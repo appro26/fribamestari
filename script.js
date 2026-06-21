@@ -1,95 +1,33 @@
-// Asetetaan virhekuuntelija heti alkuun, jotta mikään ei jää piiloon!
-window.onerror = function(msg, url, line) {
-    alert("Bugi: " + msg + " (Rivi: " + line + ")");
-};
-
-// --- 1. FIREBASE V10 MODULAARINEN KONFIGURAATIO ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, onValue, set, push, runTransaction, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// SINUN UUSI FRIBAMESTARI-TIETOKANTASI
-const firebaseConfig = { 
-    databaseURL: "https://fribamestari-default-rtdb.europe-west1.firebasedatabase.app/" 
-};
-
+const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-west1.firebasedatabase.app/" };
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- 2. PWA ASENNUSLOGIIKKA ---
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault(); deferredPrompt = e; checkInstallStatus();
-});
-
-function checkInstallStatus() {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    const installCard = document.getElementById('installCard');
-    const instructionText = document.getElementById('installInstruction');
-    const installBtn = document.getElementById('installBtn');
-    const isDismissed = localStorage.getItem('friba_install_dismissed') === 'true';
-
-    if (isStandalone || isDismissed) {
-        if (installCard) installCard.style.display = 'none'; return; 
-    }
-
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (installCard) installCard.style.display = 'block';
-
-    if (isIOS) {
-        instructionText.innerHTML = 'Saat pelin koko ruudulle: Paina selaimen alareunasta <b>Jaa</b>-kuvaketta ja valitse <b>"Lisää koti-valikkoon"</b>.';
-        installBtn.style.display = 'none';
-    } else {
-        instructionText.innerHTML = 'Asenna Fribamestari puhelimeesi, jotta se toimii radalla nopeammin ja ilman yläpalkkia!';
-        installBtn.style.display = 'block';
-        installBtn.onclick = async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') { installCard.style.display = 'none'; }
-                deferredPrompt = null;
-            }
-        };
-    }
-}
-
-window.dismissInstallPrompt = function() {
-    localStorage.setItem('friba_install_dismissed', 'true');
-    const installCard = document.getElementById('installCard');
-    if (installCard) installCard.style.display = 'none';
-};
-
-document.addEventListener('DOMContentLoaded', () => { checkInstallStatus(); });
-
-// --- 3. GLOBAALIT MUUTTUJAT ---
 let myName = localStorage.getItem('friba_name') || null;
 let allPlayers = [];
 let activeHole = null;
-let pendingXP = 0;
-let xpTimeout = null;
+let currentCourse = null;
+let currentHoleIndex = 1;
 
-// Korteille ja kaupalle säädetty kestävämpi pitkä painallus (Laskettu 1.2 sekuntiin)
+// MÄÄRÄYS: Pitkä painallus tasan 1.5 sekuntia
 function setupLongPress(btnEl, onComplete) {
     let pressTimer;
     let isPressing = false;
-    const duration = 1200; 
+    const duration = 1500; 
 
     const start = (e) => {
-        isPressing = true;
-        btnEl.classList.add('is-pressing');
+        isPressing = true; btnEl.classList.add('is-pressing');
         pressTimer = setTimeout(() => {
-            isPressing = false;
-            btnEl.classList.remove('is-pressing');
+            isPressing = false; btnEl.classList.remove('is-pressing');
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
             onComplete();
         }, duration);
     };
 
     const end = () => {
-        if (isPressing) {
-            clearTimeout(pressTimer);
-            isPressing = false;
-            btnEl.classList.remove('is-pressing');
-        }
+        if (isPressing) { clearTimeout(pressTimer); isPressing = false; btnEl.classList.remove('is-pressing'); }
     };
 
     btnEl.addEventListener('mousedown', start);
@@ -97,36 +35,24 @@ function setupLongPress(btnEl, onComplete) {
     btnEl.addEventListener('mouseup', end);
     btnEl.addEventListener('mouseleave', end);
     btnEl.addEventListener('touchend', end);
-    btnEl.addEventListener('touchcancel', end); // Tärkeä Androidille!
+    btnEl.addEventListener('touchcancel', end);
 }
 
-// --- 4. KIRJAUTUMINEN JA ROOLIT ---
+// KIRJAUTUMINEN
 window.claimIdentity = async function() {
-    try {
-        let n = document.getElementById('playerNameInput').value.trim();
-        if(!n || n.length > 15) return alert("Syötä korkeintaan 15 merkkiä pitkä nimi."); 
-        
-        myName = n; 
-        localStorage.setItem('friba_name', n);
-        updateIdentityUI(); 
-
-        await runTransaction(ref(db, 'gameState/players'), (p) => {
-            // Suojataan Firebase-objektibugi muuttamalla data aina taulukoksi (Array)
-            let arr = p ? (Array.isArray(p) ? p : Object.values(p)) : [];
-            if(!arr.find(x => x && x.name === n)) {
-                arr.push({ name: n, score: 0, cards: [] }); 
-            }
-            return arr;
-        });
-        logEvent(`${n} astui tii-paikalle.`);
-    } catch (e) {
-        alert("Kirjautuminen epäonnistui: " + e.message);
-    }
+    let n = document.getElementById('playerNameInput').value.trim();
+    if(!n || n.length > 15) return alert("Syötä korkeintaan 15 merkkiä pitkä nimi."); 
+    myName = n; localStorage.setItem('friba_name', n);
+    updateIdentityUI(); 
+    await runTransaction(ref(db, 'gameState/players'), (p) => {
+        let arr = p ? (Array.isArray(p) ? p : Object.values(p)) : [];
+        if(!arr.find(x => x && x.name === n)) { arr.push({ name: n, score: 0, cards: [] }); }
+        return arr;
+    });
 };
 
 function updateIdentityUI() { 
     document.getElementById('identityCard').style.display = myName ? 'none' : 'block'; 
-    document.getElementById('idTag').innerText = myName ? "PROFIILI: " + myName : "KIRJAUDU SISÄÄN"; 
 }
 
 window.setRole = function(r) {
@@ -135,25 +61,25 @@ window.setRole = function(r) {
     document.getElementById('btnGM').classList.toggle('active', r === 'gm');
 };
 
-// GM-tilan yksinkertainen aktivointi
 const gmBtn = document.getElementById('btnGM');
 if(gmBtn) {
     gmBtn.addEventListener('click', () => {
-        if(confirm("Siirrytäänkö Game Master -tilaan? (Tarkoitettu vain pelinjohtajalle)")) {
-            window.setRole('gm');
-        }
+        if(confirm("Siirrytäänkö Game Master -tilaan?")) window.setRole('gm');
     });
 }
 
-// --- 5. TIETOKANNAN KUUNTELU (MODULAARINEN) ---
+// DATAN KUUNTELU
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
     if(!data) return;
 
     allPlayers = data.players ? (Array.isArray(data.players) ? data.players : Object.values(data.players)) : [];
     activeHole = data.activeHole || null;
+    currentCourse = data.course || null;
+    currentHoleIndex = data.currentHoleIndex || 1;
 
     updateIdentityUI();
+    renderCourseBanner();
     renderLeaderboard();
     renderActiveHole();
     
@@ -161,184 +87,215 @@ onValue(ref(db, 'gameState'), (snap) => {
         const me = allPlayers.find(p => p && p.name === myName);
         if (me) {
             renderPlayerHand(me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : []);
-            renderShop(me.score || 0);
-            document.getElementById('myResPoints').innerText = `${me.score || 0} Pisteitä`;
-        } else {
-            myName = null;
-            localStorage.removeItem('friba_name');
-            updateIdentityUI();
+            renderShop(activeHole ? activeHole.shop : null, me.score || 0);
+            document.getElementById('myResPoints').innerText = `${me.score || 0} P`;
         }
-    }
-
-    if(document.getElementById('adminPanel').style.display === 'block') {
-        renderAdminPlayerList();
-        renderEventLog(data.eventLog);
-        renderScoreLog(data.scoreLog);
     }
 });
 
-function logEvent(msg) {
-    const time = new Date().toLocaleTimeString('fi-FI');
-    push(ref(db, 'gameState/eventLog'), { time, msg });
+// RADAN LUONTI JA HALLINTA
+window.generateParInputs = function() {
+    const count = parseInt(document.getElementById('setupHoleCount').value) || 0;
+    const container = document.getElementById('parInputsContainer');
+    container.innerHTML = '';
+    for(let i=1; i<=count; i++) {
+        container.innerHTML += `<div style="background:#111; padding:5px; border-radius:4px;"><label style="font-size:0.7rem; color:var(--text-muted);">Väylä ${i} PAR</label><input type="number" id="setupPar_${i}" value="3" style="margin:0; padding:8px;"></div>`;
+    }
+};
+
+window.saveCourseSetup = function() {
+    const name = document.getElementById('setupCourseName').value || "Tuntematon Rata";
+    const count = parseInt(document.getElementById('setupHoleCount').value) || 0;
+    if(count < 1) return alert("Lisää vähintään 1 väylä.");
+    let pars = [];
+    for(let i=1; i<=count; i++) pars.push(parseInt(document.getElementById(`setupPar_${i}`).value) || 3);
+    
+    set(ref(db, 'gameState/course'), { name: name, pars: pars });
+    set(ref(db, 'gameState/currentHoleIndex'), 1);
+    document.getElementById('courseModal').style.display = 'none';
+};
+
+function renderCourseBanner() {
+    const banner = document.getElementById('courseInfoBanner');
+    if(!currentCourse) { banner.style.display = 'none'; return; }
+    banner.style.display = 'flex';
+    document.getElementById('bannerCourseName').innerText = currentCourse.name;
+    document.getElementById('bannerHoleNum').innerText = currentHoleIndex;
+    let par = currentCourse.pars[currentHoleIndex - 1] || 3;
+    document.getElementById('bannerPar').innerText = par;
 }
 
-function logScoreChange(playerName, delta, newScore, reason) {
-    const time = new Date().toLocaleTimeString('fi-FI');
-    push(ref(db, 'gameState/scoreLog'), { time, playerName, delta, newScore, reason });
-}
-
-// --- 6. VÄYLÄN ARVONTA JA NÄKYMÄ ---
+// VÄYLÄN JA KAUPAN ARVONTA
 window.rollHoleRules = function() {
     const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
+    // Arvotaan 3 satunnaista korttia kauppaan
+    let shuffledShop = [...allCards].sort(() => 0.5 - Math.random());
+    let shopItemsForHole = shuffledShop.slice(0, 3);
+
     set(ref(db, 'gameState/activeHole'), {
-        ...randomRule,
+        rule: randomRule,
+        shop: shopItemsForHole,
         timestamp: Date.now()
     });
-    logEvent(`Väyläruletti pyöritetty: ${randomRule.n}`);
 };
 
 function renderActiveHole() {
     const container = document.getElementById('activeHoleContainer');
-    const gmControls = document.getElementById('gmGlobalControls');
-    
-    if(gmControls) gmControls.style.display = 'block';
+    document.getElementById('gmGlobalControls').style.display = 'block';
 
-    if (!activeHole) {
-        container.innerHTML = `<div class="card" style="text-align:center; padding: 15px;"><h2 style="margin:0;">Ei aktiivista väyläsääntöä</h2><p style="font-size:0.8rem; color:var(--muted);">Odotetaan että GM arpoo säännön.</p></div>`;
+    if (!activeHole || !activeHole.rule) {
+        container.innerHTML = `<div class="card" style="text-align:center;"><h2 style="margin:0; border:none;">Ei aktiivista väylää</h2><p style="font-size:0.8rem; color:var(--text-muted);">GM arpoo säännöt ja avaa kaupan.</p></div>`;
         return;
     }
     
     container.innerHTML = `
-        <div class="card" style="border-color: ${activeHole.type === 'bounty' ? 'var(--hero-gold)' : '#8e44ad'};">
-            <div class="task-status-tag" style="background: ${activeHole.type === 'bounty' ? 'var(--hero-gold)' : '#8e44ad'}; color: #fff;">
-                ${activeHole.type === 'bounty' ? '🏆 BOUNTY (HAASTE)' : '🎲 VÄYLÄSÄÄNTÖ'}
-            </div>
-            <h1 style="color: ${activeHole.type === 'bounty' ? 'var(--hero-gold)' : '#8e44ad'}; margin-top:5px; margin-bottom: 10px;">${activeHole.n}</h1>
-            <p style="font-size: 1rem; color: #fff; line-height: 1.4; margin: 0;">${activeHole.d}</p>
+        <div class="card" style="border-color: ${activeHole.rule.type === 'bounty' ? 'var(--gold)' : 'var(--accent)'}; box-shadow: 0 0 20px ${activeHole.rule.type === 'bounty' ? 'var(--gold-glow)' : 'var(--accent-glow)'};">
+            <h1 style="color: ${activeHole.rule.type === 'bounty' ? 'var(--gold)' : 'var(--accent)'}; margin-bottom: 5px;">${activeHole.rule.n}</h1>
+            <p style="font-size: 1rem; line-height: 1.4;">${activeHole.rule.d}</p>
         </div>
     `;
 }
 
-// --- 7. SABOTAASI JA KAUPPA (PELAAJA) ---
+// OMA KÄSI JA KAUPPA
 function renderPlayerHand(cards) {
     const container = document.getElementById('playerHand');
     if (cards.length === 0) {
-        container.innerHTML = '<p style="color:var(--muted); font-size:0.8rem;">Kätesi on tyhjä. Häviä väylä saadaksesi kosto-kortteja!</p>';
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.8rem;">Kätesi on tyhjä. Osta kortteja kaupasta tai häviä väyliä!</p>';
         return;
     }
-
     let html = '<div class="card-grid">';
     cards.forEach((cId, index) => {
-        const cardDef = sabotageCards.find(sc => sc.id === cId);
+        const cardDef = allCards.find(sc => sc.id === cId);
         if(!cardDef) return;
-        
+        let color = cardDef.type === 'buff' ? 'var(--success)' : 'var(--danger)';
         html += `
-            <div class="sabotage-card">
-                <div>
-                    <h3>${cardDef.n}</h3>
-                    <p>${cardDef.d}</p>
-                </div>
-                <button class="btn btn-danger long-press-btn" style="padding: 10px; margin:0;" id="useCardBtn_${index}">
-                    <div class="long-press-fill"></div>
-                    PELAA KORTTI
+            <div class="game-card" style="border-left: 4px solid ${color};">
+                <div><h3 style="color:${color};">${cardDef.n}</h3><p>${cardDef.d}</p></div>
+                <button class="btn btn-secondary long-press-btn" style="border-color:${color}; color:#fff;" id="useCardBtn_${index}">
+                    <div class="long-press-fill"></div>PELAA KORTTI
                 </button>
-            </div>
-        `;
+            </div>`;
     });
-    html += '</div>';
-    container.innerHTML = html;
+    container.innerHTML = html + '</div>';
 
     cards.forEach((cId, index) => {
         const btn = document.getElementById(`useCardBtn_${index}`);
-        if(btn) setupLongPress(btn, () => playCard(index, cId));
+        if(btn) setupLongPress(btn, () => openTargetModal(index, cId));
     });
 }
 
-function renderShop(myPoints) {
+function renderShop(shopArray, myPoints) {
     const container = document.getElementById('shopItems');
-    let html = '';
+    if(!shopArray || shopArray.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Kauppa on tyhjä tällä väylällä.</p>'; return;
+    }
     
-    shopItems.forEach(item => {
+    let html = '';
+    shopArray.forEach(item => {
+        if(!item) return;
         const canAfford = myPoints >= item.price;
+        let color = item.type === 'buff' ? 'var(--success)' : 'var(--danger)';
+        let encodedItem = encodeURIComponent(JSON.stringify(item));
         html += `
-            <div class="shop-item" style="opacity: ${canAfford ? '1' : '0.5'};">
-                <div class="shop-item-header">
-                    <h3>${item.n}</h3>
-                    <span class="price-tag">${item.price} P</span>
-                </div>
-                <p>${item.d}</p>
-                <button class="btn ${canAfford ? 'btn-success' : 'btn-secondary'} long-press-btn" style="padding: 10px; margin:0; width:100%;" ${!canAfford ? 'disabled' : ''} id="buyBtn_${item.id}">
-                    <div class="long-press-fill"></div>
-                    ${canAfford ? 'OSTA ETU' : 'EI VARAA'}
+            <div class="game-card" style="opacity: ${canAfford ? '1' : '0.5'}; border: 1px solid ${color};">
+                <span class="price-tag">${item.price} P</span>
+                <h3 style="color:${color};">${item.n}</h3><p>${item.d}</p>
+                <button class="btn ${canAfford ? 'btn-primary' : 'btn-secondary'} long-press-btn" style="margin-top:10px;" ${!canAfford ? 'disabled' : ''} id="buyBtn_${item.id}">
+                    <div class="long-press-fill"></div>${canAfford ? 'OSTA (NOPEIN VIE)' : 'EI VARAA'}
                 </button>
-            </div>
-        `;
+            </div>`;
     });
-    container.innerHTML = html;
+    container.innerHTML = `<div class="card-grid">${html}</div>`;
 
-    shopItems.forEach(item => {
+    shopArray.forEach(item => {
+        if(!item) return;
         const btn = document.getElementById(`buyBtn_${item.id}`);
-        if(btn && !btn.disabled) {
-            setupLongPress(btn, () => buyItem(item.id, item.price, item.n));
-        }
+        if(btn && !btn.disabled) setupLongPress(btn, () => buyShopItem(item));
     });
 }
 
-function playCard(cardIndex, cardId) {
-    const cardDef = sabotageCards.find(c => c.id === cardId);
+// KAUPAN LUKITUS JA OSTO
+window.buyShopItem = function(item) {
+    runTransaction(ref(db, 'gameState'), (state) => {
+        if (!state || !state.activeHole || !state.activeHole.shop) return state;
+        const me = state.players.find(p => p && p.name === myName);
+        if (!me || me.score < item.price) return state;
+
+        const shopIndex = state.activeHole.shop.findIndex(i => i && i.id === item.id);
+        if (shopIndex !== -1) {
+            me.score -= item.price;
+            state.activeHole.shop.splice(shopIndex, 1);
+            me.cards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : [];
+            me.cards.push(item.id);
+        }
+        return state;
+    }).then((res) => {
+        if(res.committed) triggerPopup(`KORTTI OSTETTU!`, `${myName} osti kortin <b>${item.n}</b>!`, ``);
+    });
+};
+
+// KORTIN KOHDISTAMINEN JA PELAAMINEN
+let pendingCardPlay = null;
+function openTargetModal(cardIndex, cardId) {
+    const cardDef = allCards.find(c => c.id === cardId);
+    pendingCardPlay = { index: cardIndex, id: cardId, def: cardDef };
+    
+    document.getElementById('targetCardName').innerText = cardDef.n;
+    const list = document.getElementById('targetPlayerList');
+    list.innerHTML = '';
+    
+    // Voit kohdistaa keneen tahansa (myös itseesi, jos se on helpotus)
+    allPlayers.forEach(p => {
+        if(!p) return;
+        let isMe = p.name === myName;
+        list.innerHTML += `<button class="target-player-btn" onclick="executeCardPlay('${p.name}')"><span>${p.name}</span> ${isMe ? '<span style="color:var(--text-muted); font-size:0.8rem;">(Sinä)</span>' : ''}</button>`;
+    });
+    
+    document.getElementById('targetModal').style.display = 'flex';
+}
+
+window.executeCardPlay = function(targetName) {
+    if(!pendingCardPlay) return;
+    const card = pendingCardPlay;
+    document.getElementById('targetModal').style.display = 'none';
     
     runTransaction(ref(db, 'gameState/players'), (pData) => {
         let players = pData ? (Array.isArray(pData) ? pData : Object.values(pData)) : [];
         const me = players.find(p => p && p.name === myName);
         if(me && me.cards) {
             me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards);
-            me.cards.splice(cardIndex, 1); 
+            me.cards.splice(card.index, 1); 
         }
         return players;
     }).then(() => {
-        triggerPopup(`SABOTAASI!`, `${myName} pelasi kortin: <b>${cardDef.n}</b>!`, `Kaikki huomio, sabotaasi aktivoitu radalla.`);
-        logEvent(`${myName} pelasi kortin: ${cardDef.n}`);
+        let title = card.def.type === 'buff' ? 'HEITON APU!' : 'SABOTAASI!';
+        let color = card.def.type === 'buff' ? 'var(--success)' : 'var(--danger)';
+        triggerPopup(`<span style="color:${color}">${title}</span>`, `<b>${myName}</b> käytti kortin <b>${card.def.n}</b> pelaajalle <b>${targetName}</b>!`, `<div style="color:${color};">${card.def.d}</div>`);
     });
-}
+};
 
-function buyItem(itemId, price, itemName) {
-    runTransaction(ref(db, 'gameState/players'), (pData) => {
-        let players = pData ? (Array.isArray(pData) ? pData : Object.values(pData)) : [];
-        const me = players.find(p => p && p.name === myName);
-        if(me && me.score >= price) {
-            me.score -= price;
-        } else {
-            return; 
-        }
-        return players;
-    }).then((res) => {
-        if(res.committed) {
-            showXPAnimation(-price);
-            triggerPopup(`Osto suoritettu!`, `${myName} osti kaupasta edun: <b>${itemName}</b>.`, `Edut astuvat voimaan heti.`);
-            logEvent(`${myName} osti: ${itemName}`);
-            const updatedMe = res.snapshot.val().find(p => p && p.name===myName);
-            logScoreChange(myName, -price, updatedMe.score, `Osto: ${itemName}`);
-        }
-    });
-}
-
-// --- 8. TULOSTEN SYÖTTÖ JA RANGAISTUKSET (GM) ---
+// TULOSTEN SYÖTTÖ
 window.openScoreModal = function() {
-    const container = document.getElementById('scoreInputsContainer');
-    if(allPlayers.length === 0) return alert("Ei pelaajia. Lisää pelaajat ensin asetuksista.");
+    if(allPlayers.length === 0) return alert("Ei pelaajia.");
+    let par = 3;
+    if(currentCourse && currentCourse.pars) par = currentCourse.pars[currentHoleIndex - 1] || 3;
     
+    document.getElementById('scoreModalHoleNum').innerText = currentHoleIndex;
+    document.getElementById('scoreModalPar').innerText = par;
+    
+    const container = document.getElementById('scoreInputsContainer');
     let html = '';
     allPlayers.forEach((p, i) => {
+        if(!p) return;
         html += `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:rgba(0,0,0,0.5); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:#111; padding:10px; border-radius:8px;">
                 <span style="font-weight:bold;">${p.name}</span>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <button class="btn btn-secondary" style="width:35px; height:35px; padding:0; margin:0;" onclick="document.getElementById('score_${i}').stepDown()">-</button>
-                    <input type="number" id="score_${i}" value="3" style="width:60px; margin:0; text-align:center; font-size:1.2rem; font-weight:bold; height:35px;">
-                    <button class="btn btn-secondary" style="width:35px; height:35px; padding:0; margin:0;" onclick="document.getElementById('score_${i}').stepUp()">+</button>
+                    <button class="btn btn-secondary" style="width:40px; height:40px; padding:0;" onclick="document.getElementById('score_${i}').stepDown()">-</button>
+                    <input type="number" id="score_${i}" value="${par}" style="width:60px; margin:0; text-align:center; font-size:1.2rem; font-weight:bold; height:40px;">
+                    <button class="btn btn-secondary" style="width:40px; height:40px; padding:0;" onclick="document.getElementById('score_${i}').stepUp()">+</button>
                 </div>
-            </div>
-        `;
+            </div>`;
     });
     container.innerHTML = html;
     document.getElementById('scoreModal').style.display = 'flex';
@@ -347,204 +304,55 @@ window.openScoreModal = function() {
 window.submitScores = function() {
     let scores = [];
     allPlayers.forEach((p, i) => {
+        if(!p) return;
         const val = parseInt(document.getElementById(`score_${i}`).value) || 3;
         scores.push({ name: p.name, strokes: val });
     });
 
     const minStrokes = Math.min(...scores.map(s => s.strokes));
     const maxStrokes = Math.max(...scores.map(s => s.strokes));
-    
     let winners = scores.filter(s => s.strokes === minStrokes).map(s => s.name);
     let losers = scores.filter(s => s.strokes === maxStrokes).map(s => s.name);
     
-    runTransaction(ref(db, 'gameState/players'), (pData) => {
-        let players = pData ? (Array.isArray(pData) ? pData : Object.values(pData)) : [];
-        
+    runTransaction(ref(db, 'gameState'), (state) => {
+        if(!state) return state;
+        let players = state.players ? (Array.isArray(state.players) ? state.players : Object.values(state.players)) : [];
         players.forEach(p => {
             if (!p) return;
-            if (winners.includes(p.name)) {
-                p.score = (p.score || 0) + 5;
-            }
+            if (winners.includes(p.name)) p.score = (p.score || 0) + 5;
             if (losers.includes(p.name)) {
                 p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
-                const randomCard = sabotageCards[Math.floor(Math.random() * sabotageCards.length)];
+                const randomCard = allCards.filter(c => c.type === 'sabotage')[Math.floor(Math.random() * 4)];
                 p.cards.push(randomCard.id);
             }
         });
-        return players;
+        state.players = players;
+        state.currentHoleIndex = (state.currentHoleIndex || 1) + 1;
+        state.activeHole = null; // Resetoi väylän ja kaupan
+        return state;
     }).then(() => {
-        logEvent(`Tulokset syötetty. Voittajat: ${winners.join(', ')} | Häviäjät: ${losers.join(', ')}`);
-        
-        let detailsHtml = `
-            <p style="color:var(--success); font-size:1rem; margin:5px 0;"><b>VOITTAJAT (+5 PISTETTÄ):</b> ${winners.join(', ')}</p>
-            <p style="color:var(--danger); font-size:1rem; margin:5px 0;"><b>HÄVIÄJÄT (+1 KORTTI):</b> ${losers.join(', ')}</p>
-        `;
-        
-        if (document.getElementById('modDrinks') && document.getElementById('modDrinks').checked) {
-            detailsHtml += `<p style="color:var(--accent); font-size:1.1rem; font-weight:900; margin-top:15px; border-top:1px dashed var(--accent); padding-top:10px;">🍻 HÄVIÄJÄT: OTTAKAA 2 HUIKKAA!</p>`;
-        }
-        
-        triggerPopup(`VÄYLÄ PELATTU!`, `Resurssit ja kosto-kortit jaettu.`, detailsHtml);
+        triggerPopup(`VÄYLÄ PELATTU!`, `Resurssit ja kosto-kortit jaettu. Siirrytään väylälle ${currentHoleIndex + 1}.`, `Voittajat (+5P): ${winners.join(', ')}<br>Häviäjät (+1 Kortti): ${losers.join(', ')}`);
         document.getElementById('scoreModal').style.display = 'none';
-        
-        remove(ref(db, 'gameState/activeHole'));
     });
 };
 
-// --- 9. POPUPIT JA ANIMAATIOT ---
 function triggerPopup(title, desc, details) {
     const overlay = document.getElementById('lotteryWinner');
     if(!overlay) return;
-    
     document.getElementById('popupTitle').innerHTML = title;
     document.getElementById('popupDesc').innerHTML = desc;
     document.getElementById('popupDetails').innerHTML = details;
-    
     overlay.style.display = 'flex';
-    
-    const bar = overlay.querySelector('.timer-bar');
-    if (bar) {
-        bar.style.animation = 'none';
-        void bar.offsetWidth; 
-        bar.style.animation = 'shrink 3.5s linear forwards';
-    }
-
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
-    setTimeout(() => { overlay.style.display = 'none'; }, 3500); 
+    setTimeout(() => { overlay.style.display = 'none'; }, 4000); 
 }
 
-function showXPAnimation(points) {
-    if (points === 0) return;
-    pendingXP += points;
-    if (xpTimeout) clearTimeout(xpTimeout);
-    
-    xpTimeout = setTimeout(() => {
-        const pop = document.getElementById('xpPopUp');
-        if(!pop) return;
-        pop.style.display = 'block';
-        
-        if (pendingXP > 0) {
-            pop.className = 'xp-popup success xp-animate';
-            pop.innerText = `+${pendingXP} P`;
-        } else {
-            pop.className = 'xp-popup danger xp-animate';
-            pop.innerText = `${pendingXP} P`;
-        }
-        
-        pendingXP = 0;
-        setTimeout(() => { 
-            pop.style.display = 'none'; 
-            pop.className = 'xp-popup'; 
-        }, 2500);
-    }, 400);
-}
-
-// --- 10. GM PANEELIN PERUSTOIMINNOT ---
 function renderLeaderboard() {
     const list = document.getElementById('playerList');
     if(!list) return;
-    let sortedPlayers = [...allPlayers].sort((a,b) => b.score - a.score);
+    let sortedPlayers = [...allPlayers].filter(p=>p).sort((a,b) => b.score - a.score);
     list.innerHTML = '';
     sortedPlayers.forEach((p, i) => {
-        if(!p) return;
-        const div = document.createElement('div');
-        div.className = `player-row ${p.name === myName ? 'me' : ''}`;
-        div.innerHTML = `<div style="display:flex; align-items:center;"><span style="color:var(--muted); font-size:0.8rem; margin-right:12px; font-weight:900;">${i+1}.</span><span>${p.name}</span></div><span class="price-tag">${p.score} P</span>`;
-        list.appendChild(div);
-    });
-}
-
-function renderAdminPlayerList() {
-    const list = document.getElementById('adminPlayerList');
-    if(!list) return; list.innerHTML = "";
-    allPlayers.forEach((p, i) => {
-        if(!p) return;
-        const div = document.createElement('div');
-        div.className = 'player-row'; div.style.padding = '8px';
-        div.innerHTML = `
-            <div style="width:100%">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:0.8rem; font-weight:bold;">${p.name} (${p.score} P) | Kortteja: ${p.cards ? p.cards.length : 0}</span>
-                    <div style="display:flex; gap:4px;">
-                        <button class="btn btn-secondary" style="width:28px; padding:5px; margin:0;" onclick="adjustScore(${i}, 5)">+</button>
-                        <button class="btn btn-secondary" style="width:28px; padding:5px; margin:0;" onclick="adjustScore(${i}, -5)">-</button>
-                        <button class="btn btn-danger" style="width:28px; padding:5px; margin:0;" onclick="removePlayer(${i})">X</button>
-                    </div>
-                </div>
-            </div>`;
-        list.appendChild(div);
-    });
-}
-
-window.adminAddPlayer = function() {
-    const input = document.getElementById('adminNewPlayerName');
-    let n = input.value.trim();
-    if(!n || n.length > 15) return;
-    
-    runTransaction(ref(db, 'gameState/players'), (pData) => {
-        let players = pData ? (Array.isArray(pData) ? pData : Object.values(pData)) : [];
-        if(!players.find(x => x && x.name === n)) { 
-            players.push({ name: n, score: 0, cards: [] }); 
-        }
-        return players;
-    }).then(() => {
-        input.value = ''; 
-        logEvent(`Admin lisäsi pelaajan: ${n}`);
-    });
-};
-
-window.adjustScore = function(idx, amt) { 
-    runTransaction(ref(db, `gameState/players/${idx}`), (p) => {
-        if(p) { p.score = Math.max(0, (p.score || 0) + amt); }
-        return p;
-    });
-};
-
-window.removePlayer = function(idx) { 
-    if(confirm("Poista pelaaja?")) { 
-        logEvent(`Admin poisti pelaajan: ${allPlayers[idx].name}`);
-        allPlayers.splice(idx, 1); 
-        set(ref(db, 'gameState/players'), allPlayers); 
-    } 
-};
-
-window.toggleAdminPanel = function() { 
-    const p = document.getElementById('adminPanel'); 
-    p.style.display = p.style.display === 'none' ? 'block' : 'none'; 
-};
-
-window.resetGame = function() {
-    if (confirm("VAROITUS: Tämä nollaa koko frisbeepelin. Jatketaanko?")) {
-        set(ref(db, 'gameState'), {
-            players: [], history: [], eventLog: {}, scoreLog: {}, activeHole: null
-        }).then(() => { localStorage.clear(); location.reload(); });
-    }
-};
-
-function renderEventLog(logData) {
-    const container = document.getElementById('adminEventLog');
-    if(!container) return;
-    container.innerHTML = "";
-    const logs = Object.values(logData || {}).reverse().slice(0, 30);
-    logs.forEach(l => {
-        const div = document.createElement('div');
-        div.className = 'log-entry';
-        div.innerHTML = `<span class="time">[${l.time}]</span> ${l.msg}`;
-        container.appendChild(div);
-    });
-}
-
-function renderScoreLog(logData) {
-    const container = document.getElementById('adminScoreLog');
-    if(!container) return;
-    container.innerHTML = "";
-    const logs = Object.values(logData || {}).reverse().slice(0, 50);
-    logs.forEach(l => {
-        const div = document.createElement('div');
-        div.className = 'log-entry';
-        let sign = l.delta > 0 ? '+' : '';
-        let color = l.delta >= 0 ? 'var(--success)' : 'var(--danger)';
-        div.innerHTML = `<span class="time">[${l.time}]</span> <b>${l.playerName}</b>: <span style="color:${color}; font-weight:bold;">${sign}${l.delta} P</span> <span style="color:var(--muted); font-size:0.85em;">(${l.reason})</span>`;
-        container.appendChild(div);
+        list.innerHTML += `<div class="player-row ${p.name === myName ? 'me' : ''}"><div><span style="color:var(--text-muted); font-weight:900; margin-right:10px;">${i+1}.</span>${p.name}</div><span class="price-tag" style="position:relative; top:0; right:0;">${p.score} P</span></div>`;
     });
 }
