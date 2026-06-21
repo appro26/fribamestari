@@ -6,7 +6,8 @@
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png">
     
-    <link rel="stylesheet" href="style.css?v=21">
+    <!-- PÄIVITETTY VERSIONUMERO: ?v=22 -->
+    <link rel="stylesheet" href="style.css?v=22">
     <meta name="theme-color" content="#10b981">
 
     <script>
@@ -20,25 +21,29 @@
 
     <div class="container">
         
+        <!-- Yläpalkki: Roolinvaihto ja Lompakko vierekkäin -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div class="role-switcher">
                 <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player')">PELAAJA</button>
-                <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">GAME MASTER</button>
+                <button id="btnGM" class="role-btn gm" onclick="if(window.setRole) window.setRole('gm')">GAME MASTER</button>
             </div>
             <div id="topWallet" class="top-wallet" style="display:none;">💰 <span id="topWalletPoints">0 P</span></div>
         </div>
 
+        <!-- Kirjautuminen -->
         <div id="identityCard" class="card" style="border: 2px solid var(--primary); text-align: center;">
             <h2 style="color: var(--primary); font-size: 1.1rem;">Tervetuloa Radalle</h2>
             <input type="text" id="playerNameInput" placeholder="Syötä nimesi...">
             <button class="btn btn-primary" onclick="if(window.claimIdentity) window.claimIdentity()">KIRJAUDU SISÄÄN</button>
         </div>
 
+        <!-- Alustusruutu -->
         <div id="gameSetupArea" class="card" style="display:none; text-align:center; border: 2px solid var(--primary);">
             <h2 style="color: var(--text-main); font-size:1.3rem; margin-bottom: 10px;">Peli ei ole käynnissä</h2>
             <button class="btn btn-primary gm-only" onclick="document.getElementById('courseModal').style.display='flex'">ALOITA UUSI PELI (GM)</button>
         </div>
 
+        <!-- PÄÄNÄKYMÄ -->
         <div id="mainGameArea" style="display:none;">
             
             <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 10px;">
@@ -49,28 +54,34 @@
                 <button class="btn btn-primary" onclick="if(window.nextHole) window.nextHole()" style="width: auto; padding: 0 12px; margin: 0; font-size: 0.85rem; line-height:1.2;">📝 TULOKSET<br>& SEURAAVA</button>
             </div>
 
+            <!-- Aktiivinen väyläsääntö on nyt heti alla -->
             <div id="activeHoleContainer"></div>
 
+            <!-- Omat Säännöt (Näkyy jos joku sabotoi sinua) -->
             <div id="myActiveRulesContainer" style="display:none;"></div>
             
+            <!-- Yleinen loki väylän pelatuista korteista -->
             <div id="activeCardsArea" style="display:none; margin-bottom: 12px;">
                 <h2 style="color: var(--info);">Aktiiviset sabotaasit tällä väylällä</h2>
                 <div id="activeCardsContainer"></div>
             </div>
 
+            <!-- INTERAKTIIVISET NÄKYMÄT -->
             <div class="player-only">
+                <!-- SUPISTETTU NÄKYMÄ: Kortit ja kauppa vierekkäin -->
                 <div id="compactViewContainer" class="grid-2" style="margin-bottom: 12px;">
-                    <button class="btn btn-danger" style="padding: 12px; font-size: 0.95rem; display: flex; flex-direction: column; align-items: center; gap: 4px;" onclick="document.getElementById('handModal').style.display='flex'">
+                    <button class="btn btn-danger" style="padding: 12px; font-size: 0.95rem; display: flex; flex-direction: column; align-items: center; gap: 6px;" onclick="document.getElementById('handModal').style.display='flex'">
                         <span>🃏 Omat kortit</span>
-                        <span id="handCountBadge" style="background: #fff; color: var(--danger); padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">0</span>
+                        <span id="handCountBadge" style="background: #fff; color: var(--danger); padding: 2px 10px; border-radius: 12px; font-size: 0.85rem;">0</span>
                     </button>
                     
-                    <button class="btn btn-warning" style="padding: 12px; font-size: 0.95rem; display: flex; flex-direction: column; align-items: center; gap: 4px;" onclick="document.getElementById('shopModal').style.display='flex'">
+                    <button class="btn btn-warning" style="padding: 12px; font-size: 0.95rem; display: flex; flex-direction: column; align-items: center; gap: 6px;" onclick="document.getElementById('shopModal').style.display='flex'">
                         <span>🛒 Kauppa</span>
-                        <span id="myResPointsBtn" style="background: #fff; color: var(--warning); padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;">0 P</span>
+                        <span id="myResPointsBtn" style="background: #fff; color: var(--warning); padding: 2px 10px; border-radius: 12px; font-size: 0.85rem;">0 P</span>
                     </button>
                 </div>
 
+                <!-- LAAJENNETTU NÄKYMÄ: 1 sarake pystyssä -->
                 <div id="expandedViewContainer" style="display:none;">
                     <div class="card" style="border-top: 5px solid var(--danger);">
                         <h2>Omat Kortit</h2>
@@ -82,16 +93,17 @@
                     </div>
                 </div>
 
+                <!-- Toggle-nappi alimpana -->
                 <button class="btn btn-secondary" onclick="if(window.toggleView) window.toggleView()" id="viewToggleBtn" style="margin-bottom:15px; font-size:0.85rem; padding:12px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
             </div>
-
         </div> 
 
+        <!-- GM HALLINTAPANEELI -->
         <div class="gm-only" style="margin-top: 12px;">
             <button class="btn btn-secondary" onclick="document.getElementById('adminPanel').style.display = document.getElementById('adminPanel').style.display === 'none' ? 'block' : 'none'">⚙️ Avaa GM Asetukset</button>
             
             <div id="adminPanel" class="card" style="display:none; margin-top:10px;">
-                <h2>Muokkaa Pelaajien Pelirahaa & Tuloskorttia</h2>
+                <h2>Muokkaa Pelaajia & Pelirahaa</h2>
                 <div id="adminPlayerList"></div>
                 
                 <div style="display: flex; gap: 10px; margin-top:15px; margin-bottom:15px;">
@@ -109,12 +121,14 @@
             </div>
         </div>
 
+        <!-- Tuloskortti radalta -->
         <div class="card" style="margin-top: 12px; border-top: 4px solid var(--text-main);">
             <h2>🏆 Frisbeegolf-Tuloskortti</h2>
             <div id="playerList"></div>
         </div>
     </div>
 
+    <!-- Modaalit (2 vierekkäin puhelimella) -->
     <div id="handModal" class="fullscreen-modal">
         <div class="fullscreen-modal-header">
             <h2>OMAT KORTIT</h2>
@@ -135,7 +149,6 @@
         <div class="card" style="width: 100%; max-width: 450px;">
             <h2 style="color:var(--text-main); font-size: 1.3rem;">Aloita Peli</h2>
             <p style="color:var(--primary); font-size:0.95rem; font-weight:600; margin-bottom:15px;">Kaikki saavat 3 korttia aloittaessa!</p>
-            
             <button class="btn btn-warning" onclick="if(window.startMeilahti) window.startMeilahti()" style="margin-bottom: 20px;">🌲 Pika-aloitus: Meilahti (16V)</button>
             
             <h2 style="border-top: 2px solid var(--border); padding-top: 15px; margin-top: 10px;">Luo oma rata</h2>
@@ -155,7 +168,8 @@
                 <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 5px;">Par <strong id="scoreModalPar" style="color:var(--text-main);">3</strong></p>
             </div>
             
-            <button class="btn btn-secondary" style="padding: 10px; font-size: 0.85rem; margin-bottom: 12px;" onclick="if(window.toggleScoreModalRule) window.toggleScoreModalRule()">👁️ TARKISTA VÄYLÄN TEHTÄVÄ / SÄÄNTÖ</button>
+            <!-- Pikapainike säännön lunastukseen livenä -->
+            <button class="btn btn-secondary" style="padding: 10px; font-size: 0.85rem; margin-bottom: 12px;" onclick="if(window.toggleScoreModalRule) window.toggleScoreModalRule()">👁️ TARKISTA VÄYLÄN SÄÄNTÖ / TEHTÄVÄ</button>
             <div id="scoreModalRuleBox" style="display: none; background: var(--surface-alt); border-left: 4px solid var(--primary); padding: 12px; border-radius: 8px; margin-bottom: 12px; font-weight: 600; font-size: 0.95rem;"></div>
 
             <div id="scoreInputsContainer" style="margin-bottom: 20px;"></div>
@@ -188,7 +202,8 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=21"></script>
-    <script type="module" src="script.js?v=21"></script>
+    <!-- PÄIVITETTY VERSIONUMERO: ?v=22 -->
+    <script src="tasks.js?v=22"></script>
+    <script type="module" src="script.js?v=22"></script>
 </body>
 </html>
