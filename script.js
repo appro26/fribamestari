@@ -32,9 +32,6 @@ window.setRole = function(r) {
     document.getElementById('btnGM').classList.toggle('active', r === 'gm');
 };
 
-const gmBtn = document.getElementById('btnGM');
-if(gmBtn) gmBtn.addEventListener('click', () => { if(confirm("Siirrytäänkö GM-tilaan?")) window.setRole('gm'); });
-
 function logEvent(msg) { push(ref(db, 'gameState/eventLog'), { time: new Date().toLocaleTimeString('fi-FI'), msg }); }
 function logScoreChange(playerName, delta, reason) { push(ref(db, 'gameState/scoreLog'), { time: new Date().toLocaleTimeString('fi-FI'), playerName, delta, reason }); }
 
@@ -49,6 +46,21 @@ onValue(ref(db, 'gameState'), (snap) => {
     currentHoleIndex = data.currentHoleIndex || 1;
 
     updateIdentityUI();
+    
+    // NÄKYMÄN VAIHTO: Näytetäänkö Aloita-ruutu vai Peliruutu
+    const gameSetupArea = document.getElementById('gameSetupArea');
+    const mainGameArea = document.getElementById('mainGameArea');
+    
+    if (gameSetupArea && mainGameArea) {
+        if (!currentCourse) {
+            gameSetupArea.style.display = 'block';
+            mainGameArea.style.display = 'none';
+        } else {
+            gameSetupArea.style.display = 'none';
+            mainGameArea.style.display = 'block';
+        }
+    }
+
     renderCourseBanner();
     renderLeaderboard();
     renderActiveHole();
@@ -67,7 +79,23 @@ onValue(ref(db, 'gameState'), (snap) => {
     renderScoreLog(data.scoreLog);
 });
 
-// RADAN LUONTI
+// UUSI: Pikavalinta Meilahti
+window.startMeilahti = function() {
+    const pars = Array(16).fill(3); // 16 väylää, kaikki par 3
+    set(ref(db, 'gameState/course'), { name: "Meilahti", pars: pars });
+    set(ref(db, 'gameState/currentHoleIndex'), 1);
+    document.getElementById('courseModal').style.display = 'none';
+    
+    // Arvotaan eka sääntö ja kauppa suoraan
+    let premiumPool = allCards.filter(c => c.tier === "premium");
+    let shuffledShop = premiumPool.sort(() => 0.5 - Math.random());
+    const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
+    set(ref(db, 'gameState/activeHole'), { rule: randomRule, shop: shuffledShop.slice(0, 5), timestamp: Date.now() });
+    
+    logEvent(`Peli aloitettu radalla Meilahti.`);
+};
+
+// RADAN LUONTI (Manuaalinen)
 window.generateParInputs = function() {
     const count = parseInt(document.getElementById('setupHoleCount').value) || 0;
     const container = document.getElementById('parInputsContainer');
@@ -78,50 +106,52 @@ window.generateParInputs = function() {
 window.saveCourseSetup = function() {
     const name = document.getElementById('setupCourseName').value || "Rata";
     const count = parseInt(document.getElementById('setupHoleCount').value) || 0;
+    if(count < 1) return alert("Syötä vähintään 1 väylä!");
     let pars = [];
     for(let i=1; i<=count; i++) pars.push(parseInt(document.getElementById(`setupPar_${i}`).value) || 3);
+    
     set(ref(db, 'gameState/course'), { name, pars });
     set(ref(db, 'gameState/currentHoleIndex'), 1);
     document.getElementById('courseModal').style.display = 'none';
+
+    // Arvotaan eka sääntö ja kauppa suoraan
+    let premiumPool = allCards.filter(c => c.tier === "premium");
+    let shuffledShop = premiumPool.sort(() => 0.5 - Math.random());
+    const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
+    set(ref(db, 'gameState/activeHole'), { rule: randomRule, shop: shuffledShop.slice(0, 5), timestamp: Date.now() });
+    
+    logEvent(`Peli aloitettu radalla ${name}.`);
 };
 
 function renderCourseBanner() {
     const banner = document.getElementById('courseInfoBanner');
-    if(!currentCourse) { banner.style.display = 'none'; return; }
-    banner.style.display = 'block';
+    if(!currentCourse) return;
     document.getElementById('bannerCourseName').innerText = currentCourse.name;
     document.getElementById('bannerHoleNum').innerText = currentHoleIndex;
     document.getElementById('bannerPar').innerText = currentCourse.pars[currentHoleIndex - 1] || 3;
 }
 
-// VAATIMUS: Seuraava väylä -nappi avaa ensin tulosten syötön
+// Seuraava väylä avaa ensin tulosten syötön
 window.nextHole = function() {
     window.openScoreModal();
 };
 
-// SÄÄNNÖN ARVONTA
 window.rollHoleRules = function() {
     const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
-    // Arvotaan kauppaan 5 kpl puhtaita Premium-kortteja
     let premiumPool = allCards.filter(c => c.tier === "premium");
     let shuffledShop = premiumPool.sort(() => 0.5 - Math.random());
-    
     set(ref(db, 'gameState/activeHole'), { rule: randomRule, shop: shuffledShop.slice(0, 5), timestamp: Date.now() });
-    logEvent(`Arvottiin väylähaaste: ${randomRule.n}`);
 };
 
 function renderActiveHole() {
     const container = document.getElementById('activeHoleContainer');
-    document.getElementById('gmGlobalControls').style.display = 'block';
-
     if (!activeHole || !activeHole.rule) {
-        container.innerHTML = `<div class="card" style="text-align:center;"><h2 style="margin:0; color:var(--text-muted);">Odotetaan avausta tiiltä</h2><p style="font-size:0.9rem; color:var(--text-muted); margin-top:5px;">Game Master pyöräyttää uuden säännön käyntiin.</p></div>`;
+        container.innerHTML = ``;
         return;
     }
     container.innerHTML = `<div class="card" style="border-left: 5px solid var(--info);"><h1 style="color: var(--info); font-size:1.3rem; margin-bottom: 6px;">🎲 ${activeHole.rule.n}</h1><p style="font-size: 0.95rem; line-height: 1.4; color:var(--text-main);">${activeHole.rule.d}</p></div>`;
 }
 
-// OMAN KÄDEN KORTIT (Lyhyt klikkaus riittää)
 function renderPlayerHand(cards) {
     const container = document.getElementById('playerHand');
     if (cards.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem; padding: 15px;">Kätesi on tyhjä.</p>'; return; }
@@ -135,10 +165,9 @@ function renderPlayerHand(cards) {
     container.innerHTML = html;
 }
 
-// VELVOITE: Kaupan kortit (Lyhyt klikkaus)
 function renderShop(shopArray, myPoints) {
     const container = document.getElementById('shopItems');
-    if(!shopArray || shopArray.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem; text-align:center; padding:10px;">Kauppa tyhjä. Arvo sääntö avataksesi kaupan.</p>'; return; }
+    if(!shopArray || shopArray.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem; text-align:center; padding:10px;">Kauppa on suljettu.</p>'; return; }
     
     let html = '';
     shopArray.forEach(item => {
@@ -148,7 +177,7 @@ function renderShop(shopArray, myPoints) {
             <div class="shop-item-premium ${!canAfford ? 'disabled' : ''}">
                 <span class="price-tag">${item.price} P</span>
                 <h3>${item.n}</h3><p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:12px;">${item.d}</p>
-                <button class="btn ${canAfford ? 'btn-primary' : 'btn-secondary'}" style="padding:10px; margin:0; font-size:0.85rem;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${canAfford ? 'OSTA ETUKORTTI' : 'EI VARAA'}</button>
+                <button class="btn ${canAfford ? 'btn-primary' : 'btn-secondary'}" style="padding:10px; margin:0; font-size:0.85rem;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${canAfford ? 'OSTA KORTTI' : 'EI VARAA'}</button>
             </div>`;
     });
     container.innerHTML = html;
@@ -227,7 +256,10 @@ window.openScoreModal = function() {
     if(allPlayers.length === 0) return alert("Ei pelaajia radalla.");
     let par = currentCourse && currentCourse.pars ? (currentCourse.pars[currentHoleIndex - 1] || 3) : 3;
     document.getElementById('scoreModalHoleNum').innerText = currentHoleIndex;
-    document.getElementById('scoreModalPar').innerText = par;
+    
+    // VIRHEEN KORJAUS: scoreModalPar on nyt olemassa HTML:ssä ja ottaa tiedon vastaan!
+    const parElement = document.getElementById('scoreModalPar');
+    if(parElement) parElement.innerText = par;
     
     const container = document.getElementById('scoreInputsContainer');
     let html = '';
@@ -265,7 +297,6 @@ window.submitScores = function() {
     let losers = scores.filter(s => s.strokes === maxStrokes).map(s => s.name);
     let taskWinner = document.getElementById('taskWinnerSelect').value;
     
-    // Suodatetaan valmiiksi vain normaalit kortit arvontaa varten
     let normalPool = allCards.filter(c => c.tier === "normal");
     
     runTransaction(ref(db, 'gameState'), (state) => {
@@ -277,13 +308,11 @@ window.submitScores = function() {
             if (winners.includes(p.name)) p.score = (p.score || 0) + 5;
             if (taskWinner === p.name) p.score = (p.score || 0) + 5;
             
-            // Häviäjä(t) saa yhden ylimääräisen sabotaasikortin
             if (losers.includes(p.name)) {
                 p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
                 p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
             }
             
-            // VELVOITE: JOKAINEN pelaaja saa väylän vaihtuessa 2 uutta korttia käteensä!
             p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
             p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
             p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
@@ -291,16 +320,15 @@ window.submitScores = function() {
         
         state.players = players;
         state.currentHoleIndex = (state.currentHoleIndex || 1) + 1;
-        state.activeHole = null; // Pyyhkii kaupan, pitää arpoa uudestaan uudella tiillä
+        state.activeHole = null; 
         return state;
     }).then(() => {
         triggerPopup(`Tulokset tallennettu`, `Kaikille jaettu 2 uutta fribakorttia!`, ``);
         document.getElementById('scoreModal').style.display = 'none';
-        window.rollHoleRules(); // Arpoo kaupan ja säännön valmiiksi automaattisesti!
+        window.rollHoleRules(); 
     });
 };
 
-// VAATIMUS: Popupin sulkeutumisaika laskettu tasan 2 sekuntiin
 function triggerPopup(title, desc, details) {
     const overlay = document.getElementById('lotteryWinner');
     if(!overlay) return;
@@ -365,13 +393,12 @@ window.removePlayer = function(idx) {
 };
 
 window.resetGame = function() {
-    if (confirm("Haluatko varmasti nollata koko kierroksen tiedot?")) {
-        set(ref(db, 'gameState'), { players: [], eventLog: {}, scoreLog: {}, activeHole: null, currentHoleIndex: 1 })
+    if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Peli palaa aloitusnäyttöön.")) {
+        set(ref(db, 'gameState'), { players: [], eventLog: {}, scoreLog: {}, activeHole: null, currentHoleIndex: 1, course: null })
         .then(() => { localStorage.clear(); location.reload(); });
     }
 };
 
-// NÄMÄ LISÄTTIIN TAKAISIN GM-PANEELIN LOKEJA VARTEN:
 function renderEventLog(logData) {
     const container = document.getElementById('adminEventLog');
     if(!container) return; container.innerHTML = "";
