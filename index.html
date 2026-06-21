@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png">
-    <link rel="stylesheet" href="style.css?v=24">
+    <link rel="stylesheet" href="style.css?v=25">
     <meta name="theme-color" content="#10b981">
     <script>window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };</script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
@@ -46,7 +46,6 @@
             </div>
 
             <div id="activeHoleContainer"></div>
-
             <div id="myActiveRulesContainer" style="display:none;"></div>
             
             <div id="activeCardsArea" style="display:none; margin-bottom: 15px;">
@@ -107,7 +106,10 @@
         </div>
     </div>
 
+    <!-- MODAALIT (Swipe to close tuettu!) -->
+    
     <div id="handModal" class="fullscreen-modal">
+        <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
             <h2>🃏 OMAT KORTIT</h2>
             <button class="close-modal-btn" onclick="document.getElementById('handModal').style.display='none'">&times;</button>
@@ -116,6 +118,7 @@
     </div>
 
     <div id="shopModal" class="fullscreen-modal">
+        <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
             <h2>🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px;">0 P</span></h2>
             <button class="close-modal-btn" onclick="document.getElementById('shopModal').style.display='none'">&times;</button>
@@ -126,20 +129,17 @@
     <div id="courseModal" class="winner-overlay">
         <div class="card" style="width: 100%; max-width: 450px;">
             <h2 style="color:var(--text-main); font-size: 1.4rem;">Aloita Peli</h2>
-            <p style="color:var(--primary); font-size:1.05rem; font-weight:800; margin-bottom:20px;">Kaikki saavat 3 korttia aloittaessa!</p>
-            
             <button class="btn btn-warning" onclick="if(window.startMeilahti) window.startMeilahti()" style="margin-bottom: 25px; color:#000;">🌲 Pika-aloitus: Meilahti (16V)</button>
-            
             <h2 style="border-top: 2px solid var(--border); padding-top: 20px; margin-top: 10px;">Luo oma rata</h2>
             <input type="text" id="setupCourseName" placeholder="Radan nimi...">
             <input type="number" id="setupHoleCount" placeholder="Väylien määrä" oninput="if(window.generateParInputs) window.generateParInputs()">
             <div id="parInputsContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-            
             <button class="btn btn-primary" onclick="if(window.saveCourseSetup) window.saveCourseSetup()">TALLENNA & ALOITA</button>
             <button class="btn btn-secondary" style="margin-top: 12px;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
         </div>
     </div>
 
+    <!-- TULOSKORTTI: Korjattu ID ja lukulogiikka -->
     <div id="scoreModal" class="winner-overlay">
         <div class="card" style="width: 100%; max-width: 450px;">
             <div style="text-align: center; margin-bottom: 20px;">
@@ -150,6 +150,7 @@
             <button class="btn btn-secondary" style="padding: 16px; font-size: 1rem; margin-bottom: 20px; background:var(--surface-alt);" onclick="if(window.toggleScoreModalRule) window.toggleScoreModalRule()">👁️ NÄYTÄ VÄYLÄN SÄÄNTÖ</button>
             <div id="scoreModalRuleBox" style="display: none; background: #fff; border: 3px solid var(--primary); padding: 16px; border-radius: 12px; margin-bottom: 20px; font-weight: 800; font-size: 1.05rem; color:var(--text-main);"></div>
 
+            <!-- Tähän generoidaan tulosrivit dynamisesti -->
             <div id="scoreInputsContainer" style="margin-bottom: 25px;"></div>
             
             <div style="background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 3px solid var(--warning);">
@@ -162,6 +163,7 @@
         </div>
     </div>
 
+    <!-- KOHDEVALIKKO -->
     <div id="targetModal" class="winner-overlay">
         <div class="card" style="width: 100%; max-width: 400px; border: 4px solid var(--danger);">
             <h2 style="color:var(--text-main);">Valitse sabotaasin kohde</h2>
@@ -171,6 +173,7 @@
         </div>
     </div>
 
+    <!-- POPUP -->
     <div id="lotteryWinner" class="winner-overlay">
         <div class="card" style="text-align: center; width: 100%; max-width: 400px; border: 4px solid var(--primary);">
             <h1 id="popupTitle" style="color: var(--text-main); font-size: 1.8rem; margin-bottom: 12px; text-transform:uppercase;">Ilmoitus</h1>
@@ -180,7 +183,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=24"></script>
-    <script type="module" src="script.js?v=24"></script>
+    <script src="tasks.js?v=25"></script>
+    <script type="module" src="script.js?v=25"></script>
 </body>
 </html>
