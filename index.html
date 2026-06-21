@@ -6,7 +6,7 @@
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png">
     
-    <link rel="stylesheet" href="style.css?v=9">
+    <link rel="stylesheet" href="style.css?v=10">
     <meta name="theme-color" content="#121212">
 
     <script>
@@ -28,40 +28,42 @@
             <button class="btn btn-primary" onclick="if(window.claimIdentity) window.claimIdentity()">ASTU TII-PAIKALLE</button>
         </div>
 
-        <div id="courseInfoBanner" class="card" style="display: none; background: var(--surface-light); text-align: center; padding: 15px;">
-            <div style="font-size: 1rem; color: var(--text-muted); font-weight: 600; margin-bottom: 5px; text-transform: uppercase;" id="bannerCourseName">Rata</div>
-            <div style="display: flex; justify-content: center; align-items: baseline; gap: 15px;">
-                <div style="font-size: 1.2rem; color: var(--text-main);">VÄYLÄ <span id="bannerHoleNum" style="font-size: 2rem; font-weight: 900; color: var(--primary);">1</span></div>
-                <div style="font-size: 1.2rem; color: var(--text-muted);">PAR <span id="bannerPar" style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">3</span></div>
-            </div>
+        <!-- UUSI: Aloitusruutu, joka näkyy kun peliä ei ole vielä luotu -->
+        <div id="gameSetupArea" class="card" style="display:none; text-align:center; border: 2px solid var(--primary);">
+            <h2 style="color: var(--text-main); font-size:1.2rem; margin-bottom: 10px;">Peliä ei ole aloitettu</h2>
+            <p style="color: var(--text-muted); font-size:0.9rem; margin-bottom: 20px;">Valitse rata ja käynnistä peli.</p>
+            <button class="btn btn-primary" onclick="document.getElementById('courseModal').style.display='flex'">ALOITA PELI</button>
         </div>
 
-        <button class="btn btn-secondary" onclick="if(window.nextHole) window.nextHole()" style="margin-bottom: 16px; font-weight: 900; border-color: var(--primary);">SEURAAVA VÄYLÄ ➡️</button>
-
-        <div class="gm-only" id="gmGlobalControls" style="display:none; margin-bottom: 16px;">
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button class="btn btn-secondary" onclick="document.getElementById('courseModal').style.display='flex'">📍 1. Luo uusi rata</button>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-arvo" onclick="if(window.rollHoleRules) window.rollHoleRules()" style="flex: 1;">🎲 2. Arvo sääntö</button>
-                    <button class="btn btn-primary" onclick="if(window.openScoreModal) window.openScoreModal()" style="flex: 1;">📝 3. Syötä tulokset</button>
+        <!-- Pelin päänäkymä (Piilotettu kunnes rata valitaan) -->
+        <div id="mainGameArea" style="display:none;">
+            <div id="courseInfoBanner" class="card" style="background: var(--surface-light); text-align: center; padding: 15px;">
+                <div style="font-size: 1rem; color: var(--text-muted); font-weight: 600; margin-bottom: 5px; text-transform: uppercase;" id="bannerCourseName">Rata</div>
+                <div style="display: flex; justify-content: center; align-items: baseline; gap: 15px;">
+                    <div style="font-size: 1.2rem; color: var(--text-main);">VÄYLÄ <span id="bannerHoleNum" style="font-size: 2rem; font-weight: 900; color: var(--primary);">1</span></div>
+                    <div style="font-size: 1.2rem; color: var(--text-muted);">PAR <span id="bannerPar" style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">3</span></div>
                 </div>
             </div>
-        </div>
 
-        <div id="activeHoleContainer"></div>
+            <!-- Väylän vaihto -->
+            <button class="btn btn-secondary" onclick="if(window.nextHole) window.nextHole()" style="margin-bottom: 16px; font-weight: 900; border-color: var(--primary);">SEURAAVA VÄYLÄ ➡️</button>
 
-        <div class="player-only" id="playerActionArea">
-            <div class="card" style="border-left: 5px solid var(--danger); padding-right: 0;">
-                <h2>Omat Kortit kädessä</h2>
-                <div id="playerHand" class="hand-scroll-area"></div>
+            <div id="activeHoleContainer"></div>
+
+            <div class="player-only" id="playerActionArea">
+                <div class="card" style="border-left: 5px solid var(--danger); padding-right: 0;">
+                    <h2>Omat Kortit kädessä</h2>
+                    <div id="playerHand" class="hand-scroll-area"></div>
+                </div>
+                
+                <div class="card" style="border-left: 5px solid var(--warning);">
+                    <h2 style="display: flex; justify-content: space-between; align-items: center;">Väylän Kauppa <span id="myResPoints" style="color: var(--warning); font-size: 1.2rem; font-weight: 900;">0 P</span></h2>
+                    <div id="shopItems" class="shop-grid"></div>
+                </div>
             </div>
-            
-            <div class="card" style="border-left: 5px solid var(--warning);">
-                <h2 style="display: flex; justify-content: space-between; align-items: center;">Väylän Kauppa <span id="myResPoints" style="color: var(--warning); font-size: 1.2rem; font-weight: 900;">0 P</span></h2>
-                <div id="shopItems" class="shop-grid"></div>
-            </div>
-        </div>
+        </div> <!-- End mainGameArea -->
 
+        <!-- GM ASETUKSET -->
         <div class="gm-only" style="margin-top: 20px;">
             <button class="btn btn-secondary" onclick="document.getElementById('adminPanel').style.display = document.getElementById('adminPanel').style.display === 'none' ? 'block' : 'none'">⚙️ Hallinta & Lokit</button>
             
@@ -89,22 +91,30 @@
         </div>
     </div>
 
+    <!-- Modaalit -->
+    <!-- UUSI: Radan luonti ja Meilahti-pikapainike -->
     <div id="courseModal" class="winner-overlay" style="display:none;">
         <div class="card" style="width: 100%; max-width: 450px;">
-            <h2>Radan luonti</h2>
-            <input type="text" id="setupCourseName" placeholder="Radan nimi (esim. Meilahti)">
+            <h2 style="color:var(--text-main); font-size: 1.2rem;">Aloita Peli</h2>
+            
+            <button class="btn btn-primary" onclick="if(window.startMeilahti) window.startMeilahti()" style="margin-bottom: 20px; background-color: var(--warning); color: #000;">🌲 Valitse Meilahti (16 väylää, Par 3)</button>
+            
+            <h2 style="border-top: 1px solid var(--border-metal); padding-top: 15px; margin-top: 15px;">Tai luo oma rata</h2>
+            <input type="text" id="setupCourseName" placeholder="Radan nimi (esim. Tali)">
             <input type="number" id="setupHoleCount" placeholder="Väylien määrä" oninput="if(window.generateParInputs) window.generateParInputs()">
             <div id="parInputsContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-            <button class="btn btn-primary" onclick="if(window.saveCourseSetup) window.saveCourseSetup()">Tallenna rata</button>
+            
+            <button class="btn btn-primary" onclick="if(window.saveCourseSetup) window.saveCourseSetup()">Tallenna & Aloita</button>
             <button class="btn btn-secondary" style="margin-top: 10px;" onclick="document.getElementById('courseModal').style.display='none'">Peruuta</button>
         </div>
     </div>
 
+    <!-- KORJATTU: Tuloskortti (scoreModalPar lisätty takaisin) -->
     <div id="scoreModal" class="winner-overlay" style="display:none;">
         <div class="card" style="width: 100%; max-width: 450px;">
             <div style="text-align: center; margin-bottom: 15px;">
                 <h2 style="color:var(--text-main); font-size: 1.4rem; margin: 0;">VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
-                <p style="color: var(--text-muted);">Merkitse väylätulokset</p>
+                <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 5px;">Par <strong id="scoreModalPar" style="color:var(--text-main);">3</strong></p>
             </div>
             
             <div id="scoreInputsContainer" style="margin-bottom: 20px;"></div>
@@ -136,7 +146,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=9"></script>
-    <script type="module" src="script.js?v=9"></script>
+    <script src="tasks.js?v=10"></script>
+    <script type="module" src="script.js?v=10"></script>
 </body>
 </html>
