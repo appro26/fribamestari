@@ -44,7 +44,7 @@ const premiumBases = [
     { n: "Laser-Tähtäin", d: "Voit siirtää kiekkosi paikkaa 5 metriä suoraan lähemmäksi koria." },
     { n: "Mando-Ohitus", d: "Saat skipata radan virallisen mandon täysin ilman rangaistusheittoa." },
     { n: "OB-Armahdus", d: "Jos kiekkosi menee OB-alueelle, saat jatkaa pelistä ilman lisälyöntejä." },
-    { n: "Pistevaras", d: "Varasta valitsemaltasi vastustajalta tasan 5 resurssipistettä." },
+    { n: "Pistevaras", d: "Varasta valitsemaltasi vastustajalta tasan 5 resurssipistett." },
     { n: "Tuplapotti", d: "Jos voitat tämän väylän tai suoritat tehtävän, saat tuplamäärän (+10) pisteitä." },
     { n: "Kiekkolukko", d: "Kiellä yhtä vastustajaa käyttämästä hänen luottodraiveriaan tällä väylällä." },
     { n: "Ilmainen Droppi", d: "Saat siirtää kiekkosi pahasta puskasta keskelle väylää ilman rangaistusta." },
@@ -58,7 +58,7 @@ const premiumBases = [
 
 for(let i = 1; i <= 30; i++) {
     const base = premiumBases[(i - 1) % premiumBases.length];
-    allCards.push({ id: "p_" + i, n: base.n, d: base.d, tier: "premium", type: "buff", price: Math.floor(Math.random() * 6) + 7 }); 
+    allCards.push({ id: "p_" + i, n: `💎 ${base.n}`, d: base.d, tier: "premium", type: "buff", price: Math.floor(Math.random() * 6) + 7 }); 
 }
 
 const holeRules = [
