@@ -44,7 +44,7 @@ const premiumBases = [
     { n: "Laser-Tähtäin", d: "Voit siirtää kiekkosi paikkaa 5 metriä suoraan lähemmäksi koria." },
     { n: "Mando-Ohitus", d: "Saat skipata radan virallisen mandon täysin ilman rangaistusheittoa." },
     { n: "OB-Armahdus", d: "Jos kiekkosi menee OB-alueelle, saat jatkaa pelistä ilman lisälyöntejä." },
-    { n: "Pistevaras", d: "Varasta valitsemaltasi vastustajalta tasan 5 resurssipistett." },
+    { n: "Pistevaras", d: "Varasta valitsemaltasi vastustajalta tasan 5 resurssipistettä." },
     { n: "Tuplapotti", d: "Jos voitat tämän väylän tai suoritat tehtävän, saat tuplamäärän (+10) pisteitä." },
     { n: "Kiekkolukko", d: "Kiellä yhtä vastustajaa käyttämästä hänen luottodraiveriaan tällä väylällä." },
     { n: "Ilmainen Droppi", d: "Saat siirtää kiekkosi pahasta puskasta keskelle väylää ilman rangaistusta." },
