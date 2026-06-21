@@ -1,6 +1,6 @@
 const allCards = [];
 
-// 1. NORMAALIT KORTIT (Vain fribaan liittyvät, ei NaN-virheitä)
+// 1. NORMAALIT KORTIT (120 kpl, vain fribasääntöjä, ei numerointeja nimessä)
 const normalBases = [
     { n: "Kämmenpakko", d: "Heitä seuraava heittosi pakollisella kämmenellä (forehand)." },
     { n: "Rystypakko", d: "Heitä seuraava heittosi pakollisella rystyllä (backhand)." },
@@ -17,7 +17,7 @@ const normalBases = [
     { n: "Turbo-Putt", d: "Seuraava putti on suoritettava sormilla kiekon alta työntäen (Turbo)." },
     { n: "Scooberi", d: "Suorita lähestymisheitto ylösalaisella scuuberi-tyylillä." },
     { n: "Grenade", d: "Kiekko on pidettävä kädessä ylösalaisin peukalo urassa." },
-    { n: "Paikaltaveto", d: "Seuraavassa heitossa et saa ottaa yhtään vauhtiaskelta." },
+    { n: "Paikaltaveto", d: "Seuraavassa heitössä et saa ottaa yhtään vauhtiaskelta." },
     { n: "Kiekon Pakkovalinta", d: "Valitse bägistäsi 3 kiekkoa, ja kohde joutuu heittämään yhdellä niistä." },
     { n: "Lainakiekko", d: "Heitä seuraava heitto vastustajan satunnaisesti valitsemalla kiekolla." },
     { n: "Kiekonvaihtokielto", d: "Pelaa koko väylä alusta loppuun vain yhdellä ja samalla kiekolla." },
@@ -34,14 +34,12 @@ const normalBases = [
     { n: "Erikoisgrippi", d: "Heitä seuraava heitto niin, että peukalosi on kiekon pohjapuolella." }
 ];
 
-// Luodaan 120 kpl normaalipakkaa (4 versiota jokaisesta peruskortista)
 for(let i = 1; i <= 120; i++) {
     const base = normalBases[(i - 1) % normalBases.length];
-    // Puhdas nimeäminen, jotta ei tule NaN-virheitä
     allCards.push({ id: "n_" + i, n: base.n, d: base.d, tier: "normal", type: "sabotage" });
 }
 
-// 2. PREMIUM-KORTIT (30 kpl, Hinnat 7-12 P)
+// 2. PREMIUM-KORTIT (30 kpl, kauppaan)
 const premiumBases = [
     { n: "Kuningas Mulligan", d: "Voit uusia minkä tahansa epäonnistuneen heiton tällä väylällä." },
     { n: "Par-Varmistus", d: "Tuloksesi tältä väylältä kirjataan suoraan maksimissaan PAR-tulokseksi." },
@@ -60,13 +58,12 @@ const premiumBases = [
     { n: "Vaihtokauppa", d: "Vaihda huono avausheittosi paikkaa vastustajan hyvän avauksen kanssa." }
 ];
 
-// Luodaan 30 kpl preemiopakkaa (2 versiota jokaisesta)
 for(let i = 1; i <= 30; i++) {
     const base = premiumBases[(i - 1) % premiumBases.length];
     allCards.push({ id: "p_" + i, n: `🔥 ${base.n}`, d: base.d, tier: "premium", type: "buff", price: Math.floor(Math.random() * 6) + 7 }); 
 }
 
-// 3. VÄYLÄSÄÄNNÖT (Ei NaN, bounty-merkintä)
+// 3. VÄYLÄSÄÄNNÖT 
 const holeRules = [
     { type: "bounty", n: "CTP-Kisa", d: "Tiiltä lähimmäksi korijalkaa osunut avaus voittaa väylätehtävän." },
     { type: "bounty", n: "Pitkä Putti", d: "Väylän pisimmän onnistuneen putin tekijä voittaa väylätehtävän." },
