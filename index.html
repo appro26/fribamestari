@@ -6,11 +6,11 @@
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png">
     
-    <link rel="stylesheet" href="style.css?v=11">
-    <meta name="theme-color" content="#121212">
+    <link rel="stylesheet" href="style.css?v=12">
+    <meta name="theme-color" content="#0f172a">
 
     <script>
-      window.onerror = function(msg, url, line) { alert("Virhe koodissa: " + msg + " (Rivi: " + line + ")"); };
+      window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 </head>
@@ -19,46 +19,51 @@
     <div class="container">
         <div class="role-switcher">
             <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player')">Pelaaja</button>
-            <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan? (Vain pelinjohtajalle)')) { if(window.setRole) window.setRole('gm'); }">Game Master</button>
+            <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">Game Master</button>
         </div>
 
         <div id="identityCard" class="card" style="border: 2px solid var(--primary);">
             <h2>Astu sisään peliin</h2>
             <input type="text" id="playerNameInput" placeholder="Syötä nimesi...">
-            <button class="btn btn-primary" onclick="if(window.claimIdentity) window.claimIdentity()">ASTU TII-PAIKALLE</button>
+            <button class="btn btn-primary" onclick="if(window.claimIdentity) window.claimIdentity()">KIRJAUDU SISÄÄN</button>
         </div>
 
         <div id="gameSetupArea" class="card" style="display:none; text-align:center; border: 2px solid var(--primary);">
-            <h2 style="color: var(--text-main); font-size:1.2rem; margin-bottom: 10px;">Peliä ei ole aloitettu</h2>
-            <p style="color: var(--text-muted); font-size:0.9rem; margin-bottom: 20px;">Valitse rata ja käynnistä peli.</p>
-            <button class="btn btn-primary" onclick="document.getElementById('courseModal').style.display='flex'">ALOITA PELI</button>
+            <h2 style="color: var(--text-main); font-size:1.3rem; margin-bottom: 10px;">Peliä ei ole aloitettu</h2>
+            <p style="color: var(--text-muted); font-size:0.95rem; margin-bottom: 20px;">Valitse rata. Kaikki pelaajat saavat automaattisesti 3 korttia aloittaessa!</p>
+            <button class="btn btn-primary" onclick="document.getElementById('courseModal').style.display='flex'">ALOITA UUSI PELI</button>
         </div>
 
         <div id="mainGameArea" style="display:none;">
             <div id="courseInfoBanner" class="card" style="background: var(--surface-light); text-align: center; padding: 15px;">
-                <div style="font-size: 1rem; color: var(--text-muted); font-weight: 600; margin-bottom: 5px; text-transform: uppercase;" id="bannerCourseName">Rata</div>
+                <div style="font-size: 1rem; color: var(--text-muted); font-weight: 800; margin-bottom: 5px; text-transform: uppercase;" id="bannerCourseName">Rata</div>
                 <div style="display: flex; justify-content: center; align-items: baseline; gap: 15px;">
-                    <div style="font-size: 1.2rem; color: var(--text-main);">VÄYLÄ <span id="bannerHoleNum" style="font-size: 2rem; font-weight: 900; color: var(--primary);">1</span></div>
+                    <div style="font-size: 1.2rem; color: var(--text-main);">VÄYLÄ <span id="bannerHoleNum" style="font-size: 2.2rem; font-weight: 900; color: var(--primary);">1</span></div>
                     <div style="font-size: 1.2rem; color: var(--text-muted);">PAR <span id="bannerPar" style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">3</span></div>
                 </div>
             </div>
 
-            <button class="btn btn-secondary" onclick="if(window.nextHole) window.nextHole()" style="margin-bottom: 16px; font-weight: 900; border-color: var(--primary);">SEURAAVA VÄYLÄ ➡️</button>
+            <button class="btn btn-secondary" onclick="if(window.nextHole) window.nextHole()" style="margin-bottom: 16px; font-weight: 900; border-color: var(--primary); color: var(--primary);">SEURAAVA VÄYLÄ ➡️</button>
 
             <div id="activeHoleContainer"></div>
+            
+            <div id="activeCardsArea" style="display:none; margin-bottom: 16px;">
+                <h2>Aktiiviset kortit tällä väylällä</h2>
+                <div id="activeCardsContainer"></div>
+            </div>
 
             <div class="player-only" id="playerActionArea">
-                <div class="card" style="border-left: 5px solid var(--danger); padding-right: 0;">
+                <div class="card" style="border-top: 5px solid var(--danger);">
                     <h2>Omat Kortit kädessä</h2>
-                    <div id="playerHand" class="hand-scroll-area"></div>
+                    <div id="playerHand" class="hand-grid"></div>
                 </div>
                 
-                <div class="card" style="border-left: 5px solid var(--warning);">
-                    <h2 style="display: flex; justify-content: space-between; align-items: center;">Väylän Kauppa <span id="myResPoints" style="color: var(--warning); font-size: 1.2rem; font-weight: 900;">0 P</span></h2>
+                <div class="card" style="border-top: 5px solid var(--warning);">
+                    <h2 style="display: flex; justify-content: space-between; align-items: center; color: var(--warning);">Kauppa <span id="myResPoints" style="color: var(--warning); font-size: 1.3rem; font-weight: 900;">0 P</span></h2>
                     <div id="shopItems" class="shop-grid"></div>
                 </div>
             </div>
-        </div>
+        </div> 
 
         <div class="gm-only" style="margin-top: 20px;">
             <button class="btn btn-secondary" onclick="document.getElementById('adminPanel').style.display = document.getElementById('adminPanel').style.display === 'none' ? 'block' : 'none'">⚙️ Hallinta & Lokit</button>
@@ -70,18 +75,11 @@
                     <input type="text" id="adminNewPlayerName" placeholder="Nimi..." style="margin: 0;">
                     <button class="btn btn-success" style="width: auto; padding: 0 20px;" onclick="if(window.adminAddPlayer) window.adminAddPlayer()">Lisää</button>
                 </div>
-
-                <h2>Tapahtumalokit</h2>
-                <div id="adminEventLog" style="max-height:130px; overflow-y:auto; font-size:0.85rem; background:var(--bg-dark); padding:10px; border-radius:8px; color: var(--text-muted); margin-bottom:15px;"></div>
-
-                <h2>Pistehistoria</h2>
-                <div id="adminScoreLog" style="max-height:130px; overflow-y:auto; font-size:0.85rem; background:var(--bg-dark); padding:10px; border-radius:8px; color: var(--text-muted);"></div>
-
                 <button class="btn btn-danger" style="margin-top: 15px;" onclick="if(window.resetGame) window.resetGame()">Nollaa koko peli</button>
             </div>
         </div>
 
-        <div class="card" style="margin-top: 16px;">
+        <div class="card" style="margin-top: 16px; border-top: 4px solid var(--info);">
             <h2>Tulostaulu (Leaderboard)</h2>
             <div id="playerList"></div>
         </div>
@@ -90,6 +88,7 @@
     <div id="courseModal" class="winner-overlay" style="display:none;">
         <div class="card" style="width: 100%; max-width: 450px;">
             <h2 style="color:var(--text-main); font-size: 1.2rem;">Aloita Peli</h2>
+            <p style="color:var(--primary); font-size:0.9rem; margin-bottom:15px;">Huom: Kun peli alkaa, kaikki saavat 3 korttia käteen.</p>
             
             <button class="btn btn-primary" onclick="if(window.startMeilahti) window.startMeilahti()" style="margin-bottom: 20px; background-color: var(--warning); color: #000;">🌲 Valitse Meilahti (16 väylää, Par 3)</button>
             
@@ -104,7 +103,7 @@
     </div>
 
     <div id="scoreModal" class="winner-overlay" style="display:none;">
-        <div class="card" style="width: 100%; max-width: 450px;">
+        <div class="card" style="width: 100%; max-width: 450px; border: 2px solid var(--primary);">
             <div style="text-align: center; margin-bottom: 15px;">
                 <h2 style="color:var(--text-main); font-size: 1.4rem; margin: 0;">VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
                 <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 5px;">Par <strong id="scoreModalPar" style="color:var(--text-main);">3</strong></p>
@@ -112,9 +111,9 @@
             
             <div id="scoreInputsContainer" style="margin-bottom: 20px;"></div>
             
-            <div style="background: var(--surface-light); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
-                <label style="color: var(--warning); font-size: 0.85rem; font-weight: 800; text-transform: uppercase; margin-bottom: 8px; display: block;">Väylätehtävän suorittaja (+5 P)</label>
-                <select id="taskWinnerSelect" style="margin: 0; background: var(--bg-dark); border: none;"></select>
+            <div style="background: var(--surface-light); padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--task-glow);">
+                <label style="color: #fff; font-size: 0.9rem; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; display: block;">Kuka suoritti väylätehtävän? (+5 P)</label>
+                <div id="taskWinnerContainer" class="task-checkbox-grid"></div>
             </div>
 
             <button class="btn btn-primary" onclick="if(window.submitScores) window.submitScores()">Tallenna & Arvo uusi väylä</button>
@@ -123,23 +122,23 @@
     </div>
 
     <div id="targetModal" class="winner-overlay" style="display:none;">
-        <div class="card" style="width: 100%; max-width: 400px;">
-            <h2>Valitse kohdepelaaja</h2>
-            <p id="targetCardName" style="color: var(--primary); font-weight: 800; margin-bottom: 15px;"></p>
+        <div class="card" style="width: 100%; max-width: 400px; border: 2px solid var(--danger);">
+            <h2>Valitse sabotaasin kohde</h2>
+            <p id="targetCardName" style="color: var(--danger); font-weight: 800; margin-bottom: 15px; font-size: 1.1rem; text-align:center;"></p>
             <div id="targetPlayerList" style="margin-bottom: 15px;"></div>
             <button class="btn btn-secondary" onclick="document.getElementById('targetModal').style.display='none'">Peruuta</button>
         </div>
     </div>
 
     <div id="lotteryWinner" class="winner-overlay" style="display:none;">
-        <div class="card" style="text-align: center; width: 100%; max-width: 400px; border: 2px solid var(--primary);">
+        <div class="card" style="text-align: center; width: 100%; max-width: 400px; border: 2px solid var(--info); box-shadow: 0 0 20px rgba(59,130,246,0.3);">
             <h1 id="popupTitle" style="color: var(--text-main); font-size: 1.4rem; margin-bottom: 8px;">Ilmoitus</h1>
             <p id="popupDesc" style="font-size:1rem; color:var(--text-muted); margin-bottom: 12px;"></p>
             <div id="popupDetails" style="background: var(--bg-dark); padding: 12px; border-radius: 8px; font-size: 0.95rem; text-align: left;"></div>
         </div>
     </div>
 
-    <script src="tasks.js?v=11"></script>
-    <script type="module" src="script.js?v=11"></script>
+    <script src="tasks.js?v=12"></script>
+    <script type="module" src="script.js?v=12"></script>
 </body>
 </html>
