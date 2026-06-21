@@ -1,6 +1,6 @@
 const allCards = [];
 
-// 1. NORMAALIT KORTIT (120 kpl, vain fribasääntöjä, ei NaN-virheitä)
+// 1. NORMAALIT KORTIT (Vain fribaan liittyvät, ei NaN-virheitä)
 const normalBases = [
     { n: "Kämmenpakko", d: "Heitä seuraava heittosi pakollisella kämmenellä (forehand)." },
     { n: "Rystypakko", d: "Heitä seuraava heittosi pakollisella rystyllä (backhand)." },
@@ -34,11 +34,11 @@ const normalBases = [
     { n: "Erikoisgrippi", d: "Heitä seuraava heitto niin, että peukalosi on kiekon pohjapuolella." }
 ];
 
+// Luodaan 120 kpl normaalipakkaa (4 versiota jokaisesta peruskortista)
 for(let i = 1; i <= 120; i++) {
     const base = normalBases[(i - 1) % normalBases.length];
-    // Puhdas nimeäminen ilman NaN-riskejä
-    const versioNro = Math.ceil(i / normalBases.length);
-    allCards.push({ id: "n_" + i, n: `${base.n} ${versioNro > 1 ? 'II' : ''}`.trim(), d: base.d, tier: "normal", type: "sabotage" });
+    // Puhdas nimeäminen, jotta ei tule NaN-virheitä
+    allCards.push({ id: "n_" + i, n: base.n, d: base.d, tier: "normal", type: "sabotage" });
 }
 
 // 2. PREMIUM-KORTIT (30 kpl, Hinnat 7-12 P)
@@ -60,12 +60,13 @@ const premiumBases = [
     { n: "Vaihtokauppa", d: "Vaihda huono avausheittosi paikkaa vastustajan hyvän avauksen kanssa." }
 ];
 
+// Luodaan 30 kpl preemiopakkaa (2 versiota jokaisesta)
 for(let i = 1; i <= 30; i++) {
     const base = premiumBases[(i - 1) % premiumBases.length];
     allCards.push({ id: "p_" + i, n: `🔥 ${base.n}`, d: base.d, tier: "premium", type: "buff", price: Math.floor(Math.random() * 6) + 7 }); 
 }
 
-// 3. VÄYLÄSÄÄNNÖT (Ei juomista, mukana +5P merkintä bountylle)
+// 3. VÄYLÄSÄÄNNÖT (Ei NaN, bounty-merkintä)
 const holeRules = [
     { type: "bounty", n: "CTP-Kisa", d: "Tiiltä lähimmäksi korijalkaa osunut avaus voittaa väylätehtävän." },
     { type: "bounty", n: "Pitkä Putti", d: "Väylän pisimmän onnistuneen putin tekijä voittaa väylätehtävän." },
