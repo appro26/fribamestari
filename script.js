@@ -13,7 +13,9 @@ let currentHoleIndex = 1;
 let isExpandedView = false; 
 let lastPlayedCardTimestamp = Date.now();
 
-// 1. KAIKKI FUNKTIOT WINDOW-OLIOON (ESTÄÄ VIRHEET)
+//==============================================
+// 1. GLOBAALIT WINDOW-FUNKTIOT (ESTÄÄ ALUSTUSVIRHEET)
+//==============================================
 
 window.updateIdentityUI = function() { 
     const el = document.getElementById('identityCard');
@@ -30,11 +32,9 @@ window.renderCourseBanner = function() {
     document.getElementById('bannerPar').innerText = currentCourse.pars[currentHoleIndex - 1] || 3;
 };
 
-// UUSI TULOSTAULU: Näyttää aidon DG tuloksen (+/-)
 window.renderLeaderboard = function() {
     const list = document.getElementById('playerList');
     if(!list) return;
-    // Järjestetään Frisbeegolf-tuloksen mukaan nousevasti (pienin voittaa!)
     let sortedPlayers = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
     list.innerHTML = '';
     sortedPlayers.forEach((p, i) => {
@@ -45,7 +45,7 @@ window.renderLeaderboard = function() {
         list.innerHTML += `<div class="player-row ${p.name === myName ? 'me' : ''}">
             <div style="font-weight:800; font-size:1.1rem;"><span style="color:var(--text-muted); margin-right:10px;">${i+1}.</span>${p.name}</div>
             <div style="display:flex; align-items:center; gap: 15px;">
-                <span style="font-size:0.8rem; color:var(--warning); font-weight:800;">${p.score || 0} P</span>
+                <span style="font-size:0.85rem; color:var(--warning); font-weight:800;">${p.score || 0} P</span>
                 <span style="font-weight:900; font-size:1.4rem; color:${dgColor}; min-width: 35px; text-align:right;">${dgStr}</span>
             </div>
         </div>`;
@@ -66,7 +66,7 @@ window.renderActiveHole = function() {
     }
     
     let bountyTag = activeHole.rule.type === 'bounty' ? `<div class="rule-bounty-tag">🏆 TEHTÄVÄ (+5 P)</div>` : '';
-    if(container) container.innerHTML = `<div class="hole-rule-card">${bountyTag}<h1 style="font-size:1.3rem; margin-bottom:5px;">${activeHole.rule.n}</h1><p style="font-size:0.95rem;">${activeHole.rule.d}</p></div>`;
+    if(container) container.innerHTML = `<div class="hole-rule-card">${bountyTag}<h1>${activeHole.rule.n}</h1><p>${activeHole.rule.d}</p></div>`;
     
     if(activeHole.playedCards && activeHole.playedCards.length > 0) {
         if(cardsArea) cardsArea.style.display = 'block';
@@ -78,10 +78,10 @@ window.renderActiveHole = function() {
             let actionText = pc.type === 'buff' ? `käytti edun` : `sabotoi kohdetta <strong>${pc.target}</strong>`;
             let color = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
             
-            cardsHtml += `<div class="active-card-chip" style="border-color:${color}; padding: 8px 12px; font-size:0.85rem;"><span style="color:var(--text-main);"><b>${pc.by}</b> ${actionText}: <span style="font-weight:900; color:${color};">${pc.cardName}</span></span></div>`;
+            cardsHtml += `<div class="active-card-chip" style="border-color:${color};" onclick="window.showCardInfo('${pc.cardName}', '${pc.cardDesc}', 'Kohde: ${pc.target}<br>Käyttäjä: ${pc.by}')"><span style="color:var(--text-main);"><b>${pc.by}</b> ${actionText}: <span style="font-weight:900; color:${color};">${pc.cardName}</span></span></div>`;
             
             if(pc.target === myName) {
-                myRulesHtml += `<div class="my-rule-item"><b>${pc.cardName}:</b> <span style="font-weight:400; font-size:0.85rem;">${pc.cardDesc}</span></div>`;
+                myRulesHtml += `<div class="my-rule-item"><b>${pc.cardName}:</b> <span style="font-weight:600;">${pc.cardDesc}</span></div>`;
             }
         });
         
@@ -89,7 +89,7 @@ window.renderActiveHole = function() {
         if(myRulesHtml !== '') {
             if(myRulesContainer) {
                 myRulesContainer.style.display = 'block';
-                myRulesContainer.innerHTML = `<div class="my-rules-box"><h3 style="font-size:0.95rem; margin-bottom:5px;">🚨 Sinuun kohdistuvat sabotaasit:</h3>${myRulesHtml}</div>`;
+                myRulesContainer.innerHTML = `<div class="my-rules-box"><h3>🚨 Sinuun kohdistuvat sabotaasit:</h3>${myRulesHtml}</div>`;
             }
         } else {
             if(myRulesContainer) myRulesContainer.style.display = 'none';
@@ -105,7 +105,7 @@ window.renderPlayerHand = function(cards) {
     const expandedContainer = document.getElementById('playerHandExpanded');
     
     if (cards.length === 0) { 
-        let emptyHtml = '<p style="color:var(--text-muted); font-size:1rem; text-align:center;">Kätesi on tyhjä.</p>';
+        let emptyHtml = '<p style="color:var(--text-muted); font-size:1rem; text-align:center; padding:15px; width:100%;">Kätesi on tyhjä.</p>';
         if(modalContainer) modalContainer.innerHTML = emptyHtml;
         if(expandedContainer) expandedContainer.innerHTML = emptyHtml;
         return; 
@@ -117,10 +117,11 @@ window.renderPlayerHand = function(cards) {
         if(!cDef) return;
         let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
         let btnClass = cDef.type === 'buff' ? 'btn-success' : 'btn-danger';
+        let labelText = cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI';
         html += `
             <div class="physical-card ${typeClass}">
-                <div><h3>${cDef.n}</h3><p>${cDef.d}</p></div>
-                <button class="btn ${btnClass}" style="padding:12px; font-size:0.9rem;" onclick="window.openTargetModal(${index}, '${cId}')">PELAA</button>
+                <div><div class="card-type-tag">${labelText}</div><h3>${cDef.n}</h3><p>${cDef.d}</p></div>
+                <button class="btn ${btnClass}" onclick="window.openTargetModal(${index}, '${cId}')">PELAA KORTTI</button>
             </div>`;
     });
     
@@ -133,7 +134,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     const expandedContainer = document.getElementById('shopItemsExpanded');
     
     if(!shopArray || shopArray.length === 0) { 
-        let emptyHtml = '<p style="color:var(--text-muted); font-size:1rem; text-align:center;">Kauppa on suljettu.</p>';
+        let emptyHtml = '<p style="color:var(--text-muted); font-size:1rem; text-align:center; padding:15px; width:100%;">Kauppa on suljettu.</p>';
         if(modalContainer) modalContainer.innerHTML = emptyHtml;
         if(expandedContainer) expandedContainer.innerHTML = emptyHtml;
         return; 
@@ -143,13 +144,13 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     shopArray.forEach(item => {
         if(!item) return;
         const canAfford = myPoints >= item.price && !boughtThisHole;
-        let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? 'OSTA' : 'EI VARAA');
+        let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? 'OSTA ETU' : 'EI VARAA');
         
         html += `
             <div class="physical-card premium-card">
                 <span class="card-price-tag">${item.price} P</span>
-                <div><h3>${item.n}</h3><p>${item.d}</p></div>
-                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" style="padding:12px; font-size:0.9rem;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
+                <div><div class="card-type-tag">💎 PREMIUM KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p></div>
+                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
             </div>`;
     });
     
@@ -157,9 +158,71 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     if(expandedContainer) expandedContainer.innerHTML = html;
 };
 
-// ===========================================
-// FIREBASE ONVALUE KUUNTELIJA
-// ===========================================
+window.renderEventLog = function(logData) {
+    const container = document.getElementById('adminEventLog');
+    if(!container) return; container.innerHTML = "";
+    Object.values(logData || {}).reverse().slice(0, 30).forEach(l => {
+        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span>${l.msg}</div>`;
+    });
+};
+
+window.renderScoreLog = function(logData) {
+    const container = document.getElementById('adminScoreLog');
+    if(!container) return; container.innerHTML = "";
+    Object.values(logData || {}).reverse().slice(0, 50).forEach(l => {
+        let color = l.delta >= 0 ? 'var(--info)' : 'var(--danger)';
+        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span><b>${l.playerName}</b>: <span style="color:${color}; font-weight:bold;">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`;
+    });
+};
+
+window.renderAdminPlayerList = function() {
+    const list = document.getElementById('adminPlayerList');
+    if(!list) return; list.innerHTML = "";
+    allPlayers.forEach((p, i) => {
+        if(!p) return;
+        list.innerHTML += `
+            <div class="player-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                    <span style="font-weight:800;">${p.name} (${p.score} P / DG: ${p.dgScore > 0 ? '+' : ''}${p.dgScore || 0})</span>
+                    <button class="btn btn-danger" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="window.removePlayer(${i})">X</button>
+                </div>
+                <div class="gm-score-adjust">
+                    <span style="font-size:0.7rem; color:var(--text-muted); width:45px;">Raha</span>
+                    <input type="number" id="gmScoreAdjust_${i}" value="1">
+                    <button class="btn btn-primary" onclick="window.adjustScore(${i}, parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0)">Lisää</button>
+                    <button class="btn btn-danger" onclick="window.adjustScore(${i}, -(parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0))">Vähennä</button>
+                </div>
+                <div class="gm-score-adjust">
+                    <span style="font-size:0.7rem; color:var(--text-muted); width:45px;">Tulos</span>
+                    <button class="btn btn-secondary" onclick="window.adjustDgScore(${i}, 1)">+1 Heitto</button>
+                    <button class="btn btn-secondary" onclick="window.adjustDgScore(${i}, -1)">-1 Heitto</button>
+                </div>
+            </div>`;
+    });
+};
+
+//==============================================
+// 2. TULOSKORTIN VÄYLÄTIEDON TARKASTUSAPU (VAATIMUS 1)
+//==============================================
+window.toggleScoreModalRule = function() {
+    const box = document.getElementById('scoreModalRuleBox');
+    if(!box) return;
+    if(box.style.display === 'none') {
+        if(activeHole && activeHole.rule) {
+            let bTxt = activeHole.rule.type === 'bounty' ? '🏆 TEHTÄVÄ: ' : '🎲 SÄÄNTÖ: ';
+            box.innerHTML = `<strong>${bTxt} ${activeHole.rule.n}</strong><br>${activeHole.rule.d}`;
+        } else {
+            box.innerHTML = "Ei aktiivista sääntöä tällä väylällä.";
+        }
+        box.style.display = 'block';
+    } else {
+        box.style.display = 'none';
+    }
+};
+
+//==============================================
+// 3. TIETOKANNAN REAALIAIKAINEN KUUNTELIJA
+//==============================================
 
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
@@ -238,7 +301,7 @@ onValue(ref(db, 'gameState'), (snap) => {
             
             if (myNewDebuffs.length > 0) {
                 myNewDebuffs.forEach(db => {
-                    window.showNotification(`💥 Sinua sabotoitiin: ${db.cardName}`, 'debuff');
+                    window.showNotification(`💥 Sinuun kohdistui: ${db.cardName}`, 'debuff');
                     if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
                 });
                 lastPlayedCardTimestamp = Math.max(...playedCards.map(pc => pc.timestamp));
@@ -247,11 +310,13 @@ onValue(ref(db, 'gameState'), (snap) => {
     }
 
     window.renderAdminPlayerList();
+    window.renderEventLog(data.eventLog);
+    window.renderScoreLog(data.scoreLog);
 });
 
-// ===========================================
-// PELAAJAN TOIMINNOT JA ILMOITUKSET
-// ===========================================
+//==============================================
+// 4. INTERAKTIOT JA KIRJAUKSET
+//==============================================
 
 window.claimIdentity = async function() {
     let n = document.getElementById('playerNameInput').value.trim();
@@ -260,7 +325,6 @@ window.claimIdentity = async function() {
     window.updateIdentityUI(); 
     await runTransaction(ref(db, 'gameState/players'), (p) => {
         let arr = p ? (Array.isArray(p) ? p : Object.values(p)) : [];
-        // DG-tulos on dgScore
         if(!arr.find(x => x && x.name === n)) { arr.push({ name: n, score: 0, dgScore: 0, cards: [], boughtThisHole: false }); }
         return arr;
     });
@@ -279,7 +343,6 @@ window.toggleView = function() {
     document.getElementById('viewToggleBtn').innerText = isExpandedView ? 'SIIRRY SUPISTETTUUN NÄKYMÄÄN' : 'LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)';
 };
 
-// TOAST ILMOITUKSET
 window.showNotification = function(message, type = 'info') {
     const container = document.getElementById('notificationContainer');
     if(!container) return; 
@@ -371,23 +434,6 @@ window.saveCourseSetup = function() {
     });
 };
 
-window.nextHole = function() { window.openScoreModal(); };
-
-window.rollHoleRules = function() {
-    runTransaction(ref(db, 'gameState'), (state) => {
-        if(!state) return state;
-        const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
-        let premiumPool = allCards.filter(c => c.tier === "premium");
-        let uniqueShop = []; let used = new Set();
-        for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
-            if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
-            if(uniqueShop.length === 5) break;
-        }
-        state.activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
-        return state;
-    });
-};
-
 window.buyShopItem = function(item) {
     runTransaction(ref(db, 'gameState'), (state) => {
         if (!state || !state.activeHole || !state.activeHole.shop) return state;
@@ -427,11 +473,11 @@ window.openTargetModal = function(cardIndex, cardId) {
     allPlayers.forEach(p => {
         if(!p) return;
         if(p.name !== myName) {
-            list.innerHTML += `<button style="background:#fff; border:2px solid var(--border); color:var(--text-main); width:100%; padding:18px; border-radius:12px; margin-bottom:10px; font-weight:800; font-size:1.1rem; text-align:left;" onclick="window.executeCardPlay('${p.name}')">${p.name}</button>`;
+            list.innerHTML += `<button style="background:#fff; border:2px solid var(--border); color:var(--text-main); width:100%; padding:14px; border-radius:12px; margin-bottom:10px; font-weight:800; font-size:1.1rem; text-align:left;" onclick="window.executeCardPlay('${p.name}')">${p.name}</button>`;
         }
     });
     document.getElementById('targetModal').style.display = 'flex';
-}
+};
 
 window.executeCardPlay = function(targetName) {
     if(!pendingCardPlay) return;
@@ -460,19 +506,6 @@ window.executeCardPlay = function(targetName) {
     });
 };
 
-window.changeScore = function(idx, par, delta) {
-    let input = document.getElementById(`scoreInput_${idx}`);
-    let val = parseInt(input.value) + delta;
-    if(val < 1) val = 1;
-    input.value = val;
-    let display = document.getElementById(`scoreDisplay_${idx}`);
-    display.innerText = val;
-    display.className = 'score-display';
-    if(val < par) display.classList.add('score-birdie');
-    else if(val > par) display.classList.add('score-bogey');
-    else display.classList.add('score-par');
-};
-
 window.openScoreModal = function() {
     if(allPlayers.length === 0) return alert("Ei pelaajia radalla.");
     let par = currentCourse && currentCourse.pars ? (currentCourse.pars[currentHoleIndex - 1] || 3) : 3;
@@ -480,6 +513,10 @@ window.openScoreModal = function() {
     
     const parElement = document.getElementById('scoreModalPar');
     if(parElement) parElement.innerText = par;
+    
+    // Nollataan tuloskortin sääntölaatikko valmiiksi
+    const box = document.getElementById('scoreModalRuleBox');
+    if(box) { box.style.display = 'none'; box.innerHTML = ''; }
     
     const container = document.getElementById('scoreInputsContainer');
     let html = '';
@@ -528,17 +565,14 @@ window.submitScores = function() {
         players.forEach(p => {
             if (!p) return;
             
-            // 1. Laske todellinen Disc Golf -tulos (+/-)
             let strokeVal = scores.find(s => s.name === p.name)?.strokes || par;
             p.dgScore = (p.dgScore || 0) + (strokeVal - par);
             
-            // 2. PISTELOGIIKKA Peliin: Voitto +2 P, Tehtävä +5 P
             if (winners.includes(p.name)) p.score = (p.score || 0) + 2;
             if (taskWinners.includes(p.name)) p.score = (p.score || 0) + 5;
             
             p.boughtThisHole = false; 
             
-            // 3. Korttien jako
             if (losers.includes(p.name)) {
                 p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
                 p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
@@ -558,45 +592,6 @@ window.submitScores = function() {
         window.rollHoleRules(); 
         lastPlayedCardTimestamp = Date.now(); 
     });
-};
-
-// GM PANEELIN PISTEMUOKKAUKSET
-
-window.renderAdminPlayerList = function() {
-    const list = document.getElementById('adminPlayerList');
-    if(!list) return; list.innerHTML = "";
-    allPlayers.forEach((p, i) => {
-        if(!p) return;
-        list.innerHTML += `
-            <div class="player-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
-                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                    <span style="font-weight:800;">${p.name} (${p.score} P / DG: ${p.dgScore > 0 ? '+' : ''}${p.dgScore || 0})</span>
-                    <button class="btn btn-danger" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="window.removePlayer(${i})">POISTA</button>
-                </div>
-                <div class="gm-score-adjust">
-                    <span style="font-size:0.7rem; color:var(--text-muted); width:40px;">Raha</span>
-                    <input type="number" id="gmScoreAdjust_${i}" value="1">
-                    <button class="btn btn-primary" onclick="window.adjustScore(${i}, parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0)">Lisää</button>
-                    <button class="btn btn-danger" onclick="window.adjustScore(${i}, -(parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0))">Vähennä</button>
-                </div>
-                <div class="gm-score-adjust">
-                    <span style="font-size:0.7rem; color:var(--text-muted); width:40px;">Heitot</span>
-                    <button class="btn btn-secondary" onclick="window.adjustDgScore(${i}, 1)">+1</button>
-                    <button class="btn btn-secondary" onclick="window.adjustDgScore(${i}, -1)">-1</button>
-                </div>
-            </div>`;
-    });
-}
-
-window.adminAddPlayer = function() {
-    const input = document.getElementById('adminNewPlayerName');
-    let n = input.value.trim();
-    if(!n) return;
-    runTransaction(ref(db, 'gameState/players'), (pData) => {
-        let players = pData ? (Array.isArray(pData) ? pData : Object.values(pData)) : [];
-        if(!players.find(x => x && x.name === n)) { players.push({ name: n, score: 0, dgScore: 0, cards: [], boughtThisHole: false }); }
-        return players;
-    }).then(() => { input.value = ''; });
 };
 
 window.adjustScore = function(idx, amt) { 
