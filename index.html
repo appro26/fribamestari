@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fribamestari</title>
+    <meta name="apple-mobile-web-app-title" content="Fribamestari">
+    <meta name="application-name" content="Fribamestari">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <link rel="stylesheet" href="style.css?v=1">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW Error:', err));
+        });
+      }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+</head>
+<body class="player-mode">
+
+    <div class="role-switcher">
+        <button id="btnPlayer" class="role-btn player active" onclick="setRole('player')">PELAAJA</button>
+        <button id="btnGM" class="role-btn gm">GAME MASTER</button>
+    </div>
+
+    <div class="container">
+        
+        <!-- PWA Asennus -->
+        <div id="installCard" class="card" style="display:none; text-align:center; padding: 20px; border-color: var(--accent); position: relative;">
+            <button onclick="dismissInstallPrompt()" style="position:absolute; top:10px; right:15px; background:none; border:none; color:var(--muted); font-size:1.5rem; cursor:pointer; padding:5px;">&times;</button>
+            <h2 style="color:var(--text); font-size:1.1rem; margin-bottom: 10px; margin-top: 0;">Pelaa sovelluksena!</h2>
+            <p id="installInstruction" style="font-size:0.85rem; color:var(--muted); margin-bottom: 15px; line-height: 1.4;"></p>
+            <button id="installBtn" class="btn btn-primary" style="display:none;">ASENNA PUHELIMEEN</button>
+            <div onclick="dismissInstallPrompt()" style="font-size:0.7rem; color:var(--muted); text-decoration:underline; cursor:pointer; margin-top:15px; text-transform: uppercase; font-weight: 700;">Ei kiitos, pelaan selaimella</div>
+        </div>
+
+        <!-- Tunnistautuminen -->
+        <div id="identityCard" class="card" style="display:none;">
+            <h2>Kuka heittää?</h2>
+            <input type="text" id="playerNameInput" placeholder="Syötä nimesi...">
+            <button class="btn btn-primary" onclick="claimIdentity()">ASTU TII-PAIKALLE</button>
+        </div>
+
+        <div id="idTag" style="text-align:center; font-size:0.7rem; color:var(--muted); margin-bottom:15px; font-weight:700; text-transform: uppercase; letter-spacing: 1px;">
+            KIRJAUDU SISÄÄN
+        </div>
+
+        <!-- Pelaajan pikanäkymät -->
+        <div class="player-only" style="margin-bottom: 15px; position: relative; z-index: 50;">
+            <button class="btn btn-secondary" id="playerCompactToggleBtn" onclick="togglePlayerCompactMode()" style="font-size: 0.65rem; padding: 12px; width: 100%; margin: 0;">SUPISTA NÄKYMÄ</button>
+        </div>
+
+        <!-- Game Masterin Pääohjaimet (Väylän hallinta) -->
+        <div class="gm-only" id="gmGlobalControls" style="display:none; margin-bottom: 15px; position: relative; z-index: 50;">
+            <div class="admin-grid-layout" style="flex-wrap: wrap;">
+                <button class="btn btn-arvo" onclick="rollHoleRules()" style="font-size: 0.65rem; padding: 12px; flex: 1;">🎲 1. ARVO VÄYLÄ (RULETTI)</button>
+                <button class="btn btn-primary" onclick="openScoreModal()" style="font-size: 0.65rem; padding: 12px; flex: 1;">📝 2. SYÖTÄ TULOKSET</button>
+                <button class="btn btn-secondary" id="gmCompactToggleBtn" onclick="toggleGMCompactMode()" style="font-size: 0.65rem; padding: 12px; flex-basis: 100%; margin-top: -5px;">SUPISTA NÄKYMÄ</button>
+            </div>
+        </div>
+
+        <!-- Aktiivisen väylän säännöt ja bounty (Näkyy kaikille) -->
+        <div id="activeHoleContainer"></div>
+
+        <!-- Pelaajan oma käsi ja kauppa -->
+        <div class="player-only" id="playerActionArea">
+            <div class="card" style="border-color: var(--accent);">
+                <h2>Kädessä olevat kortit</h2>
+                <div id="playerHand"></div>
+            </div>
+            
+            <div class="card" style="margin-top: 15px;">
+                <h2>Resurssikauppa <span id="myResPoints" style="color: var(--accent); float: right;">0 Pisteitä</span></h2>
+                <div id="shopItems"></div>
+            </div>
+        </div>
+
+        <!-- GM Admin Paneeli -->
+        <div class="gm-only" style="position: relative; z-index: 50; margin-top: 15px;">
+            <div class="admin-grid-layout" style="margin-bottom: 20px;">
+                <button class="btn btn-secondary" onclick="toggleAdminPanel()" style="width: 100%;">⚙️ GM ASETUKSET & MODUULIT</button>
+            </div>
+            
+            <div id="adminPanel" class="card" style="display:none; margin-bottom:20px;">
+                
+                <h2 style="color: var(--accent);">Pelaajien hallinta</h2>
+                <div id="adminPlayerList"></div>
+                <div class="admin-row-stack" style="margin-top:15px; margin-bottom:15px;">
+                    <input type="text" id="adminNewPlayerName" placeholder="Pelaajan nimi...">
+                    <button class="btn btn-success" id="addPlayerBtn" onclick="adminAddPlayer()">LISÄÄ</button>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
+
+                <h2>Pelin Moduulit (Asetukset)</h2>
+                <p style="font-size:0.7rem; color:var(--muted); margin-bottom:15px;">Kytke ominaisuuksia päälle ja pois lennosta.</p>
+                <div class="admin-settings-list">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="modScores" checked onchange="updateModules('scores', this.checked)"> 
+                        <label for="modScores">📝 Tulosten kirjaus (UDisc-tyyli)</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="modDice" checked onchange="updateModules('dice', this.checked)"> 
+                        <label for="modDice">🎲 Friba Dice / Väyläruletti</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="modCards" checked onchange="updateModules('cards', this.checked)"> 
+                        <label for="modCards">🃏 Resurssikauppa & Sabotaasikortit</label>
+                    </div>
+                    <div class="checkbox-group" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                        <input type="checkbox" id="modDrinks" checked onchange="updateModules('drinks', this.checked)"> 
+                        <label for="modDrinks" style="color:var(--danger)">🍻 Juomasäännöt (Rangaistukset huikkina)</label>
+                    </div>
+                </div>
+
+                <h2 style="margin-top:20px;">Kortti- & Sääntökirjasto</h2>
+                <button class="btn btn-secondary" onclick="toggleLibraryVisibility()">NÄYTÄ/PIILOTA KIRJASTO</button>
+                <div id="cardLibraryEditor" class="task-library-container" style="display:none;"></div>
+
+                <h2 style="margin-top:20px;">Tapahtumaloki</h2>
+                <div id="adminEventLog" style="max-height:200px; overflow-y:auto; font-size:0.6rem; background:#000; padding:10px; border-radius:5px; border:1px solid #222; font-family:monospace;"></div>
+
+                <h2 style="margin-top:20px;">Pisteloki</h2>
+                <div id="adminScoreLog" style="max-height:200px; overflow-y:auto; font-size:0.6rem; background:#000; padding:10px; border-radius:5px; border:1px solid #222; font-family:monospace;"></div>
+
+                <hr style="border: 0; border-top: 1px solid #333; margin: 30px 0;">
+                <button class="btn btn-danger" style="width:100%;" onclick="window.resetGame()">NOLLAA KOKO PELI (DATABASE RESET)</button>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="card" style="position: relative; z-index: 10;">
+            <h2>Tulostaulu (Leaderboard)</h2>
+            <div id="playerList"></div>
+        </div>
+
+        <!-- Historia -->
+        <div class="card" id="historyCard" style="margin-top: 10px; position: relative; z-index: 10;">
+            <h2 id="historyTitle">Pelatut väylät</h2>
+            <div id="taskHistoryList" style="font-size: 0.8rem; color: var(--muted);"></div>
+        </div>
+
+        <!-- Ohjenappi -->
+        <div class="player-only" style="margin-top: 15px; margin-bottom: 20px; text-align: center; position: relative; z-index: 10;">
+            <button class="btn btn-secondary" onclick="document.getElementById('instructionModal').style.display='flex'" style="font-size: 0.75rem; padding: 14px; margin: 0 auto; width: auto; min-width: 220px; color: var(--muted); border-style: dashed;">📖 NÄIN PELAAT (OHJEET)</button>
+        </div>
+
+    </div>
+
+    <!-- Tulosten syöttö Modal (Vain GM) -->
+    <div id="scoreModal" class="winner-overlay" style="display:none; z-index: 7000; align-items: center; padding: 15px;">
+        <div class="card" style="max-width: 450px; text-align: left; padding: 25px; margin: auto; position: relative; background: var(--surface-light); border: 2px solid var(--accent); width: 100%;">
+            <button onclick="document.getElementById('scoreModal').style.display='none'" style="position:absolute; top:10px; right:15px; background:none; border:none; color:var(--muted); font-size:2rem; cursor:pointer;">&times;</button>
+            <h2 style="color:var(--accent); margin-top:0; font-size:1.4rem; text-align:center; margin-bottom:20px;">SYÖTÄ TULOKSET</h2>
+            <div id="scoreInputsContainer"></div>
+            <button class="btn btn-success" onclick="submitScores()" style="width: 100%; margin-top: 20px;">TALLENNA & JAA RANGAISTUKSET</button>
+        </div>
+    </div>
+
+    <!-- Pelaajan Ohjemodal -->
+    <div id="instructionModal" class="winner-overlay" style="display:none; z-index: 6000; align-items: center; padding: 15px;">
+        <div class="card" style="max-width: 450px; text-align: left; padding: 25px; margin: auto; position: relative; background: var(--surface-light); border: 2px solid var(--accent); max-height: 90vh; overflow-y: auto;">
+            <button onclick="document.getElementById('instructionModal').style.display='none'" style="position:absolute; top:10px; right:15px; background:none; border:none; color:var(--muted); font-size:2rem; cursor:pointer; padding:5px;">&times;</button>
+            <h2 style="color:var(--accent); margin-top:0; font-size:1.6rem; text-align:center; margin-bottom:25px;">🎮 FRIBAMESTARI - SÄÄNNÖT</h2>
+            
+            <div style="display:flex; align-items:flex-start; margin-bottom:20px;">
+                <span style="font-size:2.2rem; margin-right:15px; line-height:1; min-width:40px; text-align:center;">1️⃣</span>
+                <div>
+                    <h3 style="margin:0 0 5px 0; font-size:1.15rem; color:#fff;">TII-PAIKAN RULETTI</h3>
+                    <p style="margin:0; font-size:1rem; color:var(--muted); line-height:1.5;">Ennen avausheittoa GM painaa arvontanappia. Sovellus voi antaa väylälle erikoissäännön (esim. pelkkä putteri) tai Bountyn (haasteen, josta voittaa pisteitä).</p>
+                </div>
+            </div>
+            
+            <div style="display:flex; align-items:flex-start; margin-bottom:20px;">
+                <span style="font-size:2.2rem; margin-right:15px; line-height:1; min-width:40px; text-align:center;">2️⃣</span>
+                <div>
+                    <h3 style="margin:0 0 5px 0; font-size:1.15rem; color:#fff;">SABOTAASI</h3>
+                    <p style="margin:0; font-size:1rem; color:var(--muted); line-height:1.5;">Kierroksen aikana voit pelata kädessäsi olevia sabotaasikortteja vastustajille. Kortit aktivoidaan pitkällä (1.5s) painalluksella.</p>
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:flex-start; margin-bottom:20px;">
+                <span style="font-size:2.2rem; margin-right:15px; line-height:1; min-width:40px; text-align:center;">3️⃣</span>
+                <div>
+                    <h3 style="margin:0 0 5px 0; font-size:1.15rem; color:#fff;">KORITUS & TULOKSET</h3>
+                    <p style="margin:0; font-size:1rem; color:var(--muted); line-height:1.5;">Kun kiekot on korissa, GM syöttää heittojen määrät. Väylän voittaja(t) saa resurssipisteitä, häviäjä(t) sabotaasikortteja tai juomarangaistuksia.</p>
+                </div>
+            </div>
+
+            <div style="display:flex; align-items:flex-start; margin-bottom:20px;">
+                <span style="font-size:2.2rem; margin-right:15px; line-height:1; min-width:40px; text-align:center;">4️⃣</span>
+                <div>
+                    <h3 style="margin:0 0 5px 0; font-size:1.15rem; color:#fff;">RESURSSIKAUPPA</h3>
+                    <p style="margin:0; font-size:1rem; color:var(--muted); line-height:1.5;">Käytä keräämiäsi pisteitä ostaaksesi etuja (kuten Mulliganeja) sovelluksen kaupasta.</p>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="document.getElementById('instructionModal').style.display='none'" style="margin-top:20px; width:100%; font-size: 1rem; padding: 20px;">SELVÄ JUTTU!</button>
+        </div>
+    </div>
+
+    <!-- Pisteanimaatiot & Pop-upit -->
+    <div id="xpPopUp" class="xp-popup"></div>
+
+    <div id="lotteryWinner" class="winner-overlay" style="display:none;">
+        <div class="winner-content">
+            <h1 id="popupTitle" style="margin:0; color: var(--danger);">⚠️ TAPAHTUMA!</h1>
+            <p id="popupDesc" style="font-size:1.1rem; color:var(--muted); margin:10px 0;"></p>
+            <div id="popupDetails"></div>
+            <div class="timer-bar" style="background:var(--accent); height:4px; width:100%; border-radius:2px;"></div>
+        </div>
+    </div>
+    
+    <script src="tasks.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
