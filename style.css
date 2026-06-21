@@ -17,12 +17,28 @@ body.gm-mode {
     --border: #475569; --text-main: #f8fafc; --text-muted: #94a3b8;
 }
 
-/* VAATIMUS 2: Estää selaimen vahinko-päivitykset (Pull to refresh) */
+/* Estää selaimen vahinko-päivitykset (Pull to refresh) */
 html, body { overscroll-behavior-y: none; overscroll-behavior-x: none; }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+* { 
+    box-sizing: border-box; margin: 0; padding: 0; 
+    font-family: 'Inter', -apple-system, sans-serif; 
+    -webkit-tap-highlight-color: transparent; 
+}
 
-body { background-color: var(--bg-main); color: var(--text-main); padding: 12px; padding-bottom: 90px; transition: background-color 0.3s ease, color 0.3s ease; }
+body { 
+    background-color: var(--bg-main); color: var(--text-main); 
+    padding: 12px; padding-bottom: 90px; 
+    transition: background-color 0.3s ease, color 0.3s ease; 
+    
+    /* VAATIMUS: ESTÄÄ TEKSTIN MAALAUTUMISEN SORMEN ALLA */
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+
+/* Sallitaan kirjoittaminen vain tekstikenttiin */
+input[type="text"], input[type="number"] {
+    user-select: text; -webkit-user-select: text;
+}
 
 .container { max-width: 500px; margin: 0 auto; position: relative; }
 
@@ -45,7 +61,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .cards-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 25px; }
 .cards-list-1 { display: flex; flex-direction: column; gap: 16px; padding-bottom: 20px; }
 
-/* VAATIMUS 3: VISUAALISET KORTIT JOTKA NOUSEVAT SORMEN ALLA */
+/* VISUAALISET KORTIT JA KOSKETUS-ANIMAATIO */
 .physical-card {
     background: #fff; border-radius: 16px; padding: 16px;
     min-height: 220px; display: flex; flex-direction: column; justify-content: space-between;
@@ -55,7 +71,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     z-index: 1;
 }
 
-/* Tämä luokka lisätään Javascriptillä sormen osuessa! */
+/* Nostaa kortin ylös kun sormi osuu siihen */
 .card-hovered { 
     transform: scale(1.05) translateY(-8px); 
     box-shadow: 0 15px 30px rgba(0,0,0,0.25); 
@@ -75,7 +91,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .physical-card p { font-size: 0.95rem; color: #222; font-weight: 600; line-height: 1.4; flex-grow: 1; margin-bottom: 12px; pointer-events: none; }
 .card-price-tag { position: absolute; top: 10px; right: 10px; background: var(--warning); color: #000; font-weight: 900; padding: 4px 10px; border-radius: 8px; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-.active-card-chip { background: var(--surface); border: 2px solid var(--info); border-left: 6px solid var(--info); border-radius: 12px; padding: 14px; margin-bottom: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: var(--text-main); }
+.active-card-chip { background: var(--surface); border: 2px solid var(--info); border-left: 6px solid var(--info); border-radius: 12px; padding: 14px; margin-bottom: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.05); color: var(--text-main); }
 .my-rules-box { background: var(--surface); border: 2px solid var(--danger); border-left: 6px solid var(--danger); border-radius: 12px; padding: 16px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.1); }
 .my-rules-box h3 { color: var(--danger); margin-bottom: 10px; font-size: 1.1rem; text-transform: uppercase; font-weight: 900; }
 .my-rule-item { border-bottom: 2px solid var(--border); padding: 10px 0; font-weight: 800; font-size: 1.05rem; color: var(--text-main); }
@@ -94,7 +110,7 @@ input:focus { border-color: var(--primary); outline: none; }
 body.gm-mode .player-only { display: none !important; }
 body.player-mode .gm-only { display: none !important; }
 
-/* Swipe-to-close Modaalit (overscroll estetty täälläkin) */
+/* Swipe-to-close Modaalit (overscroll estetty) */
 .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: none; flex-direction: column; z-index: 8000; padding: 15px; overflow-y: auto; padding-bottom: 40px; will-change: transform; overscroll-behavior-y: none; }
 .swipe-indicator { width: 45px; height: 6px; background: var(--border); border-radius: 10px; margin: 0 auto 15px auto; }
 
