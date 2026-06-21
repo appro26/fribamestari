@@ -6,7 +6,7 @@
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png">
     
-    <link rel="stylesheet" href="style.css?v=12">
+    <link rel="stylesheet" href="style.css?v=13">
     <meta name="theme-color" content="#0f172a">
 
     <script>
@@ -30,7 +30,7 @@
 
         <div id="gameSetupArea" class="card" style="display:none; text-align:center; border: 2px solid var(--primary);">
             <h2 style="color: var(--text-main); font-size:1.3rem; margin-bottom: 10px;">Peliä ei ole aloitettu</h2>
-            <p style="color: var(--text-muted); font-size:0.95rem; margin-bottom: 20px;">Valitse rata. Kaikki pelaajat saavat automaattisesti 3 korttia aloittaessa!</p>
+            <p style="color: var(--text-muted); font-size:0.95rem; margin-bottom: 20px;">Valitse rata. Kaikki saavat 3 korttia aloittaessa!</p>
             <button class="btn btn-primary" onclick="document.getElementById('courseModal').style.display='flex'">ALOITA UUSI PELI</button>
         </div>
 
@@ -45,10 +45,13 @@
 
             <button class="btn btn-secondary" onclick="if(window.nextHole) window.nextHole()" style="margin-bottom: 16px; font-weight: 900; border-color: var(--primary); color: var(--primary);">SEURAAVA VÄYLÄ ➡️</button>
 
+            <!-- UUSI: Näkyy vain, jos joku on pelannut sinuun sabotaasin -->
+            <div id="myActiveRulesContainer" style="display:none;"></div>
+
             <div id="activeHoleContainer"></div>
             
             <div id="activeCardsArea" style="display:none; margin-bottom: 16px;">
-                <h2>Aktiiviset kortit tällä väylällä</h2>
+                <h2>Aktiiviset kortit tällä väylällä (Paina nähdäksesi tiedot)</h2>
                 <div id="activeCardsContainer"></div>
             </div>
 
@@ -60,6 +63,7 @@
                 
                 <div class="card" style="border-top: 5px solid var(--warning);">
                     <h2 style="display: flex; justify-content: space-between; align-items: center; color: var(--warning);">Kauppa <span id="myResPoints" style="color: var(--warning); font-size: 1.3rem; font-weight: 900;">0 P</span></h2>
+                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">Voit ostaa vain yhden kortin per väylä.</p>
                     <div id="shopItems" class="shop-grid"></div>
                 </div>
             </div>
@@ -69,10 +73,18 @@
             <button class="btn btn-secondary" onclick="document.getElementById('adminPanel').style.display = document.getElementById('adminPanel').style.display === 'none' ? 'block' : 'none'">⚙️ Hallinta & Lokit</button>
             
             <div id="adminPanel" class="card" style="display:none; margin-top:10px;">
-                <h2>Muokkaa Pelaajia</h2>
+                <!-- UUSI GM JUOMAKYTKIN -->
+                <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-metal);">
+                    <label style="display:flex; align-items:center; gap:10px; color:var(--text-main); font-weight:bold;">
+                        <input type="checkbox" id="gmDrinkToggle" style="width:24px; height:24px; margin:0;">
+                        🍻 Juomasäännöt mukana (Kehityksessä)
+                    </label>
+                </div>
+
+                <h2>Muokkaa Pelaajia & Pisteitä</h2>
                 <div id="adminPlayerList"></div>
                 <div style="display: flex; gap: 10px; margin-top:15px; margin-bottom:15px;">
-                    <input type="text" id="adminNewPlayerName" placeholder="Nimi..." style="margin: 0;">
+                    <input type="text" id="adminNewPlayerName" placeholder="Uuden pelaajan nimi..." style="margin: 0;">
                     <button class="btn btn-success" style="width: auto; padding: 0 20px;" onclick="if(window.adminAddPlayer) window.adminAddPlayer()">Lisää</button>
                 </div>
                 <button class="btn btn-danger" style="margin-top: 15px;" onclick="if(window.resetGame) window.resetGame()">Nollaa koko peli</button>
@@ -80,15 +92,15 @@
         </div>
 
         <div class="card" style="margin-top: 16px; border-top: 4px solid var(--info);">
-            <h2>Tulostaulu (Leaderboard)</h2>
+            <h2>Tulostaulu (Väylävoitto = +2 P | Tehtävä = +5 P)</h2>
             <div id="playerList"></div>
         </div>
     </div>
 
+    <!-- Modaalit -->
     <div id="courseModal" class="winner-overlay" style="display:none;">
         <div class="card" style="width: 100%; max-width: 450px;">
             <h2 style="color:var(--text-main); font-size: 1.2rem;">Aloita Peli</h2>
-            <p style="color:var(--primary); font-size:0.9rem; margin-bottom:15px;">Huom: Kun peli alkaa, kaikki saavat 3 korttia käteen.</p>
             
             <button class="btn btn-primary" onclick="if(window.startMeilahti) window.startMeilahti()" style="margin-bottom: 20px; background-color: var(--warning); color: #000;">🌲 Valitse Meilahti (16 väylää, Par 3)</button>
             
@@ -130,15 +142,16 @@
         </div>
     </div>
 
-    <div id="lotteryWinner" class="winner-overlay" style="display:none;">
+    <div id="lotteryWinner" class="winner-overlay" style="display:none; flex-direction:column;">
         <div class="card" style="text-align: center; width: 100%; max-width: 400px; border: 2px solid var(--info); box-shadow: 0 0 20px rgba(59,130,246,0.3);">
             <h1 id="popupTitle" style="color: var(--text-main); font-size: 1.4rem; margin-bottom: 8px;">Ilmoitus</h1>
             <p id="popupDesc" style="font-size:1rem; color:var(--text-muted); margin-bottom: 12px;"></p>
-            <div id="popupDetails" style="background: var(--bg-dark); padding: 12px; border-radius: 8px; font-size: 0.95rem; text-align: left;"></div>
+            <div id="popupDetails" style="background: var(--bg-dark); padding: 12px; border-radius: 8px; font-size: 0.95rem; text-align: left; color:#fff;"></div>
+            <button class="btn btn-secondary" style="margin-top:15px; padding:10px;" onclick="document.getElementById('lotteryWinner').style.display='none'">SULJE</button>
         </div>
     </div>
 
-    <script src="tasks.js?v=12"></script>
-    <script type="module" src="script.js?v=12"></script>
+    <script src="tasks.js?v=13"></script>
+    <script type="module" src="script.js?v=13"></script>
 </body>
 </html>
