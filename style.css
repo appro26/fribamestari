@@ -3,11 +3,10 @@
     --surface: #1e1e1e;
     --surface-light: #2c2c2e;
     --border-metal: #38383a;
-    --primary: #10b981; /* Upsi-henkinen kirkas vihreä */
-    --primary-dark: #059669;
-    --danger: #ef4444; /* Bogey punainen */
-    --warning: #f59e0b; /* Kulta/Oranssi */
-    --info: #3b82f6; /* Birdie sininen/vaihtoehtoinen */
+    --primary: #10b981; /* Upsi-vihreä */
+    --danger: #ef4444; /* Bogey-punainen */
+    --warning: #f59e0b; /* Kauppa-oranssi */
+    --info: #3b82f6; /* Erikoiskortti-sininen */
     --text-main: #f4f4f5;
     --text-muted: #a1a1aa;
 }
@@ -17,128 +16,113 @@
 body {
     background-color: var(--bg-dark);
     color: var(--text-main);
-    padding: 10px;
+    padding: 12px;
     padding-bottom: 90px;
     overflow-x: hidden;
 }
 
 .container { max-width: 500px; margin: 0 auto; position: relative; }
 
-/* Selkeät, tasaiset kortit */
 .card {
     background: var(--surface);
     border: 1px solid var(--border-metal);
     border-radius: 12px;
-    padding: 20px;
+    padding: 16px;
     margin-bottom: 16px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-h2 { color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; font-weight: 800; }
+h2 { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; font-weight: 800; }
 
-/* Nappien urheilullinen tyyli */
 .btn {
     width: 100%; padding: 16px; border-radius: 10px; font-weight: 800; font-size: 1rem;
     text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; border: none;
-    transition: transform 0.1s, opacity 0.2s; color: #fff; text-align: center;
+    transition: transform 0.1s; color: #fff; text-align: center; display: block;
 }
-.btn:active { transform: scale(0.98); }
+.btn:active { transform: scale(0.97); }
 
 .btn-primary { background-color: var(--primary); color: #000; }
 .btn-danger { background-color: var(--danger); }
 .btn-success { background-color: var(--info); }
-.btn-secondary { background-color: var(--surface-light); color: var(--text-main); }
+.btn-secondary { background-color: var(--surface-light); color: var(--text-main); border: 1px solid var(--border-metal); }
 .btn-arvo { background-color: var(--warning); color: #000; }
 
-/* Pelaajan käsi (Selkeä pakka) */
+/* Sivuttain rullaava käsi (Upsi-karuselli) */
 .hand-scroll-area {
-    display: flex; gap: 12px; overflow-x: auto; padding: 5px 0 15px 0;
-    scroll-snap-type: x mandatory;
+    display: flex; gap: 12px; overflow-x: auto; padding: 4px 0 16px 0;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
 }
 .hand-scroll-area::-webkit-scrollbar { display: none; }
 
 .card-in-hand {
-    min-width: 260px; max-width: 260px;
+    min-width: 250px; max-width: 250px;
     background: var(--surface-light);
-    border-left: 6px solid var(--danger);
+    border-left: 5px solid var(--danger);
     border-radius: 10px; padding: 16px;
     display: flex; flex-direction: column; justify-content: space-between;
     scroll-snap-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
-.card-in-hand h3 { color: var(--text-main); font-size: 1.2rem; margin-bottom: 6px; font-weight: 800; }
-.card-in-hand p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.4; margin-bottom: 16px; flex-grow: 1; }
+.card-in-hand h3 { color: var(--text-main); font-size: 1.1rem; margin-bottom: 6px; font-weight: 800; }
+.card-in-hand p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.4; margin-bottom: 12px; flex-grow: 1; }
 
-/* Kauppa */
+/* Pelillinen kauppa */
 .shop-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
 .shop-item-premium {
     background: var(--surface-light);
     border: 1px solid var(--border-metal); border-radius: 10px; padding: 16px;
-    position: relative;
+    position: relative; border-left: 5px solid var(--warning);
 }
-.shop-item-premium.disabled { opacity: 0.5; }
-.shop-item-premium h3 { color: var(--primary); font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
+.shop-item-premium.disabled { opacity: 0.4; }
+.shop-item-premium h3 { color: var(--text-main); font-size: 1.1rem; font-weight: 800; margin-bottom: 4px; }
 .price-tag {
     position: absolute; top: 16px; right: 16px; background: var(--warning); color: #000;
-    font-weight: 800; font-size: 0.9rem; padding: 4px 10px; border-radius: 6px;
+    font-weight: 900; font-size: 0.85rem; padding: 4px 8px; border-radius: 5px;
 }
 
-/* Yleiset kentät */
 input[type="text"], input[type="number"], select {
     width: 100%; padding: 16px; margin-bottom: 12px; background: var(--bg-dark);
-    border: 1px solid var(--border-metal); color: var(--text-main); border-radius: 8px; font-size: 1.1rem;
+    border: 1px solid var(--border-metal); color: var(--text-main); border-radius: 8px; font-size: 1.05rem;
 }
 input:focus, select:focus { border-color: var(--primary); outline: none; }
 
-/* Leaderboard */
 .player-row {
     display: flex; justify-content: space-between; align-items: center;
     background: var(--surface-light); padding: 16px; border-radius: 8px; margin-bottom: 8px;
 }
-.player-row.me { border-left: 4px solid var(--primary); }
+.player-row.me { border-left: 4px solid var(--primary); background: rgba(16, 185, 129, 0.05); }
 
-/* Roolinvaihdin (Tab bar -tyyli) */
-.role-switcher { display: flex; background: var(--surface); border-radius: 10px; padding: 4px; margin-bottom: 20px; border: 1px solid var(--border-metal); }
+.role-switcher { display: flex; background: var(--surface); border-radius: 10px; padding: 4px; margin-bottom: 16px; border: 1px solid var(--border-metal); }
 .role-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); border-radius: 8px; font-weight: 800; font-size: 0.9rem; }
 .role-btn.active { background: var(--surface-light); color: var(--text-main); }
 
 body.gm-mode .player-only { display: none !important; }
 body.player-mode .gm-only { display: none !important; }
 
-/* 1.5s Long Press */
-.long-press-btn { position: relative; overflow: hidden; }
-.long-press-btn .long-press-fill {
-    position: absolute; bottom: 0; left: 0; height: 100%; background: rgba(0,0,0,0.3);
-    width: 0%; transition: none; border-radius: 10px;
-}
-.long-press-btn.is-pressing .long-press-fill { width: 100%; transition: width 1.5s linear; }
-
-/* Modaalit */
 .winner-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
     display: flex; align-items: center; justify-content: center; z-index: 9999;
     padding: 16px;
 }
 
-/* --- TULOSTEN SYÖTTÖ (FRISBEEGOLF-TYYLI) --- */
+/* Upsi-tuloskorttirivit */
 .score-row {
     display: flex; justify-content: space-between; align-items: center;
     padding: 12px 0; border-bottom: 1px solid var(--border-metal);
 }
 .score-row:last-child { border-bottom: none; }
 .score-name { font-size: 1.1rem; font-weight: 600; }
-.score-controls { display: flex; align-items: center; gap: 8px; }
+.score-controls { display: flex; align-items: center; gap: 10px; }
 .btn-score-ctrl {
-    width: 44px; height: 44px; border-radius: 50%; border: none;
-    background: var(--surface-light); color: var(--text-main); font-size: 1.5rem; font-weight: bold;
+    width: 46px; height: 46px; border-radius: 50%; border: none;
+    background: var(--surface-light); color: var(--text-main); font-size: 1.6rem; font-weight: bold;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
-.btn-score-ctrl:active { background: var(--border-metal); }
 .score-display {
-    width: 50px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-    font-size: 1.4rem; font-weight: 800; color: #fff; background: var(--border-metal);
-    transition: background-color 0.2s;
+    width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; font-weight: 800; color: #fff; background: var(--border-metal);
 }
-.score-birdie { background-color: var(--primary) !important; color: #000 !important;}
+.score-birdie { background-color: var(--primary) !important; color: #000 !important; }
 .score-par { background-color: var(--border-metal) !important; }
 .score-bogey { background-color: var(--danger) !important; }
