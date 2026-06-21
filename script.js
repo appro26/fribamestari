@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, set, push, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, set, push, runTransaction, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-west1.firebasedatabase.app/" };
 const app = initializeApp(firebaseConfig);
@@ -11,6 +11,9 @@ let activeHole = null;
 let currentCourse = null;
 let currentHoleIndex = 1;
 let isExpandedView = false; // Laajennettu/Supistettu tila
+
+// UUSI: Vertailija uusia pelattuja kortteja varten (ilmoitukset)
+let lastPlayedCardTimestamp = Date.now();
 
 window.claimIdentity = async function() {
     let n = document.getElementById('playerNameInput').value.trim();
@@ -32,11 +35,25 @@ window.setRole = function(r) {
     document.getElementById('btnGM').classList.toggle('active', r === 'gm');
 };
 
+// UUSI: Näkymän vaihto
 window.toggleView = function() {
     isExpandedView = !isExpandedView;
     document.getElementById('expandedViewContainer').style.display = isExpandedView ? 'block' : 'none';
     document.getElementById('compactViewContainer').style.display = isExpandedView ? 'none' : 'flex';
     document.getElementById('viewToggleBtn').innerText = isExpandedView ? 'SIIRRY SUPISTETTUUN NÄKYMÄÄN' : 'LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)';
+};
+
+// UUSI: Nopeat Ilmoitukset (Toasts)
+window.showNotification = function(message, type = 'info') {
+    const container = document.getElementById('notificationContainer');
+    if(!container) return; // Turvakatkaisu
+    const toast = document.createElement('div');
+    toast.className = `notification ${type}`;
+    toast.innerText = message;
+    container.appendChild(toast);
+    
+    // Poista ilmoitus 3 sekunnin kuluttua
+    setTimeout(() => { toast.remove(); }, 3000);
 };
 
 function logEvent(msg) { push(ref(db, 'gameState/eventLog'), { time: new Date().toLocaleTimeString('fi-FI'), msg }); }
@@ -45,7 +62,7 @@ function logScoreChange(playerName, delta, reason) { push(ref(db, 'gameState/sco
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
     
-    // Uloskirjaus jos peli on nollattu (Tietokanta tyhjä)
+    // TURVAKORJAUS RESETILLE: Jos DB on tyhjä, kirjaudutaan ulos paikallisesti
     if(!data) {
         if(myName) {
             myName = null;
@@ -64,7 +81,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     currentCourse = data.course || null;
     currentHoleIndex = data.currentHoleIndex || 1;
 
-    // Turvakorjaus: Jos oma nimi poistettiin, kirjaudu ulos
+    // Turvakorjaus: Jos peli poistettiin, kirjaudun ulos
     if (myName) {
         const me = allPlayers.find(p => p && p.name === myName);
         if (!me) {
@@ -108,6 +125,20 @@ onValue(ref(db, 'gameState'), (snap) => {
             document.getElementById('myResPointsExpanded').innerText = `${me.score || 0} P`;
             document.getElementById('handCountBadge').innerText = myCards.length;
         }
+
+        // NOPEAT ILMOITUKSET: Tarkistetaan uudet sabotaasit minuun
+        if (activeHole && activeHole.playedCards) {
+            const playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
+            const myNewDebuffs = playedCards.filter(pc => pc.target === myName && pc.timestamp > lastPlayedCardTimestamp && pc.type === 'sabotage');
+            
+            if (myNewDebuffs.length > 0) {
+                myNewDebuffs.forEach(db => {
+                    showNotification(`💥 Sinua sabotoitiin kortilla: ${db.cardName}`, 'debuff');
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
+                });
+                lastPlayedCardTimestamp = Math.max(...playedCards.map(pc => pc.timestamp));
+            }
+        }
     }
 
     renderAdminPlayerList();
@@ -146,6 +177,7 @@ window.startMeilahti = function() {
     }).then(() => {
         document.getElementById('courseModal').style.display = 'none';
         triggerPopup("Peli Aloitettu", "Meilahti (16 väylää). Kaikille jaettu 3 korttia!", "");
+        lastPlayedCardTimestamp = Date.now(); 
     });
 };
 
@@ -153,7 +185,7 @@ window.generateParInputs = function() {
     const count = parseInt(document.getElementById('setupHoleCount').value) || 0;
     const container = document.getElementById('parInputsContainer');
     container.innerHTML = '';
-    for(let i=1; i<=count; i++) container.innerHTML += `<div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid var(--border-light);"><label style="font-size:0.8rem; color:var(--text-muted); font-weight:bold;">Väylä ${i} PAR</label><input type="number" id="setupPar_${i}" value="3" style="margin:0; padding:10px; border:none; background:transparent;"></div>`;
+    for(let i=1; i<=count; i++) container.innerHTML += `<div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid var(--border);"><label style="font-size:0.8rem; color:var(--text-muted); font-weight:bold;">Väylä ${i} PAR</label><input type="number" id="setupPar_${i}" value="3" style="margin:0; padding:10px; border:none; background:transparent;"></div>`;
 };
 
 window.saveCourseSetup = function() {
@@ -193,31 +225,7 @@ window.saveCourseSetup = function() {
     }).then(() => {
         document.getElementById('courseModal').style.display = 'none';
         triggerPopup("Peli Aloitettu", `Rata valittu. Kaikille jaettu 3 korttia!`, "");
-    });
-};
-
-function renderCourseBanner() {
-    const banner = document.getElementById('courseInfoBanner');
-    if(!currentCourse) return;
-    document.getElementById('bannerCourseName').innerText = currentCourse.name;
-    document.getElementById('bannerHoleNum').innerText = currentHoleIndex;
-    document.getElementById('bannerPar').innerText = currentCourse.pars[currentHoleIndex - 1] || 3;
-}
-
-window.nextHole = function() { window.openScoreModal(); };
-
-window.rollHoleRules = function() {
-    runTransaction(ref(db, 'gameState'), (state) => {
-        if(!state) return state;
-        const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
-        let premiumPool = allCards.filter(c => c.tier === "premium");
-        let uniqueShop = []; let used = new Set();
-        for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
-            if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
-            if(uniqueShop.length === 5) break;
-        }
-        state.activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
-        return state;
+        lastPlayedCardTimestamp = Date.now();
     });
 };
 
@@ -236,7 +244,7 @@ function renderActiveHole() {
         return;
     }
     
-    // Näytetään +5P jos kyseessä on bounty (väylätehtävä)
+    // UUSI: Väylätehtävän visuaalinen korostus
     let bountyTag = activeHole.rule.type === 'bounty' ? `<div class="rule-bounty-tag">🏆 TEHTÄVÄ (+5 P)</div>` : '';
     container.innerHTML = `<div class="hole-rule-card">${bountyTag}<h1>${activeHole.rule.n}</h1><p>${activeHole.rule.d}</p></div>`;
     
@@ -245,9 +253,13 @@ function renderActiveHole() {
         let cardsHtml = '';
         let myRulesHtml = '';
         
-        activeHole.playedCards.forEach(pc => {
+        const playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
+        playedCards.forEach(pc => {
             let actionText = pc.type === 'buff' ? `käytti edun` : `sabotoi kohdetta <strong>${pc.target}</strong>`;
-            cardsHtml += `<div class="active-card-chip" onclick="window.showCardInfo('${pc.cardName}', '${pc.cardDesc}', 'Kohde: ${pc.target}<br>Käyttäjä: ${pc.by}')"><b>${pc.by}</b> ${actionText}: <span style="font-weight:900;">${pc.cardName}</span></div>`;
+            let color = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
+            
+            // UUSI: Värikoodaus livenä
+            cardsHtml += `<div class="active-card-chip" style="border-color:${color};" onclick="window.showCardInfo('${pc.cardName}', '${pc.cardDesc}', 'Kohde: ${pc.target}<br>Käyttäjä: ${pc.by}')"><span style="color:#fff;"><b>${pc.by}</b> ${actionText}: <span style="font-weight:900; color:${color};">${pc.cardName}</span></span></div>`;
             
             if(pc.target === myName) {
                 myRulesHtml += `<div class="my-rule-item"><b>${pc.cardName}:</b> ${pc.cardDesc}</div>`;
@@ -283,7 +295,8 @@ function renderPlayerHand(cards) {
     cards.forEach((cId, index) => {
         const cDef = allCards.find(sc => sc.id === cId);
         if(!cDef) return;
-        let typeClass = cDef.type === 'buff' ? 'buff' : 'sabotage';
+        // UUSI: Visuaalinen pelikortti-design
+        let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
         let btnClass = cDef.type === 'buff' ? 'btn-success' : 'btn-danger';
         html += `
             <div class="physical-card ${typeClass}">
@@ -296,7 +309,7 @@ function renderPlayerHand(cards) {
     expandedContainer.innerHTML = html;
 }
 
-// Renderöidään kauppa sekä Modaalille (Compact) että Expanded-gridille
+// Renderöidään kauppa sekä Modaalille (Compact) että Expanded-gridille (visuaalinen grid)
 function renderShop(shopArray, myPoints, boughtThisHole) {
     const modalContainer = document.getElementById('shopModalCards');
     const expandedContainer = document.getElementById('shopItemsExpanded');
@@ -312,12 +325,13 @@ function renderShop(shopArray, myPoints, boughtThisHole) {
     shopArray.forEach(item => {
         if(!item) return;
         const canAfford = myPoints >= item.price && !boughtThisHole;
-        let btnText = boughtThisHole ? 'OSTIT JO KORTIN TÄLLÄ VÄYLÄLLÄ' : (canAfford ? 'OSTA (NOPEIN VIE)' : 'EI VARAA (' + item.price + ' P)');
+        let btnText = boughtThisHole ? 'OSTIT JO KORTIN TÄLLÄ VÄYLÄLLÄ' : (canAfford ? 'OSTA (NOPEIN VIE)' : 'EI VARAA (HINTA: ' + item.price + ' P)');
         
+        // UUSI: Preemio-kortin design hintalapulla
         html += `
-            <div class="physical-card premium">
+            <div class="physical-card premium-card">
                 <span class="card-price-tag">${item.price} P</span>
-                <div><h3 style="color: var(--warning);">${item.n}</h3><p>${item.d}</p></div>
+                <div><h3>${item.n}</h3><p>${item.d}</p></div>
                 <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
             </div>`;
     });
@@ -355,6 +369,7 @@ window.openTargetModal = function(cardIndex, cardId) {
     const cardDef = allCards.find(c => c.id === cardId);
     pendingCardPlay = { index: cardIndex, id: cardId, def: cardDef };
     
+    // ÄLYKÄS KORTIN PELAAMINEN: Buffi pelataan automaattisesti itselle
     if(cardDef.type === 'buff') {
         window.executeCardPlay(myName);
         return;
@@ -366,7 +381,7 @@ window.openTargetModal = function(cardIndex, cardId) {
     allPlayers.forEach(p => {
         if(!p) return;
         if(p.name !== myName) {
-            list.innerHTML += `<button style="background:#fff; border:2px solid var(--border-light); color:var(--text-main); width:100%; padding:18px; border-radius:12px; margin-bottom:10px; font-weight:800; font-size:1.1rem; text-align:left;" onclick="window.executeCardPlay('${p.name}')">${p.name}</button>`;
+            list.innerHTML += `<button style="background:#fff; border:2px solid var(--border); color:var(--text-main); width:100%; padding:18px; border-radius:12px; margin-bottom:10px; font-weight:800; font-size:1.1rem; text-align:left;" onclick="window.executeCardPlay('${p.name}')">${p.name}</button>`;
         }
     });
     document.getElementById('targetModal').style.display = 'flex';
@@ -375,6 +390,7 @@ window.openTargetModal = function(cardIndex, cardId) {
 window.executeCardPlay = function(targetName) {
     if(!pendingCardPlay) return;
     const card = pendingCardPlay;
+    const timestamp = Date.now();
     document.getElementById('targetModal').style.display = 'none';
     document.getElementById('handModal').style.display = 'none';
     
@@ -388,7 +404,8 @@ window.executeCardPlay = function(targetName) {
         }
         if(state.activeHole) {
             state.activeHole.playedCards = state.activeHole.playedCards ? (Array.isArray(state.activeHole.playedCards) ? state.activeHole.playedCards : Object.values(state.activeHole.playedCards)) : [];
-            state.activeHole.playedCards.push({ cardName: card.def.n, cardDesc: card.def.d, target: targetName, by: myName, type: card.def.type });
+            // Lisätään aikaleima ilmoituksia varten
+            state.activeHole.playedCards.push({ cardName: card.def.n, cardDesc: card.def.d, target: targetName, by: myName, type: card.def.type, timestamp });
         }
         state.players = players;
         return state;
@@ -485,8 +502,10 @@ window.submitScores = function() {
         state.activeHole = null; 
         return state;
     }).then(() => {
+        triggerPopup(`Tulokset tallennettu`, `Kaikille jaettu 2 uutta korttia!`, ``);
         document.getElementById('scoreModal').style.display = 'none';
         window.rollHoleRules(); 
+        lastPlayedCardTimestamp = Date.now(); // Nollataan aikaleima
     });
 };
 
@@ -513,12 +532,12 @@ function renderLeaderboard() {
     });
 }
 
-// GM LOKIT JA HALLINTA PALAUTETTU TÄYSIN
+// GM-HALLINTA: Palautettu kaikki aiemmat toiminnot
 function renderEventLog(logData) {
     const container = document.getElementById('adminEventLog');
     if(!container) return; container.innerHTML = "";
     Object.values(logData || {}).reverse().slice(0, 30).forEach(l => {
-        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border-light);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span>${l.msg}</div>`;
+        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span>${l.msg}</div>`;
     });
 }
 
@@ -527,7 +546,7 @@ function renderScoreLog(logData) {
     if(!container) return; container.innerHTML = "";
     Object.values(logData || {}).reverse().slice(0, 50).forEach(l => {
         let color = l.delta >= 0 ? 'var(--info)' : 'var(--danger)';
-        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border-light);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span><b>${l.playerName}</b>: <span style="color:${color}; font-weight:bold;">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`;
+        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span><b>${l.playerName}</b>: <span style="color:${color}; font-weight:bold;">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`;
     });
 }
 
@@ -567,20 +586,19 @@ window.adjustScore = function(idx, amt) {
     runTransaction(ref(db, `gameState/players/${idx}`), (p) => {
         if(p) { p.score = Math.max(0, (p.score || 0) + amt); }
         return p;
-    }).then(() => logScoreChange("Admin", amt, "Manuaalinen muutos"));
+    });
 };
 
 window.removePlayer = function(idx) { 
     if(confirm("Poistetaanko pelaaja pelistä?")) { 
-        logEvent(`Admin poisti pelaajan: ${allPlayers[idx].name}`);
         allPlayers.splice(idx, 1); 
         set(ref(db, 'gameState/players'), allPlayers); 
     } 
 };
 
 window.resetGame = function() {
-    if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos ja peli palaa aloitusnäyttöön.")) {
-        set(ref(db, 'gameState'), { players: [], eventLog: {}, scoreLog: {}, activeHole: null, currentHoleIndex: 1, course: null })
+    if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos.")) {
+        set(ref(db, 'gameState'), { players: [], activeHole: null, currentHoleIndex: 1, course: null })
         .then(() => { localStorage.clear(); location.reload(); });
     }
 };
