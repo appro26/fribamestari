@@ -187,7 +187,7 @@ window.renderActiveHole = function() {
         if(myRulesHtml !== '') {
             if(myRulesContainer) {
                 myRulesContainer.style.display = 'block';
-                myRulesContainer.innerHTML = `<div class="my-rules-box"><h3 style="font-size:1rem; margin-bottom:8px;">🚨 Sinuun kohdistuvat sabotaasit:</h3>${myRulesHtml}</div>`;
+                myRulesContainer.innerHTML = `<div class="my-rules-box"><h3 style="font-size:0.95rem; margin-bottom:5px;">🚨 Sinuun kohdistuvat sabotaasit:</h3>${myRulesHtml}</div>`;
             }
         } else {
             if(myRulesContainer) myRulesContainer.style.display = 'none';
@@ -247,7 +247,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             <div class="physical-card premium-card">
                 <span class="card-price-tag">${item.price} P</span>
                 <div><div class="card-type-tag">💎 PREMIUM KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p></div>
-                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" style="padding:16px; font-size:1rem; color:#000;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
+                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" style="padding:16px; font-size:1rem; color:var(--text-main);" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
             </div>`;
     });
     
@@ -311,22 +311,6 @@ window.triggerPopup = function(title, desc, details) {
         else detailsEl.style.display = 'block';
     }
     overlay.style.display = 'flex';
-};
-
-window.toggleScoreModalRule = function() {
-    const box = el('scoreModalRuleBox');
-    if(!box) return;
-    if(box.style.display === 'none') {
-        if(activeHole && activeHole.rule) {
-            let bTxt = activeHole.rule.type === 'bounty' ? '🏆 TEHTÄVÄ: ' : '🎲 SÄÄNTÖ: ';
-            box.innerHTML = `<strong style="color:var(--primary); font-size:1.1rem;">${bTxt} ${activeHole.rule.n}</strong><br><br>${activeHole.rule.d}`;
-        } else {
-            box.innerHTML = "Ei aktiivista sääntöä tällä väylällä.";
-        }
-        box.style.display = 'block';
-    } else {
-        box.style.display = 'none';
-    }
 };
 
 window.adminAddPlayer = function() {
@@ -455,7 +439,7 @@ window.saveCourseSetup = function() {
 
 window.nextHole = function() { 
     const sm = el('scoreModal');
-    if(sm) sm.style.display = 'flex'; 
+    if(sm) window.openScoreModal(); 
 };
 
 window.rollHoleRules = function() {
@@ -547,11 +531,11 @@ window.executeCardPlay = function(targetName) {
 };
 
 // ===========================================
-// TULOSTEN KERÄÄMINEN (NIMI-POHJAINEN, EI KAADU)
+// TULOSTEN KERÄÄMINEN (NIMI-POHJAINEN, TURVALLINEN)
 // ===========================================
 
 window.changeScore = function(pId, par, delta) {
-    let input = document.querySelector(`.score-input-data[data-name="${pId}"]`);
+    let input = document.querySelector(`.score-input-data[data-id="${pId}"]`);
     if(!input) return;
     let val = parseInt(input.value) + delta;
     if(val < 1) val = 1;
@@ -573,7 +557,14 @@ window.openScoreModal = function() {
     if(el('scoreModalPar')) el('scoreModalPar').innerText = par;
     
     const box = el('scoreModalRuleBox');
-    if(box) { box.style.display = 'none'; box.innerHTML = ''; }
+    if(box) { 
+        if(activeHole && activeHole.rule) {
+            let bTxt = activeHole.rule.type === 'bounty' ? '🏆 TEHTÄVÄ:' : '🎲 SÄÄNTÖ:';
+            box.innerHTML = `<span style="color:var(--primary);">${bTxt} ${activeHole.rule.n}</span><br><span style="font-weight:600; font-size:0.95rem; color:var(--text-muted); display:block; margin-top:5px;">${activeHole.rule.d}</span>`;
+        } else {
+            box.innerHTML = "Ei sääntöä tällä väylällä.";
+        }
+    }
     
     const container = el('scoreInputsContainer');
     if(!container) return; 
@@ -593,7 +584,7 @@ window.openScoreModal = function() {
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, -1)">-</button>
                     <div id="scoreDisplay_${safeId}" class="score-display score-par">${par}</div>
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, 1)">+</button>
-                    <input type="hidden" class="score-input-data" data-name="${p.name}" id="scoreInput_${safeId}" value="${par}">
+                    <input type="hidden" class="score-input-data" data-id="${safeId}" data-name="${p.name}" id="scoreInput_${safeId}" value="${par}">
                 </div>
             </div>`;
     });
@@ -662,7 +653,7 @@ window.submitScores = function() {
 };
 
 //==============================================
-// 6. FIREBASE ONVALUE KUUNTELIJA
+// 7. FIREBASE ONVALUE KUUNTELIJA
 //==============================================
 
 onValue(ref(db, 'gameState'), (snap) => {
@@ -739,7 +730,7 @@ onValue(ref(db, 'gameState'), (snap) => {
             
             if (myNewDebuffs.length > 0) {
                 myNewDebuffs.forEach(db => {
-                    window.showNotification(`💥 Sinua sabotoitiin: ${db.cardName}`, 'debuff');
+                    window.showNotification(`💥 Sinuun kohdistui: ${db.cardName}`, 'debuff');
                     if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
                 });
                 lastPlayedCardTimestamp = Math.max(...playedCards.map(pc => pc.timestamp));
