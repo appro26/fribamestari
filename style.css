@@ -2,12 +2,12 @@
     --bg-main: #eefdf4;
     --surface: #ffffff;
     --primary: #10b981;
-    --primary-dark: #065f46;
-    --danger: #f43f5e;
+    --primary-dark: #059669;
+    --danger: #ef4444;
     --warning: #f59e0b;
     --info: #2563eb;
-    --text-main: #0f172a;
-    --text-muted: #64748b;
+    --text-main: #000000; /* Täysi musta luettavuuden vuoksi */
+    --text-muted: #334155;
     --border: #cbd5e1;
     --surface-alt: #f8fafc;
 }
@@ -15,104 +15,125 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
 
 body { background-color: var(--bg-main); color: var(--text-main); padding: 12px; padding-bottom: 90px; }
+
 .container { max-width: 500px; margin: 0 auto; position: relative; }
 
-/* Korttien pohja */
-.card { background: var(--surface); border: 2px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); }
-h2 { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; font-weight: 900; }
+.card {
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: 16px; padding: 16px; margin-bottom: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
 
-/* Nappien perusnollaus ja tyylit */
-button { appearance: none; -webkit-appearance: none; outline: none; border: none; background: transparent; font-family: inherit; }
-.btn { width: 100%; padding: 14px; border-radius: 12px; font-weight: 900; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: transform 0.1s; color: #fff; text-align: center; display: block; }
-.btn:active { transform: scale(0.97); }
+h2 { color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; font-weight: 900; }
+
+.btn {
+    width: 100%; padding: 16px; border-radius: 12px; font-weight: 900; font-size: 1.05rem;
+    text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; border: none;
+    transition: transform 0.1s, box-shadow 0.2s; color: #fff; text-align: center; display: block;
+}
+.btn:active { transform: scale(0.95); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.btn-primary { background-color: var(--primary); color: #fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
-.btn-danger { background-color: var(--danger); color: #fff; box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3); }
-.btn-success { background-color: var(--info); color: #fff; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+.btn-primary { background-color: var(--primary); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+.btn-danger { background-color: var(--danger); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+.btn-success { background-color: var(--info); box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
 .btn-secondary { background-color: var(--surface); color: var(--text-main); border: 2px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-.btn-warning { background-color: var(--warning); color: #fff; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+.btn-warning { background-color: var(--warning); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); color: #000; }
 
-/* Roolinvaihtaja */
-.role-switcher { display: flex; background: #fff; border-radius: 12px; padding: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex: 1; border: 2px solid var(--border); margin-bottom: 0; }
-.role-btn { flex: 1; padding: 10px; color: var(--text-muted); border-radius: 8px; font-weight: 900; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
-.role-btn.active { background: var(--primary); color: #fff; }
-
-/* Grid-asettelut */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.cards-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 25px; }
-.cards-list-1 { display: flex; flex-direction: column; gap: 14px; padding-bottom: 15px; }
+.cards-list-1 { display: flex; flex-direction: column; gap: 16px; padding-bottom: 20px; }
 
-/* Visuaaliset Pelikortit */
-.physical-card { background: #fff; border-radius: 16px; padding: 18px; min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 6px 15px rgba(0,0,0,0.08); border: 2px solid var(--border); position: relative; overflow: hidden; }
-.debuff-card { border-top: 8px solid var(--danger); background: linear-gradient(180deg, rgba(244, 63, 94, 0.03), #fff); }
-.buff-card { border-top: 8px solid var(--info); background: linear-gradient(180deg, rgba(37, 99, 235, 0.03), #fff); }
-.premium-card { border-top: 8px solid var(--warning); background: linear-gradient(180deg, rgba(245, 158, 11, 0.04), #fff); }
+/* UUSI: INTERAKTIIVINEN SWIPE KARUSELLI OMIIN KORTTEIHIN */
+.swipe-carousel {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+    gap: 15px; padding: 10px 0 30px 0; scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+.swipe-carousel::-webkit-scrollbar { display: none; }
 
-.card-type-tag { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.swipe-card-wrapper {
+    min-width: 85vw; scroll-snap-align: center;
+    display: flex; justify-content: center; align-items: stretch;
+}
+
+/* HUMALAYSTÄVÄLLISET, SELKEÄT PELIKORTIT */
+.physical-card {
+    background: #fff; border-radius: 20px; padding: 24px;
+    width: 100%; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12); border: 3px solid var(--border);
+    position: relative; overflow: hidden; transition: transform 0.2s ease;
+}
+/* Reagoi kosketukseen selaillessa */
+.swipe-card-wrapper:active .physical-card { transform: scale(0.96); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+.debuff-card { border-top: 12px solid var(--danger); background: #fff; }
+.buff-card { border-top: 12px solid var(--info); background: #fff; }
+.premium-card { border-top: 12px solid var(--warning); background: linear-gradient(180deg, rgba(245, 158, 11, 0.08), #fff); }
+
+.card-type-tag { font-size: 0.85rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
 .debuff-card .card-type-tag { color: var(--danger); }
 .buff-card .card-type-tag { color: var(--info); }
 .premium-card .card-type-tag { color: var(--warning); }
 
-.physical-card h3 { font-size: 1.2rem; font-weight: 900; color: var(--text-main); line-height: 1.2; margin-bottom: 6px; text-transform: uppercase; }
-.physical-card p { font-size: 1rem; color: var(--text-main); font-weight: 600; line-height: 1.4; flex-grow: 1; margin-bottom: 15px; }
-.card-price-tag { position: absolute; top: 10px; right: 10px; background: var(--warning); color: #fff; font-weight: 900; padding: 4px 10px; border-radius: 8px; font-size: 0.85rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+/* JÄTTITEKSTIT LUETTAVUUDEN TAKIA */
+.physical-card h3 { font-size: 1.6rem; font-weight: 900; color: #000; line-height: 1.1; margin-bottom: 12px; text-transform: uppercase; }
+.physical-card p { font-size: 1.15rem; color: #222; font-weight: 700; line-height: 1.4; flex-grow: 1; margin-bottom: 20px; }
+.card-price-tag { position: absolute; top: 12px; right: 12px; background: var(--warning); color: #000; font-weight: 900; padding: 6px 12px; border-radius: 8px; font-size: 1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-/* Lokit ja ilmoitukset */
-.active-card-chip { background: #fff; border: 2px solid var(--info); border-left: 6px solid var(--info); border-radius: 8px; padding: 10px; margin-bottom: 8px; font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.05); color: var(--text-main); }
-.my-rules-box { background: #fff; border: 2px solid var(--danger); border-left: 6px solid var(--danger); border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.05); }
-.my-rules-box h3 { color: var(--danger); margin-bottom: 8px; font-size: 1rem; text-transform: uppercase; font-weight: 900; }
-.my-rule-item { border-bottom: 1px solid var(--border); padding: 8px 0; font-weight: 700; font-size: 0.95rem; }
+.active-card-chip { background: #fff; border: 3px solid var(--info); border-left: 8px solid var(--info); border-radius: 12px; padding: 16px; margin-bottom: 10px; font-size: 1.05rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #000; }
+.my-rules-box { background: #fff; border: 3px solid var(--danger); border-left: 8px solid var(--danger); border-radius: 12px; padding: 16px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.1); }
+.my-rules-box h3 { color: var(--danger); margin-bottom: 10px; font-size: 1.1rem; text-transform: uppercase; font-weight: 900; }
+.my-rule-item { border-bottom: 2px solid var(--border); padding: 10px 0; font-weight: 800; font-size: 1.05rem; color: #000; }
 .my-rule-item:last-child { border-bottom: none; }
 
-/* Tuloskortti ja Inputit */
-input[type="text"], input[type="number"], select { width: 100%; padding: 14px; margin-bottom: 12px; background: #fff; border: 2px solid var(--border); color: var(--text-main); border-radius: 10px; font-size: 1.05rem; font-weight:600; }
-input:focus { border-color: var(--primary); }
-.player-row { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 14px; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--border); }
-.player-row.me { border: 2px solid var(--primary); background: #f0fdf4; }
+input[type="text"], input[type="number"], select { width: 100%; padding: 18px; margin-bottom: 12px; background: #fff; border: 3px solid var(--border); color: #000; border-radius: 12px; font-size: 1.15rem; font-weight:800; }
+input:focus { border-color: var(--primary); outline: none; }
+
+.player-row { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 10px; border: 2px solid var(--border); }
+.player-row.me { border: 3px solid var(--primary); background: #f0fdf4; }
+
+.role-switcher { display: flex; background: #fff; border-radius: 12px; padding: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex: 1; border: 2px solid var(--border); margin-bottom: 0; }
+.role-btn { flex: 1; padding: 12px; color: var(--text-muted); border-radius: 8px; font-weight: 900; font-size: 0.95rem; cursor: pointer; transition: 0.2s; border:none; background:transparent;}
+.role-btn.active { background: var(--primary); color: #fff; }
 
 body.gm-mode .player-only { display: none !important; }
 body.player-mode .gm-only { display: none !important; }
 
-/* Modaalit */
-.fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: none; flex-direction: column; z-index: 8000; padding: 15px; overflow-y: auto; padding-bottom: 70px; }
-.fullscreen-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
-.fullscreen-modal-header h2 { color: var(--text-main); font-size: 1.3rem; margin: 0; display: flex; align-items: center; gap: 10px; }
-.close-modal-btn { background: var(--surface-alt); border: 2px solid var(--border); border-radius: 50%; width:40px; height:40px; color: var(--text-main); font-size: 1.5rem; font-weight:bold; cursor: pointer; display:flex; align-items:center; justify-content:center; }
-.winner-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
+.fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: none; flex-direction: column; z-index: 8000; padding: 15px; overflow-y: auto; padding-bottom: 40px; }
+.fullscreen-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 3px solid var(--border); }
+.fullscreen-modal-header h2 { color: #000; font-size: 1.5rem; margin: 0; font-weight: 900; }
+.close-modal-btn { background: var(--danger); border: none; border-radius: 50%; width:44px; height:44px; color: #fff; font-size: 1.8rem; font-weight:bold; cursor: pointer; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4); }
+.winner-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 16px; overflow-y:auto; }
 
-/* Tulosten Syöttö */
-.score-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.score-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 2px solid var(--border); }
 .score-row:last-child { border-bottom: none; }
-.score-name { font-size: 1.1rem; font-weight: 800; color: var(--text-main); }
-.score-controls { display: flex; align-items: center; gap: 10px; }
-.btn-score-ctrl { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border); background: #fff; color: var(--text-main); font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-.score-display { width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 900; color: var(--text-main); background: var(--surface-alt); border: 2px solid var(--border); }
+.score-name { font-size: 1.25rem; font-weight: 900; color: #000; }
+.score-controls { display: flex; align-items: center; gap: 12px; }
+.btn-score-ctrl { width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--border); background: #fff; color: #000; font-size: 1.8rem; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.score-display { width: 54px; height: 54px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 900; color: #000; background: var(--surface-alt); border: 3px solid var(--border); }
 .score-birdie { background-color: var(--info) !important; color: #fff !important; border-color: var(--info) !important; }
 .score-par { background-color: var(--border) !important; }
 .score-bogey { background-color: var(--danger) !important; color: #fff !important; border-color: var(--danger) !important; }
 
-/* Väylätehtävä / Bounty */
-.hole-rule-card { background: linear-gradient(135deg, var(--primary), #059669); color: #fff; border: none; box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3); text-align: center; padding: 20px 15px; border-radius:12px; margin-bottom:12px; }
-.hole-rule-card h1 { font-size:1.4rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; }
-.hole-rule-card p { font-size: 1rem; line-height: 1.4; font-weight: 600; }
-.rule-bounty-tag { display:inline-block; background:#fff; color:var(--primary); padding:4px 10px; border-radius:12px; font-weight:900; font-size:0.8rem; margin-bottom:10px; text-transform:uppercase;}
+.hole-rule-card { background: linear-gradient(135deg, var(--primary), #059669); color: #fff; border: 3px solid #047857; box-shadow: 0 6px 15px rgba(16, 185, 129, 0.4); text-align: center; padding: 24px 16px; border-radius:16px; margin-bottom:12px; }
+.hole-rule-card h1 { font-size:1.6rem; margin-bottom: 10px; text-transform: uppercase; font-weight: 900; line-height: 1.1; }
+.hole-rule-card p { font-size: 1.15rem; line-height: 1.4; font-weight: 700; }
+.rule-bounty-tag { display:inline-block; background:#fff; color:var(--primary); padding:6px 14px; border-radius:12px; font-weight:900; font-size:0.95rem; margin-bottom:12px; text-transform:uppercase;}
 
 .task-checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.task-checkbox-label { display: flex; align-items: center; gap: 10px; background: #fff; padding: 10px; border-radius: 8px; border: 2px solid var(--border); color: var(--text-main); font-weight: 600; font-size:0.95rem; cursor:pointer;}
+.task-checkbox-label { display: flex; align-items: center; gap: 12px; background: #fff; padding: 14px; border-radius: 10px; border: 3px solid var(--border); color: #000; font-weight: 800; font-size:1.05rem; cursor:pointer;}
 
-.gm-score-adjust { display: flex; gap: 5px; width: 100%; margin-top: 5px; align-items:center; }
-.gm-score-adjust input { margin: 0; padding: 10px; text-align: center; width: 60px; font-weight: bold; border-radius: 6px; }
-.gm-score-adjust button { flex: 1; padding: 10px; font-size: 0.85rem; border-radius: 6px; text-transform:uppercase; font-weight:bold; }
-.log-box { height:120px; overflow-y:auto; background:var(--surface-alt); padding:10px; border-radius:10px; border:1px solid var(--border); font-size:0.85rem; font-weight:600; }
+.gm-score-adjust { display: flex; gap: 6px; width: 100%; margin-top: 8px; align-items:center; }
+.gm-score-adjust input { margin: 0; padding: 12px; text-align: center; width: 65px; font-weight: 900; border-radius: 8px; font-size: 1.1rem; }
+.gm-score-adjust button { flex: 1; padding: 12px; font-size: 0.9rem; border-radius: 8px; text-transform:uppercase; font-weight:900; }
+.log-box { height:150px; overflow-y:auto; background:var(--surface-alt); padding:12px; border-radius:12px; border:2px solid var(--border); font-size:0.95rem; font-weight:700; color: #000; }
 
-/* Ylälaidan Toast-ilmoitusalue */
 #notificationContainer { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 10000; pointer-events: none; width: 92%; max-width: 420px; }
-.notification { background: #fff; border: 2px solid var(--primary); border-left: 8px solid var(--primary); color: var(--text-main); padding: 14px 18px; border-radius: 12px; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.15); margin-bottom: 10px; font-weight: 800; font-size: 1rem; pointer-events: auto; animation: slideDown 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards; }
+.notification { background: #fff; border: 3px solid var(--primary); border-left: 10px solid var(--primary); color: #000; padding: 16px 20px; border-radius: 12px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.2); margin-bottom: 10px; font-weight: 900; font-size: 1.1rem; pointer-events: auto; animation: slideDown 0.3s ease-out, fadeOut 0.3s ease-in 3.5s forwards; }
 .notification.debuff { border-color: var(--danger); }
 .notification.info { border-color: var(--info); }
 .notification.warning { border-color: var(--warning); }
 @keyframes slideDown { 0% { transform: translateY(-100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
 
-.top-wallet { background: var(--warning); color: #fff; font-weight: 900; padding: 6px 14px; border-radius: 10px; box-shadow: 0 4px 10px rgba(245,158,11,0.25); font-size: 0.95rem; }
+.top-wallet { background: var(--warning); color: #000; font-weight: 900; padding: 8px 16px; border-radius: 12px; box-shadow: 0 4px 10px rgba(245,158,11,0.3); font-size: 1.05rem; border: 2px solid #d97706; }
