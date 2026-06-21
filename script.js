@@ -15,30 +15,29 @@ let currentHoleIndex = 1;
 let isExpandedView = false; 
 let lastPlayedCardTimestamp = Date.now();
 
-// 1. ELEOHJAUKSET (Interaktiiviset kortit ja Swipe-to-close)
-window.enableCardSquish = function() {
-    document.addEventListener('touchmove', (e) => {
+//==============================================
+// 1. ELEOHJAUKSET (Nosto-efekti ja Swipe-to-close)
+//==============================================
+window.enableCardHover = function() {
+    const resetCards = () => {
         document.querySelectorAll('.physical-card').forEach(c => {
-            c.style.transform = 'scale(1)';
-            c.style.boxShadow = '0 6px 15px rgba(0,0,0,0.1)';
+            c.classList.remove('card-hovered');
         });
+    };
+
+    const handleTouch = (e) => {
         const touch = e.touches[0];
         const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+        resetCards();
         if (elUnder) {
             const card = elUnder.closest('.physical-card');
-            if (card) {
-                card.style.transform = 'scale(0.92) translateY(2px)';
-                card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-            }
+            if (card) card.classList.add('card-hovered');
         }
-    }, {passive: true});
+    };
 
-    document.addEventListener('touchend', () => {
-        document.querySelectorAll('.physical-card').forEach(c => {
-            c.style.transform = '';
-            c.style.boxShadow = '';
-        });
-    });
+    document.addEventListener('touchstart', handleTouch, {passive: true});
+    document.addEventListener('touchmove', handleTouch, {passive: true});
+    document.addEventListener('touchend', resetCards);
 };
 
 window.setupSwipeToClose = function() {
@@ -68,7 +67,7 @@ window.setupSwipeToClose = function() {
             if (startY === null) return;
             let diff = currentY - startY;
             modal.style.transition = 'transform 0.3s ease';
-            if (diff > 120) { // Vedetty tarpeeksi alas
+            if (diff > 120) { 
                 modal.style.transform = `translateY(100%)`;
                 setTimeout(() => {
                     modal.style.display = 'none';
@@ -82,7 +81,9 @@ window.setupSwipeToClose = function() {
     });
 };
 
+//==============================================
 // 2. GLOBAALIT FUNKTIOT 
+//==============================================
 
 window.updateIdentityUI = function() { 
     if(el('identityCard')) el('identityCard').style.display = myName ? 'none' : 'block'; 
@@ -178,7 +179,7 @@ window.renderActiveHole = function() {
             let color = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
             cardsHtml += `<div class="active-card-chip" style="border-color:${color}; padding: 8px 12px; font-size:0.85rem;" onclick="window.triggerPopup('${pc.cardName}', '${pc.cardDesc}', 'Kohde: ${pc.target}<br>Käyttäjä: ${pc.by}')"><span style="color:var(--text-main);"><b>${pc.by}</b> ${actionText}: <span style="font-weight:900; color:${color};">${pc.cardName}</span></span></div>`;
             if(pc.target === myName) {
-                myRulesHtml += `<div class="my-rule-item"><b>${pc.cardName}:</b> <span style="font-weight:400; font-size:0.85rem;">${pc.cardDesc}</span></div>`;
+                myRulesHtml += `<div class="my-rule-item"><b>${pc.cardName}:</b> <span style="font-weight:600; font-size:1rem;">${pc.cardDesc}</span></div>`;
             }
         });
         
@@ -186,7 +187,7 @@ window.renderActiveHole = function() {
         if(myRulesHtml !== '') {
             if(myRulesContainer) {
                 myRulesContainer.style.display = 'block';
-                myRulesContainer.innerHTML = `<div class="my-rules-box"><h3 style="font-size:0.95rem; margin-bottom:5px;">🚨 Sinuun kohdistuvat sabotaasit:</h3>${myRulesHtml}</div>`;
+                myRulesContainer.innerHTML = `<div class="my-rules-box"><h3 style="font-size:1rem; margin-bottom:8px;">🚨 Sinuun kohdistuvat sabotaasit:</h3>${myRulesHtml}</div>`;
             }
         } else {
             if(myRulesContainer) myRulesContainer.style.display = 'none';
@@ -202,7 +203,7 @@ window.renderPlayerHand = function(cards) {
     const expandedContainer = el('playerHandExpanded');
     
     if (cards.length === 0) { 
-        let emptyHtml = '<p style="color:var(--text-muted); font-size:1rem; text-align:center; padding:15px; width:100%; grid-column: 1 / -1;">Kätesi on tyhjä.</p>';
+        let emptyHtml = '<p style="color:var(--text-muted); font-size:1.2rem; text-align:center; padding:20px; font-weight:bold; width:100%; grid-column: 1 / -1;">Kätesi on tyhjä.</p>';
         if(modalContainer) modalContainer.innerHTML = emptyHtml;
         if(expandedContainer) expandedContainer.innerHTML = emptyHtml;
         return; 
@@ -218,7 +219,7 @@ window.renderPlayerHand = function(cards) {
         html += `
             <div class="physical-card ${typeClass}">
                 <div><div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p></div>
-                <button class="btn ${btnClass}" style="padding:16px; font-size:0.95rem;" onclick="window.openTargetModal(${index}, '${cId}')">PELAA KORTTI</button>
+                <button class="btn ${btnClass}" style="padding:16px; font-size:1rem;" onclick="window.openTargetModal(${index}, '${cId}')">PELAA KORTTI</button>
             </div>`;
     });
     
@@ -231,7 +232,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     const expandedContainer = el('shopItemsExpanded');
     
     if(!shopArray || shopArray.length === 0) { 
-        let emptyHtml = '<p style="color:var(--text-muted); font-size:1rem; text-align:center; padding:15px; width:100%; grid-column: 1 / -1;">Kauppa on suljettu.</p>';
+        let emptyHtml = '<p style="color:var(--text-muted); font-size:1.2rem; text-align:center; padding:20px; font-weight:bold; width:100%; grid-column: 1 / -1;">Kauppa on suljettu.</p>';
         if(modalContainer) modalContainer.innerHTML = emptyHtml;
         if(expandedContainer) expandedContainer.innerHTML = emptyHtml;
         return; 
@@ -246,7 +247,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             <div class="physical-card premium-card">
                 <span class="card-price-tag">${item.price} P</span>
                 <div><div class="card-type-tag">💎 PREMIUM KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p></div>
-                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" style="padding:16px; font-size:0.95rem; color:var(--text-main);" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
+                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" style="padding:16px; font-size:1rem; color:#000;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
             </div>`;
     });
     
@@ -258,7 +259,7 @@ window.renderEventLog = function(logData) {
     const container = el('adminEventLog');
     if(!container) return; container.innerHTML = "";
     Object.values(logData || {}).reverse().slice(0, 30).forEach(l => {
-        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span>${l.msg}</div>`;
+        container.innerHTML += `<div style="padding:8px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:900;">[${l.time}]</span>${l.msg}</div>`;
     });
 };
 
@@ -267,7 +268,7 @@ window.renderScoreLog = function(logData) {
     if(!container) return; container.innerHTML = "";
     Object.values(logData || {}).reverse().slice(0, 50).forEach(l => {
         let color = l.delta >= 0 ? 'var(--info)' : 'var(--danger)';
-        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span><b>${l.playerName}</b>: <span style="color:${color}; font-weight:bold;">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`;
+        container.innerHTML += `<div style="padding:8px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:900;">[${l.time}]</span><b>${l.playerName}</b>: <span style="color:${color}; font-weight:900;">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`;
     });
 };
 
@@ -545,6 +546,10 @@ window.executeCardPlay = function(targetName) {
     });
 };
 
+// ===========================================
+// TULOSTEN KERÄÄMINEN (NIMI-POHJAINEN, EI KAADU)
+// ===========================================
+
 window.changeScore = function(pId, par, delta) {
     let input = document.querySelector(`.score-input-data[data-name="${pId}"]`);
     if(!input) return;
@@ -560,9 +565,6 @@ window.changeScore = function(pId, par, delta) {
     else display.classList.add('score-par');
 };
 
-// ===========================================
-// TULOSTEN KERÄÄMINEN (KORJATTU TÄYDELLISESTI)
-// ===========================================
 window.openScoreModal = function() {
     if(allPlayers.length === 0) return alert("Ei pelaajia radalla.");
     let par = currentCourse && currentCourse.pars ? (currentCourse.pars[currentHoleIndex - 1] || 3) : 3;
@@ -591,7 +593,7 @@ window.openScoreModal = function() {
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, -1)">-</button>
                     <div id="scoreDisplay_${safeId}" class="score-display score-par">${par}</div>
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, 1)">+</button>
-                    <input type="hidden" id="scoreInput_${safeId}" class="score-input-data" data-name="${p.name}" value="${par}">
+                    <input type="hidden" class="score-input-data" data-name="${p.name}" id="scoreInput_${safeId}" value="${par}">
                 </div>
             </div>`;
     });
@@ -604,10 +606,9 @@ window.submitScores = function() {
     let par = currentCourse && currentCourse.pars ? (currentCourse.pars[currentHoleIndex - 1] || 3) : 3;
     let scores = [];
     
-    // Luetaan tulokset suoraan HTML-elementeistä datan avulla! Tämä ei voi mennä rikki.
     const inputs = document.querySelectorAll('.score-input-data');
     if(inputs.length === 0) {
-        alert("Ei tuloksia tallennettavaksi.");
+        alert("Virhe: Ei tulosrivejä löydetty! Yritä avata näkymä uudelleen.");
         if(el('scoreModal')) el('scoreModal').style.display = 'none';
         return;
     }
@@ -738,7 +739,7 @@ onValue(ref(db, 'gameState'), (snap) => {
             
             if (myNewDebuffs.length > 0) {
                 myNewDebuffs.forEach(db => {
-                    window.showNotification(`💥 Sinuun kohdistui: ${db.cardName}`, 'debuff');
+                    window.showNotification(`💥 Sinua sabotoitiin: ${db.cardName}`, 'debuff');
                     if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
                 });
                 lastPlayedCardTimestamp = Math.max(...playedCards.map(pc => pc.timestamp));
@@ -752,5 +753,5 @@ onValue(ref(db, 'gameState'), (snap) => {
 });
 
 // Aja lisäosat heti alussa
-window.enableCardSquish();
+window.enableCardHover();
 window.setupSwipeToClose();
