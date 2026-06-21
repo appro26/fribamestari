@@ -1,11 +1,11 @@
 :root {
-    --bg-main: #f0fdf4; /* Raikas vaaleanvihreä tausta */
-    --surface: #ffffff; /* Puhtaan valkoiset kortit */
-    --primary: #10b981; /* Upsi kirkas vihreä */
-    --danger: #ef4444; /* Sabotaasi / Puna-oranssi */
-    --warning: #f59e0b; /* Kauppa / Kulta */
-    --info: #3b82f6; /* Helpotus / Sininen */
-    --text-main: #0f172a; /* Tumma teksti */
+    --bg-main: #f0fdf4;
+    --surface: #ffffff;
+    --primary: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+    --text-main: #0f172a;
     --text-muted: #64748b;
     --border: #e2e8f0;
     --surface-alt: #f1f5f9;
@@ -35,26 +35,22 @@ h2 { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; le
 
 .btn-primary { background-color: var(--primary); color: #fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
 .btn-primary:hover { background-color: #0d9488; }
-
 .btn-danger { background-color: var(--danger); color: #fff; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
 .btn-danger:hover { background-color: #dc2626; }
-
 .btn-success { background-color: var(--info); color: #fff; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
 .btn-success:hover { background-color: #2563eb; }
-
 .btn-secondary { background-color: var(--surface); color: var(--text-main); border: 2px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 .btn-secondary:hover { background-color: var(--surface-alt); }
-
 .btn-warning { background-color: var(--warning); color: #fff; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
 .btn-warning:hover { background-color: #d97706; }
 
-/* BUGIKORJAUS: Pehmuste gridin alareunaan, jotta painikkeet eivät leikkaudu */
+/* 2-sarakkeinen grid pelikorteille */
 .cards-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
-    padding-bottom: 25px; /* Varmistaa, että Ei varaa -painikkeet näkyvät */
+    padding-bottom: 25px; 
 }
 
-/* UUSI: Visuaaliset, Isot Pelikortit (muistuttaa Wolt Marketin gridiä) */
+/* Visuaaliset Pelikortit */
 .physical-card {
     background: #fff; border-radius: 16px; padding: 16px;
     min-height: 220px; display: flex; flex-direction: column; justify-content: space-between;
@@ -63,15 +59,10 @@ h2 { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; le
 }
 .physical-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
 
-/* Värikoodaus: Sabotaasi (debuff) */
 .debuff-card { border-top: 6px solid var(--danger); background: linear-gradient(180deg, rgba(239, 68, 68, 0.05), #fff); }
 .debuff-card h3 { color: var(--danger); }
-
-/* Värikoodaus: Helpotus (buff) */
 .buff-card { border-top: 6px solid var(--info); background: linear-gradient(180deg, rgba(59, 130, 246, 0.05), #fff); }
 .buff-card h3 { color: var(--info); }
-
-/* Värikoodaus: Preemio (kauppa) */
 .premium-card { border-top: 6px solid var(--warning); background: linear-gradient(180deg, rgba(245, 158, 11, 0.05), #fff); }
 .premium-card h3 { color: var(--warning); }
 
@@ -79,7 +70,7 @@ h2 { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; le
 .physical-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; flex-grow: 1; margin-bottom: 15px; }
 .card-price-tag { position: absolute; top: 12px; right: 12px; background: var(--warning); color: #fff; font-weight: 900; padding: 4px 8px; border-radius: 6px; font-size: 0.9rem; }
 
-/* Aktiiviset kortit livenä */
+/* Livenä pelatut kortit */
 .active-card-chip {
     background: #fff; border: 2px solid var(--info); border-left: 6px solid var(--info);
     border-radius: 10px; padding: 12px; margin-bottom: 10px; font-size: 0.95rem;
@@ -94,7 +85,7 @@ h2 { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; le
 .my-rule-item { border-bottom: 1px solid var(--border); padding: 10px 0; font-weight: 600; }
 .my-rule-item:last-child { border-bottom: none; }
 
-/* Inputit ja Listat */
+/* Inputit, listat, roolinvaihdin */
 input[type="text"], input[type="number"], select {
     width: 100%; padding: 16px; margin-bottom: 12px; background: #fff;
     border: 2px solid var(--border); color: var(--text-main); border-radius: 12px; font-size: 1.1rem; font-weight:600;
@@ -115,7 +106,7 @@ body.player-mode .gm-only { display: none !important; }
 .fullscreen-modal {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: var(--bg-main); display: none; flex-direction: column; z-index: 8000; padding: 15px; overflow-y: auto;
-    padding-bottom: 70px; /* Bugikorjaus: Tärkeä pehmuste modaalin pohjalle painikkeita varten */
+    padding-bottom: 70px; 
 }
 .fullscreen-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border); }
 .fullscreen-modal-header h2 { color: var(--text-main); font-size: 1.4rem; margin: 0; }
@@ -134,7 +125,7 @@ body.player-mode .gm-only { display: none !important; }
 .score-par { background-color: var(--border) !important; }
 .score-bogey { background-color: var(--danger) !important; color: #fff !important; border-color: var(--danger) !important; }
 
-/* Väylätehtävä / Bounty */
+/* Väyläsääntö (Bounty korostettu) */
 .hole-rule-card { background: linear-gradient(135deg, var(--primary), #059669); color: #fff; border: none; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); text-align: center; padding: 30px 20px; border-radius:16px; margin-bottom:15px; }
 .hole-rule-card h1 { font-size:1.6rem; margin-bottom: 12px; text-transform: uppercase; font-weight: 900; }
 .hole-rule-card p { font-size: 1.1rem; line-height: 1.5; font-weight: 600; }
