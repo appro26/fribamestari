@@ -11,7 +11,6 @@ let activeHole = null;
 let currentCourse = null;
 let currentHoleIndex = 1;
 
-// KIRJAUTUMINEN
 window.claimIdentity = async function() {
     let n = document.getElementById('playerNameInput').value.trim();
     if(!n || n.length > 15) return alert("Syötä nimi!"); 
@@ -35,7 +34,6 @@ window.setRole = function(r) {
 function logEvent(msg) { push(ref(db, 'gameState/eventLog'), { time: new Date().toLocaleTimeString('fi-FI'), msg }); }
 function logScoreChange(playerName, delta, reason) { push(ref(db, 'gameState/scoreLog'), { time: new Date().toLocaleTimeString('fi-FI'), playerName, delta, reason }); }
 
-// TIETOKANNAN REAALIAIKAINEN KUUNTELU
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
     if(!data) return;
@@ -47,7 +45,6 @@ onValue(ref(db, 'gameState'), (snap) => {
 
     updateIdentityUI();
     
-    // NÄKYMÄN VAIHTO: Näytetäänkö Aloita-ruutu vai Peliruutu
     const gameSetupArea = document.getElementById('gameSetupArea');
     const mainGameArea = document.getElementById('mainGameArea');
     
@@ -79,14 +76,12 @@ onValue(ref(db, 'gameState'), (snap) => {
     renderScoreLog(data.scoreLog);
 });
 
-// UUSI: Pikavalinta Meilahti
 window.startMeilahti = function() {
-    const pars = Array(16).fill(3); // 16 väylää, kaikki par 3
+    const pars = Array(16).fill(3); 
     set(ref(db, 'gameState/course'), { name: "Meilahti", pars: pars });
     set(ref(db, 'gameState/currentHoleIndex'), 1);
     document.getElementById('courseModal').style.display = 'none';
     
-    // Arvotaan eka sääntö ja kauppa suoraan
     let premiumPool = allCards.filter(c => c.tier === "premium");
     let shuffledShop = premiumPool.sort(() => 0.5 - Math.random());
     const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
@@ -95,7 +90,6 @@ window.startMeilahti = function() {
     logEvent(`Peli aloitettu radalla Meilahti.`);
 };
 
-// RADAN LUONTI (Manuaalinen)
 window.generateParInputs = function() {
     const count = parseInt(document.getElementById('setupHoleCount').value) || 0;
     const container = document.getElementById('parInputsContainer');
@@ -114,7 +108,6 @@ window.saveCourseSetup = function() {
     set(ref(db, 'gameState/currentHoleIndex'), 1);
     document.getElementById('courseModal').style.display = 'none';
 
-    // Arvotaan eka sääntö ja kauppa suoraan
     let premiumPool = allCards.filter(c => c.tier === "premium");
     let shuffledShop = premiumPool.sort(() => 0.5 - Math.random());
     const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
@@ -131,7 +124,6 @@ function renderCourseBanner() {
     document.getElementById('bannerPar').innerText = currentCourse.pars[currentHoleIndex - 1] || 3;
 }
 
-// Seuraava väylä avaa ensin tulosten syötön
 window.nextHole = function() {
     window.openScoreModal();
 };
@@ -236,7 +228,6 @@ window.executeCardPlay = function(targetName) {
     });
 };
 
-// UPSI-TYYLIN TULOSKORTTIMUUTOKSET
 window.changeScore = function(idx, par, delta) {
     let input = document.getElementById(`scoreInput_${idx}`);
     let val = parseInt(input.value) + delta;
@@ -257,7 +248,6 @@ window.openScoreModal = function() {
     let par = currentCourse && currentCourse.pars ? (currentCourse.pars[currentHoleIndex - 1] || 3) : 3;
     document.getElementById('scoreModalHoleNum').innerText = currentHoleIndex;
     
-    // VIRHEEN KORJAUS: scoreModalPar on nyt olemassa HTML:ssä ja ottaa tiedon vastaan!
     const parElement = document.getElementById('scoreModalPar');
     if(parElement) parElement.innerText = par;
     
