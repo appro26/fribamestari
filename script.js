@@ -370,3 +370,21 @@ window.resetGame = function() {
         .then(() => { localStorage.clear(); location.reload(); });
     }
 };
+
+// NÄMÄ LISÄTTIIN TAKAISIN GM-PANEELIN LOKEJA VARTEN:
+function renderEventLog(logData) {
+    const container = document.getElementById('adminEventLog');
+    if(!container) return; container.innerHTML = "";
+    Object.values(logData || {}).reverse().slice(0, 30).forEach(l => {
+        container.innerHTML += `<div style="padding:4px 0;"><span style="color:var(--text-muted); margin-right:8px;">[${l.time}]</span>${l.msg}</div>`;
+    });
+}
+
+function renderScoreLog(logData) {
+    const container = document.getElementById('adminScoreLog');
+    if(!container) return; container.innerHTML = "";
+    Object.values(logData || {}).reverse().slice(0, 50).forEach(l => {
+        let color = l.delta >= 0 ? 'var(--info)' : 'var(--danger)';
+        container.innerHTML += `<div style="padding:4px 0;"><span style="color:var(--text-muted); margin-right:8px;">[${l.time}]</span><b style="color:#fff;">${l.playerName}</b>: <span style="color:${color};">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`;
+    });
+}
