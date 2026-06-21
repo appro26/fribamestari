@@ -1,3 +1,8 @@
+// Asetetaan virhekuuntelija heti alkuun, jotta mikään ei jää piiloon!
+window.onerror = function(msg, url, line) {
+    alert("Bugi: " + msg + " (Rivi: " + line + ")");
+};
+
 // --- 1. FIREBASE V10 MODULAARINEN KONFIGURAATIO ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, onValue, set, push, runTransaction, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -62,14 +67,13 @@ let activeHole = null;
 let pendingXP = 0;
 let xpTimeout = null;
 
-// Pitkän painalluksen asettaja (Tasan 1.5 sekuntia)
+// Korteille ja kaupalle säädetty kestävämpi pitkä painallus (Laskettu 1.2 sekuntiin)
 function setupLongPress(btnEl, onComplete) {
     let pressTimer;
     let isPressing = false;
-    const duration = 1500; 
+    const duration = 1200; 
 
     const start = (e) => {
-        if (e.type === 'touchstart') e.preventDefault();
         isPressing = true;
         btnEl.classList.add('is-pressing');
         pressTimer = setTimeout(() => {
@@ -89,28 +93,35 @@ function setupLongPress(btnEl, onComplete) {
     };
 
     btnEl.addEventListener('mousedown', start);
-    btnEl.addEventListener('touchstart', start);
+    btnEl.addEventListener('touchstart', start, { passive: true });
     btnEl.addEventListener('mouseup', end);
     btnEl.addEventListener('mouseleave', end);
     btnEl.addEventListener('touchend', end);
+    btnEl.addEventListener('touchcancel', end); // Tärkeä Androidille!
 }
 
 // --- 4. KIRJAUTUMINEN JA ROOLIT ---
-window.claimIdentity = function() {
-    let n = document.getElementById('playerNameInput').value.trim();
-    if(!n || n.length > 15) return alert("Syötä korkeintaan 15 merkkiä pitkä nimi."); 
-    
-    myName = n; 
-    localStorage.setItem('friba_name', n);
-    updateIdentityUI(); 
+window.claimIdentity = async function() {
+    try {
+        let n = document.getElementById('playerNameInput').value.trim();
+        if(!n || n.length > 15) return alert("Syötä korkeintaan 15 merkkiä pitkä nimi."); 
+        
+        myName = n; 
+        localStorage.setItem('friba_name', n);
+        updateIdentityUI(); 
 
-    runTransaction(ref(db, 'gameState/players'), (p) => {
-        p = p || []; 
-        if(!p.find(x => x.name === n)) {
-            p.push({ name: n, score: 0, cards: [] }); 
-        }
-        return p;
-    }).then(() => logEvent(`${n} astui tii-paikalle.`));
+        await runTransaction(ref(db, 'gameState/players'), (p) => {
+            // Suojataan Firebase-objektibugi muuttamalla data aina taulukoksi (Array)
+            let arr = p ? (Array.isArray(p) ? p : Object.values(p)) : [];
+            if(!arr.find(x => x && x.name === n)) {
+                arr.push({ name: n, score: 0, cards: [] }); 
+            }
+            return arr;
+        });
+        logEvent(`${n} astui tii-paikalle.`);
+    } catch (e) {
+        alert("Kirjautuminen epäonnistui: " + e.message);
+    }
 };
 
 function updateIdentityUI() { 
@@ -124,11 +135,13 @@ window.setRole = function(r) {
     document.getElementById('btnGM').classList.toggle('active', r === 'gm');
 };
 
-// Salasanaton GM-tila (Pitkä painallus)
+// GM-tilan yksinkertainen aktivointi
 const gmBtn = document.getElementById('btnGM');
 if(gmBtn) {
-    setupLongPress(gmBtn, () => {
-        window.setRole('gm');
+    gmBtn.addEventListener('click', () => {
+        if(confirm("Siirrytäänkö Game Master -tilaan? (Tarkoitettu vain pelinjohtajalle)")) {
+            window.setRole('gm');
+        }
     });
 }
 
@@ -137,7 +150,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
     if(!data) return;
 
-    allPlayers = data.players || [];
+    allPlayers = data.players ? (Array.isArray(data.players) ? data.players : Object.values(data.players)) : [];
     activeHole = data.activeHole || null;
 
     updateIdentityUI();
@@ -145,9 +158,9 @@ onValue(ref(db, 'gameState'), (snap) => {
     renderActiveHole();
     
     if (myName) {
-        const me = allPlayers.find(p => p.name === myName);
+        const me = allPlayers.find(p => p && p.name === myName);
         if (me) {
-            renderPlayerHand(me.cards || []);
+            renderPlayerHand(me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : []);
             renderShop(me.score || 0);
             document.getElementById('myResPoints').innerText = `${me.score || 0} Pisteitä`;
         } else {
@@ -274,10 +287,11 @@ function renderShop(myPoints) {
 function playCard(cardIndex, cardId) {
     const cardDef = sabotageCards.find(c => c.id === cardId);
     
-    runTransaction(ref(db, 'gameState/players'), (players) => {
-        if(!players) return players;
-        const me = players.find(p => p.name === myName);
+    runTransaction(ref(db, 'gameState/players'), (pData) => {
+        let players = pData ? (Array.isArray(pData) ? pData : Object.values(pData)) : [];
+        const me = players.find(p => p && p.name === myName);
         if(me && me.cards) {
+            me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards);
             me.cards.splice(cardIndex, 1); 
         }
         return players;
@@ -288,9 +302,9 @@ function playCard(cardIndex, cardId) {
 }
 
 function buyItem(itemId, price, itemName) {
-    runTransaction(ref(db, 'gameState/players'), (players) => {
-        if(!players) return players;
-        const me = players.find(p => p.name === myName);
+    runTransaction(ref(db, 'gameState/players'), (pData) => {
+        let players = pData ? (Array.isArray(pData) ? pData : Object.values(pData)) : [];
+        const me = players.find(p => p && p.name === myName);
         if(me && me.score >= price) {
             me.score -= price;
         } else {
@@ -302,7 +316,8 @@ function buyItem(itemId, price, itemName) {
             showXPAnimation(-price);
             triggerPopup(`Osto suoritettu!`, `${myName} osti kaupasta edun: <b>${itemName}</b>.`, `Edut astuvat voimaan heti.`);
             logEvent(`${myName} osti: ${itemName}`);
-            logScoreChange(myName, -price, res.snapshot.val().find(p=>p.name===myName).score, `Osto: ${itemName}`);
+            const updatedMe = res.snapshot.val().find(p => p && p.name===myName);
+            logScoreChange(myName, -price, updatedMe.score, `Osto: ${itemName}`);
         }
     });
 }
@@ -342,15 +357,16 @@ window.submitScores = function() {
     let winners = scores.filter(s => s.strokes === minStrokes).map(s => s.name);
     let losers = scores.filter(s => s.strokes === maxStrokes).map(s => s.name);
     
-    runTransaction(ref(db, 'gameState/players'), (players) => {
-        if(!players) return players;
+    runTransaction(ref(db, 'gameState/players'), (pData) => {
+        let players = pData ? (Array.isArray(pData) ? pData : Object.values(pData)) : [];
         
         players.forEach(p => {
+            if (!p) return;
             if (winners.includes(p.name)) {
                 p.score = (p.score || 0) + 5;
             }
             if (losers.includes(p.name)) {
-                p.cards = p.cards || [];
+                p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
                 const randomCard = sabotageCards[Math.floor(Math.random() * sabotageCards.length)];
                 p.cards.push(randomCard.id);
             }
@@ -430,6 +446,7 @@ function renderLeaderboard() {
     let sortedPlayers = [...allPlayers].sort((a,b) => b.score - a.score);
     list.innerHTML = '';
     sortedPlayers.forEach((p, i) => {
+        if(!p) return;
         const div = document.createElement('div');
         div.className = `player-row ${p.name === myName ? 'me' : ''}`;
         div.innerHTML = `<div style="display:flex; align-items:center;"><span style="color:var(--muted); font-size:0.8rem; margin-right:12px; font-weight:900;">${i+1}.</span><span>${p.name}</span></div><span class="price-tag">${p.score} P</span>`;
@@ -441,6 +458,7 @@ function renderAdminPlayerList() {
     const list = document.getElementById('adminPlayerList');
     if(!list) return; list.innerHTML = "";
     allPlayers.forEach((p, i) => {
+        if(!p) return;
         const div = document.createElement('div');
         div.className = 'player-row'; div.style.padding = '8px';
         div.innerHTML = `
@@ -463,12 +481,12 @@ window.adminAddPlayer = function() {
     let n = input.value.trim();
     if(!n || n.length > 15) return;
     
-    runTransaction(ref(db, 'gameState/players'), (p) => {
-        p = p || [];
-        if(!p.find(x => x.name === n)) { 
-            p.push({ name: n, score: 0, cards: [] }); 
+    runTransaction(ref(db, 'gameState/players'), (pData) => {
+        let players = pData ? (Array.isArray(pData) ? pData : Object.values(pData)) : [];
+        if(!players.find(x => x && x.name === n)) { 
+            players.push({ name: n, score: 0, cards: [] }); 
         }
-        return p;
+        return players;
     }).then(() => {
         input.value = ''; 
         logEvent(`Admin lisäsi pelaajan: ${n}`);
