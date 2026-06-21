@@ -1,0 +1,17 @@
+{
+  "short_name": "Fribamestari",
+  "name": "Fribamestari - Sabotaasipeli",
+  "description": "PWA frisbeegolf-sovellus ja sabotaasipeli.",
+  "display": "standalone",
+  "start_url": "index.html",
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
