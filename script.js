@@ -10,16 +10,205 @@ let allPlayers = [];
 let activeHole = null;
 let currentCourse = null;
 let currentHoleIndex = 1;
-let isExpandedView = false; // Laajennettu/Supistettu tila
-
-// UUSI: Vertailija uusia pelattuja kortteja varten (ilmoitukset)
+let isExpandedView = false; 
 let lastPlayedCardTimestamp = Date.now();
+
+//==============================================
+// 1. KAIKKI FUNKTIOT WINDOW-OLIOON (ESTÄÄ VIRHEET)
+//==============================================
+
+window.updateIdentityUI = function() { 
+    const el = document.getElementById('identityCard');
+    if(el) el.style.display = myName ? 'none' : 'block'; 
+};
+
+window.renderCourseBanner = function() {
+    const banner = document.getElementById('courseInfoBanner');
+    if(!banner || !currentCourse) return;
+    document.getElementById('bannerCourseName').innerText = currentCourse.name;
+    document.getElementById('bannerHoleNum').innerText = currentHoleIndex;
+    document.getElementById('bannerPar').innerText = currentCourse.pars[currentHoleIndex - 1] || 3;
+};
+
+window.renderLeaderboard = function() {
+    const list = document.getElementById('playerList');
+    if(!list) return;
+    let sortedPlayers = [...allPlayers].filter(p=>p).sort((a,b) => b.score - a.score);
+    list.innerHTML = '';
+    sortedPlayers.forEach((p, i) => {
+        list.innerHTML += `<div class="player-row ${p.name === myName ? 'me' : ''}"><div style="font-weight:800; font-size:1.1rem;"><span style="color:var(--text-muted); margin-right:15px;">${i+1}.</span>${p.name}</div><span style="font-weight:900; font-size:1.2rem; color:var(--primary);">${p.score} P</span></div>`;
+    });
+};
+
+window.renderActiveHole = function() {
+    const container = document.getElementById('activeHoleContainer');
+    const cardsArea = document.getElementById('activeCardsArea');
+    const cardsContainer = document.getElementById('activeCardsContainer');
+    const myRulesContainer = document.getElementById('myActiveRulesContainer');
+
+    if (!activeHole || !activeHole.rule) {
+        if(container) container.innerHTML = ``;
+        if(cardsArea) cardsArea.style.display = 'none';
+        if(myRulesContainer) myRulesContainer.style.display = 'none';
+        return;
+    }
+    
+    let bountyTag = activeHole.rule.type === 'bounty' ? `<div class="rule-bounty-tag">🏆 TEHTÄVÄ (+5 P)</div>` : '';
+    if(container) container.innerHTML = `<div class="hole-rule-card">${bountyTag}<h1>${activeHole.rule.n}</h1><p>${activeHole.rule.d}</p></div>`;
+    
+    if(activeHole.playedCards && activeHole.playedCards.length > 0) {
+        if(cardsArea) cardsArea.style.display = 'block';
+        let cardsHtml = '';
+        let myRulesHtml = '';
+        
+        const playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
+        playedCards.forEach(pc => {
+            let actionText = pc.type === 'buff' ? `käytti edun` : `sabotoi kohdetta <strong>${pc.target}</strong>`;
+            let color = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
+            
+            cardsHtml += `<div class="active-card-chip" style="border-color:${color};" onclick="window.showCardInfo('${pc.cardName}', '${pc.cardDesc}', 'Kohde: ${pc.target}<br>Käyttäjä: ${pc.by}')"><span style="color:var(--text-main);"><b>${pc.by}</b> ${actionText}: <span style="font-weight:900; color:${color};">${pc.cardName}</span></span></div>`;
+            
+            if(pc.target === myName) {
+                myRulesHtml += `<div class="my-rule-item"><b>${pc.cardName}:</b> ${pc.cardDesc}</div>`;
+            }
+        });
+        
+        if(cardsContainer) cardsContainer.innerHTML = cardsHtml;
+        if(myRulesHtml !== '') {
+            if(myRulesContainer) {
+                myRulesContainer.style.display = 'block';
+                myRulesContainer.innerHTML = `<div class="my-rules-box"><h3>🚨 Sinuun kohdistuvat sabotaasit:</h3>${myRulesHtml}</div>`;
+            }
+        } else {
+            if(myRulesContainer) myRulesContainer.style.display = 'none';
+        }
+    } else {
+        if(cardsArea) cardsArea.style.display = 'none';
+        if(myRulesContainer) myRulesContainer.style.display = 'none';
+    }
+};
+
+window.renderPlayerHand = function(cards) {
+    const modalContainer = document.getElementById('handModalCards');
+    const expandedContainer = document.getElementById('playerHandExpanded');
+    
+    if (cards.length === 0) { 
+        let emptyHtml = '<p style="color:var(--text-muted); font-size:1.2rem; text-align:center;">Kätesi on tyhjä.</p>';
+        if(modalContainer) modalContainer.innerHTML = emptyHtml;
+        if(expandedContainer) expandedContainer.innerHTML = emptyHtml;
+        return; 
+    }
+    
+    let html = '';
+    cards.forEach((cId, index) => {
+        const cDef = allCards.find(sc => sc.id === cId);
+        if(!cDef) return;
+        let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
+        let btnClass = cDef.type === 'buff' ? 'btn-success' : 'btn-danger';
+        html += `
+            <div class="physical-card ${typeClass}">
+                <div><h3>${cDef.n}</h3><p>${cDef.d}</p></div>
+                <button class="btn ${btnClass}" onclick="window.openTargetModal(${index}, '${cId}')">PELAA KORTTI</button>
+            </div>`;
+    });
+    
+    if(modalContainer) modalContainer.innerHTML = html;
+    if(expandedContainer) expandedContainer.innerHTML = html;
+};
+
+window.renderShop = function(shopArray, myPoints, boughtThisHole) {
+    const modalContainer = document.getElementById('shopModalCards');
+    const expandedContainer = document.getElementById('shopItemsExpanded');
+    
+    if(!shopArray || shopArray.length === 0) { 
+        let emptyHtml = '<p style="color:var(--text-muted); font-size:1.2rem; text-align:center;">Kauppa on suljettu.</p>';
+        if(modalContainer) modalContainer.innerHTML = emptyHtml;
+        if(expandedContainer) expandedContainer.innerHTML = emptyHtml;
+        return; 
+    }
+    
+    let html = '';
+    shopArray.forEach(item => {
+        if(!item) return;
+        const canAfford = myPoints >= item.price && !boughtThisHole;
+        let btnText = boughtThisHole ? 'OSTIT JO KORTIN TÄLLÄ VÄYLÄLLÄ' : (canAfford ? 'OSTA (NOPEIN VIE)' : 'EI VARAA (HINTA: ' + item.price + ' P)');
+        
+        html += `
+            <div class="physical-card premium-card">
+                <span class="card-price-tag">${item.price} P</span>
+                <div><h3>${item.n}</h3><p>${item.d}</p></div>
+                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
+            </div>`;
+    });
+    
+    if(modalContainer) modalContainer.innerHTML = html;
+    if(expandedContainer) expandedContainer.innerHTML = html;
+};
+
+window.renderEventLog = function(logData) {
+    const container = document.getElementById('adminEventLog');
+    if(!container) return; container.innerHTML = "";
+    Object.values(logData || {}).reverse().slice(0, 30).forEach(l => {
+        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span>${l.msg}</div>`;
+    });
+};
+
+window.renderScoreLog = function(logData) {
+    const container = document.getElementById('adminScoreLog');
+    if(!container) return; container.innerHTML = "";
+    Object.values(logData || {}).reverse().slice(0, 50).forEach(l => {
+        let color = l.delta >= 0 ? 'var(--info)' : 'var(--danger)';
+        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span><b>${l.playerName}</b>: <span style="color:${color}; font-weight:bold;">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`;
+    });
+};
+
+window.renderAdminPlayerList = function() {
+    const list = document.getElementById('adminPlayerList');
+    if(!list) return; list.innerHTML = "";
+    allPlayers.forEach((p, i) => {
+        if(!p) return;
+        list.innerHTML += `
+            <div class="player-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                    <span style="font-weight:800;">${p.name} (${p.score} P)</span>
+                    <button class="btn btn-danger" style="width:auto; padding:8px 16px; font-size:0.8rem;" onclick="window.removePlayer(${i})">POISTA</button>
+                </div>
+                <div class="gm-score-adjust">
+                    <input type="number" id="gmScoreAdjust_${i}" value="1">
+                    <button class="btn btn-primary" onclick="window.adjustScore(${i}, parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0)">Lisää</button>
+                    <button class="btn btn-danger" onclick="window.adjustScore(${i}, -(parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0))">Vähennä</button>
+                </div>
+            </div>`;
+    });
+};
+
+function triggerPopup(title, desc, details) {
+    const overlay = document.getElementById('lotteryWinner');
+    if(!overlay) return;
+    document.getElementById('popupTitle').innerHTML = title;
+    document.getElementById('popupDesc').innerHTML = desc;
+    
+    const detailsEl = document.getElementById('popupDetails');
+    if(detailsEl) {
+        detailsEl.innerHTML = details;
+        if(!details || details === '') detailsEl.style.display = 'none';
+        else detailsEl.style.display = 'block';
+    }
+    overlay.style.display = 'flex';
+}
+
+function logEvent(msg) { push(ref(db, 'gameState/eventLog'), { time: new Date().toLocaleTimeString('fi-FI'), msg }); }
+function logScoreChange(playerName, delta, reason) { push(ref(db, 'gameState/scoreLog'), { time: new Date().toLocaleTimeString('fi-FI'), playerName, delta, reason }); }
+
+//==============================================
+// 2. TAPAHTUMANKUUNTELIJAT (INTERAKTIOT)
+//==============================================
 
 window.claimIdentity = async function() {
     let n = document.getElementById('playerNameInput').value.trim();
     if(!n || n.length > 15) return alert("Syötä nimi!"); 
     myName = n; localStorage.setItem('friba_name', n);
-    updateIdentityUI(); 
+    window.updateIdentityUI(); 
     await runTransaction(ref(db, 'gameState/players'), (p) => {
         let arr = p ? (Array.isArray(p) ? p : Object.values(p)) : [];
         if(!arr.find(x => x && x.name === n)) { arr.push({ name: n, score: 0, cards: [], boughtThisHole: false }); }
@@ -27,15 +216,12 @@ window.claimIdentity = async function() {
     });
 };
 
-function updateIdentityUI() { document.getElementById('identityCard').style.display = myName ? 'none' : 'block'; }
-
 window.setRole = function(r) {
     document.body.className = r + '-mode';
     document.getElementById('btnPlayer').classList.toggle('active', r === 'player');
     document.getElementById('btnGM').classList.toggle('active', r === 'gm');
 };
 
-// UUSI: Näkymän vaihto
 window.toggleView = function() {
     isExpandedView = !isExpandedView;
     document.getElementById('expandedViewContainer').style.display = isExpandedView ? 'block' : 'none';
@@ -43,108 +229,15 @@ window.toggleView = function() {
     document.getElementById('viewToggleBtn').innerText = isExpandedView ? 'SIIRRY SUPISTETTUUN NÄKYMÄÄN' : 'LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)';
 };
 
-// UUSI: Nopeat Ilmoitukset (Toasts)
 window.showNotification = function(message, type = 'info') {
     const container = document.getElementById('notificationContainer');
-    if(!container) return; // Turvakatkaisu
+    if(!container) return; 
     const toast = document.createElement('div');
     toast.className = `notification ${type}`;
     toast.innerText = message;
     container.appendChild(toast);
-    
-    // Poista ilmoitus 3 sekunnin kuluttua
     setTimeout(() => { toast.remove(); }, 3000);
 };
-
-function logEvent(msg) { push(ref(db, 'gameState/eventLog'), { time: new Date().toLocaleTimeString('fi-FI'), msg }); }
-function logScoreChange(playerName, delta, reason) { push(ref(db, 'gameState/scoreLog'), { time: new Date().toLocaleTimeString('fi-FI'), playerName, delta, reason }); }
-
-onValue(ref(db, 'gameState'), (snap) => {
-    const data = snap.val();
-    
-    // TURVAKORJAUS RESETILLE: Jos DB on tyhjä, kirjaudutaan ulos paikallisesti
-    if(!data) {
-        if(myName) {
-            myName = null;
-            localStorage.removeItem('friba_name');
-            updateIdentityUI();
-            document.getElementById('handModal').style.display = 'none';
-            document.getElementById('shopModal').style.display = 'none';
-        }
-        currentCourse = null;
-        renderCourseBanner();
-        return;
-    }
-
-    allPlayers = data.players ? (Array.isArray(data.players) ? data.players : Object.values(data.players)) : [];
-    activeHole = data.activeHole || null;
-    currentCourse = data.course || null;
-    currentHoleIndex = data.currentHoleIndex || 1;
-
-    // Turvakorjaus: Jos peli poistettiin, kirjaudun ulos
-    if (myName) {
-        const me = allPlayers.find(p => p && p.name === myName);
-        if (!me) {
-            myName = null;
-            localStorage.removeItem('friba_name');
-            document.getElementById('handModal').style.display = 'none';
-            document.getElementById('shopModal').style.display = 'none';
-        }
-    }
-
-    updateIdentityUI();
-    
-    const gameSetupArea = document.getElementById('gameSetupArea');
-    const mainGameArea = document.getElementById('mainGameArea');
-    
-    if (gameSetupArea && mainGameArea && myName) {
-        if (!currentCourse) {
-            gameSetupArea.style.display = 'block';
-            mainGameArea.style.display = 'none';
-        } else {
-            gameSetupArea.style.display = 'none';
-            mainGameArea.style.display = 'block';
-        }
-    } else if (gameSetupArea && mainGameArea) {
-        gameSetupArea.style.display = 'none';
-        mainGameArea.style.display = 'none';
-    }
-
-    renderCourseBanner();
-    renderLeaderboard();
-    renderActiveHole();
-    
-    if (myName) {
-        const me = allPlayers.find(p => p && p.name === myName);
-        if (me) {
-            let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : [];
-            renderPlayerHand(myCards);
-            renderShop(activeHole ? activeHole.shop : null, me.score || 0, me.boughtThisHole);
-            
-            document.getElementById('myResPointsBtn').innerText = `${me.score || 0} P`;
-            document.getElementById('myResPointsExpanded').innerText = `${me.score || 0} P`;
-            document.getElementById('handCountBadge').innerText = myCards.length;
-        }
-
-        // NOPEAT ILMOITUKSET: Tarkistetaan uudet sabotaasit minuun
-        if (activeHole && activeHole.playedCards) {
-            const playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
-            const myNewDebuffs = playedCards.filter(pc => pc.target === myName && pc.timestamp > lastPlayedCardTimestamp && pc.type === 'sabotage');
-            
-            if (myNewDebuffs.length > 0) {
-                myNewDebuffs.forEach(db => {
-                    showNotification(`💥 Sinua sabotoitiin kortilla: ${db.cardName}`, 'debuff');
-                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
-                });
-                lastPlayedCardTimestamp = Math.max(...playedCards.map(pc => pc.timestamp));
-            }
-        }
-    }
-
-    renderAdminPlayerList();
-    renderEventLog(data.eventLog);
-    renderScoreLog(data.scoreLog);
-});
 
 window.startMeilahti = function() {
     runTransaction(ref(db, 'gameState'), (state) => {
@@ -229,116 +322,24 @@ window.saveCourseSetup = function() {
     });
 };
 
-window.showCardInfo = function(name, desc, details) { triggerPopup(name, desc, details); };
+window.nextHole = function() { window.openScoreModal(); };
 
-function renderActiveHole() {
-    const container = document.getElementById('activeHoleContainer');
-    const cardsArea = document.getElementById('activeCardsArea');
-    const cardsContainer = document.getElementById('activeCardsContainer');
-    const myRulesContainer = document.getElementById('myActiveRulesContainer');
-
-    if (!activeHole || !activeHole.rule) {
-        container.innerHTML = ``;
-        cardsArea.style.display = 'none';
-        myRulesContainer.style.display = 'none';
-        return;
-    }
-    
-    // UUSI: Väylätehtävän visuaalinen korostus
-    let bountyTag = activeHole.rule.type === 'bounty' ? `<div class="rule-bounty-tag">🏆 TEHTÄVÄ (+5 P)</div>` : '';
-    container.innerHTML = `<div class="hole-rule-card">${bountyTag}<h1>${activeHole.rule.n}</h1><p>${activeHole.rule.d}</p></div>`;
-    
-    if(activeHole.playedCards && activeHole.playedCards.length > 0) {
-        cardsArea.style.display = 'block';
-        let cardsHtml = '';
-        let myRulesHtml = '';
-        
-        const playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
-        playedCards.forEach(pc => {
-            let actionText = pc.type === 'buff' ? `käytti edun` : `sabotoi kohdetta <strong>${pc.target}</strong>`;
-            let color = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
-            
-            // UUSI: Värikoodaus livenä
-            cardsHtml += `<div class="active-card-chip" style="border-color:${color};" onclick="window.showCardInfo('${pc.cardName}', '${pc.cardDesc}', 'Kohde: ${pc.target}<br>Käyttäjä: ${pc.by}')"><span style="color:#fff;"><b>${pc.by}</b> ${actionText}: <span style="font-weight:900; color:${color};">${pc.cardName}</span></span></div>`;
-            
-            if(pc.target === myName) {
-                myRulesHtml += `<div class="my-rule-item"><b>${pc.cardName}:</b> ${pc.cardDesc}</div>`;
-            }
-        });
-        
-        cardsContainer.innerHTML = cardsHtml;
-        if(myRulesHtml !== '') {
-            myRulesContainer.style.display = 'block';
-            myRulesContainer.innerHTML = `<div class="my-rules-box"><h3>🚨 Sinuun kohdistuvat sabotaasit:</h3>${myRulesHtml}</div>`;
-        } else {
-            myRulesContainer.style.display = 'none';
+window.rollHoleRules = function() {
+    runTransaction(ref(db, 'gameState'), (state) => {
+        if(!state) return state;
+        const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
+        let premiumPool = allCards.filter(c => c.tier === "premium");
+        let uniqueShop = []; let used = new Set();
+        for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
+            if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
+            if(uniqueShop.length === 5) break;
         }
-    } else {
-        cardsArea.style.display = 'none';
-        myRulesContainer.style.display = 'none';
-    }
-}
-
-// Renderöidään omat kortit sekä Modaalille (Compact) että Expanded-gridille
-function renderPlayerHand(cards) {
-    const modalContainer = document.getElementById('handModalCards');
-    const expandedContainer = document.getElementById('playerHandExpanded');
-    
-    if (cards.length === 0) { 
-        let emptyHtml = '<p style="color:var(--text-main); font-size:1.2rem; text-align:center;">Kätesi on tyhjä.</p>';
-        modalContainer.innerHTML = emptyHtml;
-        expandedContainer.innerHTML = emptyHtml;
-        return; 
-    }
-    
-    let html = '';
-    cards.forEach((cId, index) => {
-        const cDef = allCards.find(sc => sc.id === cId);
-        if(!cDef) return;
-        // UUSI: Visuaalinen pelikortti-design
-        let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
-        let btnClass = cDef.type === 'buff' ? 'btn-success' : 'btn-danger';
-        html += `
-            <div class="physical-card ${typeClass}">
-                <div><h3>${cDef.n}</h3><p>${cDef.d}</p></div>
-                <button class="btn ${btnClass}" onclick="window.openTargetModal(${index}, '${cId}')">PELAA KORTTI</button>
-            </div>`;
+        state.activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
+        return state;
     });
-    
-    modalContainer.innerHTML = html;
-    expandedContainer.innerHTML = html;
-}
+};
 
-// Renderöidään kauppa sekä Modaalille (Compact) että Expanded-gridille (visuaalinen grid)
-function renderShop(shopArray, myPoints, boughtThisHole) {
-    const modalContainer = document.getElementById('shopModalCards');
-    const expandedContainer = document.getElementById('shopItemsExpanded');
-    
-    if(!shopArray || shopArray.length === 0) { 
-        let emptyHtml = '<p style="color:var(--text-main); font-size:1.2rem; text-align:center;">Kauppa on suljettu.</p>';
-        modalContainer.innerHTML = emptyHtml;
-        expandedContainer.innerHTML = emptyHtml;
-        return; 
-    }
-    
-    let html = '';
-    shopArray.forEach(item => {
-        if(!item) return;
-        const canAfford = myPoints >= item.price && !boughtThisHole;
-        let btnText = boughtThisHole ? 'OSTIT JO KORTIN TÄLLÄ VÄYLÄLLÄ' : (canAfford ? 'OSTA (NOPEIN VIE)' : 'EI VARAA (HINTA: ' + item.price + ' P)');
-        
-        // UUSI: Preemio-kortin design hintalapulla
-        html += `
-            <div class="physical-card premium-card">
-                <span class="card-price-tag">${item.price} P</span>
-                <div><h3>${item.n}</h3><p>${item.d}</p></div>
-                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
-            </div>`;
-    });
-    
-    modalContainer.innerHTML = html;
-    expandedContainer.innerHTML = html;
-}
+window.showCardInfo = function(name, desc, details) { triggerPopup(name, desc, details); };
 
 window.buyShopItem = function(item) {
     runTransaction(ref(db, 'gameState'), (state) => {
@@ -369,7 +370,6 @@ window.openTargetModal = function(cardIndex, cardId) {
     const cardDef = allCards.find(c => c.id === cardId);
     pendingCardPlay = { index: cardIndex, id: cardId, def: cardDef };
     
-    // ÄLYKÄS KORTIN PELAAMINEN: Buffi pelataan automaattisesti itselle
     if(cardDef.type === 'buff') {
         window.executeCardPlay(myName);
         return;
@@ -404,7 +404,6 @@ window.executeCardPlay = function(targetName) {
         }
         if(state.activeHole) {
             state.activeHole.playedCards = state.activeHole.playedCards ? (Array.isArray(state.activeHole.playedCards) ? state.activeHole.playedCards : Object.values(state.activeHole.playedCards)) : [];
-            // Lisätään aikaleima ilmoituksia varten
             state.activeHole.playedCards.push({ cardName: card.def.n, cardDesc: card.def.d, target: targetName, by: myName, type: card.def.type, timestamp });
         }
         state.players = players;
@@ -481,7 +480,6 @@ window.submitScores = function() {
         
         players.forEach(p => {
             if (!p) return;
-            // PISTELOGIIKKA: Voitto +2 P, Tehtävä +5 P
             if (winners.includes(p.name)) p.score = (p.score || 0) + 2;
             if (taskWinners.includes(p.name)) p.score = (p.score || 0) + 5;
             
@@ -502,73 +500,11 @@ window.submitScores = function() {
         state.activeHole = null; 
         return state;
     }).then(() => {
-        triggerPopup(`Tulokset tallennettu`, `Kaikille jaettu 2 uutta korttia!`, ``);
         document.getElementById('scoreModal').style.display = 'none';
         window.rollHoleRules(); 
-        lastPlayedCardTimestamp = Date.now(); // Nollataan aikaleima
+        lastPlayedCardTimestamp = Date.now(); 
     });
 };
-
-function triggerPopup(title, desc, details) {
-    const overlay = document.getElementById('lotteryWinner');
-    if(!overlay) return;
-    document.getElementById('popupTitle').innerHTML = title;
-    document.getElementById('popupDesc').innerHTML = desc;
-    document.getElementById('popupDetails').innerHTML = details;
-    
-    if(!details || details === '') document.getElementById('popupDetails').style.display = 'none';
-    else document.getElementById('popupDetails').style.display = 'block';
-
-    overlay.style.display = 'flex';
-}
-
-function renderLeaderboard() {
-    const list = document.getElementById('playerList');
-    if(!list) return;
-    let sortedPlayers = [...allPlayers].filter(p=>p).sort((a,b) => b.score - a.score);
-    list.innerHTML = '';
-    sortedPlayers.forEach((p, i) => {
-        list.innerHTML += `<div class="player-row ${p.name === myName ? 'me' : ''}"><div style="font-weight:800; font-size:1.1rem;"><span style="color:var(--text-muted); margin-right:15px;">${i+1}.</span>${p.name}</div><span style="font-weight:900; font-size:1.2rem; color:var(--primary);">${p.score} P</span></div>`;
-    });
-}
-
-// GM-HALLINTA: Palautettu kaikki aiemmat toiminnot
-function renderEventLog(logData) {
-    const container = document.getElementById('adminEventLog');
-    if(!container) return; container.innerHTML = "";
-    Object.values(logData || {}).reverse().slice(0, 30).forEach(l => {
-        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span>${l.msg}</div>`;
-    });
-}
-
-function renderScoreLog(logData) {
-    const container = document.getElementById('adminScoreLog');
-    if(!container) return; container.innerHTML = "";
-    Object.values(logData || {}).reverse().slice(0, 50).forEach(l => {
-        let color = l.delta >= 0 ? 'var(--info)' : 'var(--danger)';
-        container.innerHTML += `<div style="padding:6px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:bold;">[${l.time}]</span><b>${l.playerName}</b>: <span style="color:${color}; font-weight:bold;">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`;
-    });
-}
-
-window.renderAdminPlayerList = function() {
-    const list = document.getElementById('adminPlayerList');
-    if(!list) return; list.innerHTML = "";
-    allPlayers.forEach((p, i) => {
-        if(!p) return;
-        list.innerHTML += `
-            <div class="player-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
-                <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                    <span style="font-weight:800;">${p.name} (${p.score} P)</span>
-                    <button class="btn btn-danger" style="width:auto; padding:8px 16px; font-size:0.8rem;" onclick="window.removePlayer(${i})">POISTA</button>
-                </div>
-                <div class="gm-score-adjust">
-                    <input type="number" id="gmScoreAdjust_${i}" value="1">
-                    <button class="btn btn-primary" onclick="window.adjustScore(${i}, parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0)">Lisää</button>
-                    <button class="btn btn-danger" onclick="window.adjustScore(${i}, -(parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0))">Vähennä</button>
-                </div>
-            </div>`;
-    });
-}
 
 window.adminAddPlayer = function() {
     const input = document.getElementById('adminNewPlayerName');
@@ -586,11 +522,12 @@ window.adjustScore = function(idx, amt) {
     runTransaction(ref(db, `gameState/players/${idx}`), (p) => {
         if(p) { p.score = Math.max(0, (p.score || 0) + amt); }
         return p;
-    });
+    }).then(() => logScoreChange("Admin", amt, "Manuaalinen muutos"));
 };
 
 window.removePlayer = function(idx) { 
     if(confirm("Poistetaanko pelaaja pelistä?")) { 
+        logEvent(`Admin poisti pelaajan: ${allPlayers[idx].name}`);
         allPlayers.splice(idx, 1); 
         set(ref(db, 'gameState/players'), allPlayers); 
     } 
@@ -598,7 +535,95 @@ window.removePlayer = function(idx) {
 
 window.resetGame = function() {
     if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos.")) {
-        set(ref(db, 'gameState'), { players: [], activeHole: null, currentHoleIndex: 1, course: null })
+        set(ref(db, 'gameState'), { players: [], eventLog: {}, scoreLog: {}, activeHole: null, currentHoleIndex: 1, course: null })
         .then(() => { localStorage.clear(); location.reload(); });
     }
 };
+
+//==============================================
+// 3. FIREBASE KUUNTELIJA
+//==============================================
+
+onValue(ref(db, 'gameState'), (snap) => {
+    const data = snap.val();
+    
+    if(!data) {
+        if(myName) {
+            myName = null;
+            localStorage.removeItem('friba_name');
+            window.updateIdentityUI();
+            document.getElementById('handModal').style.display = 'none';
+            document.getElementById('shopModal').style.display = 'none';
+        }
+        currentCourse = null;
+        window.renderCourseBanner();
+        return;
+    }
+
+    allPlayers = data.players ? (Array.isArray(data.players) ? data.players : Object.values(data.players)) : [];
+    activeHole = data.activeHole || null;
+    currentCourse = data.course || null;
+    currentHoleIndex = data.currentHoleIndex || 1;
+
+    if (myName) {
+        const me = allPlayers.find(p => p && p.name === myName);
+        if (!me) {
+            myName = null;
+            localStorage.removeItem('friba_name');
+            document.getElementById('handModal').style.display = 'none';
+            document.getElementById('shopModal').style.display = 'none';
+        }
+    }
+
+    window.updateIdentityUI();
+    
+    const gameSetupArea = document.getElementById('gameSetupArea');
+    const mainGameArea = document.getElementById('mainGameArea');
+    
+    if (gameSetupArea && mainGameArea && myName) {
+        if (!currentCourse) {
+            gameSetupArea.style.display = 'block';
+            mainGameArea.style.display = 'none';
+        } else {
+            gameSetupArea.style.display = 'none';
+            mainGameArea.style.display = 'block';
+        }
+    } else if (gameSetupArea && mainGameArea) {
+        gameSetupArea.style.display = 'none';
+        mainGameArea.style.display = 'none';
+    }
+
+    window.renderCourseBanner();
+    window.renderLeaderboard();
+    window.renderActiveHole();
+    
+    if (myName) {
+        const me = allPlayers.find(p => p && p.name === myName);
+        if (me) {
+            let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : [];
+            window.renderPlayerHand(myCards);
+            window.renderShop(activeHole ? activeHole.shop : null, me.score || 0, me.boughtThisHole);
+            
+            document.getElementById('myResPointsBtn').innerText = `${me.score || 0} P`;
+            document.getElementById('myResPointsExpanded').innerText = `${me.score || 0} P`;
+            document.getElementById('handCountBadge').innerText = myCards.length;
+        }
+
+        if (activeHole && activeHole.playedCards) {
+            const playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
+            const myNewDebuffs = playedCards.filter(pc => pc.target === myName && pc.timestamp > lastPlayedCardTimestamp && pc.type === 'sabotage');
+            
+            if (myNewDebuffs.length > 0) {
+                myNewDebuffs.forEach(db => {
+                    window.showNotification(`💥 Sinua sabotoitiin kortilla: ${db.cardName}`, 'debuff');
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
+                });
+                lastPlayedCardTimestamp = Math.max(...playedCards.map(pc => pc.timestamp));
+            }
+        }
+    }
+
+    window.renderAdminPlayerList();
+    window.renderEventLog(data.eventLog);
+    window.renderScoreLog(data.scoreLog);
+});
