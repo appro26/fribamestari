@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png">
-    <link rel="stylesheet" href="style.css?v=23">
+    <link rel="stylesheet" href="style.css?v=24">
     <meta name="theme-color" content="#10b981">
     <script>window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };</script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
@@ -38,9 +38,9 @@
         <div id="mainGameArea" style="display:none;">
             
             <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 10px;">
-                <div class="card" style="flex: 1; margin: 0; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
+                <div id="courseInfoBanner" class="card" style="flex: 1; margin: 0; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
                     <div style="font-size: 0.8rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase;" id="bannerCourseName">Rata</div>
-                    <div style="font-weight: 900; font-size: 1.3rem; color: #000;">VÄYLÄ <span id="bannerHoleNum" style="color: var(--primary);">1</span> <span style="color:var(--text-muted); font-size:0.9rem;">(PAR <span id="bannerPar">3</span>)</span></div>
+                    <div style="font-weight: 900; font-size: 1.3rem; color: var(--text-main);">VÄYLÄ <span id="bannerHoleNum" style="color: var(--primary);">1</span> <span style="color:var(--text-muted); font-size:0.9rem;">(PAR <span id="bannerPar">3</span>)</span></div>
                 </div>
                 <button class="btn btn-primary" onclick="if(window.nextHole) window.nextHole()" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2;">📝 SYÖTÄ<br>TULOS</button>
             </div>
@@ -73,7 +73,7 @@
                         <div id="playerHandExpanded" class="cards-list-1"></div>
                     </div>
                     <div class="card" style="border-top: 5px solid var(--warning);">
-                        <h2 style="color:var(--warning);">🛒 Kauppa <span id="myResPointsExpanded" style="float:right; color:#000;">0 P</span></h2>
+                        <h2 style="color:var(--warning);">🛒 Kauppa <span id="myResPointsExpanded" style="float:right; color:var(--text-main);">0 P</span></h2>
                         <div id="shopItemsExpanded" class="cards-list-1"></div>
                     </div>
                 </div>
@@ -102,7 +102,7 @@
         </div>
 
         <div class="card" style="margin-top: 15px; border-top: 4px solid var(--text-main);">
-            <h2 style="color:#000;">🏆 Frisbeegolf-Tuloskortti</h2>
+            <h2 style="color:var(--text-main);">🏆 Frisbeegolf-Tuloskortti</h2>
             <div id="playerList"></div>
         </div>
     </div>
@@ -112,7 +112,7 @@
             <h2>🃏 OMAT KORTIT</h2>
             <button class="close-modal-btn" onclick="document.getElementById('handModal').style.display='none'">&times;</button>
         </div>
-        <div id="handModalCards" class="swipe-carousel"></div>
+        <div id="handModalCards" class="cards-grid-2"></div>
     </div>
 
     <div id="shopModal" class="fullscreen-modal">
@@ -120,7 +120,7 @@
             <h2>🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px;">0 P</span></h2>
             <button class="close-modal-btn" onclick="document.getElementById('shopModal').style.display='none'">&times;</button>
         </div>
-        <div id="shopModalCards" class="swipe-carousel"></div>
+        <div id="shopModalCards" class="cards-grid-2"></div>
     </div>
 
     <div id="courseModal" class="winner-overlay">
@@ -143,17 +143,17 @@
     <div id="scoreModal" class="winner-overlay">
         <div class="card" style="width: 100%; max-width: 450px;">
             <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="color:#000; font-size: 1.8rem; margin: 0;">VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
-                <p style="color: var(--text-muted); font-size: 1.2rem; margin-top: 5px; font-weight:800;">Par <strong id="scoreModalPar" style="color:#000;">3</strong></p>
+                <h2 style="color:var(--text-main); font-size: 1.8rem; margin: 0;">VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
+                <p style="color: var(--text-muted); font-size: 1.2rem; margin-top: 5px; font-weight:800;">Par <strong id="scoreModalPar" style="color:var(--text-main);">3</strong></p>
             </div>
             
             <button class="btn btn-secondary" style="padding: 16px; font-size: 1rem; margin-bottom: 20px; background:var(--surface-alt);" onclick="if(window.toggleScoreModalRule) window.toggleScoreModalRule()">👁️ NÄYTÄ VÄYLÄN SÄÄNTÖ</button>
-            <div id="scoreModalRuleBox" style="display: none; background: #fff; border: 3px solid var(--primary); padding: 16px; border-radius: 12px; margin-bottom: 20px; font-weight: 800; font-size: 1.05rem; color:#000;"></div>
+            <div id="scoreModalRuleBox" style="display: none; background: #fff; border: 3px solid var(--primary); padding: 16px; border-radius: 12px; margin-bottom: 20px; font-weight: 800; font-size: 1.05rem; color:var(--text-main);"></div>
 
             <div id="scoreInputsContainer" style="margin-bottom: 25px;"></div>
             
             <div style="background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 3px solid var(--warning);">
-                <label style="color: #000; font-size: 1.1rem; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; display: block;">Kuka suoritti tehtävän? (+5 P)</label>
+                <label style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; display: block;">Kuka suoritti tehtävän? (+5 P)</label>
                 <div id="taskWinnerContainer" class="task-checkbox-grid"></div>
             </div>
 
@@ -164,7 +164,7 @@
 
     <div id="targetModal" class="winner-overlay">
         <div class="card" style="width: 100%; max-width: 400px; border: 4px solid var(--danger);">
-            <h2 style="color:#000;">Valitse sabotaasin kohde</h2>
+            <h2 style="color:var(--text-main);">Valitse sabotaasin kohde</h2>
             <p id="targetCardName" style="color: var(--danger); font-weight: 900; margin-bottom: 20px; font-size: 1.5rem; text-align:center; text-transform:uppercase; line-height:1.2;"></p>
             <div id="targetPlayerList" style="margin-bottom: 20px;"></div>
             <button class="btn btn-secondary" onclick="document.getElementById('targetModal').style.display='none'">PERUUTA</button>
@@ -173,14 +173,14 @@
 
     <div id="lotteryWinner" class="winner-overlay">
         <div class="card" style="text-align: center; width: 100%; max-width: 400px; border: 4px solid var(--primary);">
-            <h1 id="popupTitle" style="color: #000; font-size: 1.8rem; margin-bottom: 12px; text-transform:uppercase;">Ilmoitus</h1>
-            <p id="popupDesc" style="font-size:1.15rem; color:#222; font-weight:800; margin-bottom: 16px;"></p>
-            <div id="popupDetails" style="background: var(--surface-alt); padding: 16px; border-radius: 12px; font-size: 1.05rem; font-weight:700; text-align: left; border: 2px solid var(--border); color:#000;"></div>
+            <h1 id="popupTitle" style="color: var(--text-main); font-size: 1.8rem; margin-bottom: 12px; text-transform:uppercase;">Ilmoitus</h1>
+            <p id="popupDesc" style="font-size:1.15rem; color:var(--text-main); font-weight:800; margin-bottom: 16px;"></p>
+            <div id="popupDetails" style="background: var(--surface-alt); padding: 16px; border-radius: 12px; font-size: 1.05rem; font-weight:700; text-align: left; border: 2px solid var(--border); color:var(--text-main);"></div>
             <button class="btn btn-primary" style="margin-top:25px; padding:18px;" onclick="document.getElementById('lotteryWinner').style.display='none'">SELVÄ!</button>
         </div>
     </div>
 
-    <script src="tasks.js?v=23"></script>
-    <script type="module" src="script.js?v=23"></script>
+    <script src="tasks.js?v=24"></script>
+    <script type="module" src="script.js?v=24"></script>
 </body>
 </html>
