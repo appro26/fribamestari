@@ -33,19 +33,42 @@ window.setRole = function(r) {
 
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
-    if(!data) return;
+    if(!data) {
+        // JOS DB ON TYHJÄ (RESET), KIRJAUDUTAAN ULOS PAIKALLISESTI
+        if(myName) {
+            myName = null;
+            localStorage.removeItem('friba_name');
+            updateIdentityUI();
+            document.getElementById('handModal').style.display = 'none';
+            document.getElementById('shopModal').style.display = 'none';
+        }
+        currentCourse = null;
+        renderCourseBanner();
+        return;
+    }
 
     allPlayers = data.players ? (Array.isArray(data.players) ? data.players : Object.values(data.players)) : [];
     activeHole = data.activeHole || null;
     currentCourse = data.course || null;
     currentHoleIndex = data.currentHoleIndex || 1;
 
+    // TURVAKORJAUS RESETILLE: Jos nimeni ei ole enää listassa, kirjaudun ulos
+    if (myName) {
+        const me = allPlayers.find(p => p && p.name === myName);
+        if (!me) {
+            myName = null;
+            localStorage.removeItem('friba_name');
+            document.getElementById('handModal').style.display = 'none';
+            document.getElementById('shopModal').style.display = 'none';
+        }
+    }
+
     updateIdentityUI();
     
     const gameSetupArea = document.getElementById('gameSetupArea');
     const mainGameArea = document.getElementById('mainGameArea');
     
-    if (gameSetupArea && mainGameArea) {
+    if (gameSetupArea && mainGameArea && myName) {
         if (!currentCourse) {
             gameSetupArea.style.display = 'block';
             mainGameArea.style.display = 'none';
@@ -53,6 +76,9 @@ onValue(ref(db, 'gameState'), (snap) => {
             gameSetupArea.style.display = 'none';
             mainGameArea.style.display = 'block';
         }
+    } else if (gameSetupArea && mainGameArea) {
+        gameSetupArea.style.display = 'none';
+        mainGameArea.style.display = 'none';
     }
 
     renderCourseBanner();
@@ -64,7 +90,10 @@ onValue(ref(db, 'gameState'), (snap) => {
         if (me) {
             renderPlayerHand(me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : []);
             renderShop(activeHole ? activeHole.shop : null, me.score || 0, me.boughtThisHole);
-            document.getElementById('myResPoints').innerText = `${me.score || 0} P`;
+            
+            document.getElementById('myResPointsBtn').innerText = `${me.score || 0} P`;
+            const cCount = me.cards ? (Array.isArray(me.cards) ? me.cards.length : Object.keys(me.cards).length) : 0;
+            document.getElementById('handCountBadge').innerText = cCount;
         }
     }
 
@@ -83,7 +112,6 @@ window.startMeilahti = function() {
             if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
             if(uniqueShop.length === 5) break;
         }
-        
         const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
         state.activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
         
@@ -110,7 +138,7 @@ window.generateParInputs = function() {
     const count = parseInt(document.getElementById('setupHoleCount').value) || 0;
     const container = document.getElementById('parInputsContainer');
     container.innerHTML = '';
-    for(let i=1; i<=count; i++) container.innerHTML += `<div style="background:var(--bg-dark); padding:10px; border-radius:8px;"><label style="font-size:0.8rem; color:var(--text-muted);">Väylä ${i} PAR</label><input type="number" id="setupPar_${i}" value="3" style="margin:0; padding:10px;"></div>`;
+    for(let i=1; i<=count; i++) container.innerHTML += `<div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid var(--border-light);"><label style="font-size:0.8rem; color:var(--text-muted); font-weight:bold;">Väylä ${i} PAR</label><input type="number" id="setupPar_${i}" value="3" style="margin:0; padding:10px; border:none; background:transparent;"></div>`;
 };
 
 window.saveCourseSetup = function() {
@@ -167,14 +195,12 @@ window.rollHoleRules = function() {
     runTransaction(ref(db, 'gameState'), (state) => {
         if(!state) return state;
         const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
-        
         let premiumPool = allCards.filter(c => c.tier === "premium");
         let uniqueShop = []; let used = new Set();
         for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
             if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
             if(uniqueShop.length === 5) break;
         }
-        
         state.activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
         return state;
     });
@@ -198,7 +224,7 @@ function renderActiveHole() {
     }
     
     let icon = activeHole.rule.type === 'bounty' ? '🏆' : '🎲';
-    container.innerHTML = `<div class="card hole-rule-card"><h1 style="color: #fff; font-size:1.6rem; margin-bottom: 10px;">${icon} ${activeHole.rule.n}</h1><p style="font-size: 1.1rem; line-height: 1.5; color:var(--text-main);">${activeHole.rule.d}</p></div>`;
+    container.innerHTML = `<div class="card hole-rule-card"><h1>${icon} ${activeHole.rule.n}</h1><p>${activeHole.rule.d}</p></div>`;
     
     if(activeHole.playedCards && activeHole.playedCards.length > 0) {
         cardsArea.style.display = 'block';
@@ -206,10 +232,8 @@ function renderActiveHole() {
         let myRulesHtml = '';
         
         activeHole.playedCards.forEach(pc => {
-            let actionText = pc.type === 'buff' ? `käytti edun itselleen` : `sabotoi kohdetta <strong>${pc.target}</strong>`;
-            let color = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
-            
-            cardsHtml += `<div class="active-card-chip" style="border-color:${color};" onclick="window.showCardInfo('${pc.cardName}', '${pc.cardDesc}', 'Kohde: ${pc.target}<br>Käyttäjä: ${pc.by}')"><span style="color:#fff;"><b>${pc.by}</b> ${actionText}: <span style="color:${color};">${pc.cardName}</span></span></div>`;
+            let actionText = pc.type === 'buff' ? `käytti edun` : `sabotoi kohdetta <strong>${pc.target}</strong>`;
+            cardsHtml += `<div class="active-card-chip" onclick="window.showCardInfo('${pc.cardName}', '${pc.cardDesc}', 'Kohde: ${pc.target}<br>Käyttäjä: ${pc.by}')"><b>${pc.by}</b> ${actionText}: <span style="font-weight:900;">${pc.cardName}</span></div>`;
             
             if(pc.target === myName) {
                 myRulesHtml += `<div class="my-rule-item"><b>${pc.cardName}:</b> ${pc.cardDesc}</div>`;
@@ -220,7 +244,7 @@ function renderActiveHole() {
         
         if(myRulesHtml !== '') {
             myRulesContainer.style.display = 'block';
-            myRulesContainer.innerHTML = `<div class="my-rules-box"><h3>🚨 Sinuun kohdistuvat säännöt:</h3>${myRulesHtml}</div>`;
+            myRulesContainer.innerHTML = `<div class="my-rules-box"><h3>🚨 Sinuun kohdistuvat sabotaasit:</h3>${myRulesHtml}</div>`;
         } else {
             myRulesContainer.style.display = 'none';
         }
@@ -230,41 +254,42 @@ function renderActiveHole() {
     }
 }
 
+// OMAT KORTIT MODAALIIN (Isot kortit)
 function renderPlayerHand(cards) {
-    const container = document.getElementById('playerHand');
-    if (cards.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem; padding: 10px;">Kätesi on tyhjä.</p>'; return; }
+    const container = document.getElementById('handModalCards');
+    if (cards.length === 0) { container.innerHTML = '<p style="color:#fff; font-size:1.2rem; text-align:center;">Kätesi on tyhjä.</p>'; return; }
     
     let html = '';
     cards.forEach((cId, index) => {
         const cDef = allCards.find(sc => sc.id === cId);
         if(!cDef) return;
+        let typeClass = cDef.type === 'buff' ? 'buff' : 'sabotage';
         let btnColor = cDef.type === 'buff' ? 'var(--info)' : 'var(--danger)';
         html += `
-            <div class="card-in-hand" style="border-left-color:${btnColor};">
-                <div class="card-in-hand-header"><h3>${cDef.n}</h3></div>
-                <p>${cDef.d}</p>
-                <button class="btn" style="background-color:${btnColor}; padding:12px; margin:0; font-size:0.85rem;" onclick="window.openTargetModal(${index}, '${cId}')">PELAA KORTTI</button>
+            <div class="physical-card ${typeClass}">
+                <div><h3>${cDef.n}</h3><p>${cDef.d}</p></div>
+                <button class="btn" style="background-color:${btnColor};" onclick="window.openTargetModal(${index}, '${cId}')">PELAA KORTTI</button>
             </div>`;
     });
     container.innerHTML = html;
 }
 
+// KAUPPA MODAALIIN (Isot kortit)
 function renderShop(shopArray, myPoints, boughtThisHole) {
-    const container = document.getElementById('shopItems');
-    if(!shopArray || shopArray.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem; text-align:center; padding:10px;">Kauppa on suljettu.</p>'; return; }
+    const container = document.getElementById('shopModalCards');
+    if(!shopArray || shopArray.length === 0) { container.innerHTML = '<p style="color:#fff; font-size:1.2rem; text-align:center;">Kauppa on suljettu.</p>'; return; }
     
     let html = '';
     shopArray.forEach(item => {
         if(!item) return;
         const canAfford = myPoints >= item.price && !boughtThisHole;
-        let btnText = boughtThisHole ? 'OSTIT JO KORTIN' : (canAfford ? 'OSTA (NOPEIN VIE)' : 'EI VARAA');
+        let btnText = boughtThisHole ? 'OSTIT JO KORTIN TÄLLÄ VÄYLÄLLÄ' : (canAfford ? 'OSTA (NOPEIN VIE)' : 'EI VARAA (HINTA: ' + item.price + ' P)');
         
         html += `
-            <div class="shop-item-premium ${!canAfford ? 'disabled' : ''}">
-                <span class="price-tag">${item.price} P</span>
-                <h3 onclick="window.showCardInfo('${item.n}', '${item.d}', 'Hinta: ${item.price} P')" style="cursor:pointer; text-decoration:underline dashed var(--border-metal);">${item.n}</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:12px;">${item.d}</p>
-                <button class="btn ${canAfford ? 'btn-primary' : 'btn-secondary'}" style="padding:10px; margin:0; font-size:0.85rem;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
+            <div class="physical-card premium">
+                <span class="card-price-tag">${item.price} P</span>
+                <div><h3 style="color: var(--warning);">${item.n}</h3><p>${item.d}</p></div>
+                <button class="btn ${canAfford ? 'btn-arvo' : 'btn-secondary'}" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
             </div>`;
     });
     container.innerHTML = html;
@@ -287,7 +312,8 @@ window.buyShopItem = function(item) {
         return state;
     }).then((res) => {
         if(res.committed) {
-            triggerPopup(`Ostos suoritettu`, `Ostit edun ${item.n}.`, ``);
+            document.getElementById('shopModal').style.display = 'none';
+            triggerPopup(`Kortti ostettu`, `Ostit edun ${item.n}.`, ``);
         }
     });
 };
@@ -308,7 +334,7 @@ window.openTargetModal = function(cardIndex, cardId) {
     allPlayers.forEach(p => {
         if(!p) return;
         if(p.name !== myName) {
-            list.innerHTML += `<button style="background:var(--surface-light); border:1px solid var(--border-metal); color:var(--text-main); width:100%; padding:14px; border-radius:8px; margin-bottom:8px; font-weight:600; font-size:1rem; text-align:left;" onclick="window.executeCardPlay('${p.name}')">${p.name}</button>`;
+            list.innerHTML += `<button style="background:#fff; border:2px solid var(--border-light); color:var(--text-main); width:100%; padding:18px; border-radius:12px; margin-bottom:10px; font-weight:800; font-size:1.1rem; text-align:left;" onclick="window.executeCardPlay('${p.name}')">${p.name}</button>`;
         }
     });
     document.getElementById('targetModal').style.display = 'flex';
@@ -318,6 +344,7 @@ window.executeCardPlay = function(targetName) {
     if(!pendingCardPlay) return;
     const card = pendingCardPlay;
     document.getElementById('targetModal').style.display = 'none';
+    document.getElementById('handModal').style.display = 'none';
     
     runTransaction(ref(db, 'gameState'), (state) => {
         if(!state) return state;
@@ -365,7 +392,7 @@ window.openScoreModal = function() {
     
     allPlayers.forEach((p, i) => {
         if(!p) return;
-        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${p.name}" style="width:20px; height:20px; margin:0;"> ${p.name}</label>`;
+        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${p.name}" style="width:24px; height:24px; margin:0;"> ${p.name}</label>`;
         
         html += `
             <div class="score-row">
@@ -404,11 +431,10 @@ window.submitScores = function() {
         
         players.forEach(p => {
             if (!p) return;
-            // PISTELOGIIKKA: Voitto +2 P, Tehtävä +5 P
             if (winners.includes(p.name)) p.score = (p.score || 0) + 2;
             if (taskWinners.includes(p.name)) p.score = (p.score || 0) + 5;
             
-            p.boughtThisHole = false; // Resetoi osto-oikeus
+            p.boughtThisHole = false; 
             
             if (losers.includes(p.name)) {
                 p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
@@ -437,7 +463,6 @@ function triggerPopup(title, desc, details) {
     document.getElementById('popupDesc').innerHTML = desc;
     document.getElementById('popupDetails').innerHTML = details;
     
-    // Tyhjennetään details jos se on tyhjä, ettei jää rumaa laatikkoa
     if(!details || details === '') document.getElementById('popupDetails').style.display = 'none';
     else document.getElementById('popupDetails').style.display = 'block';
 
@@ -450,11 +475,10 @@ function renderLeaderboard() {
     let sortedPlayers = [...allPlayers].filter(p=>p).sort((a,b) => b.score - a.score);
     list.innerHTML = '';
     sortedPlayers.forEach((p, i) => {
-        list.innerHTML += `<div class="player-row ${p.name === myName ? 'me' : ''}"><div style="font-weight:600;"><span style="color:var(--text-muted); margin-right:12px;">${i+1}.</span>${p.name}</div><span style="font-weight:800; color:var(--primary);">${p.score} P</span></div>`;
+        list.innerHTML += `<div class="player-row ${p.name === myName ? 'me' : ''}"><div style="font-weight:800; font-size:1.1rem;"><span style="color:var(--text-muted); margin-right:15px;">${i+1}.</span>${p.name}</div><span style="font-weight:900; font-size:1.2rem; color:var(--primary);">${p.score} P</span></div>`;
     });
 }
 
-// GM PANEELIN PISTEMUOKKAUS TEKSTIKENTÄLLÄ
 window.renderAdminPlayerList = function() {
     const list = document.getElementById('adminPlayerList');
     if(!list) return; list.innerHTML = "";
@@ -464,7 +488,7 @@ window.renderAdminPlayerList = function() {
             <div class="player-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
                 <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
                     <span style="font-weight:800;">${p.name} (${p.score} P)</span>
-                    <button class="btn btn-danger" style="width:auto; padding:6px 12px; font-size:0.8rem;" onclick="window.removePlayer(${i})">X</button>
+                    <button class="btn btn-danger" style="width:auto; padding:8px 16px; font-size:0.8rem;" onclick="window.removePlayer(${i})">POISTA</button>
                 </div>
                 <div class="gm-score-adjust">
                     <input type="number" id="gmScoreAdjust_${i}" value="1">
