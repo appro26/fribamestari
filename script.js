@@ -11,7 +11,7 @@ let activeHole = null;
 let currentCourse = null;
 let currentHoleIndex = 1;
 
-// 1.5s PITKÄ PAINALLUS
+// MÄÄRÄYS: Pitkä painallus kestää tasan 1.5 sekuntia
 function setupLongPress(btnEl, onComplete) {
     let pressTimer;
     let isPressing = false;
@@ -96,11 +96,11 @@ window.generateParInputs = function() {
     const count = parseInt(document.getElementById('setupHoleCount').value) || 0;
     const container = document.getElementById('parInputsContainer');
     container.innerHTML = '';
-    for(let i=1; i<=count; i++) container.innerHTML += `<div style="background:rgba(0,0,0,0.8); padding:10px; border-radius:8px;"><label style="font-size:0.8rem; color:var(--text-muted);">Väylä ${i} PAR</label><input type="number" id="setupPar_${i}" value="3" style="margin:0; padding:12px;"></div>`;
+    for(let i=1; i<=count; i++) container.innerHTML += `<div style="background:var(--bg-dark); padding:12px; border-radius:8px;"><label style="font-size:0.8rem; color:var(--text-muted);">Väylä ${i} PAR</label><input type="number" id="setupPar_${i}" value="3" style="margin:0; padding:10px;"></div>`;
 };
 
 window.saveCourseSetup = function() {
-    const name = document.getElementById('setupCourseName').value || "Tuntematon Rata";
+    const name = document.getElementById('setupCourseName').value || "Rata";
     const count = parseInt(document.getElementById('setupHoleCount').value) || 0;
     let pars = [];
     for(let i=1; i<=count; i++) pars.push(parseInt(document.getElementById(`setupPar_${i}`).value) || 3);
@@ -141,23 +141,21 @@ function renderActiveHole() {
     document.getElementById('gmGlobalControls').style.display = 'block';
 
     if (!activeHole || !activeHole.rule) {
-        container.innerHTML = `<div class="card" style="text-align:center; border-color:var(--border-metal); box-shadow:none;"><h2 style="margin:0; border:none; color:var(--text-muted);">Siirry tii-paikalle</h2><p style="font-size:0.9rem; color:var(--text-muted);">Odotetaan GM:n sääntö- ja kauppa-arvontaa.</p></div>`;
+        container.innerHTML = `<div class="card" style="text-align:center;"><h2 style="margin:0; color:var(--text-muted);">Sääntöä ei arvottu</h2><p style="font-size:0.9rem; color:var(--text-muted); margin-top:10px;">GM arpoo säännön ja kaupan.</p></div>`;
         return;
     }
-    let color = activeHole.rule.type === 'bounty' ? 'var(--gold)' : 'var(--accent)';
-    let glow = activeHole.rule.type === 'bounty' ? 'var(--gold-glow)' : 'var(--accent-glow)';
-    container.innerHTML = `<div class="card" style="border-color: ${color}; box-shadow: 0 0 40px ${glow};"><h1 style="color: ${color}; margin-bottom: 10px; text-transform:uppercase; font-size:1.8rem;">${activeHole.rule.n}</h1><p style="font-size: 1.2rem; line-height: 1.5;">${activeHole.rule.d}</p></div>`;
+    container.innerHTML = `<div class="card" style="border-left: 4px solid var(--info);"><h1 style="color: var(--info); font-size:1.4rem; margin-bottom: 10px;">${activeHole.rule.n}</h1><p style="font-size: 1.05rem; line-height: 1.5; color:var(--text-main);">${activeHole.rule.d}</p></div>`;
 }
 
 function renderPlayerHand(cards) {
     const container = document.getElementById('playerHand');
-    if (cards.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem; padding: 15px;">Kätesi on tyhjä.</p>'; return; }
+    if (cards.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">Kätesi on tyhjä.</p>'; return; }
     
     let html = '';
     cards.forEach((cId, index) => {
         const cDef = allCards.find(sc => sc.id === cId);
         if(!cDef) return;
-        html += `<div class="card-in-hand"><div><h3>${cDef.n}</h3><p>${cDef.d}</p></div><button class="btn btn-danger long-press-btn" style="padding:16px; margin:0;" id="useCardBtn_${index}"><div class="long-press-fill"></div>PELAA KORTTI</button></div>`;
+        html += `<div class="card-in-hand"><div><h3>${cDef.n}</h3><p>${cDef.d}</p></div><button class="btn btn-secondary long-press-btn" style="padding:12px; margin:0;" id="useCardBtn_${index}"><div class="long-press-fill"></div>PELAA</button></div>`;
     });
     container.innerHTML = html;
     cards.forEach((cId, index) => {
@@ -168,7 +166,7 @@ function renderPlayerHand(cards) {
 
 function renderShop(shopArray, myPoints) {
     const container = document.getElementById('shopItems');
-    if(!shopArray || shopArray.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); text-align:center; font-size:1rem;">Kauppa on tyhjä tällä väylällä.</p>'; return; }
+    if(!shopArray || shopArray.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">Kauppa on tyhjä.</p>'; return; }
     
     let html = '';
     shopArray.forEach(item => {
@@ -177,8 +175,8 @@ function renderShop(shopArray, myPoints) {
         html += `
             <div class="shop-item-premium ${!canAfford ? 'disabled' : ''}">
                 <span class="price-tag">${item.price} P</span>
-                <h3>${item.n}</h3><p style="color:var(--text-muted); font-size:0.95rem; margin-bottom:20px;">${item.d}</p>
-                <button class="btn ${canAfford ? 'btn-primary' : 'btn-secondary'} long-press-btn" style="padding:16px; margin:0;" ${!canAfford ? 'disabled' : ''} id="buyBtn_${item.id}"><div class="long-press-fill"></div>${canAfford ? 'OSTA KORTTI' : 'EI VARAA'}</button>
+                <h3>${item.n}</h3><p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:16px;">${item.d}</p>
+                <button class="btn ${canAfford ? 'btn-secondary' : 'btn-secondary'} long-press-btn" style="padding:12px; margin:0; border: 1px solid var(--border-metal);" ${!canAfford ? 'disabled' : ''} id="buyBtn_${item.id}"><div class="long-press-fill"></div>${canAfford ? 'OSTA' : 'EI VARAA'}</button>
             </div>`;
     });
     container.innerHTML = html;
@@ -205,7 +203,7 @@ window.buyShopItem = function(item) {
         return state;
     }).then((res) => {
         if(res.committed) {
-            triggerPopup(`KORTTI OSTETTU!`, `${myName} osti kortin <b>${item.n}</b>!`, ``);
+            triggerPopup(`Kortti ostettu`, `Ostit kortin ${item.n}.`, ``);
             logEvent(`${myName} osti: ${item.n}`);
             logScoreChange(myName, -item.price, `Osto: ${item.n}`);
         }
@@ -221,7 +219,7 @@ window.openTargetModal = function(cardIndex, cardId) {
     list.innerHTML = '';
     allPlayers.forEach(p => {
         if(!p) return;
-        list.innerHTML += `<button style="background:#000; border:2px solid var(--danger); color:#fff; width:100%; padding:18px; border-radius:12px; margin-bottom:12px; font-weight:900; font-size:1.2rem; text-transform:uppercase;" onclick="executeCardPlay('${p.name}')">${p.name}</button>`;
+        list.innerHTML += `<button style="background:var(--surface-light); border:1px solid var(--border-metal); color:var(--text-main); width:100%; padding:16px; border-radius:8px; margin-bottom:10px; font-weight:600; font-size:1.1rem; text-align:left;" onclick="executeCardPlay('${p.name}')">${p.name}</button>`;
     });
     document.getElementById('targetModal').style.display = 'flex';
 }
@@ -237,11 +235,25 @@ window.executeCardPlay = function(targetName) {
         if(me && me.cards) { me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards); me.cards.splice(card.index, 1); }
         return players;
     }).then(() => {
-        let typeColor = card.def.type === 'buff' ? 'var(--success)' : 'var(--danger)';
-        let typeTitle = card.def.type === 'buff' ? 'APUKORTTI!' : 'SABOTAASI!';
-        triggerPopup(`<span style="color:${typeColor}">${typeTitle}</span>`, `<b>${myName}</b> käytti kortin <b>${card.def.n}</b> kohteena <b>${targetName}</b>!`, `<div style="color:${typeColor};">${card.def.d}</div>`);
+        triggerPopup(`Kortti pelattu`, `<b>${myName}</b> käytti kortin <b>${card.def.n}</b> pelaajalle ${targetName}!`, `<div style="color:var(--info); margin-top:10px;">${card.def.d}</div>`);
         logEvent(`${myName} käytti kortin ${card.def.n} -> ${targetName}`);
     });
+};
+
+// --- TULOSTEN SYÖTTÖ JA VÄRILOGIIKKA ---
+window.changeScore = function(idx, par, delta) {
+    let input = document.getElementById(`scoreInput_${idx}`);
+    let val = parseInt(input.value) + delta;
+    if(val < 1) val = 1;
+    input.value = val;
+    
+    let display = document.getElementById(`scoreDisplay_${idx}`);
+    display.innerText = val;
+    
+    display.className = 'score-display';
+    if(val < par) display.classList.add('score-birdie');
+    else if(val > par) display.classList.add('score-bogey');
+    else display.classList.add('score-par');
 };
 
 window.openScoreModal = function() {
@@ -258,12 +270,14 @@ window.openScoreModal = function() {
         if(!p) return;
         taskSelect += `<option value="${p.name}">${p.name}</option>`;
         html += `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; background:rgba(0,0,0,0.6); padding:12px; border-radius:12px; border:1px solid var(--border-metal);">
-                <span style="font-weight:900; font-size:1.1rem;">${p.name}</span>
-                <div style="display:flex; gap:12px;">
-                    <button class="btn btn-secondary" style="width:50px; height:50px; padding:0; font-size:1.5rem;" onclick="document.getElementById('score_${i}').stepDown()">-</button>
-                    <input type="number" id="score_${i}" value="${par}" style="width:70px; margin:0; text-align:center; font-size:1.6rem; font-weight:900; height:50px; background:#000; border:2px solid var(--success);">
-                    <button class="btn btn-secondary" style="width:50px; height:50px; padding:0; font-size:1.5rem;" onclick="document.getElementById('score_${i}').stepUp()">+</button>
+            <div class="score-row">
+                <span class="score-name">${p.name}</span>
+                <div class="score-controls">
+                    <button class="btn-score-ctrl" onclick="changeScore(${i}, ${par}, -1)">-</button>
+                    <div id="scoreDisplay_${i}" class="score-display score-par">${par}</div>
+                    <button class="btn-score-ctrl" onclick="changeScore(${i}, ${par}, 1)">+</button>
+                    <!-- Piilotettu input arvon säilytykseen -->
+                    <input type="hidden" id="scoreInput_${i}" value="${par}">
                 </div>
             </div>`;
     });
@@ -276,7 +290,7 @@ window.submitScores = function() {
     let scores = [];
     allPlayers.forEach((p, i) => {
         if(!p) return;
-        scores.push({ name: p.name, strokes: parseInt(document.getElementById(`score_${i}`).value) || 3 });
+        scores.push({ name: p.name, strokes: parseInt(document.getElementById(`scoreInput_${i}`).value) || 3 });
     });
 
     const minStrokes = Math.min(...scores.map(s => s.strokes));
@@ -303,7 +317,7 @@ window.submitScores = function() {
         state.activeHole = null; 
         return state;
     }).then(() => {
-        triggerPopup(`VÄYLÄ PELATTU!`, `Resurssit jaettu. Siirrytään väylälle ${currentHoleIndex + 1}.`, `<span style="color:var(--success)">🏆 Voittajat (+5P): ${winners.join(', ')}</span><br><span style="color:var(--gold)">⭐ Tehtävä (+5P): ${taskWinner || 'Ei kukaan'}</span><br><span style="color:var(--danger)">💀 Häviäjät (+1 Kortti): ${losers.join(', ')}</span>`);
+        triggerPopup(`Väylä ${currentHoleIndex - 1} pelattu`, `Pisteet jaettu.`, `<span style="color:var(--info)">Voittajat: ${winners.join(', ')}</span><br><span style="color:var(--warning)">Tehtävä: ${taskWinner || '-'}</span><br><span style="color:var(--danger)">Kortti: ${losers.join(', ')}</span>`);
         document.getElementById('scoreModal').style.display = 'none';
     });
 };
@@ -325,7 +339,7 @@ function renderLeaderboard() {
     let sortedPlayers = [...allPlayers].filter(p=>p).sort((a,b) => b.score - a.score);
     list.innerHTML = '';
     sortedPlayers.forEach((p, i) => {
-        list.innerHTML += `<div class="player-row ${p.name === myName ? 'me' : ''}"><div style="font-size:1.1rem;"><span style="color:var(--text-muted); font-weight:900; margin-right:12px;">${i+1}.</span>${p.name}</div><span class="price-tag" style="position:relative; top:0; right:0; box-shadow:none;">${p.score} P</span></div>`;
+        list.innerHTML += `<div class="player-row ${p.name === myName ? 'me' : ''}"><div style="font-size:1.05rem; font-weight:600;"><span style="color:var(--text-muted); margin-right:12px;">${i+1}.</span>${p.name}</div><span style="font-weight:800; color:var(--primary);">${p.score} P</span></div>`;
     });
 }
 
@@ -335,12 +349,12 @@ window.renderAdminPlayerList = function() {
     allPlayers.forEach((p, i) => {
         if(!p) return;
         list.innerHTML += `
-            <div class="player-row" style="padding:15px; flex-direction:column; align-items:flex-start; gap:10px;">
-                <span style="font-size:1rem; font-weight:900; color:var(--accent);">${p.name} (${p.score} P)</span>
+            <div class="player-row" style="flex-direction:column; align-items:flex-start; gap:10px;">
+                <span style="font-size:1rem; font-weight:800;">${p.name} (${p.score} P)</span>
                 <div style="display:flex; gap:8px; width:100%;">
                     <button class="btn btn-secondary" style="flex:1; padding:10px;" onclick="adjustScore(${i}, 5)">+5 P</button>
                     <button class="btn btn-secondary" style="flex:1; padding:10px;" onclick="adjustScore(${i}, -5)">-5 P</button>
-                    <button class="btn btn-danger" style="flex:1; padding:10px;" onclick="removePlayer(${i})">POISTA</button>
+                    <button class="btn btn-danger" style="flex:1; padding:10px;" onclick="removePlayer(${i})">Poista</button>
                 </div>
             </div>`;
     });
@@ -354,7 +368,7 @@ window.adminAddPlayer = function() {
         let players = pData ? (Array.isArray(pData) ? pData : Object.values(pData)) : [];
         if(!players.find(x => x && x.name === n)) { players.push({ name: n, score: 0, cards: [] }); }
         return players;
-    }).then(() => { input.value = ''; logEvent(`Admin lisäsi pelaajan: ${n}`); });
+    }).then(() => { input.value = ''; logEvent(`Lisäsi pelaajan: ${n}`); });
 };
 
 window.adjustScore = function(idx, amt) { 
@@ -366,14 +380,14 @@ window.adjustScore = function(idx, amt) {
 
 window.removePlayer = function(idx) { 
     if(confirm("Poista pelaaja?")) { 
-        logEvent(`Admin poisti pelaajan: ${allPlayers[idx].name}`);
+        logEvent(`Poisti pelaajan: ${allPlayers[idx].name}`);
         allPlayers.splice(idx, 1); 
         set(ref(db, 'gameState/players'), allPlayers); 
     } 
 };
 
 window.resetGame = function() {
-    if (confirm("VAROITUS: Tämä nollaa koko frisbeepelin. Jatketaanko?")) {
+    if (confirm("Nollataanko tietokanta?")) {
         set(ref(db, 'gameState'), { players: [], eventLog: {}, scoreLog: {}, activeHole: null, currentHoleIndex: 1 })
         .then(() => { localStorage.clear(); location.reload(); });
     }
@@ -383,7 +397,7 @@ function renderEventLog(logData) {
     const container = document.getElementById('adminEventLog');
     if(!container) return; container.innerHTML = "";
     Object.values(logData || {}).reverse().slice(0, 30).forEach(l => {
-        container.innerHTML += `<div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--accent); margin-right:10px; font-weight:900;">[${l.time}]</span>${l.msg}</div>`;
+        container.innerHTML += `<div style="padding:4px 0;"><span style="color:var(--text-muted); margin-right:8px;">[${l.time}]</span>${l.msg}</div>`;
     });
 }
 
@@ -391,7 +405,7 @@ function renderScoreLog(logData) {
     const container = document.getElementById('adminScoreLog');
     if(!container) return; container.innerHTML = "";
     Object.values(logData || {}).reverse().slice(0, 50).forEach(l => {
-        let color = l.delta >= 0 ? 'var(--success)' : 'var(--danger)';
-        container.innerHTML += `<div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span style="color:var(--accent); margin-right:10px; font-weight:900;">[${l.time}]</span><b style="color:#fff;">${l.playerName}</b>: <span style="color:${color}; font-weight:900;">${l.delta > 0 ? '+' : ''}${l.delta} P</span> <span style="color:var(--text-muted); font-size:0.9em;">(${l.reason})</span></div>`;
+        let color = l.delta >= 0 ? 'var(--info)' : 'var(--danger)';
+        container.innerHTML += `<div style="padding:4px 0;"><span style="color:var(--text-muted); margin-right:8px;">[${l.time}]</span><b style="color:#fff;">${l.playerName}</b>: <span style="color:${color};">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`;
     });
 }
