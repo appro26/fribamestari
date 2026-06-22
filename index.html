@@ -7,8 +7,8 @@
     
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=65" />
-    <meta id="themeColorMeta" name="theme-color" content="#eefdf4" />
+    <link rel="stylesheet" href="style.css?v=70" />
+    <meta id="themeColorMeta" name="theme-color" content="#d1fae5" />
     
     <script>
       window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
@@ -22,9 +22,8 @@
             <div style="font-size:3.5rem; margin-bottom:10px;">📲</div>
             <h2 style="color:var(--text-main); font-size: 1.5rem; margin-bottom: 15px; font-weight:900;">ASENNA SOVELLUS</h2>
             <p id="installInstructions" style="font-size:1.1rem; color:var(--text-muted); line-height:1.5; margin-bottom:25px; font-weight:700;">
-                Parhaan pelikokemuksen saat asentamalla pelin suoraan puhelimeesi!
+                <!-- Sisältö täytetään JS:llä -->
             </p>
-            <button class="btn btn-primary" id="nativeInstallBtn" onclick="if(window.triggerNativeInstall) window.triggerNativeInstall();" style="font-size:1.1rem; padding:18px; margin-bottom:12px; display:none;">🚀 ASENNA NYT</button>
             <button class="btn btn-secondary glass-card" onclick="if(window.dismissInstallPrompt) window.dismissInstallPrompt();" style="font-size:1rem; padding:16px;">JATKA SELAIMELLA</button>
         </div>
     </div>
@@ -55,7 +54,8 @@
 
         <div id="gameSetupArea" class="card glass-card" style="display:none; text-align:center; border-color:var(--primary); margin-top:15px;">
             <h2 style="color: var(--text-main); font-size:1.4rem; margin-bottom: 10px;">Peli ei ole käynnissä</h2>
-            <button class="btn btn-primary" onclick="document.getElementById('courseModal').style.display='flex'">ALOITA UUSI PELI</button>
+            <button class="btn btn-primary" onclick="if(window.startMeilahti) window.startMeilahti();" style="margin-bottom:15px;">🌲 PIKA-ALOITUS: MEILAHTI (16V)</button>
+            <button class="btn btn-secondary glass-card" onclick="document.getElementById('courseModal').style.display='flex'">LUO OMA RATA</button>
         </div>
 
         <div id="mainGameArea" style="display:none; margin-top:15px;">
@@ -77,10 +77,6 @@
             </div>
 
             <div class="player-only">
-                <div id="walletDisplayArea" class="player-wallet-box glass-card" style="background:rgba(245, 158, 11, 0.85); color:#000;">
-                    <span>💰 SALDO:</span> <span id="mainWalletPoints">0 P</span>
-                </div>
-
                 <div id="compactViewContainer" class="grid-2" style="margin-bottom: 15px;">
                     <button class="btn btn-danger" style="padding: 16px 10px; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px;" onclick="document.getElementById('handModal').style.display='flex'">
                         <span>🃏 Omat kortit</span>
@@ -89,6 +85,7 @@
                     
                     <button id="shopButtonElement" class="btn btn-warning" style="padding: 16px 10px; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px; color:#000;" onclick="document.getElementById('shopModal').style.display='flex'">
                         <span>🛒 Kauppa</span>
+                        <span style="background: #000; color: var(--warning); padding: 4px 14px; border-radius: 12px; font-size: 0.95rem;">SALDO: <span id="myResPointsBtn" style="font-weight:900;">0 P</span></span>
                     </button>
                 </div>
 
@@ -166,17 +163,18 @@
         </div>
 
         <div style="margin-top: 20px; padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
-            <button class="btn btn-secondary player-only glass-card" onclick="if(window.toggleView) { window.toggleView(); }" id="viewToggleBtn" style="font-size:0.9rem; margin:0; padding:16px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
+            <button class="btn btn-secondary player-only glass-card" onclick="if(window.toggleView) window.toggleView();" id="viewToggleBtn" style="font-size:0.9rem; margin:0; padding:16px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
             <button class="btn btn-secondary glass-card" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
 
             <div class="role-switcher glass-card">
-                <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) { window.setRole('player'); }">PELAAJA</button>
-                <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) { window.setRole('gm'); } }">GM</button>
+                <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player');">PELAAJA</button>
+                <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">GM</button>
             </div>
         </div>
 
     </div>
 
+    <!-- Modaalit -->
     <div id="handModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
@@ -233,9 +231,7 @@
 
     <div id="courseModal" class="winner-overlay">
         <div class="card glass-card" style="width: 100%; max-width: 450px;">
-            <h2 style="color:var(--text-main); font-size: 1.4rem;">Aloita Peli</h2>
-            <button class="btn btn-warning" onclick="if(window.startMeilahti) { window.startMeilahti(); }" style="margin-bottom: 25px; color:#000;">🌲 Pika-aloitus: Meilahti (16V)</button>
-            <h2 style="border-top: 2px solid var(--border); padding-top: 20px; margin-top: 10px;">Luo oma rata</h2>
+            <h2 style="color:var(--text-main); font-size: 1.4rem;">Luo oma rata</h2>
             <input type="text" id="setupCourseName" aria-label="Radan nimi" placeholder="Radan nimi..." />
             <input type="number" id="setupHoleCount" aria-label="Väylien määrä" placeholder="Väylien määrä" oninput="if(window.generateParInputs) { window.generateParInputs(); }" />
             <div id="parInputsContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
@@ -283,7 +279,8 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=65"></script>
-    <script type="module" src="script.js?v=65"></script>
+    <!-- MUISTA LISÄTÄ TASKS.JS -->
+    <script src="tasks.js?v=70"></script>
+    <script type="module" src="script.js?v=70"></script>
 </body>
 </html>
