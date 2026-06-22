@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=43" />
-    
-    <!-- Yläpalkki päivittyy automaattisesti taustan väriseksi -->
+    <link rel="stylesheet" href="style.css?v=44" />
     <meta id="themeColorMeta" name="theme-color" content="#eefdf4" />
     
     <script>
@@ -17,10 +15,7 @@
 </head>
 <body class="player-mode">
 
-    <!-- UUSI LEIJUVA LOMPAKKO (Ei vie tilaa ylhäältä) -->
-    <div id="topWallet" class="top-wallet" style="display:none;">💰 <span id="topWalletPoints">0 P</span></div>
-
-    <!-- APPLE-TYYLINEN ILMOITUS -->
+    <!-- APPLE-TYYLINEN ILMOITUS PISTEILLE -->
     <div id="appleToast" class="apple-toast">
         <span id="appleToastIcon" style="font-size:1.3rem;">✨</span>
         <span id="appleToastText">Väylä suoritettu!</span>
@@ -30,7 +25,6 @@
 
     <div class="container">
 
-        <!-- Ylimääräinen tila ja nappi siivottu pois -->
         <div id="identityCard" class="card" style="border: 3px solid var(--primary); text-align: center; margin-top:15px;">
             <h2 style="color: var(--primary); font-size: 1.1rem;">Tervetuloa Radalle</h2>
             <input type="text" id="playerNameInput" placeholder="Syötä nimesi..." aria-label="Syötä nimesi" />
@@ -52,18 +46,25 @@
                 <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2;">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
+            <!-- VÄYLÄTEHTÄVÄ TULEE TÄHÄN -->
             <div id="activeHoleContainer"></div>
             
-            <!-- ELEGANTIMPI JA PIENEMPI OMAT KORTIT OSIO -->
-            <div id="myActiveRulesContainer" style="display:none; margin-bottom: 15px;"></div>
+            <!-- SINUA KOSKEVAT KORTIT TULEE TÄHÄN -->
+            <div id="myActiveRulesContainer" style="display:none;"></div>
             
-            <!-- PIENENNETTY PELATTUJEN KORTTIEN ALUE -->
-            <div id="activeCardsArea" style="display:none; margin-bottom: 25px;">
-                <h2 style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px; display:flex; align-items:center; gap:8px;">KAIKKI PELATUT KORTIT</h2>
-                <div id="activeCardsContainer" style="display:flex; flex-direction:column; gap:6px;"></div>
+            <!-- TIIVISTETTY KAIKKI PELATUT KORTIT -->
+            <div id="activeCardsArea" style="display:none; margin-bottom: 20px;">
+                <h2 style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 5px; display:flex; align-items:center; gap:8px;">KAIKKI PELATUT KORTIT</h2>
+                <div id="activeCardsContainer" class="card" style="padding:0 12px;"></div>
             </div>
 
             <div class="player-only">
+                
+                <!-- UUSI ISOMPI LOMPAKKO NÄKYMÄ -->
+                <div id="walletDisplayArea" class="player-wallet-box">
+                    <span>💰 SALDO:</span> <span id="mainWalletPoints">0 P</span>
+                </div>
+
                 <div id="compactViewContainer" class="grid-2" style="margin-bottom: 15px;">
                     <button class="btn btn-danger" style="padding: 16px 10px; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px;" onclick="document.getElementById('handModal').style.display='flex'">
                         <span>🃏 Omat kortit</span>
@@ -74,17 +75,6 @@
                         <span>🛒 Kauppa</span>
                         <span id="myResPointsBtn" style="background: #000; color: var(--warning); padding: 4px 14px; border-radius: 12px; font-size: 0.9rem;">0 P</span>
                     </button>
-                </div>
-
-                <div id="expandedViewContainer" style="display:none;">
-                    <div class="card" style="border-top: 5px solid var(--danger);">
-                        <h2 style="color:var(--danger);">🃏 Omat Kortit</h2>
-                        <div id="playerHandExpanded" class="cards-list-1"></div>
-                    </div>
-                    <div class="card" style="border-top: 5px solid var(--warning);">
-                        <h2 style="color:var(--warning);">🛒 Kauppa <span id="myResPointsExpanded" style="float:right; color:var(--text-main);">0 P</span></h2>
-                        <div id="shopItemsExpanded" class="cards-list-1"></div>
-                    </div>
                 </div>
             </div>
         </div> 
@@ -121,12 +111,9 @@
             <div id="playerList"></div>
         </div>
 
-        <!-- Alalaidan valikot ja päivitysnappi yhdessä paikassa -->
+        <!-- Alalaidan valikot ja päivitysnappi -->
         <div style="margin-top: 20px; border-top: 2px dashed var(--border); padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-secondary player-only" onclick="if(window.toggleView) { window.toggleView(); }" id="viewToggleBtn" style="flex:2; font-size:0.9rem; margin:0;">LAAJENNETTU NÄKYMÄ</button>
-                <button class="btn btn-secondary" onclick="location.reload()" style="flex:1; font-size:0.9rem; margin:0; padding:12px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ</button>
-            </div>
+            <button class="btn btn-secondary" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
 
             <div class="role-switcher">
                 <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) { window.setRole('player'); }">PELAAJA</button>
@@ -149,7 +136,7 @@
     <div id="shopModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
-            <h2 style="display:flex; align-items:center; gap:10px;">🛒 KAUPPA</h2>
+            <h2 style="display:flex; align-items:center; gap:10px;">🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px;">0 P</span></h2>
             <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('shopModal').style.display='none'">&times;</button>
         </div>
         <div id="shopModalCards" class="cards-grid-2"></div>
@@ -165,13 +152,14 @@
         <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
-    <!-- UUSI 3D KORTTIMODAALI -->
+    <!-- UUSI 3D KORTTIMODAALI SLAIDAUKSELLA -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:20px;">
         <div id="cardDetail3DContainer" class="card-3d-container">
             <div class="card-3d" id="cardDetail3D"></div>
         </div>
-        <div style="text-align:center; color:rgba(255,255,255,0.8); font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:10px; margin-top:-10px;">👈 Slaidaa pyörittääksesi 👉</div>
-        <button class="btn" style="width:100%; max-width:280px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
+        <div style="text-align:center; color:rgba(255,255,255,0.8); font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:5px; margin-top:-10px;">👈 Slaidaa pyörittääksesi 👉</div>
+        <div id="cardDetailActionArea" style="width:100%; max-width:290px; display:flex; flex-direction:column; gap:10px;"></div>
+        <button class="btn" style="width:100%; max-width:290px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
     <div id="courseModal" class="winner-overlay">
@@ -226,8 +214,7 @@
         </div>
     </div>
 
-    <!-- PÄIVITETTY VERSIO 43 -->
-    <script src="tasks.js?v=43"></script>
-    <script type="module" src="script.js?v=43"></script>
+    <script src="tasks.js?v=44"></script>
+    <script type="module" src="script.js?v=44"></script>
 </body>
 </html>
