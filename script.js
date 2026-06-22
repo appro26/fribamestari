@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, set, push, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, set, push, runTransaction, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-west1.firebasedatabase.app/" };
 const app = initializeApp(firebaseConfig);
@@ -16,7 +16,7 @@ let isExpandedView = false;
 let lastPlayedCardTimestamp = Date.now();
 
 //==============================================
-// 1. ELEOHJAUKSET (Korttien Hover ja Swipe-to-close)
+// 1. ELEOHJAUKSET (Nosto-efekti ja Swipe-to-close)
 //==============================================
 window.enableCardHover = function() {
     const resetCards = () => {
@@ -49,14 +49,18 @@ window.setupSwipeToClose = function() {
             if (modal.scrollTop <= 5) { 
                 startY = e.touches[0].clientY;
                 modal.style.transition = 'none';
-            } else { startY = null; }
+            } else {
+                startY = null;
+            }
         }, {passive: true});
         
         modal.addEventListener('touchmove', e => {
             if (startY === null) return;
             currentY = e.touches[0].clientY;
             let diff = currentY - startY;
-            if (diff > 0) modal.style.transform = `translateY(${diff}px)`;
+            if (diff > 0) {
+                modal.style.transform = `translateY(${diff}px)`;
+            }
         }, {passive: true});
         
         modal.addEventListener('touchend', e => {
@@ -65,8 +69,13 @@ window.setupSwipeToClose = function() {
             modal.style.transition = 'transform 0.3s ease';
             if (diff > 120) { 
                 modal.style.transform = `translateY(100%)`;
-                setTimeout(() => { modal.style.display = 'none'; modal.style.transform = ''; }, 300);
-            } else { modal.style.transform = ''; }
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    modal.style.transform = '';
+                }, 300);
+            } else {
+                modal.style.transform = '';
+            }
             startY = null;
         });
     });
@@ -165,18 +174,10 @@ window.renderActiveHole = function() {
         let myRulesHtml = '';
         
         const playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
-        playedCards.forEach((pc, index) => {
+        playedCards.forEach(pc => {
             let actionText = pc.type === 'buff' ? `käytti edun` : `sabotoi kohdetta <strong>${pc.target}</strong>`;
             let color = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
-            
-            // GM Undo nappi
-            let undoBtn = document.body.classList.contains('gm-mode') ? `<button class="btn btn-danger" style="padding:6px; font-size:0.7rem; width:auto;" onclick="window.undoCardPlay(${index})">KUMOA</button>` : '';
-
-            cardsHtml += `<div class="active-card-chip" style="border-color:${color}; padding: 8px 12px; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:var(--text-main);"><b>${pc.by}</b> ${actionText}: <span style="font-weight:900; color:${color};">${pc.cardName}</span></span>
-                ${undoBtn}
-            </div>`;
-            
+            cardsHtml += `<div class="active-card-chip" style="border-color:${color}; padding: 8px 12px; font-size:0.85rem;" onclick="window.triggerPopup('${pc.cardName}', '${pc.cardDesc}', 'Kohde: ${pc.target}<br>Käyttäjä: ${pc.by}')"><span style="color:var(--text-main);"><b>${pc.by}</b> ${actionText}: <span style="font-weight:900; color:${color};">${pc.cardName}</span></span></div>`;
             if(pc.target === myName) {
                 myRulesHtml += `<div class="my-rule-item"><b>${pc.cardName}:</b> <span style="font-weight:600; font-size:1rem;">${pc.cardDesc}</span></div>`;
             }
@@ -210,8 +211,7 @@ window.renderPlayerHand = function(cards) {
     
     let html = '';
     cards.forEach((cId, index) => {
-        // allCards tulee tasks.js tiedostosta, joka ladataan globaalisti HTML:ssä.
-        const cDef = window.allCards.find(sc => sc.id === cId);
+        const cDef = allCards.find(sc => sc.id === cId);
         if(!cDef) return;
         let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
         let btnClass = cDef.type === 'buff' ? 'btn-success' : 'btn-danger';
@@ -247,7 +247,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             <div class="physical-card premium-card">
                 <span class="card-price-tag">${item.price} P</span>
                 <div><div class="card-type-tag">💎 PREMIUM KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p></div>
-                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" style="padding:16px; font-size:1rem; color:var(--text-main);" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
+                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" style="padding:16px; font-size:1rem; color:#000;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
             </div>`;
     });
     
@@ -298,47 +298,35 @@ window.renderAdminPlayerList = function() {
     });
 };
 
-// UUSI VAATIMUS 4: KORTTIEN ANTO-TYÖKALU GM:lle
-window.renderAdminCardGiver = function() {
-    const container = el('gmCardManager');
-    if(!container) return;
-    if(typeof window.allCards === 'undefined') return; 
+window.triggerPopup = function(title, desc, details) {
+    const overlay = el('lotteryWinner');
+    if(!overlay) return;
+    el('popupTitle').innerHTML = title;
+    el('popupDesc').innerHTML = desc;
     
-    let playerOpts = allPlayers.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
-    let sortedCards = [...window.allCards].sort((a,b) => a.n.localeCompare(b.n));
-    let cardOpts = sortedCards.map(c => `<option value="${c.id}">${c.n} (${c.tier === 'premium' ? 'Kauppa' : 'Normaali'})</option>`).join('');
-
-    container.innerHTML = `
-        <select id="gmAddCardPlayer" style="margin-bottom:8px;">${playerOpts}</select>
-        <select id="gmAddCardSelect" style="margin-bottom:8px;">${cardOpts}</select>
-        <button class="btn btn-success" style="padding:14px; font-size:1rem;" onclick="window.adminGiveCard()">ANNA KORTTI</button>
-    `;
+    const detailsEl = el('popupDetails');
+    if(detailsEl) {
+        detailsEl.innerHTML = details;
+        if(!details || details === '') detailsEl.style.display = 'none';
+        else detailsEl.style.display = 'block';
+    }
+    overlay.style.display = 'flex';
 };
 
-// UUSI VAATIMUS 3: KUMOA KORTTI
-window.undoCardPlay = function(index) {
-    runTransaction(ref(db, 'gameState'), (state) => {
-        if(!state) return state;
-        let played = state.activeHole?.playedCards;
-        if(!played) return state;
-        let pArr = Array.isArray(played) ? played : Object.values(played);
-        let pc = pArr[index];
-        if(!pc) return state;
-
-        let players = state.players ? (Array.isArray(state.players) ? state.players : Object.values(state.players)) : [];
-        let me = players.find(p => p && p.name === pc.by);
-        if(me) {
-            me.cards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : [];
-            if(pc.cardId) me.cards.push(pc.cardId); // Palauta alkuperäiselle
+window.toggleScoreModalRule = function() {
+    const box = el('scoreModalRuleBox');
+    if(!box) return;
+    if(box.style.display === 'none') {
+        if(activeHole && activeHole.rule) {
+            let bTxt = activeHole.rule.type === 'bounty' ? '🏆 TEHTÄVÄ: ' : '🎲 SÄÄNTÖ: ';
+            box.innerHTML = `<strong style="color:var(--primary); font-size:1.1rem;">${bTxt} ${activeHole.rule.n}</strong><br><br>${activeHole.rule.d}`;
+        } else {
+            box.innerHTML = "Ei aktiivista sääntöä tällä väylällä.";
         }
-        
-        pArr.splice(index, 1);
-        state.activeHole.playedCards = pArr;
-        state.players = players;
-        return state;
-    }).then(() => {
-        window.showNotification("Kortti palautettu pelaajalle", "info");
-    });
+        box.style.display = 'block';
+    } else {
+        box.style.display = 'none';
+    }
 };
 
 window.adminAddPlayer = function() {
@@ -351,24 +339,6 @@ window.adminAddPlayer = function() {
         if(!players.find(x => x && x.name === n)) { players.push({ name: n, score: 0, dgScore: 0, cards: [], boughtThisHole: false }); }
         return players;
     }).then(() => { input.value = ''; });
-};
-
-window.adminGiveCard = function() {
-    let pName = el('gmAddCardPlayer').value;
-    let cId = el('gmAddCardSelect').value;
-    if(!pName || !cId) return;
-
-    runTransaction(ref(db, 'gameState/players'), (players) => {
-        let pArray = players ? (Array.isArray(players) ? players : Object.values(players)) : [];
-        let p = pArray.find(x => x && x.name === pName);
-        if (p) {
-            p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
-            p.cards.push(cId);
-        }
-        return pArray;
-    }).then(() => {
-        window.showNotification(`Kortti lisätty: ${pName}`, "success");
-    });
 };
 
 window.adjustScore = function(idx, amt) { 
@@ -407,7 +377,7 @@ window.startMeilahti = function() {
         state.course = { name: "Meilahti", pars: Array(16).fill(3) };
         state.currentHoleIndex = 1;
         
-        let premiumPool = window.allCards.filter(c => c.tier === "premium");
+        let premiumPool = allCards.filter(c => c.tier === "premium");
         let uniqueShop = []; let used = new Set();
         for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
             if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
@@ -416,7 +386,7 @@ window.startMeilahti = function() {
         const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
         state.activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
         
-        let normalPool = window.allCards.filter(c => c.tier === "normal");
+        let normalPool = allCards.filter(c => c.tier === "normal");
         if(state.players) {
             state.players = state.players.map(p => {
                 if(!p) return p;
@@ -455,7 +425,7 @@ window.saveCourseSetup = function() {
         state.course = { name: name, pars: pars };
         state.currentHoleIndex = 1;
         
-        let premiumPool = window.allCards.filter(c => c.tier === "premium");
+        let premiumPool = allCards.filter(c => c.tier === "premium");
         let uniqueShop = []; let used = new Set();
         for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
             if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
@@ -464,7 +434,7 @@ window.saveCourseSetup = function() {
         const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
         state.activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
         
-        let normalPool = window.allCards.filter(c => c.tier === "normal");
+        let normalPool = allCards.filter(c => c.tier === "normal");
         if(state.players) {
             state.players = state.players.map(p => {
                 if(!p) return p;
@@ -485,14 +455,14 @@ window.saveCourseSetup = function() {
 
 window.nextHole = function() { 
     const sm = el('scoreModal');
-    if(sm) window.openScoreModal(); 
+    if(sm) sm.style.display = 'flex'; 
 };
 
 window.rollHoleRules = function() {
     runTransaction(ref(db, 'gameState'), (state) => {
         if(!state) return state;
         const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
-        let premiumPool = window.allCards.filter(c => c.tier === "premium");
+        let premiumPool = allCards.filter(c => c.tier === "premium");
         let uniqueShop = []; let used = new Set();
         for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
             if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
@@ -528,7 +498,7 @@ window.buyShopItem = function(item) {
 
 let pendingCardPlay = null;
 window.openTargetModal = function(cardIndex, cardId) {
-    const cardDef = window.allCards.find(c => c.id === cardId);
+    const cardDef = allCards.find(c => c.id === cardId);
     pendingCardPlay = { index: cardIndex, id: cardId, def: cardDef };
     
     if(cardDef.type === 'buff') {
@@ -566,8 +536,7 @@ window.executeCardPlay = function(targetName) {
         }
         if(state.activeHole) {
             state.activeHole.playedCards = state.activeHole.playedCards ? (Array.isArray(state.activeHole.playedCards) ? state.activeHole.playedCards : Object.values(state.activeHole.playedCards)) : [];
-            // HUOM: cardId lisätty Undo-ominaisuutta varten!
-            state.activeHole.playedCards.push({ cardId: card.id, cardName: card.def.n, cardDesc: card.def.d, target: targetName, by: myName, type: card.def.type, timestamp });
+            state.activeHole.playedCards.push({ cardName: card.def.n, cardDesc: card.def.d, target: targetName, by: myName, type: card.def.type, timestamp });
         }
         state.players = players;
         return state;
@@ -578,11 +547,11 @@ window.executeCardPlay = function(targetName) {
 };
 
 // ===========================================
-// TULOSTEN KERÄÄMINEN (NIMI-POHJAINEN, TURVALLINEN)
+// TULOSTEN KERÄÄMINEN (NIMI-POHJAINEN, EI KAADU)
 // ===========================================
 
 window.changeScore = function(pId, par, delta) {
-    let input = document.querySelector(`.score-input-data[data-id="${pId}"]`);
+    let input = document.querySelector(`.score-input-data[data-name="${pId}"]`);
     if(!input) return;
     let val = parseInt(input.value) + delta;
     if(val < 1) val = 1;
@@ -604,15 +573,7 @@ window.openScoreModal = function() {
     if(el('scoreModalPar')) el('scoreModalPar').innerText = par;
     
     const box = el('scoreModalRuleBox');
-    if(box) { 
-        if(activeHole && activeHole.rule) {
-            let bTxt = activeHole.rule.type === 'bounty' ? '🏆 TEHTÄVÄ:' : '🎲 SÄÄNTÖ:';
-            box.innerHTML = `<span style="color:var(--primary);">${bTxt} ${activeHole.rule.n}</span><br><span style="font-weight:600; font-size:0.95rem; color:var(--text-main); display:block; margin-top:5px;">${activeHole.rule.d}</span>`;
-            box.style.display = 'block';
-        } else {
-            box.style.display = 'none';
-        }
-    }
+    if(box) { box.style.display = 'none'; box.innerHTML = ''; }
     
     const container = el('scoreInputsContainer');
     if(!container) return; 
@@ -632,7 +593,7 @@ window.openScoreModal = function() {
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, -1)">-</button>
                     <div id="scoreDisplay_${safeId}" class="score-display score-par">${par}</div>
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, 1)">+</button>
-                    <input type="hidden" class="score-input-data" data-id="${safeId}" data-name="${p.name}" id="scoreInput_${safeId}" value="${par}">
+                    <input type="hidden" class="score-input-data" data-name="${p.name}" id="scoreInput_${safeId}" value="${par}">
                 </div>
             </div>`;
     });
@@ -662,7 +623,7 @@ window.submitScores = function() {
     let losers = scores.filter(s => s.strokes === maxStrokes).map(s => s.name);
     
     let taskWinners = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => cb.value);
-    let normalPool = window.allCards.filter(c => c.tier === "normal");
+    let normalPool = allCards.filter(c => c.tier === "normal");
     
     runTransaction(ref(db, 'gameState'), (state) => {
         if(!state) return state;
@@ -756,7 +717,6 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderCourseBanner();
     window.renderLeaderboard();
     window.renderActiveHole();
-    window.renderAdminCardGiver();
     
     if (myName) {
         const me = allPlayers.find(p => p && p.name === myName);
@@ -779,7 +739,7 @@ onValue(ref(db, 'gameState'), (snap) => {
             
             if (myNewDebuffs.length > 0) {
                 myNewDebuffs.forEach(db => {
-                    window.showNotification(`💥 Sinuun kohdistui: ${db.cardName}`, 'debuff');
+                    window.showNotification(`💥 Sinua sabotoitiin: ${db.cardName}`, 'debuff');
                     if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
                 });
                 lastPlayedCardTimestamp = Math.max(...playedCards.map(pc => pc.timestamp));
@@ -792,6 +752,6 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderScoreLog(data.scoreLog);
 });
 
-// Aja eleohjaukset
+// Aja lisäosat heti alussa
 window.enableCardHover();
 window.setupSwipeToClose();
