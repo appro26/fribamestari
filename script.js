@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, set, push, runTransaction, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-west1.firebasedatabase.app/" };
 const app = initializeApp(firebaseConfig);
@@ -16,7 +16,7 @@ let isExpandedView = false;
 let lastPlayedCardTimestamp = Date.now();
 
 //==============================================
-// 1. ELEOHJAUKSET (Nosto-efekti ja Swipe-to-close)
+// 1. ELEOHJAUKSET
 //==============================================
 window.enableCardHover = function() {
     const resetCards = () => {
@@ -113,16 +113,16 @@ window.showNotification = function(message, type = 'info') {
     setTimeout(() => { toast.remove(); }, 3000);
 };
 
-window.claimIdentity = async function() {
+window.claimIdentity = function() {
     let n = el('playerNameInput').value.trim();
     if(!n || n.length > 15) return alert("Syötä nimi!"); 
     myName = n; localStorage.setItem('friba_name', n);
     window.updateIdentityUI(); 
-    await runTransaction(ref(db, 'gameState/players'), (p) => {
-        let arr = p ? (Array.isArray(p) ? p : Object.values(p)) : [];
-        if(!arr.find(x => x && x.name === n)) { arr.push({ name: n, score: 0, dgScore: 0, cards: [], boughtThisHole: false }); }
-        return arr;
-    });
+    
+    if(!allPlayers.find(x => x && x.name === n)) { 
+        allPlayers.push({ name: n, score: 0, dgScore: 0, cards: [], boughtThisHole: false }); 
+        set(ref(db, 'gameState/players'), allPlayers);
+    }
 };
 
 window.renderCourseBanner = function() {
@@ -334,33 +334,33 @@ window.adminAddPlayer = function() {
     if(!input) return;
     let n = input.value.trim();
     if(!n) return;
-    runTransaction(ref(db, 'gameState/players'), (pData) => {
-        let players = pData ? (Array.isArray(pData) ? pData : Object.values(pData)) : [];
-        if(!players.find(x => x && x.name === n)) { players.push({ name: n, score: 0, dgScore: 0, cards: [], boughtThisHole: false }); }
-        return players;
-    }).then(() => { input.value = ''; });
+    
+    if(!allPlayers.find(x => x && x.name === n)) { 
+        allPlayers.push({ name: n, score: 0, dgScore: 0, cards: [], boughtThisHole: false }); 
+        set(ref(db, 'gameState/players'), allPlayers).then(() => { input.value = ''; });
+    }
 };
 
 window.adjustScore = function(idx, amt) { 
     if(amt === 0) return;
-    runTransaction(ref(db, `gameState/players/${idx}`), (p) => {
-        if(p) { p.score = Math.max(0, (p.score || 0) + amt); }
-        return p;
-    });
+    if(allPlayers[idx]) {
+        allPlayers[idx].score = Math.max(0, (allPlayers[idx].score || 0) + amt);
+        set(ref(db, `gameState/players/${idx}/score`), allPlayers[idx].score);
+    }
 };
 
 window.adjustDgScore = function(idx, amt) { 
     if(amt === 0) return;
-    runTransaction(ref(db, `gameState/players/${idx}`), (p) => {
-        if(p) { p.dgScore = (p.dgScore || 0) + amt; }
-        return p;
-    });
+    if(allPlayers[idx]) {
+        allPlayers[idx].dgScore = (allPlayers[idx].dgScore || 0) + amt;
+        set(ref(db, `gameState/players/${idx}/dgScore`), allPlayers[idx].dgScore);
+    }
 };
 
 window.removePlayer = function(idx) { 
     if(confirm("Poistetaanko pelaaja pelistä?")) { 
         allPlayers.splice(idx, 1); 
-        set(ref(db, 'gameState/players'), allPlayers); 
+        set(ref(db, 'gameState/players'), allPlayers);
     } 
 };
 
@@ -372,37 +372,38 @@ window.resetGame = function() {
 };
 
 window.startMeilahti = function() {
-    runTransaction(ref(db, 'gameState'), (state) => {
-        if(!state) return state;
-        state.course = { name: "Meilahti", pars: Array(16).fill(3) };
-        state.currentHoleIndex = 1;
-        
-        let premiumPool = allCards.filter(c => c.tier === "premium");
-        let uniqueShop = []; let used = new Set();
-        for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
-            if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
-            if(uniqueShop.length === 5) break;
-        }
-        const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
-        state.activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
-        
-        let normalPool = allCards.filter(c => c.tier === "normal");
-        if(state.players) {
-            state.players = state.players.map(p => {
-                if(!p) return p;
-                let pCards = [
-                    normalPool[Math.floor(Math.random() * normalPool.length)].id,
-                    normalPool[Math.floor(Math.random() * normalPool.length)].id,
-                    normalPool[Math.floor(Math.random() * normalPool.length)].id
-                ];
-                return { ...p, score: 0, dgScore: 0, cards: pCards, boughtThisHole: false };
-            });
-        }
-        return state;
-    }).then(() => {
-        if(el('courseModal')) el('courseModal').style.display = 'none';
-        lastPlayedCardTimestamp = Date.now(); 
-    });
+    currentCourse = { name: "Meilahti", pars: Array(16).fill(3) };
+    currentHoleIndex = 1;
+    
+    let premiumPool = allCards.filter(c => c.tier === "premium");
+    let uniqueShop = []; let used = new Set();
+    for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
+        if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
+        if(uniqueShop.length === 5) break;
+    }
+    const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
+    activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
+    
+    let normalPool = allCards.filter(c => c.tier === "normal");
+    if(allPlayers) {
+        allPlayers = allPlayers.map(p => {
+            if(!p) return p;
+            let pCards = [
+                normalPool[Math.floor(Math.random() * normalPool.length)].id,
+                normalPool[Math.floor(Math.random() * normalPool.length)].id,
+                normalPool[Math.floor(Math.random() * normalPool.length)].id
+            ];
+            return { ...p, score: 0, dgScore: 0, cards: pCards, boughtThisHole: false };
+        });
+    }
+    
+    set(ref(db, 'gameState/course'), currentCourse);
+    set(ref(db, 'gameState/currentHoleIndex'), currentHoleIndex);
+    set(ref(db, 'gameState/activeHole'), activeHole);
+    set(ref(db, 'gameState/players'), allPlayers);
+
+    if(el('courseModal')) el('courseModal').style.display = 'none';
+    lastPlayedCardTimestamp = Date.now(); 
 };
 
 window.generateParInputs = function() {
@@ -420,37 +421,38 @@ window.saveCourseSetup = function() {
     let pars = [];
     for(let i=1; i<=count; i++) pars.push(parseInt(el(`setupPar_${i}`).value) || 3);
     
-    runTransaction(ref(db, 'gameState'), (state) => {
-        if(!state) return state;
-        state.course = { name: name, pars: pars };
-        state.currentHoleIndex = 1;
-        
-        let premiumPool = allCards.filter(c => c.tier === "premium");
-        let uniqueShop = []; let used = new Set();
-        for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
-            if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
-            if(uniqueShop.length === 5) break;
-        }
-        const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
-        state.activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
-        
-        let normalPool = allCards.filter(c => c.tier === "normal");
-        if(state.players) {
-            state.players = state.players.map(p => {
-                if(!p) return p;
-                let pCards = [
-                    normalPool[Math.floor(Math.random() * normalPool.length)].id,
-                    normalPool[Math.floor(Math.random() * normalPool.length)].id,
-                    normalPool[Math.floor(Math.random() * normalPool.length)].id
-                ];
-                return { ...p, score: 0, dgScore: 0, cards: pCards, boughtThisHole: false };
-            });
-        }
-        return state;
-    }).then(() => {
-        if(el('courseModal')) el('courseModal').style.display = 'none';
-        lastPlayedCardTimestamp = Date.now();
-    });
+    currentCourse = { name: name, pars: pars };
+    currentHoleIndex = 1;
+    
+    let premiumPool = allCards.filter(c => c.tier === "premium");
+    let uniqueShop = []; let used = new Set();
+    for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
+        if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
+        if(uniqueShop.length === 5) break;
+    }
+    const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
+    activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
+    
+    let normalPool = allCards.filter(c => c.tier === "normal");
+    if(allPlayers) {
+        allPlayers = allPlayers.map(p => {
+            if(!p) return p;
+            let pCards = [
+                normalPool[Math.floor(Math.random() * normalPool.length)].id,
+                normalPool[Math.floor(Math.random() * normalPool.length)].id,
+                normalPool[Math.floor(Math.random() * normalPool.length)].id
+            ];
+            return { ...p, score: 0, dgScore: 0, cards: pCards, boughtThisHole: false };
+        });
+    }
+
+    set(ref(db, 'gameState/course'), currentCourse);
+    set(ref(db, 'gameState/currentHoleIndex'), currentHoleIndex);
+    set(ref(db, 'gameState/activeHole'), activeHole);
+    set(ref(db, 'gameState/players'), allPlayers);
+
+    if(el('courseModal')) el('courseModal').style.display = 'none';
+    lastPlayedCardTimestamp = Date.now();
 };
 
 window.nextHole = function() { 
@@ -459,41 +461,36 @@ window.nextHole = function() {
 };
 
 window.rollHoleRules = function() {
-    runTransaction(ref(db, 'gameState'), (state) => {
-        if(!state) return state;
-        const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
-        let premiumPool = allCards.filter(c => c.tier === "premium");
-        let uniqueShop = []; let used = new Set();
-        for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
-            if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
-            if(uniqueShop.length === 5) break;
-        }
-        state.activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
-        return state;
-    });
+    const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
+    let premiumPool = allCards.filter(c => c.tier === "premium");
+    let uniqueShop = []; let used = new Set();
+    for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
+        if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
+        if(uniqueShop.length === 5) break;
+    }
+    activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
+    set(ref(db, 'gameState/activeHole'), activeHole);
 };
 
 window.buyShopItem = function(item) {
-    runTransaction(ref(db, 'gameState'), (state) => {
-        if (!state || !state.activeHole || !state.activeHole.shop) return state;
-        const me = state.players.find(p => p && p.name === myName);
-        if (!me || me.score < item.price || me.boughtThisHole) return state;
+    if (!activeHole || !activeHole.shop) return;
+    const me = allPlayers.find(p => p && p.name === myName);
+    if (!me || me.score < item.price || me.boughtThisHole) return;
 
-        const shopIndex = state.activeHole.shop.findIndex(i => i && i.id === item.id);
-        if (shopIndex !== -1) {
-            me.score -= item.price;
-            me.boughtThisHole = true;
-            state.activeHole.shop.splice(shopIndex, 1);
-            me.cards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : [];
-            me.cards.push(item.id);
-        }
-        return state;
-    }).then((res) => {
-        if(res.committed) {
-            if(el('shopModal')) el('shopModal').style.display = 'none';
-            window.showNotification(`🛒 Ostit edun: ${item.n}`, 'warning');
-        }
-    });
+    const shopIndex = activeHole.shop.findIndex(i => i && i.id === item.id);
+    if (shopIndex !== -1) {
+        me.score -= item.price;
+        me.boughtThisHole = true;
+        activeHole.shop.splice(shopIndex, 1);
+        me.cards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : [];
+        me.cards.push(item.id);
+
+        set(ref(db, 'gameState/players'), allPlayers);
+        set(ref(db, 'gameState/activeHole/shop'), activeHole.shop);
+
+        if(el('shopModal')) el('shopModal').style.display = 'none';
+        window.showNotification(`🛒 Ostit edun: ${item.n}`, 'warning');
+    }
 };
 
 let pendingCardPlay = null;
@@ -526,28 +523,25 @@ window.executeCardPlay = function(targetName) {
     if(el('targetModal')) el('targetModal').style.display = 'none';
     if(el('handModal')) el('handModal').style.display = 'none';
     
-    runTransaction(ref(db, 'gameState'), (state) => {
-        if(!state) return state;
-        let players = state.players ? (Array.isArray(state.players) ? state.players : Object.values(state.players)) : [];
-        const me = players.find(p => p && p.name === myName);
-        if(me && me.cards) { 
-            me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards); 
-            me.cards.splice(card.index, 1); 
-        }
-        if(state.activeHole) {
-            state.activeHole.playedCards = state.activeHole.playedCards ? (Array.isArray(state.activeHole.playedCards) ? state.activeHole.playedCards : Object.values(state.activeHole.playedCards)) : [];
-            state.activeHole.playedCards.push({ cardName: card.def.n, cardDesc: card.def.d, target: targetName, by: myName, type: card.def.type, timestamp });
-        }
-        state.players = players;
-        return state;
-    }).then(() => {
-        let type = card.def.type === 'buff' ? 'info' : 'debuff';
-        window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, type);
-    });
+    const me = allPlayers.find(p => p && p.name === myName);
+    if(me && me.cards) { 
+        me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards); 
+        me.cards.splice(card.index, 1); 
+    }
+    if(activeHole) {
+        activeHole.playedCards = activeHole.playedCards ? (Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards)) : [];
+        activeHole.playedCards.push({ cardName: card.def.n, cardDesc: card.def.d, target: targetName, by: myName, type: card.def.type, timestamp });
+    }
+    
+    set(ref(db, 'gameState/players'), allPlayers);
+    if(activeHole) set(ref(db, 'gameState/activeHole/playedCards'), activeHole.playedCards);
+    
+    let type = card.def.type === 'buff' ? 'info' : 'debuff';
+    window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, type);
 };
 
 // ===========================================
-// TULOSTEN KERÄÄMINEN (NIMI-POHJAINEN, EI KAADU)
+// TULOSTEN KERÄÄMINEN
 // ===========================================
 
 window.changeScore = function(pId, par, delta) {
@@ -625,40 +619,37 @@ window.submitScores = function() {
     let taskWinners = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => cb.value);
     let normalPool = allCards.filter(c => c.tier === "normal");
     
-    runTransaction(ref(db, 'gameState'), (state) => {
-        if(!state) return state;
-        let players = state.players ? (Array.isArray(state.players) ? state.players : Object.values(state.players)) : [];
+    allPlayers.forEach(p => {
+        if (!p) return;
         
-        players.forEach(p => {
-            if (!p) return;
-            
-            let strokeVal = scores.find(s => s.name === p.name)?.strokes || par;
-            p.dgScore = (p.dgScore || 0) + (strokeVal - par);
-            
-            if (winners.includes(p.name)) p.score = (p.score || 0) + 2;
-            if (taskWinners.includes(p.name)) p.score = (p.score || 0) + 5;
-            
-            p.boughtThisHole = false; 
-            
-            if (losers.includes(p.name)) {
-                p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
-                p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
-            }
-            
+        let strokeVal = scores.find(s => s.name === p.name)?.strokes || par;
+        p.dgScore = (p.dgScore || 0) + (strokeVal - par);
+        
+        if (winners.includes(p.name)) p.score = (p.score || 0) + 2;
+        if (taskWinners.includes(p.name)) p.score = (p.score || 0) + 5;
+        
+        p.boughtThisHole = false; 
+        
+        if (losers.includes(p.name)) {
             p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
             p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
-            p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
-        });
+        }
         
-        state.players = players;
-        state.currentHoleIndex = (state.currentHoleIndex || 1) + 1;
-        state.activeHole = null; 
-        return state;
-    }).then(() => {
-        if(el('scoreModal')) el('scoreModal').style.display = 'none';
-        window.rollHoleRules(); 
-        lastPlayedCardTimestamp = Date.now(); 
+        p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
+        p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
+        p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
     });
+    
+    currentHoleIndex++;
+    activeHole = null; 
+    
+    set(ref(db, 'gameState/players'), allPlayers);
+    set(ref(db, 'gameState/currentHoleIndex'), currentHoleIndex);
+    set(ref(db, 'gameState/activeHole'), activeHole);
+
+    if(el('scoreModal')) el('scoreModal').style.display = 'none';
+    window.rollHoleRules(); 
+    lastPlayedCardTimestamp = Date.now(); 
 };
 
 //==============================================
