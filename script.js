@@ -457,22 +457,6 @@ window.triggerPopup = function(title, desc, details) {
     overlay.style.display = 'flex';
 };
 
-window.toggleScoreModalRule = function() {
-    const box = el('scoreModalRuleBox');
-    if(!box) { return; }
-    if(box.style.display === 'none') {
-        if(activeHole && activeHole.rule) {
-            let bTxt = activeHole.rule.type === 'bounty' ? '🏆 TEHTÄVÄ: ' : '🎲 SÄÄNTÖ: ';
-            box.innerHTML = `<strong style="color:var(--primary); font-size:1.1rem;">${bTxt} ${activeHole.rule.n}</strong><br><br>${activeHole.rule.d}`;
-        } else {
-            box.innerHTML = "Ei aktiivista sääntöä tällä väylällä.";
-        }
-        box.style.display = 'block';
-    } else {
-        box.style.display = 'none';
-    }
-};
-
 window.adminAddPlayer = function() {
     const input = el('adminNewPlayerName');
     if(!input) { return; }
@@ -612,7 +596,20 @@ window.saveCourseSetup = function() {
 
 window.nextHole = function() { 
     const sm = el('scoreModal');
-    if(sm) { sm.style.display = 'flex'; }
+    if(sm) { 
+        // Varmistaan että sääntö on esillä heti kun modaali avataan
+        const box = el('scoreModalRuleBox');
+        if(box) {
+            if(activeHole && activeHole.rule) {
+                let bTxt = activeHole.rule.type === 'bounty' ? '🏆 TEHTÄVÄ: ' : '🎲 SÄÄNTÖ: ';
+                box.innerHTML = `<strong style="color:var(--primary); font-size:1.1rem;">${bTxt} ${activeHole.rule.n}</strong><br><br>${activeHole.rule.d}`;
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+        sm.style.display = 'flex'; 
+    }
 };
 
 window.rollHoleRules = function() {
@@ -686,15 +683,17 @@ window.executeCardPlay = function(targetName) {
     }
     if(activeHole) {
         activeHole.playedCards = activeHole.playedCards ? (Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards)) : [];
+        
+        // VIRHEKORJAUS 2: || -varotoimet, jottei yksikään undefined mene Firebaseen
         activeHole.playedCards.push({ 
-            cardId: card.id,
-            cardName: card.def.n, 
-            cardDesc: card.def.d, 
-            target: targetName, 
-            by: myName, 
-            type: card.def.type, 
-            tier: card.def.tier,
-            timestamp 
+            cardId: card.id || '',
+            cardName: card.def.n || '', 
+            cardDesc: card.def.d || '', 
+            target: targetName || '', 
+            by: myName || '', 
+            type: card.def.type || 'sabotage', 
+            tier: card.def.tier || 'normal',
+            timestamp: timestamp 
         });
     }
     
@@ -741,16 +740,19 @@ window.undoCardPlay = function(timestamp) {
 // TULOSTEN KERÄÄMINEN
 // ===========================================
 
-window.changeScore = function(pId, par, delta) {
-    let input = document.querySelector(`.score-input-data[data-name="${pId}"]`);
+window.changeScore = function(safeId, par, delta) {
+    // VIRHEKORJAUS 3: Korjattu oikea tunniste scoreInputtiin
+    let input = el(`scoreInput_${safeId}`);
     if(!input) { return; }
     let val = parseInt(input.value) + delta;
     if(val < 1) { val = 1; }
     input.value = val;
-    let display = el(`scoreDisplay_${pId}`);
+    
+    let display = el(`scoreDisplay_${safeId}`);
     if(!display) { return; }
     display.innerText = val;
     display.className = 'score-display';
+    
     if(val < par) { display.classList.add('score-birdie'); }
     else if(val > par) { display.classList.add('score-bogey'); }
     else { display.classList.add('score-par'); }
@@ -762,9 +764,6 @@ window.openScoreModal = function() {
     
     if(el('scoreModalHoleNum')) { el('scoreModalHoleNum').innerText = currentHoleIndex; }
     if(el('scoreModalPar')) { el('scoreModalPar').innerText = par; }
-    
-    const box = el('scoreModalRuleBox');
-    if(box) { box.style.display = 'none'; box.innerHTML = ''; }
     
     const container = el('scoreInputsContainer');
     if(!container) { return; } 
@@ -790,7 +789,7 @@ window.openScoreModal = function() {
     });
     container.innerHTML = html;
     if(el('taskWinnerContainer')) { el('taskWinnerContainer').innerHTML = taskCheckboxes; }
-    if(el('scoreModal')) { el('scoreModal').style.display = 'flex'; }
+    window.nextHole(); // Kutsutaan apufunktiota modaalin ja säännön avaamiseen
 };
 
 window.submitScores = function() {
