@@ -17,7 +17,7 @@ let isExpandedView = false;
 let lastPlayedCardTimestamp = Date.now();
 
 //==============================================
-// UUSI 3D-KORTIN SLAIDAUS (Touch Drag)
+// UUSI 3D-KORTIN SLAIDAUS (Toimiva drag-mekaniikka)
 //==============================================
 window.cardLastRot = 0;
 window.initCardSwipe = function() {
@@ -29,7 +29,7 @@ window.initCardSwipe = function() {
     container.addEventListener('touchstart', e => {
         startX = e.touches[0].clientX;
         isDragging = true;
-        el('cardDetail3D').style.transition = 'none'; // Poistaa viiveen sormen ajaksi
+        el('cardDetail3D').style.transition = 'none'; 
     }, {passive: true});
 
     container.addEventListener('touchmove', e => {
@@ -108,7 +108,7 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
 };
 
 //==============================================
-// UUSI APPLE-ILMOITUS (NOPEAMPI)
+// APPLE-ILMOITUS (NOPEAMPI)
 //==============================================
 window.showAppleToast = function(msg, icon = '✨') {
     const toast = el('appleToast');
@@ -143,9 +143,6 @@ window.logScore = function(playerName, delta) {
     push(ref(db, 'gameState/scoreLog'), window.cleanFirebaseData({ time: timeStr, playerName: playerName, delta: delta }));
 };
 
-//==============================================
-// ELEOHJAUKSET
-//==============================================
 window.setupSwipeToClose = function() {
     document.querySelectorAll('.fullscreen-modal').forEach(modal => {
         let startY = null;
@@ -182,7 +179,6 @@ window.setRole = function(r) {
     if(el('btnPlayer')) { el('btnPlayer').classList.toggle('active', r === 'player'); }
     if(el('btnGM')) { el('btnGM').classList.toggle('active', r === 'gm'); }
     
-    // Status Bar -värin muutos automaattisesti!
     const themeMeta = document.getElementById('themeColorMeta');
     if(themeMeta) themeMeta.setAttribute('content', r === 'gm' ? '#0f172a' : '#eefdf4');
     
@@ -197,7 +193,7 @@ window.showNotification = function(message, type = 'info') {
     toast.className = `notification ${type}`;
     toast.innerHTML = `<span style="font-size:1.3rem;">${icon}</span> <span>${message}</span>`;
     container.appendChild(toast);
-    setTimeout(() => { toast.remove(); }, 2500); // Lyhennetty kesto
+    setTimeout(() => { toast.remove(); }, 2500); 
 };
 
 window.claimIdentity = function() {
@@ -254,15 +250,17 @@ window.renderActiveHole = function() {
         return;
     }
     
-    let bountyTag = activeHole.rule.type === 'bounty' ? `<div class="premium-bounty-tag">🏆 TEHTÄVÄ: +5 P</div>` : '';
-    
-    // ELEGANTTI VÄYLÄTEHTÄVÄ BANNERI
+    // MASSIIVINEN VÄYLÄTEHTÄVÄ
+    let bountyTag = activeHole.rule.type === 'bounty' ? '🏆 TEHTÄVÄ: SUORITTAJALLE +5 P' : '🎲 VÄYLÄSÄÄNTÖ';
     if(container) { 
         container.innerHTML = `
-            <div class="premium-banner" style="border-left-color: var(--primary);">
-                ${bountyTag}
-                <div class="banner-title">${activeHole.rule.n}</div>
-                <div class="banner-desc">${activeHole.rule.d}</div>
+            <div style="background:#fff; border: 4px solid var(--primary); border-radius: 16px; padding: 24px 20px; margin-bottom: 25px; box-shadow: 0 12px 30px rgba(16, 185, 129, 0.25); text-align:center; position:relative; overflow:hidden;">
+                <div style="position:absolute; top:-20px; right:-20px; font-size:8rem; opacity:0.04; pointer-events:none;">🎯</div>
+                <div style="display:inline-block; background:rgba(16,185,129,0.15); color:var(--primary-dark); padding:6px 16px; border-radius:20px; font-weight:900; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:15px; border:2px solid var(--primary);">
+                    ${bountyTag}
+                </div>
+                <h1 style="font-size:1.8rem; color:var(--text-main); margin-bottom:12px; font-weight:900; line-height:1.1; text-transform:uppercase;">${activeHole.rule.n}</h1>
+                <p style="font-size:1.15rem; color:var(--text-muted); font-weight:700; line-height:1.4;">${activeHole.rule.d}</p>
             </div>`; 
     }
     
@@ -279,13 +277,15 @@ window.renderActiveHole = function() {
             let cType = pc.type || (cardDef ? cardDef.type : 'sabotage');
             
             let color = 'var(--danger)'; 
+            let glowColor = 'rgba(244, 63, 94, 0.25)';
+            let bgColor = 'rgba(244, 63, 94, 0.1)';
             let icon = '🚨';
-            if (cTier === 'premium') { color = 'var(--warning)'; icon = '💎'; }
-            else if (cType === 'buff') { color = 'var(--info)'; icon = '🛡️'; }
+            
+            if (cTier === 'premium') { color = 'var(--warning)'; icon = '💎'; glowColor = 'rgba(245, 158, 11, 0.25)'; bgColor = 'rgba(245, 158, 11, 0.1)'; }
+            else if (cType === 'buff') { color = 'var(--info)'; icon = '🛡️'; glowColor = 'rgba(37, 99, 235, 0.25)'; bgColor = 'rgba(37, 99, 235, 0.1)'; }
             
             let actionText = cType === 'buff' ? `käytti edun` : `sabotoi kohti <strong style="text-transform:uppercase;">${pc.target}</strong>`;
 
-            // KOMPAKTI LISTA ILMAN LAATIKKOA (Vain viiva)
             let undoBtn = currentRole === 'gm' ? `<button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; width:auto; border-radius:6px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">PERU</button>` : `<span style="font-size:0.8rem; color:var(--border);">ℹ️</span>`;
             
             cardsHtml += `
@@ -299,14 +299,17 @@ window.renderActiveHole = function() {
                     ${undoBtn}
                 </div>`;
             
-            // ELEGANTTI "SINUA KOSKEVA" BANNERI
+            // MASSIIVINEN "SINUA KOSKEVA" KORTTI
             if(pc.target && myName && pc.target.trim() === myName.trim()) {
                 let label = cType === 'buff' ? 'OMA ETU' : 'SABOTAASI';
                 myRulesHtml += `
-                    <div class="premium-banner" style="border-left-color: ${color};">
-                        <div style="color:${color}; font-weight:900; font-size:0.85rem; letter-spacing:1px; margin-bottom:6px; text-transform:uppercase;">${icon} ${label}</div>
-                        <div class="banner-title">${pc.cardName}</div>
-                        <div class="banner-desc" style="opacity:0.9;">${pc.cardDesc}</div>
+                    <div style="background:#fff; border: 4px solid ${color}; border-radius: 16px; padding: 24px 20px; margin-bottom: 15px; box-shadow: 0 12px 30px ${glowColor}; position:relative; overflow:hidden;">
+                        <div style="position:absolute; top:-20px; right:-20px; font-size:8rem; opacity:0.04; pointer-events:none;">${icon}</div>
+                        <div style="display:inline-flex; align-items:center; gap:8px; background:${bgColor}; color:${color}; padding:6px 16px; border-radius:20px; font-weight:900; font-size:0.9rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:15px; border: 2px solid ${color};">
+                            <span>${icon}</span> <span>${label}</span>
+                        </div>
+                        <h1 style="font-size:1.7rem; color:var(--text-main); margin-bottom:10px; font-weight:900; line-height:1.1; text-transform:uppercase;">${pc.cardName}</h1>
+                        <p style="font-size:1.15rem; color:var(--text-muted); font-weight:700; line-height:1.4;">${pc.cardDesc}</p>
                     </div>`;
             }
         });
@@ -315,7 +318,14 @@ window.renderActiveHole = function() {
         if(myRulesHtml !== '') {
             if(myRulesContainer) {
                 myRulesContainer.style.display = 'block';
-                myRulesContainer.innerHTML = `<h2 style="font-size:1rem; margin-bottom:10px; color:var(--text-main); display:flex; align-items:center; gap:8px;">⚠️ VAIKUTTAVAT KORTIT</h2>${myRulesHtml}`;
+                myRulesContainer.innerHTML = `
+                    <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:15px; margin-top:10px;">
+                        <span style="height:3px; background:var(--danger); flex:1; border-radius:3px; opacity:0.2;"></span>
+                        <h2 style="font-size:1.1rem; color:var(--danger); margin:0; text-align:center; font-weight:900; letter-spacing:1px;">⚠️ HUOMIOITAVAA</h2>
+                        <span style="height:3px; background:var(--danger); flex:1; border-radius:3px; opacity:0.2;"></span>
+                    </div>
+                    ${myRulesHtml}
+                `;
             }
         } else {
             if(myRulesContainer) myRulesContainer.style.display = 'none'; 
@@ -468,7 +478,7 @@ window.renderGmCardList = function(filterTxt) {
                     <div><div class="card-type-tag">${tagTxt}</div><h3 style="font-size:1rem;">${c.n}</h3><p style="font-size:0.8rem;">${c.d}</p></div>
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
-                <button class="btn ${btnClass}" style="border-radius:0 0 14px 14px; padding:12px; font-size:0.9rem; color:${c.tier === 'premium' ? '#000' : '#fff'};" onclick="window.giveCardToPlayer('${c.id}')">ANNA TÄMÄ</button>
+                <button class="btn ${btnClass}" style="border-radius:0 0 14px 14px; padding:16px; font-size:1.05rem; color:${c.tier === 'premium' ? '#000' : '#fff'};" onclick="window.giveCardToPlayer('${c.id}')">ANNA TÄMÄ</button>
             </div>`;
     });
     container.innerHTML = html;
@@ -1101,6 +1111,19 @@ onValue(ref(db, 'gameState'), (snap) => {
             if(el('shopModalWallet')) el('shopModalWallet').innerText = pts; 
             if(el('handCountBadge')) el('handCountBadge').innerText = myCards.filter(Boolean).length; 
         }
+
+        if (activeHole && activeHole.playedCards) {
+            const playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
+            const myNewDebuffs = playedCards.filter(Boolean).filter(pc => pc.target === myName && pc.timestamp > lastPlayedCardTimestamp && pc.type === 'sabotage');
+            
+            if (myNewDebuffs.length > 0) {
+                myNewDebuffs.forEach(db => {
+                    window.showNotification(`💥 Sinua sabotoitiin: ${db.cardName}`, 'debuff');
+                    if (navigator.vibrate) { navigator.vibrate([200, 100, 200]); }
+                });
+                lastPlayedCardTimestamp = Math.max(...playedCards.map(pc => pc.timestamp));
+            }
+        }
     }
 
     window.renderAdminPlayerList();
@@ -1110,6 +1133,7 @@ onValue(ref(db, 'gameState'), (snap) => {
 
 // Aja lisäosat
 window.setupSwipeToClose();
+window.initCardSwipe();
 
 window.populateRuleSelect = function() {
     const sel = el('gmRuleSelect');
