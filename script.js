@@ -17,13 +17,13 @@ let isExpandedView = false;
 let lastPlayedCardTimestamp = Date.now();
 
 //==============================================
-// TURVALLISUUS- HELPER (ESTÄÄ FIREBASE KAATUMISET)
+// TURVALLISUUS- HELPER (ESTÄÄ FIREBASE KAATUMISET JSON-VIRHEISIIN)
 //==============================================
 window.cleanFirebaseData = function(data) {
     if (data === undefined || data === null) return null;
     try {
         let str = JSON.stringify(data);
-        if (!str || str === 'undefined' || str === '"undefined"') return null;
+        if (!str || str === 'undefined' || str === '"undefined"' || str === 'null') return null;
         return JSON.parse(str);
     } catch (err) {
         console.error("Firebase payload clean error:", err);
@@ -202,12 +202,8 @@ window.renderActiveHole = function() {
     let bountyTag = activeHole.rule.type === 'bounty' ? `<div class="rule-bounty-tag">🏆 TEHTÄVÄ: SUORITTAJALLE +5 P</div>` : '';
     if(container) { container.innerHTML = `<div class="hole-rule-card">${bountyTag}<h1 style="font-size:1.5rem; margin-bottom:5px;">${activeHole.rule.n}</h1><p style="font-size:1.1rem;">${activeHole.rule.d}</p></div>`; }
     
-    // KORJAUS TÄSSÄ: Pakotetaan palautus oikeaksi taulukoksi (Arrayksi), jottei .length kaadu koskaan.
-    let playedCards = [];
-    if (activeHole.playedCards) {
-        playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
-        playedCards = playedCards.filter(Boolean); // Pesu
-    }
+    // TÄSSÄ KORJAUS 1: Luetaan objektit aina Object.values() avulla, jottei .length tai Firebase-Arrayt sekoile.
+    let playedCards = Object.values(activeHole.playedCards || {}).filter(Boolean);
 
     if(playedCards.length > 0) {
         if(cardsArea) { cardsArea.style.display = 'block'; }
@@ -219,7 +215,7 @@ window.renderActiveHole = function() {
             let cTier = pc.tier || (cardDef ? cardDef.tier : 'normal');
             let cType = pc.type || (cardDef ? cardDef.type : 'sabotage');
             
-            let actionText = cType === 'buff' ? `käytti edun` : `sabotoi kohdetta <strong>${pc.target}</strong>`;
+            let actionText = cType === 'buff' ? `käytti edun` : `sabotoi kohdetta <strong style="text-transform:uppercase;">${pc.target}</strong>`;
             
             let color = 'var(--danger)'; 
             if (cTier === 'premium') { color = 'var(--warning)'; }
@@ -227,16 +223,20 @@ window.renderActiveHole = function() {
 
             let undoBtnHtml = '';
             if (currentRole === 'gm') {
-                undoBtnHtml = `<button class="btn btn-danger" style="margin-top:10px; padding:6px 12px; font-size:0.8rem; width:auto; float:right;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">↩️ PERU & PALAUTA</button><div style="clear:both;"></div>`;
+                undoBtnHtml = `<button class="btn btn-danger" style="margin-top:10px; padding:6px 12px; font-size:0.8rem; width:auto; float:right;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">↩️ PERU</button><div style="clear:both;"></div>`;
             }
 
-            cardsHtml += `<div class="active-card-chip" style="border-color:${color}; padding: 12px; font-size:0.85rem;" onclick="window.triggerPopup('${pc.cardName}', '${pc.cardDesc}', 'Kohde: ${pc.target}<br>Käyttäjä: ${pc.by}')">
-                <span style="color:var(--text-main); display:block; margin-bottom: ${undoBtnHtml ? '5px' : '0'};"><b>${pc.by}</b> ${actionText}: <span style="font-weight:900; color:${color};">${pc.cardName}</span></span>
+            cardsHtml += `<div class="active-card-chip" style="border-left: 6px solid ${color}; background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 8px;" onclick="window.triggerPopup('${pc.cardName}', '${pc.cardDesc}', 'Kohde: ${pc.target}<br>Käyttäjä: ${pc.by}')">
+                <span style="color:var(--text-muted); font-size: 0.85rem; display:block; margin-bottom: 4px;"><b>${pc.by}</b> ${actionText}</span>
+                <span style="font-weight:900; color:${color}; font-size: 1.1rem; display:block;">${pc.cardName}</span>
                 ${undoBtnHtml}
             </div>`;
             
             if(pc.target === myName && cType === 'sabotage') {
-                myRulesHtml += `<div class="my-rule-item"><b>${pc.cardName}:</b> <span style="font-weight:600; font-size:1rem;">${pc.cardDesc}</span></div>`;
+                myRulesHtml += `<div class="my-rule-item" style="background:#fff; border: 2px solid var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 8px;">
+                    <b style="color:var(--danger); display:block; margin-bottom:4px; font-size:1.1rem;">${pc.cardName}</b> 
+                    <span style="font-weight:700; font-size:1rem; color:var(--text-main);">${pc.cardDesc}</span>
+                </div>`;
             }
         });
         
@@ -244,7 +244,10 @@ window.renderActiveHole = function() {
         if(myRulesHtml !== '') {
             if(myRulesContainer) {
                 myRulesContainer.style.display = 'block';
-                myRulesContainer.innerHTML = `<div class="my-rules-box"><h3 style="font-size:1rem; margin-bottom:8px;">🚨 Sinuun kohdistuvat sabotaasit:</h3>${myRulesHtml}</div>`;
+                myRulesContainer.innerHTML = `<div class="my-rules-box">
+                    <h3 style="font-size:1.1rem; margin-bottom:10px; color:var(--danger); display:flex; align-items:center; gap:8px;">🚨 KOHDISTETTU SINUUN!</h3>
+                    ${myRulesHtml}
+                </div>`;
             }
         } else {
             if(myRulesContainer) { myRulesContainer.style.display = 'none'; }
@@ -542,7 +545,7 @@ window.startMeilahti = function() {
         if(uniqueShop.length === 5) { break; }
     }
     const randomRule = window.holeRules[Math.floor(Math.random() * window.holeRules.length)];
-    activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
+    activeHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
     
     let normalPool = window.allCards.filter(c => c.tier === "normal");
     if(allPlayers) {
@@ -595,7 +598,7 @@ window.saveCourseSetup = function() {
         if(uniqueShop.length === 5) { break; }
     }
     const randomRule = window.holeRules[Math.floor(Math.random() * window.holeRules.length)];
-    activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
+    activeHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
     
     let normalPool = window.allCards.filter(c => c.tier === "normal");
     if(allPlayers) {
@@ -622,7 +625,7 @@ window.saveCourseSetup = function() {
 };
 
 // ===========================================
-// TULOSTEN KERUU
+// TULOSTEN KERUU JA PISTEIDEN JAKO
 // ===========================================
 
 window.changeScore = function(safeId, par, delta) {
@@ -671,7 +674,8 @@ window.openScoreModal = function() {
         
         taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${i}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
         
-        let safeId = i; 
+        // Luodaan id, joka ei hajoa nimien erikoismerkkeihin! (esim. "Temeliii" -> "Temeliii")
+        let safeId = "player_" + i;
         html += `
             <div class="score-row">
                 <span class="score-name">${p.name}</span>
@@ -752,7 +756,8 @@ window.submitScores = function() {
         if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
         if(uniqueShop.length === 5) { break; }
     }
-    activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
+    // Tyhjä objekti playedCards -kentälle alussa, jotta array-ongelmilta vältytään
+    activeHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
     
     allPlayers = allPlayers.filter(Boolean);
     
@@ -783,8 +788,10 @@ window.buyShopItem = function(item) {
         me.cards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : [];
         me.cards.push(item.id);
 
-        set(ref(db, 'gameState/players'), window.cleanFirebaseData(allPlayers));
-        set(ref(db, 'gameState/activeHole/shop'), window.cleanFirebaseData(activeHole.shop));
+        let updates = {};
+        updates['gameState/players'] = window.cleanFirebaseData(allPlayers);
+        updates['gameState/activeHole/shop'] = window.cleanFirebaseData(activeHole.shop);
+        update(ref(db), updates);
 
         if(el('shopModal')) { el('shopModal').style.display = 'none'; }
         window.logEvent(`${myName} osti edun: ${item.n}.`);
@@ -809,7 +816,8 @@ window.openTargetModal = function(cardId) {
     allPlayers.forEach(p => {
         if(!p) { return; }
         if(p.name !== myName) {
-            list.innerHTML += `<button style="background:var(--surface); border:3px solid var(--border); color:var(--text-main); width:100%; padding:20px; border-radius:12px; margin-bottom:12px; font-weight:900; font-size:1.3rem; text-align:left; box-shadow:0 4px 10px rgba(0,0,0,0.05);" onclick="window.executeCardPlay('${p.name}')">${p.name}</button>`;
+            // TÄSSÄ KORJAUS 2: Targetin valinta käyttää data-name attribuuttia, joka kestää kaikki välimerkit
+            list.innerHTML += `<button class="btn btn-secondary target-btn" data-name="${p.name}" style="background:var(--surface); border:3px solid var(--border); color:var(--text-main); width:100%; padding:20px; border-radius:12px; margin-bottom:12px; font-weight:900; font-size:1.3rem; text-align:left; box-shadow:0 4px 10px rgba(0,0,0,0.05);" onclick="window.executeCardPlay(this.getAttribute('data-name'))">${p.name}</button>`;
         }
     });
     if(el('targetModal')) { el('targetModal').style.display = 'flex'; }
@@ -833,10 +841,15 @@ window.executeCardPlay = function(targetName) {
         }
     }
     if(activeHole) {
-        activeHole.playedCards = activeHole.playedCards ? (Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards)) : [];
-        activeHole.playedCards = activeHole.playedCards.filter(Boolean);
+        // TÄSSÄ KORJAUS 1: Tallennetaan kortit aina Firebase-turvalliseen objektiin (dictionary), jolloin ei tule Array-vikoja
+        let pCards = {};
+        if (activeHole.playedCards) {
+            let oldCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
+            oldCards.filter(Boolean).forEach((c, i) => { pCards['old_'+i] = c; });
+        }
         
-        activeHole.playedCards.push({ 
+        let cKey = 'c_' + timestamp + '_' + Math.floor(Math.random()*1000);
+        pCards[cKey] = { 
             cardId: card.id || 'err_id',
             cardName: card.def.n || 'Nimetön', 
             cardDesc: card.def.d || '-', 
@@ -845,11 +858,16 @@ window.executeCardPlay = function(targetName) {
             type: card.def.type || 'sabotage', 
             tier: card.def.tier || 'normal',
             timestamp: timestamp 
-        });
+        };
+        activeHole.playedCards = pCards;
     }
     
-    set(ref(db, 'gameState/players'), window.cleanFirebaseData(allPlayers));
-    if(activeHole) { set(ref(db, 'gameState/activeHole/playedCards'), window.cleanFirebaseData(activeHole.playedCards)); }
+    let updates = {};
+    updates['gameState/players'] = window.cleanFirebaseData(allPlayers);
+    if(activeHole) { 
+        updates['gameState/activeHole/playedCards'] = window.cleanFirebaseData(activeHole.playedCards); 
+    }
+    update(ref(db), updates);
     
     window.logEvent(`${myName} pelasi kortin ${card.def.n} kohteelle ${targetName}.`);
     
@@ -859,15 +877,19 @@ window.executeCardPlay = function(targetName) {
 
 window.undoCardPlay = function(timestamp) {
     if(!confirm("Palautetaanko kortti takaisin pelaajan käteen ja perutaan vaikutus?")) { return; }
-    
     if(!activeHole || !activeHole.playedCards) { return; }
     
-    let playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
-    let cardIndex = playedCards.findIndex(pc => pc && pc.timestamp === timestamp);
+    let pCards = activeHole.playedCards;
+    if (Array.isArray(pCards)) {
+        let temp = {};
+        pCards.filter(Boolean).forEach((c, i) => { temp['old_'+i] = c; });
+        pCards = temp;
+    }
+
+    let targetKey = Object.keys(pCards).find(k => pCards[k] && pCards[k].timestamp === timestamp);
+    if (!targetKey) { return; }
     
-    if (cardIndex === -1) { return; }
-    let pc = playedCards[cardIndex];
-    
+    let pc = pCards[targetKey];
     let cardDef = window.allCards.find(c => c.n === pc.cardName);
     let cId = pc.cardId || (cardDef ? cardDef.id : null);
     
@@ -877,11 +899,13 @@ window.undoCardPlay = function(timestamp) {
         player.cards.push(cId);
     }
     
-    playedCards.splice(cardIndex, 1);
-    activeHole.playedCards = playedCards.filter(Boolean);
+    delete pCards[targetKey];
+    activeHole.playedCards = pCards;
     
-    set(ref(db, 'gameState/players'), window.cleanFirebaseData(allPlayers));
-    set(ref(db, 'gameState/activeHole/playedCards'), window.cleanFirebaseData(activeHole.playedCards));
+    let updates = {};
+    updates['gameState/players'] = window.cleanFirebaseData(allPlayers);
+    updates['gameState/activeHole/playedCards'] = window.cleanFirebaseData(activeHole.playedCards);
+    update(ref(db), updates);
     
     window.logEvent(`${myName} (GM) perui kortin ${cardDef ? cardDef.n : ''} vaikutuksen.`);
     window.showNotification("Kortti palautettu onnistuneesti!", "info");
@@ -947,7 +971,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     if (myName) {
         const me = allPlayers.find(p => p && p.name === myName);
         if (me) {
-            // Rahan muutosilmoitus
+            // Rahan muutosilmoitus väylän vaihtuessa
             if (typeof window.myLastHole === 'undefined') {
                 window.myLastHole = currentHoleIndex;
                 window.myLastPoints = me.score || 0;
