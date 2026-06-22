@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=35" />
+    <link rel="stylesheet" href="style.css?v=36" />
     <meta name="theme-color" content="#10b981" />
     <script>
       window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
@@ -45,11 +45,14 @@
             </div>
 
             <div id="activeHoleContainer"></div>
-            <div id="myActiveRulesContainer" style="display:none;"></div>
             
-            <div id="activeCardsArea" style="display:none; margin-bottom: 15px;">
-                <h2 style="color: var(--info);">Aktiiviset sabotaasit tällä väylällä</h2>
-                <div id="activeCardsContainer"></div>
+            <!-- Uusittu, erottuvampi laatikko omille sabotaaseille -->
+            <div id="myActiveRulesContainer" style="display:none; margin-bottom: 15px;"></div>
+            
+            <!-- Uusittu, erottuvampi laatikko kaikille pelatuille korteille -->
+            <div id="activeCardsArea" style="display:none; margin-bottom: 25px; background: var(--surface-alt); padding: 16px; border-radius: 12px; border: 2px solid var(--border);">
+                <h2 style="color: var(--info); font-size: 1.1rem; margin-bottom: 15px; display:flex; align-items:center; gap:8px;">📢 PELATUT KORTIT TÄLLÄ VÄYLÄLLÄ</h2>
+                <div id="activeCardsContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
             </div>
 
             <div class="player-only">
@@ -202,8 +205,7 @@
         </div>
     </div>
 
-    <!-- Huom: Myös script.js versio päivitetty! -->
-    <script src="tasks.js?v=35"></script>
-    <script type="module" src="script.js?v=35"></script>
+    <script src="tasks.js?v=36"></script>
+    <script type="module" src="script.js?v=36"></script>
 </body>
 </html>
