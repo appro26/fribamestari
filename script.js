@@ -20,7 +20,16 @@ let lastPlayedCardTimestamp = Date.now();
 // TURVALLISUUS- HELPER (ESTÄÄ FIREBASE KAATUMISET)
 //==============================================
 window.cleanFirebaseData = function(data) {
-    return JSON.parse(JSON.stringify(data));
+    if (data === undefined || data === null) return null;
+    try {
+        let str = JSON.stringify(data);
+        // Estetään "undefined" -tekstien muuntaminen rikkinäiseksi JSONiksi
+        if (!str || str === 'undefined' || str === '"undefined"') return null;
+        return JSON.parse(str);
+    } catch (err) {
+        console.error("Firebase payload clean error:", err);
+        return null;
+    }
 };
 
 //==============================================
@@ -28,12 +37,12 @@ window.cleanFirebaseData = function(data) {
 //==============================================
 window.logEvent = function(msg) {
     const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
-    push(ref(db, 'gameState/eventLog'), { time: timeStr, msg: msg });
+    push(ref(db, 'gameState/eventLog'), window.cleanFirebaseData({ time: timeStr, msg: msg }));
 };
 
 window.logScore = function(playerName, delta) {
     const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
-    push(ref(db, 'gameState/scoreLog'), { time: timeStr, playerName: playerName, delta: delta });
+    push(ref(db, 'gameState/scoreLog'), window.cleanFirebaseData({ time: timeStr, playerName: playerName, delta: delta }));
 };
 
 //==============================================
@@ -265,7 +274,7 @@ window.renderPlayerHand = function(cards) {
         html += `
             <div class="physical-card ${typeClass}">
                 <div><div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p></div>
-                <button class="btn ${btnClass}" style="padding:16px; font-size:1rem; color:${cDef.tier==='premium'? '#000':'#fff'};" onclick="window.openTargetModal(${index}, '${cId}')">PELAA KORTTI</button>
+                <button class="btn ${btnClass}" style="padding:16px; font-size:1rem; color:${cDef.tier==='premium'? '#000':'#fff'};" onclick="window.openTargetModal('${cId}')">PELAA KORTTI</button>
             </div>`;
     });
     
@@ -507,14 +516,14 @@ window.removePlayer = function(idx) {
 
 window.resetGame = function() {
     if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos.")) {
-        set(ref(db, 'gameState'), { players: [], activeHole: null, currentHoleIndex: 1, course: null })
+        set(ref(db, 'gameState'), window.cleanFirebaseData({ players: [], activeHole: null, currentHoleIndex: 1, course: null }))
         .then(() => { localStorage.clear(); location.reload(); });
         window.logEvent(`${myName} (GM) nollasi koko pelin.`);
     }
 };
 
 // ===========================================
-// PELIN ALOITUS & TULOSTEN KERUU (UPDATE KUTSU)
+// PELIN ALOITUS & TULOSTEN KERUU
 // ===========================================
 
 window.startMeilahti = function() {
@@ -532,7 +541,7 @@ window.startMeilahti = function() {
     
     let normalPool = window.allCards.filter(c => c.tier === "normal");
     if(allPlayers) {
-        allPlayers = allPlayers.filter(p => p).map(p => {
+        allPlayers = allPlayers.filter(Boolean).map(p => {
             let pCards = [
                 normalPool[Math.floor(Math.random() * normalPool.length)].id,
                 normalPool[Math.floor(Math.random() * normalPool.length)].id,
@@ -585,7 +594,7 @@ window.saveCourseSetup = function() {
     
     let normalPool = window.allCards.filter(c => c.tier === "normal");
     if(allPlayers) {
-        allPlayers = allPlayers.filter(p => p).map(p => {
+        allPlayers = allPlayers.filter(Boolean).map(p => {
             let pCards = [
                 normalPool[Math.floor(Math.random() * normalPool.length)].id,
                 normalPool[Math.floor(Math.random() * normalPool.length)].id,
@@ -608,7 +617,7 @@ window.saveCourseSetup = function() {
 };
 
 // ===========================================
-// TULOSTEN KERUU (INDEKSOITU)
+// TULOSTEN KERUU (INDEKSOITU & ERIKOISMERKIT SALLITTU)
 // ===========================================
 
 window.changeScore = function(safeId, par, delta) {
@@ -635,7 +644,6 @@ window.openScoreModal = function() {
     if(el('scoreModalHoleNum')) { el('scoreModalHoleNum').innerText = currentHoleIndex; }
     if(el('scoreModalPar')) { el('scoreModalPar').innerText = par; }
     
-    // Piirretään tehtävä suoraan modaaliin ilman avausnappia
     const box = el('scoreModalRuleBox');
     if(box) {
         if(activeHole && activeHole.rule) {
@@ -653,12 +661,13 @@ window.openScoreModal = function() {
     let html = '';
     let taskCheckboxes = '';
     
-    allPlayers.forEach((p, i) => {
+    allPlayers.forEach(p => {
         if(!p) { return; }
-        // Käytetään varmaa indeksiä (i) nimen sijaan, jottei selain mene sekaisin erikoismerkeistä
-        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${i}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
+        // Ruksit käyttävät suoraan nimeä
+        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${p.name}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
         
-        let safeId = i; 
+        // Luodaan erikoismerkit kestävä ID nappeja varten (esim "Temeliii_123")
+        let safeId = p.name.replace(/[^a-zA-Z0-9]/g, '_');
         html += `
             <div class="score-row">
                 <span class="score-name">${p.name}</span>
@@ -666,7 +675,8 @@ window.openScoreModal = function() {
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, -1)">-</button>
                     <div id="scoreDisplay_${safeId}" class="score-display score-par">${par}</div>
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, 1)">+</button>
-                    <input type="hidden" class="score-input-data" data-index="${i}" id="scoreInput_${safeId}" value="${par}" />
+                    <!-- Tulos tallentuu oikealle nimelle täysin riippumatta erikoismerkeistä -->
+                    <input type="hidden" class="score-input-data" data-name="${p.name}" id="scoreInput_${safeId}" value="${par}" />
                 </div>
             </div>`;
     });
@@ -689,10 +699,8 @@ window.submitScores = function() {
     }
     
     inputs.forEach(input => {
-        let pIndex = parseInt(input.getAttribute('data-index'));
-        if(allPlayers[pIndex]) {
-            scores.push({ name: allPlayers[pIndex].name, strokes: parseInt(input.value) || par });
-        }
+        let pName = input.getAttribute('data-name');
+        scores.push({ name: pName, strokes: parseInt(input.value) || par });
     });
 
     const minStrokes = Math.min(...scores.map(s => s.strokes));
@@ -700,18 +708,20 @@ window.submitScores = function() {
     let winners = scores.filter(s => s.strokes === minStrokes).map(s => s.name);
     let losers = scores.filter(s => s.strokes === maxStrokes).map(s => s.name);
     
-    let taskWinnerIndices = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => parseInt(cb.value));
-    let taskWinners = taskWinnerIndices.map(i => allPlayers[i] ? allPlayers[i].name : "");
+    // Ruksit palauttavat suoraan oikean nimen value-kentästä
+    let taskWinners = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => cb.value);
     let normalPool = window.allCards.filter(c => c.tier === "normal");
     
     allPlayers.forEach(p => {
         if (!p) { return; }
         
         let strokeVal = scores.find(s => s.name === p.name)?.strokes || par;
-        p.dgScore = (p.dgScore || 0) + (strokeVal - par);
+        p.dgScore = Number(p.dgScore || 0) + (strokeVal - par);
         
-        if (winners.includes(p.name)) { p.score = (p.score || 0) + 2; }
-        if (taskWinners.includes(p.name)) { p.score = (p.score || 0) + 5; }
+        // Pisteiden varmennettu maksu nimien perusteella
+        p.score = Number(p.score || 0);
+        if (winners.includes(p.name)) { p.score += 2; }
+        if (taskWinners.includes(p.name)) { p.score += 5; }
         
         p.boughtThisHole = false; 
         
@@ -740,6 +750,9 @@ window.submitScores = function() {
     }
     activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
     
+    // Suodatetaan mahdolliset tyhjät rivit pois koko pelaajalistasta ennen lähetystä
+    allPlayers = allPlayers.filter(Boolean);
+    
     update(ref(db, 'gameState'), window.cleanFirebaseData({
         players: allPlayers,
         currentHoleIndex: currentHoleIndex,
@@ -751,7 +764,7 @@ window.submitScores = function() {
 };
 
 // ===========================================
-// KORTTIEN PELUU
+// KORTTIEN PELUU (TURVALLINEN INDEKSOINTI)
 // ===========================================
 
 window.buyShopItem = function(item) {
@@ -777,9 +790,9 @@ window.buyShopItem = function(item) {
 };
 
 let pendingCardPlay = null;
-window.openTargetModal = function(cardIndex, cardId) {
+window.openTargetModal = function(cardId) {
     const cardDef = window.allCards.find(c => c.id === cardId);
-    pendingCardPlay = { index: cardIndex, id: cardId, def: cardDef };
+    pendingCardPlay = { id: cardId, def: cardDef };
     
     if(cardDef.type === 'buff') {
         window.executeCardPlay(myName);
@@ -809,8 +822,13 @@ window.executeCardPlay = function(targetName) {
     const me = allPlayers.find(p => p && p.name === myName);
     if(me && me.cards) { 
         me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards);
-        me.cards = me.cards.filter(Boolean); // Pesu tyhjistä korteista
-        me.cards.splice(card.index, 1); 
+        me.cards = me.cards.filter(Boolean); // Pesu
+        
+        // Etsitään nimenomaan ID:llä, ei enää luoteta käyttöliittymän rendering-indeksiin
+        let actualIndex = me.cards.indexOf(card.id);
+        if (actualIndex !== -1) {
+            me.cards.splice(actualIndex, 1); 
+        }
     }
     if(activeHole) {
         activeHole.playedCards = activeHole.playedCards ? (Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards)) : [];
@@ -986,3 +1004,4 @@ window.populateRuleSelect = function() {
     sel.innerHTML = window.holeRules.map((r, i) => `<option value="${i}">${r.n}</option>`).join('');
 };
 setTimeout(window.populateRuleSelect, 500);
+
