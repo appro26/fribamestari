@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-west1.firebasedatabase.app/" };
 const app = initializeApp(firebaseConfig);
@@ -15,6 +15,19 @@ let currentCourse = null;
 let currentHoleIndex = 1;
 let isExpandedView = false; 
 let lastPlayedCardTimestamp = Date.now();
+
+//==============================================
+// LOKITUSJÄRJESTELMÄ 
+//==============================================
+window.logEvent = function(msg) {
+    const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
+    push(ref(db, 'gameState/eventLog'), { time: timeStr, msg: msg });
+};
+
+window.logScore = function(playerName, delta) {
+    const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
+    push(ref(db, 'gameState/scoreLog'), { time: timeStr, playerName: playerName, delta: delta });
+};
 
 //==============================================
 // 1. ELEOHJAUKSET
@@ -127,6 +140,7 @@ window.claimIdentity = function() {
     if(!allPlayers.find(x => x && x.name === n)) { 
         allPlayers.push({ name: n, score: 0, dgScore: 0, cards: [], boughtThisHole: false }); 
         set(ref(db, 'gameState/players'), allPlayers);
+        window.logEvent(`${n} liittyi peliin.`);
     }
 };
 
@@ -290,6 +304,21 @@ window.renderAdminPlayerList = function() {
     list.innerHTML = "";
     allPlayers.forEach((p, i) => {
         if(!p) { return; }
+        
+        let cardsHtml = '';
+        if(p.cards && p.cards.length > 0) {
+            cardsHtml = `<div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; width:100%;">`;
+            p.cards.forEach((cId, cIdx) => {
+                let cardDef = allCards.find(c => c.id === cId);
+                if(cardDef) {
+                    cardsHtml += `<div style="background:var(--surface-alt); border:2px solid var(--border); padding:4px 8px; border-radius:6px; font-size:0.8rem; display:flex; align-items:center; gap:5px;">
+                        ${cardDef.n} <button style="color:var(--danger); font-weight:900; font-size:1.1rem; padding:0 4px; line-height:1;" onclick="window.removeCardFromPlayer(${i}, ${cIdx})">&times;</button>
+                    </div>`;
+                }
+            });
+            cardsHtml += `</div>`;
+        }
+
         list.innerHTML += `
             <div class="player-row" style="flex-direction:column; align-items:flex-start; gap:10px;">
                 <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
@@ -299,6 +328,7 @@ window.renderAdminPlayerList = function() {
                         <button class="btn btn-danger" style="width:auto; padding:10px; font-size:0.85rem;" onclick="window.removePlayer(${i})">POISTA</button>
                     </div>
                 </div>
+                ${cardsHtml}
                 <div class="gm-score-adjust">
                     <span style="font-size:0.85rem; color:var(--text-muted); width:50px; font-weight:bold;">Raha</span>
                     <input type="number" id="gmScoreAdjust_${i}" value="1">
@@ -352,12 +382,44 @@ window.filterGmCards = function() {
 window.giveCardToPlayer = function(cardId) {
     if (selectedPlayerForCard === null) { return; }
     let p = allPlayers[selectedPlayerForCard];
-    if (p) {
+    let cardDef = allCards.find(c => c.id === cardId);
+    if (p && cardDef) {
         p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
         p.cards.push(cardId);
         set(ref(db, `gameState/players/${selectedPlayerForCard}/cards`), p.cards);
+        window.logEvent(`${myName} (GM) antoi kortin ${cardDef.n} pelaajalle ${p.name}.`);
         window.showNotification(`Kortti lisätty pelaajalle ${p.name}!`, "info");
         el('gmGiveCardModal').style.display = 'none';
+    }
+};
+
+window.removeCardFromPlayer = function(pIdx, cIdx) {
+    let p = allPlayers[pIdx];
+    if(p && p.cards) {
+        let cId = p.cards[cIdx];
+        let cardDef = allCards.find(c => c.id === cId);
+        p.cards.splice(cIdx, 1);
+        set(ref(db, `gameState/players/${pIdx}/cards`), p.cards);
+        window.logEvent(`${myName} (GM) poisti kortin ${cardDef ? cardDef.n : ''} pelaajalta ${p.name}.`);
+    }
+};
+
+window.gmRollRule = function() {
+    if(!activeHole) { return; }
+    const randomRule = holeRules[Math.floor(Math.random() * holeRules.length)];
+    activeHole.rule = randomRule;
+    set(ref(db, 'gameState/activeHole/rule'), randomRule);
+    window.logEvent(`${myName} (GM) arpoi uuden väyläsäännön: ${randomRule.n}`);
+};
+
+window.gmSetRule = function() {
+    if(!activeHole) { return; }
+    const sel = el('gmRuleSelect');
+    const ruleDef = holeRules[sel.value];
+    if(ruleDef) {
+        activeHole.rule = ruleDef;
+        set(ref(db, 'gameState/activeHole/rule'), ruleDef);
+        window.logEvent(`${myName} (GM) asetti väyläsäännön: ${ruleDef.n}`);
     }
 };
 
@@ -420,6 +482,7 @@ window.adminAddPlayer = function() {
     if(!allPlayers.find(x => x && x.name === n)) { 
         allPlayers.push({ name: n, score: 0, dgScore: 0, cards: [], boughtThisHole: false }); 
         set(ref(db, 'gameState/players'), allPlayers).then(() => { input.value = ''; });
+        window.logEvent(`${myName} (GM) lisäsi pelaajan ${n}.`);
     }
 };
 
@@ -428,6 +491,8 @@ window.adjustScore = function(idx, amt) {
     if(allPlayers[idx]) {
         allPlayers[idx].score = Math.max(0, (allPlayers[idx].score || 0) + amt);
         set(ref(db, `gameState/players/${idx}/score`), allPlayers[idx].score);
+        window.logEvent(`${myName} (GM) antoi ${amt} P pelaajalle ${allPlayers[idx].name}.`);
+        window.logScore(allPlayers[idx].name, amt);
     }
 };
 
@@ -436,13 +501,16 @@ window.adjustDgScore = function(idx, amt) {
     if(allPlayers[idx]) {
         allPlayers[idx].dgScore = (allPlayers[idx].dgScore || 0) + amt;
         set(ref(db, `gameState/players/${idx}/dgScore`), allPlayers[idx].dgScore);
+        window.logEvent(`${myName} (GM) sääti pelaajan ${allPlayers[idx].name} heittotulosta (${amt > 0 ? '+'+amt : amt}).`);
     }
 };
 
 window.removePlayer = function(idx) { 
     if(confirm("Poistetaanko pelaaja pelistä?")) { 
+        let pName = allPlayers[idx].name;
         allPlayers.splice(idx, 1); 
         set(ref(db, 'gameState/players'), allPlayers);
+        window.logEvent(`${myName} (GM) poisti pelaajan ${pName}.`);
     } 
 };
 
@@ -450,6 +518,7 @@ window.resetGame = function() {
     if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos.")) {
         set(ref(db, 'gameState'), { players: [], activeHole: null, currentHoleIndex: 1, course: null })
         .then(() => { localStorage.clear(); location.reload(); });
+        window.logEvent(`${myName} (GM) nollasi koko pelin.`);
     }
 };
 
@@ -486,6 +555,7 @@ window.startMeilahti = function() {
 
     if(el('courseModal')) { el('courseModal').style.display = 'none'; }
     lastPlayedCardTimestamp = Date.now(); 
+    window.logEvent(`${myName} aloitti uuden pelin radalla: ${currentCourse.name}.`);
 };
 
 window.generateParInputs = function() {
@@ -537,6 +607,7 @@ window.saveCourseSetup = function() {
 
     if(el('courseModal')) { el('courseModal').style.display = 'none'; }
     lastPlayedCardTimestamp = Date.now();
+    window.logEvent(`${myName} aloitti uuden pelin radalla: ${currentCourse.name}.`);
 };
 
 window.nextHole = function() { 
@@ -573,6 +644,7 @@ window.buyShopItem = function(item) {
         set(ref(db, 'gameState/activeHole/shop'), activeHole.shop);
 
         if(el('shopModal')) { el('shopModal').style.display = 'none'; }
+        window.logEvent(`${myName} osti kaupasta edun: ${item.n}.`);
         window.showNotification(`🛒 Ostit edun: ${item.n}`, 'warning');
     }
 };
@@ -629,6 +701,8 @@ window.executeCardPlay = function(targetName) {
     set(ref(db, 'gameState/players'), allPlayers);
     if(activeHole) { set(ref(db, 'gameState/activeHole/playedCards'), activeHole.playedCards); }
     
+    window.logEvent(`${myName} pelasi kortin ${card.def.n} kohteelle ${targetName}.`);
+    
     let type = card.def.type === 'buff' ? 'info' : 'debuff';
     window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, type);
 };
@@ -659,6 +733,7 @@ window.undoCardPlay = function(timestamp) {
     set(ref(db, 'gameState/players'), allPlayers);
     set(ref(db, 'gameState/activeHole/playedCards'), activeHole.playedCards);
     
+    window.logEvent(`${myName} (GM) perui kortin ${cardDef ? cardDef.n : ''} vaikutuksen.`);
     window.showNotification("Kortti palautettu onnistuneesti!", "info");
 };
 
@@ -761,6 +836,8 @@ window.submitScores = function() {
         p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
         p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
     });
+    
+    window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
     
     currentHoleIndex++;
     activeHole = null; 
@@ -865,6 +942,14 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderScoreLog(data.scoreLog);
 });
 
-// Aja lisäosat heti alussa
+// Aja lisäosat ja generoi GM valikot
 window.enableCardHover();
 window.setupSwipeToClose();
+
+window.populateRuleSelect = function() {
+    const sel = el('gmRuleSelect');
+    if(!sel || typeof holeRules === 'undefined') { return; }
+    sel.innerHTML = holeRules.map((r, i) => `<option value="${i}">${r.n}</option>`).join('');
+};
+setTimeout(window.populateRuleSelect, 500);
+
