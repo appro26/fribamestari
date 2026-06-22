@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=44" />
+    <link rel="stylesheet" href="style.css?v=45" />
+    
+    <!-- Yläpalkki päivittyy automaattisesti taustan väriseksi -->
     <meta id="themeColorMeta" name="theme-color" content="#eefdf4" />
     
     <script>
@@ -46,35 +48,42 @@
                 <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2;">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
-            <!-- VÄYLÄTEHTÄVÄ TULEE TÄHÄN -->
+            <!-- VÄYLÄTEHTÄVÄ -->
             <div id="activeHoleContainer"></div>
             
-            <!-- SINUA KOSKEVAT KORTIT TULEE TÄHÄN -->
-            <div id="myActiveRulesContainer" style="display:none;"></div>
+            <!-- SINUA KOSKEVAT KORTIT -->
+            <div id="myActiveRulesContainer" style="display:none; margin-bottom: 15px;"></div>
             
             <!-- TIIVISTETTY KAIKKI PELATUT KORTIT -->
-            <div id="activeCardsArea" style="display:none; margin-bottom: 20px;">
+            <div id="activeCardsArea" style="display:none; margin-bottom: 25px;">
                 <h2 style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 5px; display:flex; align-items:center; gap:8px;">KAIKKI PELATUT KORTIT</h2>
-                <div id="activeCardsContainer" class="card" style="padding:0 12px;"></div>
+                <div id="activeCardsContainer" class="card" style="padding:4px 16px;"></div>
             </div>
 
             <div class="player-only">
                 
-                <!-- UUSI ISOMPI LOMPAKKO NÄKYMÄ -->
-                <div id="walletDisplayArea" class="player-wallet-box">
-                    <span>💰 SALDO:</span> <span id="mainWalletPoints">0 P</span>
-                </div>
-
                 <div id="compactViewContainer" class="grid-2" style="margin-bottom: 15px;">
                     <button class="btn btn-danger" style="padding: 16px 10px; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px;" onclick="document.getElementById('handModal').style.display='flex'">
                         <span>🃏 Omat kortit</span>
                         <span id="handCountBadge" style="background: #fff; color: var(--danger); padding: 4px 14px; border-radius: 12px; font-size: 0.9rem;">0</span>
                     </button>
                     
+                    <!-- UUSI KAUPPANAPPI, JOSSA ON SALDO INTEGROITUNA -->
                     <button class="btn btn-warning" style="padding: 16px 10px; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px; color:#000;" onclick="document.getElementById('shopModal').style.display='flex'">
                         <span>🛒 Kauppa</span>
-                        <span id="myResPointsBtn" style="background: #000; color: var(--warning); padding: 4px 14px; border-radius: 12px; font-size: 0.9rem;">0 P</span>
+                        <span style="background: #000; color: var(--warning); padding: 4px 14px; border-radius: 12px; font-size: 0.95rem;">SALDO: <span id="myResPointsBtn" style="font-weight:900;">0 P</span></span>
                     </button>
+                </div>
+
+                <div id="expandedViewContainer" style="display:none;">
+                    <div class="card" style="border-top: 5px solid var(--danger);">
+                        <h2 style="color:var(--danger);">🃏 Omat Kortit</h2>
+                        <div id="playerHandExpanded" class="cards-list-1"></div>
+                    </div>
+                    <div class="card" style="border-top: 5px solid var(--warning);">
+                        <h2 style="color:var(--warning);">🛒 Kauppa <span id="myResPointsExpanded" style="float:right; color:var(--text-main);">0 P</span></h2>
+                        <div id="shopItemsExpanded" class="cards-list-1"></div>
+                    </div>
                 </div>
             </div>
         </div> 
@@ -136,7 +145,7 @@
     <div id="shopModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
-            <h2 style="display:flex; align-items:center; gap:10px;">🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px;">0 P</span></h2>
+            <h2 style="display:flex; align-items:center; gap:10px;">🛒 KAUPPA</h2>
             <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('shopModal').style.display='none'">&times;</button>
         </div>
         <div id="shopModalCards" class="cards-grid-2"></div>
@@ -214,7 +223,8 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=44"></script>
-    <script type="module" src="script.js?v=44"></script>
+    <!-- PÄIVITETTY VERSIO 45 -->
+    <script src="tasks.js?v=45"></script>
+    <script type="module" src="script.js?v=45"></script>
 </body>
 </html>
