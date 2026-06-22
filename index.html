@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=46" />
-    
+    <link rel="stylesheet" href="style.css?v=47" />
     <meta id="themeColorMeta" name="theme-color" content="#eefdf4" />
     
     <script>
@@ -16,7 +15,15 @@
 </head>
 <body class="player-mode">
 
-    <!-- APPLE-TYYLINEN ILMOITUS PISTEILLE -->
+    <div id="handLimitModal" class="winner-overlay" style="z-index: 10005; background: rgba(244, 63, 94, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); align-items:flex-start; padding-top:40px;">
+        <div style="width:100%; max-width:450px; text-align:center; color:#fff;">
+            <div style="font-size:4rem; margin-bottom:10px;">⚠️</div>
+            <h1 style="font-size:2rem; margin-bottom:10px; font-weight:900;">LIIKAA KORTTEJA</h1>
+            <p style="font-size:1.15rem; font-weight:700; margin-bottom:25px; line-height:1.4;">Käsiraja on ylittynyt (<span id="handLimitCount" style="font-weight:900; font-size:1.3rem;">6</span> / 5).<br>Myy tai poista kortteja jatkaaksesi peliä.</p>
+            <div id="handLimitCards" style="display:flex; flex-direction:column; gap:10px; text-align:left; max-height:60vh; overflow-y:auto; padding-bottom:20px;"></div>
+        </div>
+    </div>
+
     <div id="appleToast" class="apple-toast">
         <span id="appleToastIcon" style="font-size:1.3rem;">✨</span>
         <span id="appleToastText">Väylä suoritettu!</span>
@@ -47,13 +54,10 @@
                 <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2;">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
-            <!-- UUSI MASSIIVINEN VÄYLÄTEHTÄVÄ -->
             <div id="activeHoleContainer"></div>
             
-            <!-- UUSI MASSIIVINEN "SINUA KOSKEVAT KORTIT" -->
             <div id="myActiveRulesContainer" style="display:none; margin-bottom: 30px;"></div>
             
-            <!-- TIIVISTETTY KAIKKI PELATUT KORTIT -->
             <div id="activeCardsArea" style="display:none; margin-bottom: 25px;">
                 <h2 style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 5px; display:flex; align-items:center; gap:8px;">KAIKKI PELATUT KORTIT</h2>
                 <div id="activeCardsContainer" class="card" style="padding:4px 16px;"></div>
@@ -118,7 +122,6 @@
             <div id="playerList"></div>
         </div>
 
-        <!-- Alalaidan valikot ja päivitysnappi -->
         <div style="margin-top: 20px; border-top: 2px dashed var(--border); padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
             <button class="btn btn-secondary" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU (KORJAA JUMIT)</button>
 
@@ -130,7 +133,6 @@
 
     </div>
 
-    <!-- Modaalit -->
     <div id="handModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
@@ -159,7 +161,6 @@
         <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
-    <!-- UUSI 3D KORTTIMODAALI SLAIDAUKSELLA -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:20px;">
         <div id="cardDetail3DContainer" class="card-3d-container">
             <div class="card-3d" id="cardDetail3D"></div>
@@ -221,7 +222,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=46"></script>
-    <script type="module" src="script.js?v=46"></script>
+    <script src="tasks.js?v=47"></script>
+    <script type="module" src="script.js?v=47"></script>
 </body>
 </html>
