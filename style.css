@@ -17,10 +17,8 @@ body.gm-mode {
     --border: #475569; --text-main: #f8fafc; --text-muted: #94a3b8;
 }
 
-/* Estää selaimen vahinko-päivitykset (Pull to refresh) */
 html, body { overscroll-behavior-y: none; overscroll-behavior-x: none; }
 
-/* Tekstinvalinnan ja kopioinnin esto koko sovelluksessa */
 * { 
     box-sizing: border-box; 
     margin: 0; 
@@ -32,13 +30,20 @@ html, body { overscroll-behavior-y: none; overscroll-behavior-x: none; }
     user-select: none;
 }
 
-/* Sallitaan tekstin maalaus ja syöttö vain syöttökentissä */
 input, textarea, select {
     -webkit-user-select: auto;
     user-select: auto;
 }
 
-body { background-color: var(--bg-main); color: var(--text-main); padding: 12px; padding-bottom: 90px; transition: background-color 0.3s ease, color 0.3s ease; }
+/* Varmistetaan ruksiboksien toimivuus kaikilla selaimilla */
+input[type="checkbox"] {
+    appearance: auto !important;
+    -webkit-appearance: auto !important;
+    pointer-events: auto;
+}
+
+/* Pienennetty padding-bottom turhan skrollin estämiseksi */
+body { background-color: var(--bg-main); color: var(--text-main); padding: 12px; padding-bottom: 25px; transition: background-color 0.3s ease, color 0.3s ease; }
 
 .container { max-width: 500px; margin: 0 auto; position: relative; }
 
@@ -61,7 +66,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .cards-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 25px; }
 .cards-list-1 { display: flex; flex-direction: column; gap: 16px; padding-bottom: 20px; }
 
-/* VISUAALISET KORTIT JOTKA NOUSEVAT SORMEN ALLA */
 .physical-card {
     background: #fff; border-radius: 16px; padding: 16px;
     min-height: 220px; display: flex; flex-direction: column; justify-content: space-between;
@@ -109,7 +113,6 @@ input:focus { border-color: var(--primary); outline: none; }
 body.gm-mode .player-only { display: none !important; }
 body.player-mode .gm-only { display: none !important; }
 
-/* Swipe-to-close Modaalit */
 .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: none; flex-direction: column; z-index: 8000; padding: 15px; overflow-y: auto; padding-bottom: 40px; will-change: transform; overscroll-behavior-y: none; }
 .swipe-indicator { width: 45px; height: 6px; background: var(--border); border-radius: 10px; margin: 0 auto 15px auto; }
 
