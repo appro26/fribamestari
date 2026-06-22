@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=42" />
+    <link rel="stylesheet" href="style.css?v=43" />
     
-    <!-- Yläpalkki päivittyy automaattisesti taustan väriseksi! -->
+    <!-- Yläpalkki päivittyy automaattisesti taustan väriseksi -->
     <meta id="themeColorMeta" name="theme-color" content="#eefdf4" />
     
     <script>
@@ -17,7 +17,7 @@
 </head>
 <body class="player-mode">
 
-    <!-- Kelluva lompakko -->
+    <!-- UUSI LEIJUVA LOMPAKKO (Ei vie tilaa ylhäältä) -->
     <div id="topWallet" class="top-wallet" style="display:none;">💰 <span id="topWalletPoints">0 P</span></div>
 
     <!-- APPLE-TYYLINEN ILMOITUS -->
@@ -30,13 +30,14 @@
 
     <div class="container">
 
-        <div id="identityCard" class="card" style="border: 3px solid var(--primary); text-align: center; margin-top:20px;">
+        <!-- Ylimääräinen tila ja nappi siivottu pois -->
+        <div id="identityCard" class="card" style="border: 3px solid var(--primary); text-align: center; margin-top:15px;">
             <h2 style="color: var(--primary); font-size: 1.1rem;">Tervetuloa Radalle</h2>
             <input type="text" id="playerNameInput" placeholder="Syötä nimesi..." aria-label="Syötä nimesi" />
             <button class="btn btn-primary" onclick="if(window.claimIdentity) { window.claimIdentity(); }">KIRJAUDU SISÄÄN</button>
         </div>
 
-        <div id="gameSetupArea" class="card" style="display:none; text-align:center; border: 3px solid var(--primary); margin-top:20px;">
+        <div id="gameSetupArea" class="card" style="display:none; text-align:center; border: 3px solid var(--primary); margin-top:15px;">
             <h2 style="color: var(--text-main); font-size:1.4rem; margin-bottom: 10px;">Peli ei ole käynnissä</h2>
             <button class="btn btn-primary" onclick="document.getElementById('courseModal').style.display='flex'">ALOITA UUSI PELI</button>
         </div>
@@ -53,8 +54,8 @@
 
             <div id="activeHoleContainer"></div>
             
-            <!-- UUSI TYYLIKÄS ALUE KOHDISTETUILLE KORTEILLE -->
-            <div id="myActiveRulesContainer" style="display:none; margin-bottom: 20px;"></div>
+            <!-- ELEGANTIMPI JA PIENEMPI OMAT KORTIT OSIO -->
+            <div id="myActiveRulesContainer" style="display:none; margin-bottom: 15px;"></div>
             
             <!-- PIENENNETTY PELATTUJEN KORTTIEN ALUE -->
             <div id="activeCardsArea" style="display:none; margin-bottom: 25px;">
@@ -73,6 +74,17 @@
                         <span>🛒 Kauppa</span>
                         <span id="myResPointsBtn" style="background: #000; color: var(--warning); padding: 4px 14px; border-radius: 12px; font-size: 0.9rem;">0 P</span>
                     </button>
+                </div>
+
+                <div id="expandedViewContainer" style="display:none;">
+                    <div class="card" style="border-top: 5px solid var(--danger);">
+                        <h2 style="color:var(--danger);">🃏 Omat Kortit</h2>
+                        <div id="playerHandExpanded" class="cards-list-1"></div>
+                    </div>
+                    <div class="card" style="border-top: 5px solid var(--warning);">
+                        <h2 style="color:var(--warning);">🛒 Kauppa <span id="myResPointsExpanded" style="float:right; color:var(--text-main);">0 P</span></h2>
+                        <div id="shopItemsExpanded" class="cards-list-1"></div>
+                    </div>
                 </div>
             </div>
         </div> 
@@ -109,10 +121,10 @@
             <div id="playerList"></div>
         </div>
 
-        <!-- Alalaidan valikot ja päivitysnappi -->
+        <!-- Alalaidan valikot ja päivitysnappi yhdessä paikassa -->
         <div style="margin-top: 20px; border-top: 2px dashed var(--border); padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
             <div style="display:flex; gap:10px;">
-                <!--<button class="btn btn-secondary player-only" onclick="if(window.toggleView) { window.toggleView(); }" id="viewToggleBtn" style="flex:2; font-size:0.9rem; margin:0;">LAAJENNETTU NÄKYMÄ</button>-->
+                <button class="btn btn-secondary player-only" onclick="if(window.toggleView) { window.toggleView(); }" id="viewToggleBtn" style="flex:2; font-size:0.9rem; margin:0;">LAAJENNETTU NÄKYMÄ</button>
                 <button class="btn btn-secondary" onclick="location.reload()" style="flex:1; font-size:0.9rem; margin:0; padding:12px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ</button>
             </div>
 
@@ -155,12 +167,11 @@
 
     <!-- UUSI 3D KORTTIMODAALI -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:20px;">
-        <div class="card-3d-container" onclick="this.querySelector('.card-3d').classList.toggle('is-flipped')">
+        <div id="cardDetail3DContainer" class="card-3d-container">
             <div class="card-3d" id="cardDetail3D"></div>
         </div>
-        <div style="text-align:center; color:rgba(255,255,255,0.8); font-size:0.95rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">👆 Näpäytä kääntääksesi</div>
-        <div id="cardDetailActionArea" style="width:100%; max-width:280px; display:flex; flex-direction:column; gap:10px;"></div>
-        <button class="btn" style="width:100%; max-width:280px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE</button>
+        <div style="text-align:center; color:rgba(255,255,255,0.8); font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:10px; margin-top:-10px;">👈 Slaidaa pyörittääksesi 👉</div>
+        <button class="btn" style="width:100%; max-width:280px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
     <div id="courseModal" class="winner-overlay">
@@ -206,7 +217,17 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=42"></script>
-    <script type="module" src="script.js?v=42"></script>
+    <div id="lotteryWinner" class="winner-overlay">
+        <div class="card" style="width: 100%; max-width: 400px; border: 4px solid var(--info); text-align: center;">
+            <h2 id="popupTitle" style="color:var(--info); font-size: 1.5rem; margin-bottom: 10px; font-weight: 900;"></h2>
+            <p id="popupDesc" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; color: var(--text-main);"></p>
+            <div id="popupDetails" style="font-size: 0.95rem; color: var(--text-muted); background: var(--surface-alt); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 700;"></div>
+            <button class="btn btn-secondary" onclick="document.getElementById('lotteryWinner').style.display='none'">SULJE</button>
+        </div>
+    </div>
+
+    <!-- PÄIVITETTY VERSIO 43 -->
+    <script src="tasks.js?v=43"></script>
+    <script type="module" src="script.js?v=43"></script>
 </body>
 </html>
