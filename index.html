@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=47" />
+    <link rel="stylesheet" href="style.css?v=48" />
     <meta id="themeColorMeta" name="theme-color" content="#eefdf4" />
     
     <script>
@@ -15,15 +15,17 @@
 </head>
 <body class="player-mode">
 
+    <!-- KÄSIRAJAN PAKOTUSNÄKYMÄ -->
     <div id="handLimitModal" class="winner-overlay" style="z-index: 10005; background: rgba(244, 63, 94, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); align-items:flex-start; padding-top:40px;">
         <div style="width:100%; max-width:450px; text-align:center; color:#fff;">
             <div style="font-size:4rem; margin-bottom:10px;">⚠️</div>
             <h1 style="font-size:2rem; margin-bottom:10px; font-weight:900;">LIIKAA KORTTEJA</h1>
-            <p style="font-size:1.15rem; font-weight:700; margin-bottom:25px; line-height:1.4;">Käsiraja on ylittynyt (<span id="handLimitCount" style="font-weight:900; font-size:1.3rem;">6</span> / 5).<br>Myy tai poista kortteja jatkaaksesi peliä.</p>
+            <p style="font-size:1.15rem; font-weight:700; margin-bottom:25px; line-height:1.4;">Käsiraja on ylittynyt (<span id="handLimitCount" style="font-weight:900; font-size:1.3rem;"></span>).<br>Myy tai poista kortteja jatkaaksesi peliä.</p>
             <div id="handLimitCards" style="display:flex; flex-direction:column; gap:10px; text-align:left; max-height:60vh; overflow-y:auto; padding-bottom:20px;"></div>
         </div>
     </div>
 
+    <!-- APPLE-TYYLINEN ILMOITUS -->
     <div id="appleToast" class="apple-toast">
         <span id="appleToastIcon" style="font-size:1.3rem;">✨</span>
         <span id="appleToastText">Väylä suoritettu!</span>
@@ -71,7 +73,8 @@
                         <span id="handCountBadge" style="background: #fff; color: var(--danger); padding: 4px 14px; border-radius: 12px; font-size: 0.9rem;">0</span>
                     </button>
                     
-                    <button class="btn btn-warning" style="padding: 16px 10px; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px; color:#000;" onclick="document.getElementById('shopModal').style.display='flex'">
+                    <!-- Lisätty id "shopButtonElement" asetuksia varten -->
+                    <button id="shopButtonElement" class="btn btn-warning" style="padding: 16px 10px; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px; color:#000;" onclick="document.getElementById('shopModal').style.display='flex'">
                         <span>🛒 Kauppa</span>
                         <span style="background: #000; color: var(--warning); padding: 4px 14px; border-radius: 12px; font-size: 0.95rem;">SALDO: <span id="myResPointsBtn" style="font-weight:900;">0 P</span></span>
                     </button>
@@ -95,6 +98,35 @@
             
             <div id="adminPanel" class="card" style="display:none; margin-top:10px;">
                 
+                <!-- UUSI: PELIASETUKSET -->
+                <h2 style="margin-top:5px;">Peliasetukset</h2>
+                <div style="background:var(--surface-alt); padding:15px; border-radius:12px; margin-bottom:25px; border:2px solid var(--border);">
+                    <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.05rem;">
+                        <input type="checkbox" id="gmSetShop" style="width:24px; height:24px; margin:0; appearance:auto; pointer-events:auto;"> Kauppa käytössä
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.05rem;">
+                        <input type="checkbox" id="gmSetLimitCheck" style="width:24px; height:24px; margin:0; appearance:auto; pointer-events:auto;"> Käsiraja käytössä
+                    </label>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                        <span style="font-weight:800;">Maksimikortit:</span>
+                        <input type="number" id="gmSetLimitCount" style="width:80px; padding:10px; margin:0;">
+                    </div>
+                    <div style="border-top:2px solid var(--border); margin:15px 0;"></div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                        <span style="font-weight:800;">Pelirahaa voitosta:</span>
+                        <input type="number" id="gmSetPtsWin" style="width:80px; padding:10px; margin:0;">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                        <span style="font-weight:800;">Rahaa tehtävästä:</span>
+                        <input type="number" id="gmSetPtsTask" style="width:80px; padding:10px; margin:0;">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                        <span style="font-weight:800;">Miinusta häviöstä:</span>
+                        <input type="number" id="gmSetPtsLose" style="width:80px; padding:10px; margin:0;">
+                    </div>
+                    <button class="btn btn-primary" style="padding:16px; margin-top:10px;" onclick="if(window.saveGameSettings) window.saveGameSettings();">TALLENNA ASETUKSET</button>
+                </div>
+
                 <h2>Väylätehtävä</h2>
                 <div style="display:flex; gap:10px; margin-bottom: 25px;">
                     <select id="gmRuleSelect" style="margin:0; padding:12px;"></select>
@@ -123,6 +155,7 @@
         </div>
 
         <div style="margin-top: 20px; border-top: 2px dashed var(--border); padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
+            <button class="btn btn-secondary player-only" onclick="if(window.toggleView) { window.toggleView(); }" id="viewToggleBtn" style="font-size:0.9rem; margin:0; padding:16px;">LAAJENNETTU NÄKYMÄ</button>
             <button class="btn btn-secondary" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU (KORJAA JUMIT)</button>
 
             <div class="role-switcher">
@@ -133,6 +166,7 @@
 
     </div>
 
+    <!-- Modaalit -->
     <div id="handModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
@@ -222,7 +256,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=47"></script>
-    <script type="module" src="script.js?v=47"></script>
+    <script src="tasks.js?v=48"></script>
+    <script type="module" src="script.js?v=48"></script>
 </body>
 </html>
