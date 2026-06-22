@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <!-- PÄIVITETTY VERSIO 60 PAKOTTAA VÄLIMUISTIN NOLLAUKSEN -->
-    <link rel="stylesheet" href="style.css?v=60" />
+    <link rel="stylesheet" href="style.css?v=53" />
     <meta id="themeColorMeta" name="theme-color" content="#eefdf4" />
     
     <script>
@@ -16,6 +15,19 @@
 </head>
 <body class="player-mode">
 
+    <!-- UUSI ASENNUS/SELAIN ILMOITUS PWA:ta VARTEN -->
+    <div id="installPromptModal" class="winner-overlay" style="z-index: 10010; flex-direction:column; justify-content:center; align-items:center;">
+        <div class="card glass-card" style="width: 100%; max-width: 400px; text-align: center; border-color: var(--primary);">
+            <div style="font-size:3.5rem; margin-bottom:10px;">📲</div>
+            <h2 style="color:var(--text-main); font-size: 1.5rem; margin-bottom: 15px; font-weight:900;">ASENNA SOVELLUS</h2>
+            <p id="installInstructions" style="font-size:1.1rem; color:var(--text-muted); line-height:1.5; margin-bottom:25px; font-weight:700;">
+                <!-- JavaScript täyttää käyttöjärjestelmän mukaisen ohjeen tähän -->
+            </p>
+            <button class="btn btn-secondary" onclick="window.dismissInstallPrompt()" style="font-size:1rem; padding:16px;">JATKA SELAIMELLA</button>
+        </div>
+    </div>
+
+    <!-- KÄSIRAJAN PAKOTUSNÄKYMÄ -->
     <div id="handLimitModal" class="winner-overlay" style="z-index: 10005; background: rgba(244, 63, 94, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); align-items:flex-start; padding-top:40px;">
         <div style="width:100%; max-width:450px; text-align:center; color:#fff;">
             <div style="font-size:4rem; margin-bottom:10px;">⚠️</div>
@@ -154,7 +166,7 @@
 
         <div style="margin-top: 20px; padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
             <button class="btn btn-secondary player-only glass-card" onclick="if(window.toggleView) { window.toggleView(); }" id="viewToggleBtn" style="font-size:0.9rem; margin:0; padding:16px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
-            <button class="btn btn-secondary glass-card" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU (KORJAA JUMIT)</button>
+            <button class="btn btn-secondary glass-card" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
 
             <div class="role-switcher glass-card">
                 <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) { window.setRole('player'); }">PELAAJA</button>
@@ -214,7 +226,7 @@
         <div id="cardDetail3DContainer" class="card-3d-container">
             <div class="card-3d" id="cardDetail3D"></div>
         </div>
-        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:800; text-transform:uppercase; margin-bottom:5px; margin-top:-10px;">👈 Slaidaa pyörittääksesi 👉</div>
+        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:5px; margin-top:-10px;">👈 Slaidaa pyörittääksesi 👉</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;"></div>
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
@@ -271,7 +283,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=60"></script>
-    <script type="module" src="script.js?v=60"></script>
+    <script src="tasks.js?v=53"></script>
+    <script type="module" src="script.js?v=53"></script>
 </body>
 </html>
