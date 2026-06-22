@@ -16,7 +16,7 @@ let currentHoleIndex = 1;
 let isExpandedView = false; 
 let lastPlayedCardTimestamp = Date.now();
 
-// UUDET ASETUKSET
+// OLETUSASETUKSET
 window.gameSettings = {
     shopEnabled: true,
     handLimitEnabled: true,
@@ -28,7 +28,7 @@ window.gameSettings = {
 };
 
 //==============================================
-// 3D-KORTIN SLAIDAUS
+// UUSI 3D-KORTIN SLAIDAUS
 //==============================================
 window.cardLastRot = 0;
 window.initCardSwipe = function() {
@@ -125,7 +125,7 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
 };
 
 //==============================================
-// KORTIN POISTO / MYYNTI (KORJATTU SET-KOMENTO)
+// KORTIN POISTO / MYYNTI
 //==============================================
 window.forceDiscard = function(cId, isNormal) {
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
@@ -145,7 +145,6 @@ window.forceDiscard = function(cId, isNormal) {
             window.showAppleToast('Kortti poistettu', '🗑️');
         }
     }
-    // Korjattu laittamalla suoraan set() komento update:n sijaan jotta Array ei kaada Firebasea!
     set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
 };
 
@@ -257,6 +256,17 @@ window.updateIdentityUI = function() {
     if(el('identityCard')) { el('identityCard').style.display = myName ? 'none' : 'block'; }
 };
 
+window.applyViewState = function() {
+    if(el('expandedViewContainer')) { el('expandedViewContainer').style.display = isExpandedView ? 'block' : 'none'; }
+    if(el('compactViewContainer')) { el('compactViewContainer').style.display = isExpandedView ? 'none' : 'grid'; }
+    if(el('viewToggleBtn')) { el('viewToggleBtn').innerText = isExpandedView ? 'SIIRRY SUPISTETTUUN NÄKYMÄÄN' : 'LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)'; }
+};
+
+window.toggleView = function() {
+    isExpandedView = !isExpandedView;
+    window.applyViewState();
+};
+
 window.setRole = function(r) {
     currentRole = r;
     document.body.className = r + '-mode';
@@ -335,14 +345,15 @@ window.renderActiveHole = function() {
     }
     
     let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
-    let bountyTag = activeHole.rule.type === 'bounty' ? `🏆 TEHTÄVÄ: +${ptsTask} P` : '🎲 VÄYLÄSÄÄNTÖ';
+    let bountyTag = activeHole.rule.type === 'bounty' ? `🏆 TEHTÄVÄ (+${ptsTask} P)` : '🎲 VÄYLÄSÄÄNTÖ';
     
+    // TÄYSIN INLINE TYYLITETTY PREMIUM BANNERI VÄYLÄLLE, ETTEI CSS CACHE HAITTAA
     if(container) { 
         container.innerHTML = `
-            <div class="premium-banner" style="border-left-color: var(--primary);">
-                <div class="premium-bounty-tag">${bountyTag}</div>
-                <div class="banner-title">${activeHole.rule.n}</div>
-                <div class="banner-desc">${activeHole.rule.d}</div>
+            <div style="background: var(--surface); border: 2px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); border-left: 8px solid var(--primary); margin-bottom: 15px; position: relative; overflow: hidden;">
+                <div style="display:inline-block; background:rgba(16, 185, 129, 0.15); color:var(--primary); padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.85rem; margin-bottom:12px; text-transform:uppercase; letter-spacing: 1px; border: 1px solid rgba(16, 185, 129, 0.3);">${bountyTag}</div>
+                <div style="font-size:1.4rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${activeHole.rule.n}</div>
+                <div style="font-size: 1.05rem; line-height: 1.45; font-weight: 700; color: var(--text-muted);">${activeHole.rule.d}</div>
             </div>`; 
     }
     
@@ -378,13 +389,14 @@ window.renderActiveHole = function() {
                     ${undoBtn}
                 </div>`;
             
+            // TÄYSIN INLINE TYYLITETTY PREMIUM BANNERI OMILLE KORTEILLE
             if(pc.target && myName && pc.target.trim() === myName.trim()) {
                 let label = cType === 'buff' ? 'OMA ETU' : 'SABOTAASI';
                 myRulesHtml += `
-                    <div class="premium-banner" style="border-left-color: ${color};">
+                    <div style="background: var(--surface); border: 2px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); border-left: 8px solid ${color}; margin-bottom: 15px; position: relative; overflow: hidden;">
                         <div style="color:${color}; font-weight:900; font-size:0.85rem; letter-spacing:1px; margin-bottom:6px; text-transform:uppercase;">${icon} ${label}</div>
-                        <div class="banner-title">${pc.cardName}</div>
-                        <div class="banner-desc" style="opacity:0.9;">${pc.cardDesc}</div>
+                        <div style="font-size:1.4rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${pc.cardName}</div>
+                        <div style="font-size: 1.05rem; line-height: 1.45; font-weight: 700; color: var(--text-muted);">${pc.cardDesc}</div>
                     </div>`;
             }
         });
@@ -783,7 +795,7 @@ window.saveCourseSetup = function() {
 };
 
 // ===========================================
-// PISTEIDEN KERUU ASETUKSILLA
+// PISTEIDEN KERUU
 // ===========================================
 
 window.changeScore = function(safeId, par, delta) {
@@ -814,8 +826,11 @@ window.openScoreModal = function() {
     if(box) {
         if(activeHole && activeHole.rule) {
             let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
-            let bTxt = activeHole.rule.type === 'bounty' ? `🏆 TEHTÄVÄ (+${ptsTask} P): ` : '🎲 SÄÄNTÖ: ';
-            box.innerHTML = `<strong style="color:var(--primary); font-size:1.1rem;">${bTxt} ${activeHole.rule.n}</strong><br><br>${activeHole.rule.d}`;
+            let bTxt = activeHole.rule.type === 'bounty' ? `🏆 TEHTÄVÄ (+${ptsTask} P)` : '🎲 VÄYLÄSÄÄNTÖ';
+            box.innerHTML = `
+                <div style="display:inline-block; background:rgba(16, 185, 129, 0.15); color:var(--primary); padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.85rem; margin-bottom:12px; text-transform:uppercase; letter-spacing: 1px; border: 1px solid rgba(16, 185, 129, 0.3);">${bTxt}</div>
+                <div style="font-size:1.4rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${activeHole.rule.n}</div>
+                <div style="font-size: 1.05rem; line-height: 1.45; font-weight: 700; color: var(--text-muted);">${activeHole.rule.d}</div>`;
             box.style.display = 'block';
         } else {
             box.style.display = 'none';
@@ -831,7 +846,6 @@ window.openScoreModal = function() {
     allPlayers.forEach((p, i) => {
         if(!p) return; 
         
-        let encodedName = p.name.replace(/"/g, '&quot;');
         taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${i}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
         
         let safeId = "player_" + i; 
@@ -878,11 +892,12 @@ window.submitScores = function() {
     let taskWinnerIndices = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => parseInt(cb.value, 10));
     let normalPool = window.allCards.filter(c => c.tier === "normal");
     
-    // ASETUKSET
     let ptsWin = window.gameSettings.ptsWin !== undefined ? window.gameSettings.ptsWin : 2;
     let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
     let ptsLose = window.gameSettings.ptsLose !== undefined ? window.gameSettings.ptsLose : 0;
     let ptsPassive = window.gameSettings.ptsPassive !== undefined ? window.gameSettings.ptsPassive : 1;
+    let handLimit = window.gameSettings.handLimit !== undefined ? window.gameSettings.handLimit : 5;
+    let limitEnabled = window.gameSettings.handLimitEnabled !== undefined ? window.gameSettings.handLimitEnabled : true;
     
     nextPlayers.forEach((p, index) => {
         if (!p) return; 
@@ -899,7 +914,7 @@ window.submitScores = function() {
         if (taskWinnerIndices.includes(index)) { currentPoints += ptsTask; }
         if (strokes === maxStrokes && minStrokes !== maxStrokes) { 
             currentPoints -= Math.abs(ptsLose); 
-            currentPoints = Math.max(0, currentPoints); // Ei mennä miinukselle rahoissa
+            currentPoints = Math.max(0, currentPoints);
         }
         
         p.score = currentPoints;
@@ -908,11 +923,14 @@ window.submitScores = function() {
         p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
         p.cards = p.cards.filter(Boolean);
         
-        if (strokes === maxStrokes && minStrokes !== maxStrokes) {
-            p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
+        // KORTTIEN JAKAMINEN VAIN JOS KÄSIRAJAA EI YLITETÄ
+        let cardsToGive = (strokes === maxStrokes && minStrokes !== maxStrokes) ? 3 : 2;
+        
+        for(let i=0; i<cardsToGive; i++) {
+            if (!limitEnabled || p.cards.length < handLimit) {
+                p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
+            }
         }
-        p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
-        p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
         
         p.cards = p.cards.filter(Boolean);
     });
@@ -948,6 +966,17 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
     const me = nextPlayers.find(p => p && p.name === myName);
     if (!me || me.score < priceVal || me.boughtThisHole) return; 
+    
+    // KÄSIRAJAN VALVONTA KAUPASSA (Varoitus)
+    let limitEnabled = window.gameSettings.handLimitEnabled !== undefined ? window.gameSettings.handLimitEnabled : true;
+    let limit = window.gameSettings.handLimit !== undefined ? window.gameSettings.handLimit : 5;
+    let currentCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean).length : 0;
+    
+    if (limitEnabled && currentCards >= limit) {
+        if (!confirm(`Kätesi on jo täynnä (${currentCards}/${limit})! Jos ostat uuden kortin, joudut heti perään poistamaan tai myymään kortteja jatkaaksesi peliä. Haluatko varmasti ostaa?`)) {
+            return; // Peruuta osto
+        }
+    }
 
     const shopIndex = activeHole.shop.findIndex(i => i && i.id === idStr);
     if (shopIndex !== -1) {
@@ -1153,6 +1182,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderCourseBanner();
     window.renderLeaderboard();
     window.renderActiveHole();
+    window.applyViewState();
     
     if (myName) {
         const me = allPlayers.find(p => p && p.name === myName);
@@ -1189,7 +1219,6 @@ onValue(ref(db, 'gameState'), (snap) => {
             let pts = `${me.score || 0} P`;
             if(el('myResPointsBtn')) el('myResPointsBtn').innerText = pts; 
             if(el('myResPointsExpanded')) el('myResPointsExpanded').innerText = pts; 
-            if(el('topWalletPoints')) el('topWalletPoints').innerText = pts; 
             if(el('shopModalWallet')) el('shopModalWallet').innerText = pts; 
             if(el('handCountBadge')) el('handCountBadge').innerText = myCards.filter(Boolean).length; 
         }
@@ -1223,3 +1252,4 @@ window.populateRuleSelect = function() {
     sel.innerHTML = window.holeRules.map((r, i) => `<option value="${i}">${r.n}</option>`).join('');
 };
 setTimeout(window.populateRuleSelect, 500);
+
