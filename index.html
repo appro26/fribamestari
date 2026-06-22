@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=51" />
+    <link rel="stylesheet" href="style.css?v=52" />
     <meta id="themeColorMeta" name="theme-color" content="#eefdf4" />
     
     <script>
@@ -54,13 +54,10 @@
                 <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2;">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
-            <!-- VÄYLÄTEHTÄVÄ -->
+            <!-- VÄYLÄTEHTÄVÄ JA OMAT VAIKUTUKSET -->
             <div id="activeHoleContainer"></div>
-            
-            <!-- SINUA KOSKEVAT KORTIT -->
             <div id="myActiveRulesContainer" style="display:none; margin-bottom: 30px;"></div>
             
-            <!-- TIIVISTETTY KAIKKI PELATUT KORTIT -->
             <div id="activeCardsArea" style="display:none; margin-bottom: 25px;">
                 <h2 style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 5px; display:flex; align-items:center; gap:8px;">KAIKKI PELATUT KORTIT</h2>
                 <div id="activeCardsContainer" class="card" style="padding:4px 16px;"></div>
@@ -156,6 +153,7 @@
             <div id="playerList"></div>
         </div>
 
+        <!-- Alalaidan valikot ja päivitysnappi -->
         <div style="margin-top: 20px; border-top: 2px dashed var(--border); padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
             <button class="btn btn-secondary player-only" onclick="if(window.toggleView) { window.toggleView(); }" id="viewToggleBtn" style="font-size:0.9rem; margin:0; padding:16px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
             <button class="btn btn-secondary" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU (KORJAA JUMIT)</button>
@@ -178,7 +176,6 @@
         <div id="handModalCards" class="cards-grid-2"></div>
     </div>
 
-    <!-- UUSITTU KAUPPA-MODAALI (Osta / Myy) -->
     <div id="shopModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header" style="margin-bottom:10px;">
@@ -186,9 +183,9 @@
             <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('shopModal').style.display='none'">&times;</button>
         </div>
         
-        <div class="role-switcher" style="margin-bottom:20px; box-shadow:none;">
+        <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(0,0,0,0.05); padding:4px;">
             <button id="shopTabBuyBtn" class="role-btn active" onclick="if(window.switchShopTab) window.switchShopTab('buy')">OSTA KORTTEJA</button>
-            <button id="shopTabSellBtn" class="role-btn" onclick="if(window.switchShopTab) window.switchShopTab('sell')">MYY KORTTEJA</button>
+            <button id="shopTabSellBtn" class="role-btn" onclick="if(window.switchShopTab) window.switchShopTab('sell')">OMAT KORTIT</button>
         </div>
         
         <div id="shopBuyArea">
@@ -215,7 +212,6 @@
         <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
-    <!-- 3D KORTTIMODAALI ISOMMALLA TEKSTILLÄ -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:20px;">
         <div id="cardDetail3DContainer" class="card-3d-container">
             <div class="card-3d" id="cardDetail3D"></div>
@@ -277,7 +273,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=51"></script>
-    <script type="module" src="script.js?v=51"></script>
+    <script src="tasks.js?v=52"></script>
+    <script type="module" src="script.js?v=52"></script>
 </body>
 </html>
