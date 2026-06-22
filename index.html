@@ -4,8 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
+    
+    <script>
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                for (let name of names) caches.delete(name);
+            });
+        }
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) { registration.unregister(); }
+            });
+        }
+    </script>
+
+    <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
+
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=61" />
+    <link rel="stylesheet" href="style.css?v=62" />
     <meta id="themeColorMeta" name="theme-color" content="#eefdf4" />
     
     <script>
@@ -19,8 +35,7 @@
         <div class="card glass-card" style="width: 100%; max-width: 400px; text-align: center; border-color: var(--primary);">
             <div style="font-size:3.5rem; margin-bottom:10px;">📲</div>
             <h2 style="color:var(--text-main); font-size: 1.5rem; margin-bottom: 15px; font-weight:900;">ASENNA SOVELLUS</h2>
-            <p id="installInstructions" style="font-size:1.1rem; color:var(--text-muted); line-height:1.5; margin-bottom:25px; font-weight:700;">
-                </p>
+            <p id="installInstructions" style="font-size:1.1rem; color:var(--text-muted); line-height:1.5; margin-bottom:25px; font-weight:700;"></p>
             <button class="btn btn-secondary glass-card" onclick="window.dismissInstallPrompt()" style="font-size:1rem; padding:16px;">JATKA SELAIMELLA</button>
         </div>
     </div>
@@ -173,6 +188,7 @@
 
     </div>
 
+    <!-- Modaalit -->
     <div id="handModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
@@ -279,7 +295,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=61"></script>
-    <script type="module" src="script.js?v=61"></script>
+    <script src="tasks.js?v=62"></script>
+    <script type="module" src="script.js?v=62"></script>
 </body>
 </html>
