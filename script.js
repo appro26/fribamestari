@@ -20,7 +20,49 @@ window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5,
 window.pendingShopPurchase = null;
 
 //==============================================
-// BUGIKORJAUS: Määritellään kriittiset funktiot globaalisti heti alkuun!
+// ASENNA SOVELLUS (PWA / KOTIVALIKKO) PROMPT
+//==============================================
+window.checkInstallPrompt = function() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+    const wantsBrowser = localStorage.getItem('friba_browser_mode');
+    
+    if (!isStandalone && !wantsBrowser) {
+        const os = (function() {
+            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            if (/android/i.test(userAgent)) return "Android";
+            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) return "iOS";
+            return "Other";
+        })();
+        
+        let instText = "";
+        if (os === "iOS") {
+            instText = "Parhaan pelikokemuksen saat asentamalla Fribamestarin puhelimeesi!<br><br>Paina selaimen alalaidasta <b>Jaa-kuvaketta</b> (neliö ja nuoli ylös) ja valitse sitten <b>'Lisää kotivalikkoon'</b>.";
+        } else if (os === "Android") {
+            instText = "Parhaan pelikokemuksen saat asentamalla Fribamestarin puhelimeesi!<br><br>Paina selaimesi <b>valikkoa</b> (kolme pistettä ylhäällä) ja valitse <b>'Asenna sovellus'</b> tai <b>'Lisää aloitusnäyttöön'</b>.";
+        } else {
+            instText = "Parhaan pelikokemuksen saat asentamalla pelin tai lisäämällä sen kirjanmerkkeihin/aloitusnäyttöön selaimesi asetuksista.";
+        }
+        
+        let elInst = el('installInstructions');
+        let elModal = el('installPromptModal');
+        if(elInst && elModal) {
+            elInst.innerHTML = instText;
+            elModal.style.display = 'flex';
+        }
+    }
+};
+
+window.dismissInstallPrompt = function() {
+    localStorage.setItem('friba_browser_mode', 'true');
+    if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
+};
+
+// Viive, jotta sivu ehtii latautua ennen mahdollista promptia
+setTimeout(window.checkInstallPrompt, 800);
+
+
+//==============================================
+// KORTIN PELAAMINEN (TARGET MODAL / AUTOMATIIKKA)
 //==============================================
 window.openTargetModal = function(cardId) {
     const cardDef = window.allCards.find(c => c.id === cardId);
@@ -35,7 +77,6 @@ window.openTargetModal = function(cardId) {
     
     let opponents = allPlayers.filter(p => p && p.name !== myName);
     
-    // KAKSINPELI AUTOMATIIKKA: Jos on vain yksi vastustaja, ammu kortti heti sille!
     if (opponents.length === 1) {
         window.executeCardPlay(opponents[0].name);
         return;
@@ -107,7 +148,7 @@ window.executeCardPlay = function(targetName) {
 };
 
 //==============================================
-// UUSI 3D-KORTIN SLAIDAUS
+// 3D-KORTIN SLAIDAUS
 //==============================================
 window.initCardSwipe = function() {
     const container = el('cardDetail3DContainer');
@@ -158,9 +199,9 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     el('cardDetail3D').innerHTML = `
         <div class="card-face card-front ${typeClass}">
             <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
-                <div class="card-type-tag" style="font-size:0.95rem; margin-bottom:12px;">${tagTxt}</div>
-                <h3 style="font-size:1.85rem; margin-bottom:20px; color:#000;">${cDef.n}</h3>
-                <p style="font-size:1.45rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
+                <div class="card-type-tag" style="font-size:1.05rem; margin-bottom:12px;">${tagTxt}</div>
+                <h3 style="font-size:1.8rem; margin-bottom:20px; color:#000;">${cDef.n}</h3>
+                <p style="font-size:1.4rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
             </div>
         </div>
         <div class="card-face card-back ${backClass}">
@@ -176,7 +217,6 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     let btnHtml = '';
     if (mode === 'hand') {
         btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
-        
         if (cDef.tier === 'normal') {
             btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:#000;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
         } else {
@@ -307,6 +347,9 @@ window.showHandLimitModal = function(cards) {
     el('handLimitModal').style.display = 'flex';
 };
 
+//==============================================
+// GM ASETUKSET
+//==============================================
 window.saveGameSettings = function() {
     let newSettings = {
         shopEnabled: el('gmSetShop').checked,
@@ -324,15 +367,6 @@ window.saveGameSettings = function() {
 //==============================================
 // HELPERIT
 //==============================================
-window.showAppleToast = function(msg, icon = '✨') {
-    const toast = el('appleToast');
-    if(!toast) return;
-    el('appleToastIcon').innerText = icon;
-    el('appleToastText').innerText = msg;
-    toast.classList.add('show');
-    setTimeout(() => { toast.classList.remove('show'); }, 2000); 
-};
-
 window.cleanFirebaseData = function(obj) {
     if (obj === null || obj === undefined) return null;
     if (typeof obj !== 'object') return obj;
