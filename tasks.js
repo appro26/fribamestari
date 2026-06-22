@@ -1,4 +1,4 @@
-const allCards = [];
+window.allCards = [];
 
 const normalBases = [
     { n: "Kämmenpakko", d: "Heitä seuraava heittosi pakollisella kämmenellä (forehand)." },
@@ -35,7 +35,7 @@ const normalBases = [
 
 for(let i = 1; i <= 120; i++) {
     const base = normalBases[(i - 1) % normalBases.length];
-    allCards.push({ id: "n_" + i, n: base.n, d: base.d, tier: "normal", type: "sabotage" });
+    window.allCards.push({ id: "n_" + i, n: base.n, d: base.d, tier: "normal", type: "sabotage" });
 }
 
 const premiumBases = [
@@ -58,14 +58,14 @@ const premiumBases = [
 
 for(let i = 1; i <= 30; i++) {
     const base = premiumBases[(i - 1) % premiumBases.length];
-    allCards.push({ id: "p_" + i, n: `💎 ${base.n}`, d: base.d, tier: "premium", type: "buff", price: Math.floor(Math.random() * 6) + 7 }); 
+    window.allCards.push({ id: "p_" + i, n: `💎 ${base.n}`, d: base.d, tier: "premium", type: "buff", price: Math.floor(Math.random() * 6) + 7 }); 
 }
 
-const holeRules = [
-    { type: "bounty", n: "CTP-Kisa", d: "Tiiltä lähimmäksi korijalkaa osunut avaus voittaa väylätehtävän." },
-    { type: "bounty", n: "Pitkä Putti", d: "Väylän pisimmän onnistuneen putin tekijä voittaa väylätehtävän." },
+window.holeRules = [
+    { type: "bounty", n: "CTP-Kisa (+5 P)", d: "Tiiltä lähimmäksi korijalkaa osunut avaus voittaa väylätehtävän." },
+    { type: "bounty", n: "Pitkä Putti (+5 P)", d: "Väylän pisimmän onnistuneen putin tekijä voittaa väylätehtävän." },
     { type: "rule", n: "Putteri-Ruletti", d: "Koko väylä pelataan pelkillä puttereilla. Draiverit on täysin kielletty kaikilta." },
-    { type: "bounty", n: "Pelastaja", d: "Ensimmäinen pelaaja, joka osuu puuhun tai menee OB:lle, mutta pelastaa silti Par-tuloksen, voittaa tehtävän." },
+    { type: "bounty", n: "Pelastaja (+5 P)", d: "Ensimmäinen pelaaja, joka osuu puuhun tai menee OB:lle, mutta pelastaa silti Par-tuloksen, voittaa tehtävän." },
     { type: "rule", n: "Seisova Avaus", d: "Kukaan ei saa ottaa yhtään vauhtiaskelta avausheitossaan tiiltä." },
     { type: "rule", n: "Kämmenväylä", d: "Kaikki yli 10 metrin lähestymiset ja avaukset on pakko heittää kämmeneltä (forehand)." }
 ];
