@@ -57,9 +57,10 @@ window.dismissInstallPrompt = function() {
     if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
 };
 
-// Viive, jotta sivu ehtii latautua ennen mahdollista promptia
-setTimeout(window.checkInstallPrompt, 800);
-
+// Viivästetty asennusilmoitus jotta ruutu ehtii latautua
+window.addEventListener('load', () => {
+    setTimeout(window.checkInstallPrompt, 1000);
+});
 
 //==============================================
 // KORTIN PELAAMINEN (TARGET MODAL / AUTOMATIIKKA)
@@ -200,8 +201,8 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
         <div class="card-face card-front ${typeClass}">
             <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
                 <div class="card-type-tag" style="font-size:1.05rem; margin-bottom:12px;">${tagTxt}</div>
-                <h3 style="font-size:1.8rem; margin-bottom:20px; color:#000;">${cDef.n}</h3>
-                <p style="font-size:1.4rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
+                <h3 style="font-size:1.85rem; margin-bottom:20px; color:#000;">${cDef.n}</h3>
+                <p style="font-size:1.45rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
             </div>
         </div>
         <div class="card-face card-back ${backClass}">
@@ -347,9 +348,6 @@ window.showHandLimitModal = function(cards) {
     el('handLimitModal').style.display = 'flex';
 };
 
-//==============================================
-// GM ASETUKSET
-//==============================================
 window.saveGameSettings = function() {
     let newSettings = {
         shopEnabled: el('gmSetShop').checked,
@@ -367,6 +365,15 @@ window.saveGameSettings = function() {
 //==============================================
 // HELPERIT
 //==============================================
+window.showAppleToast = function(msg, icon = '✨') {
+    const toast = el('appleToast');
+    if(!toast) return;
+    el('appleToastIcon').innerText = icon;
+    el('appleToastText').innerText = msg;
+    toast.classList.add('show');
+    setTimeout(() => { toast.classList.remove('show'); }, 2000); 
+};
+
 window.cleanFirebaseData = function(obj) {
     if (obj === null || obj === undefined) return null;
     if (typeof obj !== 'object') return obj;
@@ -389,32 +396,6 @@ window.logEvent = function(msg) {
 window.logScore = function(playerName, delta) {
     const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
     push(ref(db, 'gameState/scoreLog'), window.cleanFirebaseData({ time: timeStr, playerName: playerName, delta: delta }));
-};
-
-window.setupSwipeToClose = function() {
-    document.querySelectorAll('.fullscreen-modal').forEach(modal => {
-        let startY = null;
-        let currentY = null;
-        modal.addEventListener('touchstart', e => {
-            if (modal.scrollTop <= 5) { startY = e.touches[0].clientY; modal.style.transition = 'none'; } else { startY = null; }
-        }, {passive: true});
-        modal.addEventListener('touchmove', e => {
-            if (startY === null) return;
-            currentY = e.touches[0].clientY;
-            let diff = currentY - startY;
-            if (diff > 0) modal.style.transform = `translateY(${diff}px)`;
-        }, {passive: true});
-        modal.addEventListener('touchend', e => {
-            if (startY === null) return;
-            let diff = currentY - startY;
-            modal.style.transition = 'transform 0.3s ease';
-            if (diff > 120) { 
-                modal.style.transform = `translateY(100%)`;
-                setTimeout(() => { modal.style.display = 'none'; modal.style.transform = ''; }, 300);
-            } else { modal.style.transform = ''; }
-            startY = null;
-        });
-    });
 };
 
 window.updateIdentityUI = function() { 
@@ -516,7 +497,7 @@ window.renderActiveHole = function() {
         container.innerHTML = `
             <div class="glass-card" style="border-left: 8px solid var(--primary); padding: 24px 20px; margin-bottom: 25px; border-radius: 16px; position: relative; overflow: hidden;">
                 <div style="display:inline-block; background:rgba(16, 185, 129, 0.15); color:var(--primary-dark); padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.85rem; margin-bottom:12px; text-transform:uppercase; letter-spacing: 1px; border: 1px solid rgba(16, 185, 129, 0.3);">${bountyTag}</div>
-                <div style="font-size:1.5rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${activeHole.rule.n}</div>
+                <div style="font-size:1.4rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${activeHole.rule.n}</div>
                 <div style="font-size: 1.1rem; line-height: 1.45; font-weight: 700; color: var(--text-muted);">${activeHole.rule.d}</div>
             </div>`; 
     }
@@ -731,8 +712,9 @@ window.renderAdminPlayerList = function() {
     });
 };
 
+let selectedPlayerForCard = null;
 window.openGmGiveCard = function(playerIndex) {
-    window.selectedPlayerForCard = playerIndex;
+    selectedPlayerForCard = playerIndex;
     el('gmCardSearch').value = '';
     window.renderGmCardList('');
     el('gmGiveCardModal').style.display = 'flex';
@@ -769,9 +751,9 @@ window.filterGmCards = function() {
 };
 
 window.giveCardToPlayer = function(cardId) {
-    if (window.selectedPlayerForCard === null) return; 
+    if (selectedPlayerForCard === null) return; 
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
-    let p = nextPlayers[window.selectedPlayerForCard];
+    let p = nextPlayers[selectedPlayerForCard];
     let cardDef = window.allCards.find(c => c.id === cardId);
     if (p && cardDef) {
         p.cards = p.cards || [];
@@ -894,6 +876,7 @@ window.removePlayer = function(idx) {
 
 window.resetGame = function() {
     if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos.")) {
+        localStorage.removeItem('friba_browser_mode');
         set(ref(db, 'gameState'), window.cleanFirebaseData({ settings: window.gameSettings, players: [], activeHole: null, currentHoleIndex: 1, course: null }))
         .then(() => { localStorage.clear(); location.reload(); });
         window.logEvent(`${myName} (GM) nollasi koko pelin.`);
@@ -1311,7 +1294,7 @@ onValue(ref(db, 'gameState'), (snap) => {
 
 // Aja lisäosat
 window.setupSwipeToClose();
-window.initCardSwipe();
+if (window.initCardSwipe) window.initCardSwipe();
 
 window.populateRuleSelect = function() {
     const sel = el('gmRuleSelect');
@@ -1319,4 +1302,3 @@ window.populateRuleSelect = function() {
     sel.innerHTML = window.holeRules.map((r, i) => `<option value="${i}">${r.n}</option>`).join('');
 };
 setTimeout(window.populateRuleSelect, 500);
-
