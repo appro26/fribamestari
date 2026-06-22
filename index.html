@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=36" />
+    <link rel="stylesheet" href="style.css?v=37" />
     <meta name="theme-color" content="#10b981" />
     <script>
       window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
@@ -36,7 +36,7 @@
 
         <div id="mainGameArea" style="display:none;">
             
-            <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 10px;">
+            <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 15px;">
                 <div id="courseInfoBanner" class="card" style="flex: 1; margin: 0; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
                     <div style="font-size: 0.8rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase;" id="bannerCourseName">Rata</div>
                     <div style="font-weight: 900; font-size: 1.3rem; color: var(--text-main);">VÄYLÄ <span id="bannerHoleNum" style="color: var(--primary);">1</span> <span style="color:var(--text-muted); font-size:0.9rem;">(PAR <span id="bannerPar">3</span>)</span></div>
@@ -46,10 +46,9 @@
 
             <div id="activeHoleContainer"></div>
             
-            <!-- Uusittu, erottuvampi laatikko omille sabotaaseille -->
-            <div id="myActiveRulesContainer" style="display:none; margin-bottom: 15px;"></div>
+            <!-- Uusittu, erittäin erottuva laatikko Sinuun kohdistuville korteille -->
+            <div id="myActiveRulesContainer" style="display:none; margin-bottom: 20px;"></div>
             
-            <!-- Uusittu, erottuvampi laatikko kaikille pelatuille korteille -->
             <div id="activeCardsArea" style="display:none; margin-bottom: 25px; background: var(--surface-alt); padding: 16px; border-radius: 12px; border: 2px solid var(--border);">
                 <h2 style="color: var(--info); font-size: 1.1rem; margin-bottom: 15px; display:flex; align-items:center; gap:8px;">📢 PELATUT KORTIT TÄLLÄ VÄYLÄLLÄ</h2>
                 <div id="activeCardsContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
@@ -205,7 +204,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=36"></script>
-    <script type="module" src="script.js?v=36"></script>
+    <script src="tasks.js?v=37"></script>
+    <script type="module" src="script.js?v=37"></script>
 </body>
 </html>
