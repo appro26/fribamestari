@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=31" />
+    <link rel="stylesheet" href="style.css?v=32" />
     <meta name="theme-color" content="#10b981" />
     <script>
       window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
@@ -169,8 +169,8 @@
                 <p style="color: var(--text-muted); font-size: 1.2rem; margin-top: 5px; font-weight:800;">Par <strong id="scoreModalPar" style="color:var(--text-main);">3</strong></p>
             </div>
             
-            <button class="btn btn-secondary" style="padding: 16px; font-size: 1rem; margin-bottom: 20px; background:var(--surface-alt);" onclick="if(window.toggleScoreModalRule) { window.toggleScoreModalRule(); }">👁️ NÄYTÄ VÄYLÄN SÄÄNTÖ</button>
-            <div id="scoreModalRuleBox" style="display: none; background: #fff; border: 3px solid var(--primary); padding: 16px; border-radius: 12px; margin-bottom: 20px; font-weight: 800; font-size: 1.05rem; color:var(--text-main);"></div>
+            <!-- Sääntö näytetään nyt automaattisesti ilman nappia -->
+            <div id="scoreModalRuleBox" style="display: none; background: #fff; border: 3px solid var(--primary); padding: 16px; border-radius: 12px; margin-bottom: 25px; font-weight: 800; font-size: 1.05rem; color:var(--text-main);"></div>
 
             <div id="scoreInputsContainer" style="margin-bottom: 25px;"></div>
             
@@ -202,7 +202,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=31"></script>
-    <script type="module" src="script.js?v=31"></script>
+    <script src="tasks.js?v=32"></script>
+    <script type="module" src="script.js?v=32"></script>
 </body>
 </html>
