@@ -23,7 +23,6 @@ window.cleanFirebaseData = function(data) {
     if (data === undefined || data === null) return null;
     try {
         let str = JSON.stringify(data);
-        // Estetään "undefined" -tekstien muuntaminen rikkinäiseksi JSONiksi
         if (!str || str === 'undefined' || str === '"undefined"') return null;
         return JSON.parse(str);
     } catch (err) {
@@ -203,13 +202,19 @@ window.renderActiveHole = function() {
     let bountyTag = activeHole.rule.type === 'bounty' ? `<div class="rule-bounty-tag">🏆 TEHTÄVÄ: SUORITTAJALLE +5 P</div>` : '';
     if(container) { container.innerHTML = `<div class="hole-rule-card">${bountyTag}<h1 style="font-size:1.5rem; margin-bottom:5px;">${activeHole.rule.n}</h1><p style="font-size:1.1rem;">${activeHole.rule.d}</p></div>`; }
     
-    if(activeHole.playedCards && activeHole.playedCards.length > 0) {
+    // KORJAUS TÄSSÄ: Pakotetaan palautus oikeaksi taulukoksi (Arrayksi), jottei .length kaadu koskaan.
+    let playedCards = [];
+    if (activeHole.playedCards) {
+        playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
+        playedCards = playedCards.filter(Boolean); // Pesu
+    }
+
+    if(playedCards.length > 0) {
         if(cardsArea) { cardsArea.style.display = 'block'; }
         let cardsHtml = '';
         let myRulesHtml = '';
         
-        const playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
-        playedCards.filter(Boolean).forEach(pc => {
+        playedCards.forEach(pc => {
             let cardDef = window.allCards.find(c => c.n === pc.cardName);
             let cTier = pc.tier || (cardDef ? cardDef.tier : 'normal');
             let cType = pc.type || (cardDef ? cardDef.type : 'sabotage');
@@ -523,7 +528,7 @@ window.resetGame = function() {
 };
 
 // ===========================================
-// PELIN ALOITUS & TULOSTEN KERUU
+// PELIN ALOITUS
 // ===========================================
 
 window.startMeilahti = function() {
@@ -617,7 +622,7 @@ window.saveCourseSetup = function() {
 };
 
 // ===========================================
-// TULOSTEN KERUU (INDEKSOITU & ERIKOISMERKIT SALLITTU)
+// TULOSTEN KERUU
 // ===========================================
 
 window.changeScore = function(safeId, par, delta) {
@@ -661,13 +666,12 @@ window.openScoreModal = function() {
     let html = '';
     let taskCheckboxes = '';
     
-    allPlayers.forEach(p => {
+    allPlayers.forEach((p, i) => {
         if(!p) { return; }
-        // Ruksit käyttävät suoraan nimeä
-        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${p.name}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
         
-        // Luodaan erikoismerkit kestävä ID nappeja varten (esim "Temeliii_123")
-        let safeId = p.name.replace(/[^a-zA-Z0-9]/g, '_');
+        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${i}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
+        
+        let safeId = i; 
         html += `
             <div class="score-row">
                 <span class="score-name">${p.name}</span>
@@ -675,8 +679,7 @@ window.openScoreModal = function() {
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, -1)">-</button>
                     <div id="scoreDisplay_${safeId}" class="score-display score-par">${par}</div>
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, 1)">+</button>
-                    <!-- Tulos tallentuu oikealle nimelle täysin riippumatta erikoismerkeistä -->
-                    <input type="hidden" class="score-input-data" data-name="${p.name}" id="scoreInput_${safeId}" value="${par}" />
+                    <input type="hidden" class="score-input-data" data-index="${i}" id="scoreInput_${safeId}" value="${par}" />
                 </div>
             </div>`;
     });
@@ -699,8 +702,10 @@ window.submitScores = function() {
     }
     
     inputs.forEach(input => {
-        let pName = input.getAttribute('data-name');
-        scores.push({ name: pName, strokes: parseInt(input.value) || par });
+        let pIndex = parseInt(input.getAttribute('data-index'));
+        if(allPlayers[pIndex]) {
+            scores.push({ name: allPlayers[pIndex].name, strokes: parseInt(input.value) || par });
+        }
     });
 
     const minStrokes = Math.min(...scores.map(s => s.strokes));
@@ -708,8 +713,8 @@ window.submitScores = function() {
     let winners = scores.filter(s => s.strokes === minStrokes).map(s => s.name);
     let losers = scores.filter(s => s.strokes === maxStrokes).map(s => s.name);
     
-    // Ruksit palauttavat suoraan oikean nimen value-kentästä
-    let taskWinners = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => cb.value);
+    let taskWinnerIndices = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => parseInt(cb.value));
+    let taskWinners = taskWinnerIndices.map(i => allPlayers[i] ? allPlayers[i].name : "");
     let normalPool = window.allCards.filter(c => c.tier === "normal");
     
     allPlayers.forEach(p => {
@@ -718,7 +723,6 @@ window.submitScores = function() {
         let strokeVal = scores.find(s => s.name === p.name)?.strokes || par;
         p.dgScore = Number(p.dgScore || 0) + (strokeVal - par);
         
-        // Pisteiden varmennettu maksu nimien perusteella
         p.score = Number(p.score || 0);
         if (winners.includes(p.name)) { p.score += 2; }
         if (taskWinners.includes(p.name)) { p.score += 5; }
@@ -734,7 +738,7 @@ window.submitScores = function() {
         p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
         p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
         
-        p.cards = p.cards.filter(Boolean); // Estetään tyhjät kortit
+        p.cards = p.cards.filter(Boolean);
     });
     
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
@@ -750,7 +754,6 @@ window.submitScores = function() {
     }
     activeHole = { rule: randomRule, shop: uniqueShop, playedCards: [], timestamp: Date.now() };
     
-    // Suodatetaan mahdolliset tyhjät rivit pois koko pelaajalistasta ennen lähetystä
     allPlayers = allPlayers.filter(Boolean);
     
     update(ref(db, 'gameState'), window.cleanFirebaseData({
@@ -764,7 +767,7 @@ window.submitScores = function() {
 };
 
 // ===========================================
-// KORTTIEN PELUU (TURVALLINEN INDEKSOINTI)
+// KORTTIEN PELUU
 // ===========================================
 
 window.buyShopItem = function(item) {
@@ -822,9 +825,8 @@ window.executeCardPlay = function(targetName) {
     const me = allPlayers.find(p => p && p.name === myName);
     if(me && me.cards) { 
         me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards);
-        me.cards = me.cards.filter(Boolean); // Pesu
+        me.cards = me.cards.filter(Boolean);
         
-        // Etsitään nimenomaan ID:llä, ei enää luoteta käyttöliittymän rendering-indeksiin
         let actualIndex = me.cards.indexOf(card.id);
         if (actualIndex !== -1) {
             me.cards.splice(actualIndex, 1); 
@@ -835,11 +837,11 @@ window.executeCardPlay = function(targetName) {
         activeHole.playedCards = activeHole.playedCards.filter(Boolean);
         
         activeHole.playedCards.push({ 
-            cardId: card.id || '',
-            cardName: card.def.n || '', 
-            cardDesc: card.def.d || '', 
-            target: targetName || '', 
-            by: myName || '', 
+            cardId: card.id || 'err_id',
+            cardName: card.def.n || 'Nimetön', 
+            cardDesc: card.def.d || '-', 
+            target: targetName || 'Joku', 
+            by: myName || 'Joku', 
             type: card.def.type || 'sabotage', 
             tier: card.def.tier || 'normal',
             timestamp: timestamp 
@@ -945,7 +947,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     if (myName) {
         const me = allPlayers.find(p => p && p.name === myName);
         if (me) {
-            // ILMOITUSLOGIIKKA RAHAN MUUTOKSESTA VÄYLÄN VAIHTUESSA
+            // Rahan muutosilmoitus
             if (typeof window.myLastHole === 'undefined') {
                 window.myLastHole = currentHoleIndex;
                 window.myLastPoints = me.score || 0;
@@ -953,9 +955,9 @@ onValue(ref(db, 'gameState'), (snap) => {
                 let diff = (me.score || 0) - window.myLastPoints;
                 if (diff !== 0) {
                     let sign = diff > 0 ? '+' : '';
-                    window.showNotification(`Väylä vaihtui! Sait ${sign}${diff} P. (Rahaa nyt: ${me.score || 0} P)`, diff > 0 ? 'info' : 'warning');
+                    window.showNotification(`Väylä vaihtui! Pisteet: ${sign}${diff} P. (Rahaa nyt: ${me.score || 0} P)`, diff > 0 ? 'info' : 'warning');
                 } else {
-                    window.showNotification(`Väylä vaihtui! Et saanut pisteitä. (Rahaa: ${me.score || 0} P)`, 'info');
+                    window.showNotification(`Väylä vaihtui! Ei uusia pisteitä. (Rahaa: ${me.score || 0} P)`, 'info');
                 }
                 window.myLastHole = currentHoleIndex;
                 window.myLastPoints = me.score || 0;
