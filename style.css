@@ -35,14 +35,12 @@ input, textarea, select {
     user-select: auto;
 }
 
-/* Varmistetaan ruksiboksien toimivuus kaikilla selaimilla */
 input[type="checkbox"] {
     appearance: auto !important;
     -webkit-appearance: auto !important;
     pointer-events: auto;
 }
 
-/* Pienennetty padding-bottom turhan skrollin estämiseksi */
 body { background-color: var(--bg-main); color: var(--text-main); padding: 12px; padding-bottom: 25px; transition: background-color 0.3s ease, color 0.3s ease; }
 
 .container { max-width: 500px; margin: 0 auto; position: relative; }
@@ -149,6 +147,39 @@ body.player-mode .gm-only { display: none !important; }
 .notification.debuff { border-color: var(--danger); }
 .notification.info { border-color: var(--info); }
 .notification.warning { border-color: var(--warning); }
+
+/* UUSI APPLE-TYYLINEN ILMOITUS PISTEILLE */
+.apple-toast {
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    color: #111;
+    padding: 14px 28px;
+    border-radius: 40px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15), 0 2px 10px rgba(0,0,0,0.05);
+    font-weight: 900;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 10000;
+    transition: top 0.5s cubic-bezier(0.2, 1.2, 0.3, 1);
+    pointer-events: none;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+.apple-toast.show {
+    top: 25px;
+}
+body.gm-mode .apple-toast {
+    background: rgba(30, 41, 59, 0.95);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
 @keyframes slideDown { 0% { transform: translateY(-100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
 
