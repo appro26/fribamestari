@@ -17,6 +17,20 @@ let isExpandedView = false;
 let lastPlayedCardTimestamp = Date.now();
 
 //==============================================
+// UUSI APPLE-ILMOITUS
+//==============================================
+window.showAppleToast = function(msg, icon = '✨') {
+    const toast = el('appleToast');
+    if(!toast) return;
+    el('appleToastIcon').innerText = icon;
+    el('appleToastText').innerText = msg;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
+};
+
+//==============================================
 // TURVALLISUUS- HELPER (ESTÄÄ FIREBASE KAATUMISET JSON-VIRHEISIIN)
 //==============================================
 window.cleanFirebaseData = function(obj) {
@@ -207,7 +221,7 @@ window.renderActiveHole = function() {
         return;
     }
     
-    let bountyTag = activeHole.rule.type === 'bounty' ? `<div class="rule-bounty-tag">🏆 TEHTÄVÄ: SUORITTAJALLE +5 P</div>` : '';
+    let bountyTag = activeHole.rule.type === 'bounty' ? `<div class="rule-bounty-tag">🏆 TEHTÄVÄ: +5 P</div>` : '';
     if(container) { container.innerHTML = `<div class="hole-rule-card">${bountyTag}<h1 style="font-size:1.5rem; margin-bottom:5px;">${activeHole.rule.n}</h1><p style="font-size:1.1rem;">${activeHole.rule.d}</p></div>`; }
     
     let playedCards = Object.values(activeHole.playedCards || {}).filter(Boolean);
@@ -633,7 +647,7 @@ window.saveCourseSetup = function() {
 };
 
 // ===========================================
-// TÄYSIN UUSITTU, SANAKIRJAAN PERUSTUVA PISTEIDEN KERUU
+// TÄYSIN UUDELLEENRAKENNETTU PISTEIDEN KERUU JA LASKENTA
 // ===========================================
 
 window.changeScore = function(safeId, par, delta) {
@@ -681,7 +695,8 @@ window.openScoreModal = function() {
         if(!p) { return; }
         
         let encodedName = p.name.replace(/"/g, '&quot;');
-        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" data-name="${encodedName}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
+        // Ruksit käyttävät idioottivarmaa nimeä arvona
+        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${encodedName}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
         
         let safeId = "player_" + i; 
         html += `
@@ -705,7 +720,7 @@ window.openScoreModal = function() {
 window.submitScores = function() {
     let par = currentCourse && currentCourse.pars ? (currentCourse.pars[currentHoleIndex - 1] || 3) : 3;
     
-    // 1. Luodaan turvallinen sanakirja johon kaikki tulokset yhdistetään suoraan nimellä
+    // 1. Kerätään tulokset täysin nimivarmalla tavalla
     let playerResults = {};
     allPlayers.forEach(p => {
         if(p) { playerResults[p.name] = { strokes: par, taskWon: false }; }
@@ -718,68 +733,65 @@ window.submitScores = function() {
         return;
     }
     
-    // 2. Kerätään heitot napuloista
+    // Yhdistetään DOMin numeeriset tulokset oikeisiin nimiin
     inputs.forEach(input => {
-        let pName = input.getAttribute('data-name');
-        if(playerResults[pName]) {
-            playerResults[pName].strokes = parseInt(input.value, 10) || par;
+        let pName = input.value; // HTML de-koodaa &quot; automaattisesti
+        let attrName = input.getAttribute('data-name');
+        if(playerResults[attrName]) {
+            playerResults[attrName].strokes = parseInt(input.value, 10) || par;
         }
     });
 
-    // 3. Kerätään tehtäväruksit
-    document.querySelectorAll('.task-checkbox').forEach(cb => {
-        if (cb.checked) {
-            let pName = cb.getAttribute('data-name');
-            if(playerResults[pName]) {
-                playerResults[pName].taskWon = true;
-            }
+    // Kerätään tehtäväruksit suoraan nimellä
+    document.querySelectorAll('.task-checkbox:checked').forEach(cb => {
+        let pName = cb.value;
+        if (playerResults[pName]) {
+            playerResults[pName].taskWon = true;
         }
     });
 
-    // 4. Lasketaan voittajat ja häviäjät
-    let minStrokes = Infinity;
-    let maxStrokes = -Infinity;
+    // 2. Etsitään pienin (voittaja) ja suurin (häviäjä) tulos
+    let minStrokes = 9999;
+    let maxStrokes = -9999;
     for (let key in playerResults) {
         let s = playerResults[key].strokes;
         if (s < minStrokes) minStrokes = s;
         if (s > maxStrokes) maxStrokes = s;
     }
 
-    let holeWinners = [];
-    let holeLosers = [];
-    for (let key in playerResults) {
-        if (playerResults[key].strokes === minStrokes) holeWinners.push(key);
-        if (playerResults[key].strokes === maxStrokes) holeLosers.push(key);
-    }
-    
+    // 3. Lasketaan ja päivitetään uudet pisteet!
     let normalPool = window.allCards.filter(c => c.tier === "normal");
-    
-    // 5. Jaetaan palkinnot ja miinukset oikeille nimille
+
     allPlayers.forEach(p => {
-        if (!p) { return; }
-        let res = playerResults[p.name];
-        if (!res) { return; }
-        
-        p.dgScore = (parseInt(p.dgScore, 10) || 0) + (res.strokes - par);
-        
-        let pointsGained = 0;
-        // PISTEIDEN LISÄYS: Voittajille +1 P, Tehtävästä +5 P!
-        if (holeWinners.includes(p.name)) { pointsGained += 1; }
-        if (res.taskWon) { pointsGained += 5; }
-        
-        p.score = (parseInt(p.score, 10) || 0) + pointsGained;
-        p.boughtThisHole = false; 
-        
+        if (!p) return;
+        let result = playerResults[p.name];
+        if (!result) return;
+
+        // Heittotuloksen laskenta
+        p.dgScore = (parseInt(p.dgScore, 10) || 0) + (result.strokes - par);
+
+        // UUSI RAHAN LASKENTA: +1 P Väylävoitosta, +5 P Tehtävästä!
+        let currentMoney = parseInt(p.score, 10) || 0;
+        if (result.strokes === minStrokes) {
+            currentMoney += 1; 
+        }
+        if (result.taskWon) {
+            currentMoney += 5; 
+        }
+        p.score = currentMoney;
+        p.boughtThisHole = false;
+
+        // Korttien jako (Häviäjä saa kolme, muut kaksi)
         p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
-        if (holeLosers.includes(p.name)) {
-            p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
+        if (result.strokes === maxStrokes) {
+            p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id); 
         }
         p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
         p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
-        
         p.cards = p.cards.filter(Boolean);
     });
-    
+
+    // 4. Päivitetään peli ja lähetetään serverille
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
     
     currentHoleIndex++;
@@ -1004,21 +1016,21 @@ onValue(ref(db, 'gameState'), (snap) => {
     if (myName) {
         const me = allPlayers.find(p => p && p.name === myName);
         if (me) {
-            if (typeof window.myLastHole === 'undefined') {
-                window.myLastHole = currentHoleIndex;
-                window.myLastPoints = me.score || 0;
-            } else if (window.myLastHole !== currentHoleIndex) {
-                let diff = (me.score || 0) - window.myLastPoints;
-                if (diff !== 0) {
-                    let sign = diff > 0 ? '+' : '';
-                    window.showNotification(`Väylä vaihtui! Pisteet: ${sign}${diff} P. (Rahaa nyt: ${me.score || 0} P)`, diff > 0 ? 'info' : 'warning');
+            // Rahan muutosilmoitus uuden Apple Toastin avulla
+            if (typeof window.myLastHoleIndex === 'undefined') {
+                window.myLastHoleIndex = currentHoleIndex;
+                window.myLastScore = me.score || 0;
+            } else if (window.myLastHoleIndex !== currentHoleIndex) {
+                let diff = (me.score || 0) - window.myLastScore;
+                if (diff > 0) {
+                    window.showAppleToast(`+${diff} P! (Yhteensä ${me.score || 0} P)`, '💰');
                 } else {
-                    window.showNotification(`Väylä vaihtui! Ei uusia pisteitä. (Rahaa: ${me.score || 0} P)`, 'info');
+                    window.showAppleToast(`Ei pisteitä. (Yhteensä ${me.score || 0} P)`, '👍');
                 }
-                window.myLastHole = currentHoleIndex;
-                window.myLastPoints = me.score || 0;
+                window.myLastHoleIndex = currentHoleIndex;
+                window.myLastScore = me.score || 0;
             } else {
-                window.myLastPoints = me.score || 0;
+                window.myLastScore = me.score || 0; // Päivittää saldon jos teki ostoksia kaupassa
             }
 
             let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : [];
