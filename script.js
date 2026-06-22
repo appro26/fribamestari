@@ -1,8 +1,11 @@
-//==============================================
-// KAIKKI FUNKTIOT MÄÄRITELLÄÄN ENSIN (Estää is not a function -bugin)
-//==============================================
-window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
-window.pendingShopPurchase = null;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue, set, push, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-west1.firebasedatabase.app/" };
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const el = id => document.getElementById(id);
 
 let myName = localStorage.getItem('friba_name') || null;
 let currentRole = 'player';
@@ -13,13 +16,54 @@ let currentHoleIndex = 1;
 let isExpandedView = false; 
 let lastPlayedCardTimestamp = Date.now();
 
-const el = id => document.getElementById(id);
+window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
+window.pendingShopPurchase = null;
+
+//==============================================
+// UUSI PWA ASENNUSLOGIIKKA (Chrome Native Prompt)
+//==============================================
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Jos selain tukee natiivia asennusta, näytä asennusnappi
+    const wantsBrowser = localStorage.getItem('friba_browser_mode');
+    if (!wantsBrowser) {
+        let elModal = el('installPromptModal');
+        let elBtn = el('nativeInstallBtn');
+        let elInst = el('installInstructions');
+        if(elModal && elBtn && elInst) {
+            elInst.innerHTML = "Tämä peli toimii parhaiten puhelimen omana sovelluksena. Asenna se nyt yhdellä painalluksella!";
+            elBtn.style.display = 'block';
+            elModal.style.display = 'flex';
+        }
+    }
+});
+
+window.triggerNativeInstall = async function() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
+        }
+        deferredPrompt = null;
+    } else {
+        alert("Asennus ei onnistunut automaattisesti. Kokeile selaimesi valikosta 'Asenna sovellus' tai 'Lisää aloitusnäyttöön'.");
+    }
+};
 
 window.checkInstallPrompt = function() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
     const wantsBrowser = localStorage.getItem('friba_browser_mode');
     
-    if (!isStandalone && !wantsBrowser) {
+    // Jos olemme jo asentaneet tai peruneet, ei tehdä mitään.
+    if (isStandalone || wantsBrowser) return;
+    
+    // Jos deferredPrompt on olemassa, laukaisimme jo natiivin ikkunan (yllä).
+    // Jos ei ole (esim. Safari), näytetään manuaaliset ohjeet.
+    if (!deferredPrompt) {
         const os = (function() {
             var userAgent = navigator.userAgent || navigator.vendor || window.opera;
             if (/android/i.test(userAgent)) return "Android";
@@ -38,8 +82,10 @@ window.checkInstallPrompt = function() {
         
         let elInst = el('installInstructions');
         let elModal = el('installPromptModal');
+        let elBtn = el('nativeInstallBtn');
         if(elInst && elModal) {
             elInst.innerHTML = instText;
+            if(elBtn) elBtn.style.display = 'none'; // Piilotetaan asennusnappi koska joudutaan tekee manuaalisesti
             elModal.style.display = 'flex';
         }
     }
@@ -50,11 +96,16 @@ window.dismissInstallPrompt = function() {
     if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
 };
 
-window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1000); });
+// Viivästetty kutsu ohjeille, jos native prompt ei herää
+window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
+//==============================================
+// KORTIN PELAAMINEN
+//==============================================
 window.openTargetModal = function(cardId) {
     const cardDef = window.allCards.find(c => c.id === cardId);
     if (!cardDef) return;
+    
     window.pendingCardPlay = { id: cardId, def: cardDef };
     
     if(cardDef.type === 'buff') {
@@ -63,6 +114,7 @@ window.openTargetModal = function(cardId) {
     }
     
     let opponents = allPlayers.filter(p => p && p.name !== myName);
+    
     if (opponents.length === 1) {
         window.executeCardPlay(opponents[0].name);
         return;
@@ -93,8 +145,11 @@ window.executeCardPlay = function(targetName) {
     if(me && me.cards) { 
         me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards);
         me.cards = me.cards.filter(Boolean);
+        
         let actualIndex = me.cards.indexOf(card.id);
-        if (actualIndex !== -1) { me.cards.splice(actualIndex, 1); }
+        if (actualIndex !== -1) {
+            me.cards.splice(actualIndex, 1); 
+        }
     }
     
     let pCards = {};
@@ -103,23 +158,37 @@ window.executeCardPlay = function(targetName) {
             let oldCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
             oldCards.filter(Boolean).forEach((c, i) => { pCards['old_'+i] = c; });
         }
+        
         let cKey = 'c_' + timestamp + '_' + Math.floor(Math.random()*1000);
-        pCards[cKey] = { cardId: card.id || 'err_id', cardName: card.def.n || 'Nimetön', cardDesc: card.def.d || '-', target: targetName || 'Joku', by: myName || 'Joku', type: card.def.type || 'sabotage', tier: card.def.tier || 'normal', timestamp: timestamp };
+        pCards[cKey] = { 
+            cardId: card.id || 'err_id',
+            cardName: card.def.n || 'Nimetön', 
+            cardDesc: card.def.d || '-', 
+            target: targetName || 'Joku', 
+            by: myName || 'Joku', 
+            type: card.def.type || 'sabotage', 
+            tier: card.def.tier || 'normal',
+            timestamp: timestamp 
+        };
     }
     
     let updates = {};
     updates['gameState/players'] = window.cleanFirebaseData(nextPlayers);
-    if(activeHole) { updates['gameState/activeHole/playedCards'] = window.cleanFirebaseData(pCards); }
+    if(activeHole) { 
+        updates['gameState/activeHole/playedCards'] = window.cleanFirebaseData(pCards); 
+    }
     
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.update(fb.ref(window.fbDb), updates);
-    });
+    update(ref(db), updates);
     
     window.logEvent(`${myName} pelasi kortin ${card.def.n} kohteelle ${targetName}.`);
+    
     let type = card.def.type === 'buff' ? 'info' : 'debuff';
     window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, type);
 };
 
+//==============================================
+// 3D-KORTIN SLAIDAUS
+//==============================================
 window.initCardSwipe = function() {
     const container = el('cardDetail3DContainer');
     if(!container) return;
@@ -218,6 +287,9 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     }, 10);
 };
 
+//==============================================
+// KORTIN POISTO JA KAUPPA
+//==============================================
 window.forceDiscard = function(cId, isNormal) {
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
     const me = nextPlayers.find(p => p && p.name === myName);
@@ -255,9 +327,7 @@ window.forceDiscard = function(cId, isNormal) {
             updates['gameState/players'] = window.cleanFirebaseData(nextPlayers);
             updates['gameState/activeHole/shop'] = window.cleanFirebaseData(nextShop);
             
-            import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-                fb.update(fb.ref(window.fbDb), updates);
-            });
+            update(ref(db), updates);
             
             window.pendingShopPurchase = null;
             el('shopModal').style.display = 'none';
@@ -268,9 +338,7 @@ window.forceDiscard = function(cId, isNormal) {
         }
     }
     
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.set(fb.ref(window.fbDb, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
-    });
+    set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
 };
 
 window.cancelShopPurchase = function() {
@@ -330,12 +398,13 @@ window.saveGameSettings = function() {
         ptsPassive: window.gameSettings.ptsPassive || 1
     };
     
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.set(fb.ref(window.fbDb, 'gameState/settings'), newSettings);
-    });
+    set(ref(db, 'gameState/settings'), newSettings);
     window.showNotification("Asetukset tallennettu!", "info");
 };
 
+//==============================================
+// HELPERIT
+//==============================================
 window.showAppleToast = function(msg, icon = '✨') {
     const toast = el('appleToast');
     if(!toast) return;
@@ -361,16 +430,12 @@ window.cleanFirebaseData = function(obj) {
 
 window.logEvent = function(msg) {
     const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.push(fb.ref(window.fbDb, 'gameState/eventLog'), window.cleanFirebaseData({ time: timeStr, msg: msg }));
-    });
+    push(ref(db, 'gameState/eventLog'), window.cleanFirebaseData({ time: timeStr, msg: msg }));
 };
 
 window.logScore = function(playerName, delta) {
     const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.push(fb.ref(window.fbDb, 'gameState/scoreLog'), window.cleanFirebaseData({ time: timeStr, playerName: playerName, delta: delta }));
-    });
+    push(ref(db, 'gameState/scoreLog'), window.cleanFirebaseData({ time: timeStr, playerName: playerName, delta: delta }));
 };
 
 window.setupSwipeToClose = function() {
@@ -446,9 +511,7 @@ window.claimIdentity = function() {
     if(!allPlayers.find(x => x && x.name === n)) { 
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); 
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${n} liittyi peliin.`);
     }
 };
@@ -500,7 +563,7 @@ window.renderActiveHole = function() {
         container.innerHTML = `
             <div class="glass-card" style="border-left: 8px solid var(--primary); padding: 24px 20px; margin-bottom: 25px; border-radius: 16px; position: relative; overflow: hidden;">
                 <div style="display:inline-block; background:rgba(16, 185, 129, 0.15); color:var(--primary-dark); padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.85rem; margin-bottom:12px; text-transform:uppercase; letter-spacing: 1px; border: 1px solid rgba(16, 185, 129, 0.3);">${bountyTag}</div>
-                <div style="font-size:1.4rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${activeHole.rule.n}</div>
+                <div style="font-size:1.5rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${activeHole.rule.n}</div>
                 <div style="font-size: 1.1rem; line-height: 1.45; font-weight: 700; color: var(--text-muted);">${activeHole.rule.d}</div>
             </div>`; 
     }
@@ -760,9 +823,7 @@ window.giveCardToPlayer = function(cardId) {
     if (p && cardDef) {
         p.cards = p.cards || [];
         p.cards.push(cardId);
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, `gameState/players`), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) antoi kortin ${cardDef.n} pelaajalle ${p.name}.`);
         window.showNotification(`Kortti lisätty pelaajalle ${p.name}!`, "info");
         el('gmGiveCardModal').style.display = 'none';
@@ -776,9 +837,7 @@ window.removeCardFromPlayer = function(pIdx, cIdx) {
         let cId = p.cards[cIdx];
         let cardDef = window.allCards.find(c => c.id === cId);
         p.cards.splice(cIdx, 1);
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, `gameState/players`), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) poisti kortin ${cardDef ? cardDef.n : ''} pelaajalta ${p.name}.`);
     }
 };
@@ -787,9 +846,7 @@ window.gmRollRule = function() {
     if(!activeHole) return; 
     const randomRule = window.holeRules[Math.floor(Math.random() * window.holeRules.length)];
     activeHole.rule = randomRule;
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.set(fb.ref(window.fbDb, 'gameState/activeHole/rule'), window.cleanFirebaseData(randomRule));
-    });
+    set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(randomRule));
     window.logEvent(`${myName} (GM) arpoi uuden väyläsäännön: ${randomRule.n}`);
 };
 
@@ -799,9 +856,7 @@ window.gmSetRule = function() {
     const ruleDef = window.holeRules[sel.value];
     if(ruleDef) {
         activeHole.rule = ruleDef;
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, 'gameState/activeHole/rule'), window.cleanFirebaseData(ruleDef));
-        });
+        set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(ruleDef));
         window.logEvent(`${myName} (GM) asetti väyläsäännön: ${ruleDef.n}`);
     }
 };
@@ -849,9 +904,7 @@ window.adminAddPlayer = function() {
     if(!allPlayers.find(x => x && x.name === n)) { 
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); 
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, 'gameState/players'), window.cleanFirebaseData(nextPlayers)).then(() => { input.value = ''; });
-        });
+        set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers)).then(() => { input.value = ''; });
         window.logEvent(`${myName} (GM) lisäsi pelaajan ${n}.`);
     }
 };
@@ -861,9 +914,7 @@ window.adjustScore = function(idx, amt) {
     if(allPlayers[idx]) {
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         nextPlayers[idx].score = Math.max(0, (parseInt(nextPlayers[idx].score, 10) || 0) + amt);
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, `gameState/players`), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) antoi ${amt} P pelaajalle ${nextPlayers[idx].name}.`);
     }
 };
@@ -873,9 +924,7 @@ window.adjustDgScore = function(idx, amt) {
     if(allPlayers[idx]) {
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         nextPlayers[idx].dgScore = (parseInt(nextPlayers[idx].dgScore, 10) || 0) + amt;
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, `gameState/players`), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) sääti pelaajan ${nextPlayers[idx].name} heittotulosta (${amt > 0 ? '+'+amt : amt}).`);
     }
 };
@@ -885,9 +934,7 @@ window.removePlayer = function(idx) {
         let pName = allPlayers[idx].name;
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         nextPlayers.splice(idx, 1); 
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) poisti pelaajan ${pName}.`);
     } 
 };
@@ -895,10 +942,8 @@ window.removePlayer = function(idx) {
 window.resetGame = function() {
     if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos.")) {
         localStorage.removeItem('friba_browser_mode');
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, 'gameState'), window.cleanFirebaseData({ settings: window.gameSettings, players: [], activeHole: null, currentHoleIndex: 1, course: null }))
-            .then(() => { localStorage.clear(); location.reload(); });
-        });
+        set(ref(db, 'gameState'), window.cleanFirebaseData({ settings: window.gameSettings, players: [], activeHole: null, currentHoleIndex: 1, course: null }))
+        .then(() => { localStorage.clear(); location.reload(); });
         window.logEvent(`${myName} (GM) nollasi koko pelin.`);
     }
 };
@@ -929,14 +974,12 @@ window.startMeilahti = function() {
         });
     }
     
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.update(fb.ref(window.fbDb, 'gameState'), window.cleanFirebaseData({
-            course: nextCourse,
-            currentHoleIndex: nextHoleIndex,
-            activeHole: nextActiveHole,
-            players: nextPlayers
-        }));
-    });
+    update(ref(db, 'gameState'), window.cleanFirebaseData({
+        course: nextCourse,
+        currentHoleIndex: nextHoleIndex,
+        activeHole: nextActiveHole,
+        players: nextPlayers
+    }));
 
     if(el('courseModal')) el('courseModal').style.display = 'none'; 
     window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}. Kaikki saivat 3 P ja 3 korttia.`);
@@ -984,14 +1027,12 @@ window.saveCourseSetup = function() {
         });
     }
 
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.update(fb.ref(window.fbDb, 'gameState'), window.cleanFirebaseData({
-            course: nextCourse,
-            currentHoleIndex: nextHoleIndex,
-            activeHole: nextActiveHole,
-            players: nextPlayers
-        }));
-    });
+    update(ref(db, 'gameState'), window.cleanFirebaseData({
+        course: nextCourse,
+        currentHoleIndex: nextHoleIndex,
+        activeHole: nextActiveHole,
+        players: nextPlayers
+    }));
 
     if(el('courseModal')) el('courseModal').style.display = 'none'; 
     window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}. Kaikki saivat 3 P ja 3 korttia.`);
@@ -1168,22 +1209,19 @@ window.submitScores = function() {
     
     let nextActiveHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
     
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.update(fb.ref(window.fbDb, 'gameState'), window.cleanFirebaseData({
-            players: nextPlayers,
-            currentHoleIndex: nextHoleIndex,
-            activeHole: nextActiveHole
-        }));
-    });
+    update(ref(db, 'gameState'), window.cleanFirebaseData({
+        players: nextPlayers,
+        currentHoleIndex: nextHoleIndex,
+        activeHole: nextActiveHole
+    }));
 
     if(el('scoreModal')) el('scoreModal').style.display = 'none'; 
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
 };
 
 //==============================================
-// FIREBASE INIT JA ONVALUE KUUNTELIJA
+// FIREBASE ONVALUE KUUNTELIJA (Vasta kaikkien funktioiden jälkeen)
 //==============================================
-window.fbDb = db; // Tallenna viittaus globaalisti importteja varten
 
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
@@ -1311,8 +1349,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderScoreLog(data.scoreLog);
 });
 
-// Aja lisäosat
-window.setupSwipeToClose();
+// Lopuksi käynnistetään init
 if (window.initCardSwipe) window.initCardSwipe();
 
 window.populateRuleSelect = function() {
