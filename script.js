@@ -16,22 +16,99 @@ let currentHoleIndex = 1;
 let isExpandedView = false; 
 let lastPlayedCardTimestamp = Date.now();
 
-window.gameSettings = {
-    shopEnabled: true,
-    handLimitEnabled: true,
-    handLimit: 5,
-    ptsWin: 2,
-    ptsTask: 3,
-    ptsLose: 0,
-    ptsPassive: 1
+window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
+window.pendingShopPurchase = null;
+
+//==============================================
+// BUGIKORJAUS: Määritellään kriittiset funktiot globaalisti heti alkuun!
+//==============================================
+window.openTargetModal = function(cardId) {
+    const cardDef = window.allCards.find(c => c.id === cardId);
+    if (!cardDef) return;
+    
+    window.pendingCardPlay = { id: cardId, def: cardDef };
+    
+    if(cardDef.type === 'buff') {
+        window.executeCardPlay(myName);
+        return;
+    }
+    
+    let opponents = allPlayers.filter(p => p && p.name !== myName);
+    
+    // KAKSINPELI AUTOMATIIKKA: Jos on vain yksi vastustaja, ammu kortti heti sille!
+    if (opponents.length === 1) {
+        window.executeCardPlay(opponents[0].name);
+        return;
+    }
+    
+    if(el('targetCardName')) el('targetCardName').innerText = cardDef.n; 
+    const list = el('targetPlayerList');
+    if(!list) return; 
+    list.innerHTML = '';
+    
+    opponents.forEach(p => {
+        let encodedName = p.name.replace(/"/g, '&quot;');
+        list.innerHTML += `<button class="btn btn-secondary target-btn glass-card" data-name="${encodedName}" style="border:3px solid var(--border); color:var(--text-main); width:100%; padding:20px; border-radius:12px; margin-bottom:12px; font-weight:900; font-size:1.3rem; text-align:left; box-shadow:0 4px 10px rgba(0,0,0,0.05);" onclick="window.executeCardPlay(this.getAttribute('data-name'))">${p.name}</button>`;
+    });
+    if(el('targetModal')) el('targetModal').style.display = 'flex'; 
 };
 
-window.pendingShopPurchase = null;
+window.executeCardPlay = function(targetName) {
+    if(!window.pendingCardPlay) return; 
+    const card = window.pendingCardPlay;
+    const timestamp = Date.now();
+    if(el('targetModal')) el('targetModal').style.display = 'none'; 
+    if(el('handModal')) el('handModal').style.display = 'none'; 
+    
+    let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
+    const me = nextPlayers.find(p => p && p.name === myName);
+    
+    if(me && me.cards) { 
+        me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards);
+        me.cards = me.cards.filter(Boolean);
+        
+        let actualIndex = me.cards.indexOf(card.id);
+        if (actualIndex !== -1) {
+            me.cards.splice(actualIndex, 1); 
+        }
+    }
+    
+    let pCards = {};
+    if(activeHole) {
+        if (activeHole.playedCards) {
+            let oldCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
+            oldCards.filter(Boolean).forEach((c, i) => { pCards['old_'+i] = c; });
+        }
+        
+        let cKey = 'c_' + timestamp + '_' + Math.floor(Math.random()*1000);
+        pCards[cKey] = { 
+            cardId: card.id || 'err_id',
+            cardName: card.def.n || 'Nimetön', 
+            cardDesc: card.def.d || '-', 
+            target: targetName || 'Joku', 
+            by: myName || 'Joku', 
+            type: card.def.type || 'sabotage', 
+            tier: card.def.tier || 'normal',
+            timestamp: timestamp 
+        };
+    }
+    
+    let updates = {};
+    updates['gameState/players'] = window.cleanFirebaseData(nextPlayers);
+    if(activeHole) { 
+        updates['gameState/activeHole/playedCards'] = window.cleanFirebaseData(pCards); 
+    }
+    update(ref(db), updates);
+    
+    window.logEvent(`${myName} pelasi kortin ${card.def.n} kohteelle ${targetName}.`);
+    
+    let type = card.def.type === 'buff' ? 'info' : 'debuff';
+    window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, type);
+};
 
 //==============================================
 // UUSI 3D-KORTIN SLAIDAUS
 //==============================================
-window.cardLastRot = 0;
 window.initCardSwipe = function() {
     const container = el('cardDetail3DContainer');
     if(!container) return;
@@ -81,9 +158,9 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     el('cardDetail3D').innerHTML = `
         <div class="card-face card-front ${typeClass}">
             <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
-                <div class="card-type-tag" style="font-size:1.05rem; margin-bottom:12px;">${tagTxt}</div>
-                <h3 style="font-size:1.8rem; margin-bottom:20px; color:#000;">${cDef.n}</h3>
-                <p style="font-size:1.4rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
+                <div class="card-type-tag" style="font-size:0.95rem; margin-bottom:12px;">${tagTxt}</div>
+                <h3 style="font-size:1.85rem; margin-bottom:20px; color:#000;">${cDef.n}</h3>
+                <p style="font-size:1.45rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
             </div>
         </div>
         <div class="card-face card-back ${backClass}">
@@ -99,10 +176,11 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     let btnHtml = '';
     if (mode === 'hand') {
         btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
+        
         if (cDef.tier === 'normal') {
-            btnHtml += `<button class="btn btn-secondary" style="font-size:1.05rem; padding:16px; margin-top:5px; color:#000;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
+            btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:#000;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
         } else {
-            btnHtml += `<button class="btn btn-secondary" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
+            btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
         }
     } else if (mode === 'shop') {
         let price = arg1;
@@ -131,7 +209,7 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
 };
 
 //==============================================
-// KORTIN POISTO / MYYNTI JA KAUPPA
+// KORTIN POISTO JA KAUPPA
 //==============================================
 window.forceDiscard = function(cId, isNormal) {
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
@@ -229,9 +307,6 @@ window.showHandLimitModal = function(cards) {
     el('handLimitModal').style.display = 'flex';
 };
 
-//==============================================
-// GM ASETUKSET
-//==============================================
 window.saveGameSettings = function() {
     let newSettings = {
         shopEnabled: el('gmSetShop').checked,
@@ -247,7 +322,7 @@ window.saveGameSettings = function() {
 };
 
 //==============================================
-// YLEISET HELPERIT
+// HELPERIT
 //==============================================
 window.showAppleToast = function(msg, icon = '✨') {
     const toast = el('appleToast');
@@ -377,7 +452,7 @@ window.renderLeaderboard = function() {
         let dgStr = dgVal > 0 ? `+${dgVal}` : (dgVal === 0 ? 'E' : `${dgVal}`);
         let dgColor = dgVal > 0 ? 'var(--danger)' : (dgVal < 0 ? 'var(--info)' : 'var(--text-main)');
         
-        list.innerHTML += `<div class="player-row ${p.name === myName ? 'me' : ''}">
+        list.innerHTML += `<div class="player-row glass-card ${p.name === myName ? 'me' : ''}" style="margin-bottom:8px;">
             <div style="font-weight:900; font-size:1.2rem; color:var(--text-main);"><span style="color:var(--text-muted); margin-right:10px;">${i+1}.</span>${p.name}</div>
             <div style="display:flex; align-items:center; gap: 15px;">
                 <span style="font-size:0.95rem; color:var(--warning); font-weight:900;">${p.score || 0} P</span>
@@ -405,10 +480,10 @@ window.renderActiveHole = function() {
     
     if(container) { 
         container.innerHTML = `
-            <div style="background: var(--surface); border: 2px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); border-left: 8px solid var(--primary); margin-bottom: 15px; position: relative; overflow: hidden;">
-                <div style="display:inline-block; background:rgba(16, 185, 129, 0.15); color:var(--primary); padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.85rem; margin-bottom:12px; text-transform:uppercase; letter-spacing: 1px; border: 1px solid rgba(16, 185, 129, 0.3);">${bountyTag}</div>
-                <div style="font-size:1.4rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${activeHole.rule.n}</div>
-                <div style="font-size: 1.05rem; line-height: 1.45; font-weight: 700; color: var(--text-muted);">${activeHole.rule.d}</div>
+            <div class="glass-card" style="border-left: 8px solid var(--primary); padding: 24px 20px; margin-bottom: 25px; border-radius: 16px; position: relative; overflow: hidden;">
+                <div style="display:inline-block; background:rgba(16, 185, 129, 0.15); color:var(--primary-dark); padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.85rem; margin-bottom:12px; text-transform:uppercase; letter-spacing: 1px; border: 1px solid rgba(16, 185, 129, 0.3);">${bountyTag}</div>
+                <div style="font-size:1.5rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${activeHole.rule.n}</div>
+                <div style="font-size: 1.1rem; line-height: 1.45; font-weight: 700; color: var(--text-muted);">${activeHole.rule.d}</div>
             </div>`; 
     }
     
@@ -425,12 +500,12 @@ window.renderActiveHole = function() {
             let cType = pc.type || (cardDef ? cardDef.type : 'sabotage');
             
             let color = 'var(--danger)'; 
+            let bgColor = 'rgba(244, 63, 94, 0.15)';
             let icon = '🚨';
-            if (cTier === 'premium') { color = 'var(--warning)'; icon = '💎'; }
-            else if (cType === 'buff') { color = 'var(--info)'; icon = '🛡️'; }
+            if (cTier === 'premium') { color = 'var(--warning)'; icon = '💎'; bgColor = 'rgba(245, 158, 11, 0.15)'; }
+            else if (cType === 'buff') { color = 'var(--info)'; icon = '🛡️'; bgColor = 'rgba(37, 99, 235, 0.15)'; }
             
             let actionText = cType === 'buff' ? `käytti edun` : `sabotoi kohti <strong style="text-transform:uppercase;">${pc.target}</strong>`;
-
             let undoBtn = currentRole === 'gm' ? `<button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; width:auto; border-radius:6px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">PERU</button>` : `<span style="font-size:0.8rem; color:var(--border);">ℹ️</span>`;
             
             cardsHtml += `
@@ -447,10 +522,12 @@ window.renderActiveHole = function() {
             if(pc.target && myName && pc.target.trim() === myName.trim()) {
                 let label = cType === 'buff' ? 'OMA ETU' : 'SABOTAASI';
                 myRulesHtml += `
-                    <div style="background: var(--surface); border: 2px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); border-left: 8px solid ${color}; margin-bottom: 15px; position: relative; overflow: hidden;">
-                        <div style="color:${color}; font-weight:900; font-size:0.85rem; letter-spacing:1px; margin-bottom:6px; text-transform:uppercase;">${icon} ${label}</div>
-                        <div style="font-size:1.4rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${pc.cardName}</div>
-                        <div style="font-size: 1.05rem; line-height: 1.45; font-weight: 700; color: var(--text-muted);">${pc.cardDesc}</div>
+                    <div class="glass-card" style="border-left: 8px solid ${color}; padding: 20px; margin-bottom: 15px; border-radius: 16px; position: relative; overflow: hidden;">
+                        <div style="display:inline-flex; align-items:center; gap:6px; background:${bgColor}; color:${color}; padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; border: 1px solid ${color};">
+                            <span>${icon}</span> <span>${label}</span>
+                        </div>
+                        <div style="font-size:1.5rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${pc.cardName}</div>
+                        <div style="font-size: 1.1rem; line-height: 1.45; font-weight: 700; color: var(--text-muted);">${pc.cardDesc}</div>
                     </div>`;
             }
         });
@@ -596,7 +673,7 @@ window.renderAdminPlayerList = function() {
         }
 
         list.innerHTML += `
-            <div class="player-row" style="flex-direction:column; align-items:flex-start; gap:10px;">
+            <div class="player-row glass-card" style="flex-direction:column; align-items:flex-start; gap:10px;">
                 <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
                     <span style="font-weight:900; font-size:1.1rem; color:var(--text-main);">${p.name} (${p.score} P / DG: ${p.dgScore > 0 ? '+' : ''}${p.dgScore || 0})</span>
                     <div style="display:flex; gap: 8px;">
@@ -620,9 +697,8 @@ window.renderAdminPlayerList = function() {
     });
 };
 
-let selectedPlayerForCard = null;
 window.openGmGiveCard = function(playerIndex) {
-    selectedPlayerForCard = playerIndex;
+    window.selectedPlayerForCard = playerIndex;
     el('gmCardSearch').value = '';
     window.renderGmCardList('');
     el('gmGiveCardModal').style.display = 'flex';
@@ -659,9 +735,9 @@ window.filterGmCards = function() {
 };
 
 window.giveCardToPlayer = function(cardId) {
-    if (selectedPlayerForCard === null) return; 
+    if (window.selectedPlayerForCard === null) return; 
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
-    let p = nextPlayers[selectedPlayerForCard];
+    let p = nextPlayers[window.selectedPlayerForCard];
     let cardDef = window.allCards.find(c => c.id === cardId);
     if (p && cardDef) {
         p.cards = p.cards || [];
@@ -885,7 +961,7 @@ window.saveCourseSetup = function() {
 };
 
 // ===========================================
-// PISTEIDEN KERUU JA KORTTIEN JAKO (KÄSIRAJALLA)
+// PISTEIDEN KERUU
 // ===========================================
 
 window.changeScore = function(safeId, par, delta) {
@@ -1036,7 +1112,6 @@ window.submitScores = function() {
         p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
         p.cards = p.cards.filter(Boolean);
         
-        // KORTTIEN JAKO KÄSIRAJAN PUITTEISSA
         let cardsToGive = (holeLosers.includes(p.name) && minStrokes !== maxStrokes) ? 3 : 2;
         
         for(let i=0; i<cardsToGive; i++) {
@@ -1210,3 +1285,4 @@ window.populateRuleSelect = function() {
     sel.innerHTML = window.holeRules.map((r, i) => `<option value="${i}">${r.n}</option>`).join('');
 };
 setTimeout(window.populateRuleSelect, 500);
+
