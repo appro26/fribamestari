@@ -17,7 +17,7 @@ let isExpandedView = false;
 let lastPlayedCardTimestamp = Date.now();
 
 //==============================================
-// UUSI POMMINVARMA DATAPESURI (EI KÄYTÄ JSON-PARSE VAIHEITA)
+// TURVALLISUUS- HELPER (ESTÄÄ FIREBASE KAATUMISET JSON-VIRHEISIIN)
 //==============================================
 window.cleanFirebaseData = function(obj) {
     if (obj === null || obj === undefined) return null;
@@ -45,6 +45,11 @@ window.cleanFirebaseData = function(obj) {
 window.logEvent = function(msg) {
     const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
     push(ref(db, 'gameState/eventLog'), window.cleanFirebaseData({ time: timeStr, msg: msg }));
+};
+
+window.logScore = function(playerName, delta) {
+    const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
+    push(ref(db, 'gameState/scoreLog'), window.cleanFirebaseData({ time: timeStr, playerName: playerName, delta: delta }));
 };
 
 //==============================================
@@ -503,6 +508,7 @@ window.adjustScore = function(idx, amt) {
         allPlayers[idx].score = Math.max(0, (parseInt(allPlayers[idx].score, 10) || 0) + amt);
         set(ref(db, `gameState/players/${idx}/score`), allPlayers[idx].score);
         window.logEvent(`${myName} (GM) antoi ${amt} P pelaajalle ${allPlayers[idx].name}.`);
+        window.logScore(allPlayers[idx].name, amt);
     }
 };
 
@@ -627,7 +633,7 @@ window.saveCourseSetup = function() {
 };
 
 // ===========================================
-// TULOSTEN KERUU (INDEKSOITU & ERIKOISMERKIT SALLITTU)
+// TÄYSIN UUSITTU, SANAKIRJAAN PERUSTUVA PISTEIDEN KERUU
 // ===========================================
 
 window.changeScore = function(safeId, par, delta) {
@@ -674,9 +680,10 @@ window.openScoreModal = function() {
     allPlayers.forEach((p, i) => {
         if(!p) { return; }
         
-        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${i}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
+        let encodedName = p.name.replace(/"/g, '&quot;');
+        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" data-name="${encodedName}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
         
-        let safeId = "player_" + i;
+        let safeId = "player_" + i; 
         html += `
             <div class="score-row">
                 <span class="score-name">${p.name}</span>
@@ -684,7 +691,7 @@ window.openScoreModal = function() {
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, -1)">-</button>
                     <div id="scoreDisplay_${safeId}" class="score-display score-par">${par}</div>
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, 1)">+</button>
-                    <input type="hidden" class="score-input-data" data-index="${i}" id="scoreInput_${safeId}" value="${par}" />
+                    <input type="hidden" class="score-input-data" data-name="${encodedName}" id="scoreInput_${safeId}" value="${par}" />
                 </div>
             </div>`;
     });
@@ -697,7 +704,12 @@ window.openScoreModal = function() {
 
 window.submitScores = function() {
     let par = currentCourse && currentCourse.pars ? (currentCourse.pars[currentHoleIndex - 1] || 3) : 3;
-    let scores = [];
+    
+    // 1. Luodaan turvallinen sanakirja johon kaikki tulokset yhdistetään suoraan nimellä
+    let playerResults = {};
+    allPlayers.forEach(p => {
+        if(p) { playerResults[p.name] = { strokes: par, taskWon: false }; }
+    });
     
     const inputs = document.querySelectorAll('.score-input-data');
     if(inputs.length === 0) {
@@ -706,47 +718,66 @@ window.submitScores = function() {
         return;
     }
     
+    // 2. Kerätään heitot napuloista
     inputs.forEach(input => {
-        let pIndex = parseInt(input.getAttribute('data-index'), 10);
-        if(allPlayers[pIndex]) {
-            scores.push({ index: pIndex, strokes: parseInt(input.value, 10) || par });
+        let pName = input.getAttribute('data-name');
+        if(playerResults[pName]) {
+            playerResults[pName].strokes = parseInt(input.value, 10) || par;
         }
     });
 
-    const minStrokes = Math.min(...scores.map(s => s.strokes));
-    const maxStrokes = Math.max(...scores.map(s => s.strokes));
-    
-    let winnerIndices = scores.filter(s => s.strokes === minStrokes).map(s => s.index);
-    let loserIndices = scores.filter(s => s.strokes === maxStrokes).map(s => s.index);
-    let taskWinnerIndices = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => parseInt(cb.value, 10));
+    // 3. Kerätään tehtäväruksit
+    document.querySelectorAll('.task-checkbox').forEach(cb => {
+        if (cb.checked) {
+            let pName = cb.getAttribute('data-name');
+            if(playerResults[pName]) {
+                playerResults[pName].taskWon = true;
+            }
+        }
+    });
+
+    // 4. Lasketaan voittajat ja häviäjät
+    let minStrokes = Infinity;
+    let maxStrokes = -Infinity;
+    for (let key in playerResults) {
+        let s = playerResults[key].strokes;
+        if (s < minStrokes) minStrokes = s;
+        if (s > maxStrokes) maxStrokes = s;
+    }
+
+    let holeWinners = [];
+    let holeLosers = [];
+    for (let key in playerResults) {
+        if (playerResults[key].strokes === minStrokes) holeWinners.push(key);
+        if (playerResults[key].strokes === maxStrokes) holeLosers.push(key);
+    }
     
     let normalPool = window.allCards.filter(c => c.tier === "normal");
     
-    allPlayers.forEach((p, index) => {
+    // 5. Jaetaan palkinnot ja miinukset oikeille nimille
+    allPlayers.forEach(p => {
         if (!p) { return; }
+        let res = playerResults[p.name];
+        if (!res) { return; }
         
-        let strokeVal = scores.find(s => s.index === index)?.strokes || par;
-        p.dgScore = (parseInt(p.dgScore, 10) || 0) + (strokeVal - par);
+        p.dgScore = (parseInt(p.dgScore, 10) || 0) + (res.strokes - par);
         
-        let currentPoints = parseInt(p.score, 10) || 0;
+        let pointsGained = 0;
+        // PISTEIDEN LISÄYS: Voittajille +1 P, Tehtävästä +5 P!
+        if (holeWinners.includes(p.name)) { pointsGained += 1; }
+        if (res.taskWon) { pointsGained += 5; }
         
-        // PISTEIDEN LISÄYS: Voittajat +1, Tehtävä +5
-        if (winnerIndices.includes(index)) { currentPoints += 1; }
-        if (taskWinnerIndices.includes(index)) { currentPoints += 5; }
-        
-        p.score = currentPoints;
+        p.score = (parseInt(p.score, 10) || 0) + pointsGained;
         p.boughtThisHole = false; 
         
-        if (loserIndices.includes(index)) {
-            p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
+        p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
+        if (holeLosers.includes(p.name)) {
             p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
         }
-        
-        p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
         p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
         p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
         
-        p.cards = p.cards.filter(Boolean); 
+        p.cards = p.cards.filter(Boolean);
     });
     
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
@@ -762,8 +793,6 @@ window.submitScores = function() {
     }
     
     activeHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
-    
-    // Suodatetaan mahdolliset tyhjät pois vain jos niitä on
     allPlayers = allPlayers.filter(Boolean);
     
     update(ref(db, 'gameState'), window.cleanFirebaseData({
@@ -821,7 +850,8 @@ window.openTargetModal = function(cardId) {
     allPlayers.forEach(p => {
         if(!p) { return; }
         if(p.name !== myName) {
-            list.innerHTML += `<button class="btn btn-secondary target-btn" data-name="${p.name}" style="background:var(--surface); border:3px solid var(--border); color:var(--text-main); width:100%; padding:20px; border-radius:12px; margin-bottom:12px; font-weight:900; font-size:1.3rem; text-align:left; box-shadow:0 4px 10px rgba(0,0,0,0.05);" onclick="window.executeCardPlay(this.getAttribute('data-name'))">${p.name}</button>`;
+            let encodedName = p.name.replace(/"/g, '&quot;');
+            list.innerHTML += `<button class="btn btn-secondary target-btn" data-name="${encodedName}" style="background:var(--surface); border:3px solid var(--border); color:var(--text-main); width:100%; padding:20px; border-radius:12px; margin-bottom:12px; font-weight:900; font-size:1.3rem; text-align:left; box-shadow:0 4px 10px rgba(0,0,0,0.05);" onclick="window.executeCardPlay(this.getAttribute('data-name'))">${p.name}</button>`;
         }
     });
     if(el('targetModal')) { el('targetModal').style.display = 'flex'; }
