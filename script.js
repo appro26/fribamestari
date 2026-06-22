@@ -17,6 +17,75 @@ let isExpandedView = false;
 let lastPlayedCardTimestamp = Date.now();
 
 //==============================================
+// UUDET 3D-SLAIDAUKSET
+//==============================================
+window.cardLastRot = 0;
+window.initCardSwipe = function() {
+    const container = el('cardDetail3DContainer');
+    if(!container) return;
+    let startX = 0;
+    let isDragging = false;
+    
+    container.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+        isDragging = true;
+        el('cardDetail3D').classList.add('dragging');
+    }, {passive: true});
+
+    container.addEventListener('touchmove', e => {
+        if(!isDragging) return;
+        let deltaX = e.touches[0].clientX - startX;
+        let newRot = window.cardLastRot + (deltaX * 0.7);
+        el('cardDetail3D').style.transform = `rotateY(${newRot}deg)`;
+    }, {passive: true});
+
+    container.addEventListener('touchend', e => {
+        if(!isDragging) return;
+        isDragging = false;
+        const card = el('cardDetail3D');
+        card.classList.remove('dragging');
+        
+        let transformStr = card.style.transform;
+        let match = transformStr.match(/rotateY\(([-0-9.]+)deg\)/);
+        if(match) {
+            let currentRot = parseFloat(match[1]);
+            window.cardLastRot = Math.round(currentRot / 180) * 180;
+            card.style.transform = `rotateY(${window.cardLastRot}deg)`;
+        }
+    }, {passive: true});
+};
+
+window.openCardDetail = function(cId) {
+    const cDef = window.allCards.find(c => c.id === cId);
+    if(!cDef) return;
+
+    let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
+    if(cDef.tier === 'premium') typeClass = 'premium-card';
+    let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
+
+    let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
+    let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
+
+    el('cardDetail3D').innerHTML = `
+        <div class="card-face card-front ${typeClass}">
+            <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
+                <div class="card-type-tag" style="font-size:0.9rem; margin-bottom:12px;">${tagTxt}</div>
+                <h3 style="font-size:1.6rem; margin-bottom:15px; color:#000;">${cDef.n}</h3>
+                <p style="font-size:1.15rem; color:#222; line-height:1.5;">${cDef.d}</p>
+            </div>
+        </div>
+        <div class="card-face card-back ${backClass}">
+            <div class="card-back-icon">${backIcon}</div>
+            <div style="color:#fff; font-weight:900; font-size:1.4rem; margin-top:20px; letter-spacing:3px;">FRIBAMESTARI</div>
+        </div>
+    `;
+    
+    window.cardLastRot = 0;
+    el('cardDetail3D').style.transform = 'rotateY(0deg)';
+    el('cardDetailModal').style.display = 'flex';
+};
+
+//==============================================
 // UUSI APPLE-ILMOITUS
 //==============================================
 window.showAppleToast = function(msg, icon = '✨') {
@@ -55,72 +124,8 @@ window.logScore = function(playerName, delta) {
 };
 
 //==============================================
-// 3D KORTTI NÄKYMÄ (UUSI)
-//==============================================
-window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
-    const cDef = window.allCards.find(c => c.id === cId);
-    if(!cDef) return;
-
-    let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
-    if(cDef.tier === 'premium') typeClass = 'premium-card';
-    let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
-
-    let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
-    let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
-
-    el('cardDetail3D').innerHTML = `
-        <div class="card-face card-front ${typeClass}">
-            <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
-                <div class="card-type-tag" style="font-size:0.9rem; margin-bottom:12px;">${tagTxt}</div>
-                <h3 style="font-size:1.6rem; margin-bottom:15px; color:#000;">${cDef.n}</h3>
-                <p style="font-size:1.15rem; color:#222; line-height:1.5;">${cDef.d}</p>
-            </div>
-        </div>
-        <div class="card-face card-back ${backClass}">
-            <div class="card-back-icon">${backIcon}</div>
-            <div style="color:#fff; font-weight:900; font-size:1.4rem; margin-top:20px; letter-spacing:3px;">FRIBAMESTARI</div>
-        </div>
-    `;
-    el('cardDetail3D').className = 'card-3d'; 
-
-    let btnHtml = '';
-    if (mode === 'hand') {
-        btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
-    } else if (mode === 'shop') {
-        let price = arg1;
-        let canAfford = arg2;
-        let boughtThisHole = arg3;
-        let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? `OSTA ETU (${price} P)` : 'EI VARAA');
-        let btnClass = canAfford && !boughtThisHole ? 'btn-warning' : 'btn-secondary';
-        let dis = (!canAfford || boughtThisHole) ? 'disabled' : '';
-        btnHtml = `<button class="btn ${btnClass}" ${dis} style="font-size:1.1rem; padding:18px; color:#000; box-shadow:0 10px 25px rgba(245,158,11,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cId}', '${cDef.n}', ${price})">${btnText}</button>`;
-    } else if (mode === 'gm') {
-        btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.giveCardToPlayer('${cId}')">ANNA TÄMÄ</button>`;
-    }
-
-    el('cardDetailActionArea').innerHTML = btnHtml;
-    el('cardDetailModal').style.display = 'flex';
-};
-
-//==============================================
 // ELEOHJAUKSET
 //==============================================
-window.enableCardHover = function() {
-    const resetCards = () => { document.querySelectorAll('.physical-card').forEach(c => c.classList.remove('card-hovered')); };
-    const handleTouch = (e) => {
-        const touch = e.touches[0];
-        const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
-        resetCards();
-        if (elUnder) {
-            const card = elUnder.closest('.physical-card');
-            if (card) card.classList.add('card-hovered');
-        }
-    };
-    document.addEventListener('touchstart', handleTouch, {passive: true});
-    document.addEventListener('touchmove', handleTouch, {passive: true});
-    document.addEventListener('touchend', resetCards);
-};
-
 window.setupSwipeToClose = function() {
     document.querySelectorAll('.fullscreen-modal').forEach(modal => {
         let startY = null;
@@ -158,6 +163,7 @@ window.setRole = function(r) {
     if(el('btnPlayer')) { el('btnPlayer').classList.toggle('active', r === 'player'); }
     if(el('btnGM')) { el('btnGM').classList.toggle('active', r === 'gm'); }
     
+    // YLÄPALKIN VÄRIN MUUTOS
     const themeMeta = document.getElementById('themeColorMeta');
     if(themeMeta) themeMeta.setAttribute('content', r === 'gm' ? '#0f172a' : '#eefdf4');
     
@@ -256,7 +262,6 @@ window.renderActiveHole = function() {
             if (cTier === 'premium') { color = 'var(--warning)'; icon = '💎'; }
             else if (cType === 'buff') { color = 'var(--info)'; icon = '🛡️'; }
 
-            // KOMPAKTI LISTA KAIKISTA PELATUISTA KORTEISTA
             let undoBtn = currentRole === 'gm' ? `<button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; width:auto; border-radius:6px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">PERU</button>` : `<span style="font-size:0.8rem; color:var(--text-muted);">ℹ️</span>`;
             
             cardsHtml += `
@@ -271,7 +276,6 @@ window.renderActiveHole = function() {
                     ${undoBtn}
                 </div>`;
             
-            // ELEGANTTI "SINUA KOSKEVA" LAATIKKO
             if(pc.target && myName && pc.target.trim() === myName.trim()) {
                 let label = cType === 'buff' ? 'OMA ETU' : 'SABOTAASI';
                 myRulesHtml += `
@@ -301,6 +305,9 @@ window.renderActiveHole = function() {
     }
 };
 
+// ===========================================
+// PÄIVITETYT KORTTIEN NÄKYMÄT SUORALLA PELUULLA
+// ===========================================
 window.renderPlayerHand = function(cards) {
     const modalContainer = el('handModalCards');
     const expandedContainer = el('playerHandExpanded');
@@ -319,13 +326,16 @@ window.renderPlayerHand = function(cards) {
         let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
         if(cDef.tier === 'premium') typeClass = 'premium-card'; 
         
+        let btnClass = cDef.tier === 'premium' ? 'btn-warning' : (cDef.type === 'buff' ? 'btn-success' : 'btn-danger');
         let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
         
-        // Vaihdettu onclick kutsumaan uutta 3D näyttöä
         html += `
-            <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'hand')">
-                <div><div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p></div>
-                <div style="text-align:center; font-weight:900; font-size:0.85rem; color:var(--text-muted); margin-top:10px;">NÄPÄYTÄ</div>
+            <div class="physical-card ${typeClass}" style="padding:0;">
+                <div onclick="window.openCardDetail('${cId}')" style="flex:1; padding:16px; display:flex; flex-direction:column; cursor:pointer;">
+                    <div><div class="card-type-tag">${tagTxt}</div><h3 style="font-size:1.05rem;">${cDef.n}</h3><p style="font-size:0.9rem;">${cDef.d}</p></div>
+                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
+                </div>
+                <button class="btn ${btnClass}" style="border-radius:0 0 14px 14px; font-size:1rem; padding:14px; color:${cDef.tier==='premium'? '#000':'#fff'};" onclick="window.openTargetModal('${cId}')">PELAA KORTTI</button>
             </div>`;
     });
     
@@ -348,13 +358,17 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     shopArray.forEach(item => {
         if(!item) return; 
         const canAfford = myPoints >= item.price && !boughtThisHole;
+        let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? 'OSTA ETU' : 'EI VARAA');
+        let btnClass = canAfford ? 'btn-warning' : 'btn-secondary';
         
-        // Vaihdettu onclick kutsumaan uutta 3D näyttöä parametreillä
         html += `
-            <div class="physical-card premium-card" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})">
-                <span class="card-price-tag">${item.price} P</span>
-                <div><div class="card-type-tag">💎 PREMIUM KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p></div>
-                <div style="text-align:center; font-weight:900; font-size:0.85rem; color:var(--text-muted); margin-top:10px;">NÄPÄYTÄ</div>
+            <div class="physical-card premium-card" style="padding:0; position:relative;">
+                <span class="card-price-tag" style="top:12px; right:12px;">${item.price} P</span>
+                <div onclick="window.openCardDetail('${item.id}')" style="flex:1; padding:16px; display:flex; flex-direction:column; cursor:pointer;">
+                    <div><div class="card-type-tag">💎 PREMIUM KAUPPA</div><h3 style="font-size:1.05rem; padding-right:45px;">${item.n}</h3><p style="font-size:0.9rem;">${item.d}</p></div>
+                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
+                </div>
+                <button class="btn ${btnClass}" style="border-radius:0 0 14px 14px; font-size:1rem; padding:14px; color:#000;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
             </div>`;
     });
     
@@ -428,11 +442,15 @@ window.renderGmCardList = function(filterTxt) {
         let typeClass = c.type === 'buff' ? 'buff-card' : 'debuff-card';
         if (c.tier === 'premium') typeClass = 'premium-card'; 
         let tagTxt = c.tier === 'premium' ? '💎 PREMIUM' : (c.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
+        let btnClass = c.tier === 'premium' ? 'btn-warning' : (c.type === 'buff' ? 'btn-success' : 'btn-danger');
         
         html += `
-            <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${c.id}', 'gm')">
-                <div><div class="card-type-tag">${tagTxt}</div><h3 style="font-size:1rem;">${c.n}</h3><p style="font-size:0.8rem;">${c.d}</p></div>
-                <div style="text-align:center; font-weight:900; font-size:0.85rem; color:var(--text-muted); margin-top:10px;">NÄPÄYTÄ</div>
+            <div class="physical-card ${typeClass}" style="padding:0;">
+                <div onclick="window.openCardDetail('${c.id}')" style="flex:1; padding:16px; display:flex; flex-direction:column; cursor:pointer;">
+                    <div><div class="card-type-tag">${tagTxt}</div><h3 style="font-size:1rem;">${c.n}</h3><p style="font-size:0.8rem;">${c.d}</p></div>
+                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
+                </div>
+                <button class="btn ${btnClass}" style="border-radius:0 0 14px 14px; padding:12px; font-size:0.9rem; color:${c.tier === 'premium' ? '#000' : '#fff'};" onclick="window.giveCardToPlayer('${c.id}')">ANNA TÄMÄ</button>
             </div>`;
     });
     container.innerHTML = html;
@@ -754,7 +772,6 @@ window.submitScores = function() {
     }
     
     inputs.forEach(input => {
-        let pName = input.value; 
         let attrName = input.getAttribute('data-name');
         if(playerResults[attrName]) {
             playerResults[attrName].strokes = parseInt(input.value, 10) || par;
@@ -859,6 +876,7 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
         updates['gameState/activeHole/shop'] = window.cleanFirebaseData(nextShop);
         update(ref(db), updates);
 
+        if(el('shopModal')) el('shopModal').style.display = 'none'; 
         window.logEvent(`${myName} osti edun: ${nameStr}.`);
         window.showNotification(`🛒 Ostit edun: ${nameStr}`, 'warning');
     }
@@ -893,6 +911,7 @@ window.executeCardPlay = function(targetName) {
     const card = pendingCardPlay;
     const timestamp = Date.now();
     if(el('targetModal')) el('targetModal').style.display = 'none'; 
+    if(el('handModal')) el('handModal').style.display = 'none'; 
     
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
     const me = nextPlayers.find(p => p && p.name === myName);
@@ -1064,6 +1083,19 @@ onValue(ref(db, 'gameState'), (snap) => {
             if(el('shopModalWallet')) el('shopModalWallet').innerText = pts; 
             if(el('handCountBadge')) el('handCountBadge').innerText = myCards.filter(Boolean).length; 
         }
+
+        if (activeHole && activeHole.playedCards) {
+            const playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
+            const myNewDebuffs = playedCards.filter(Boolean).filter(pc => pc.target === myName && pc.timestamp > lastPlayedCardTimestamp && pc.type === 'sabotage');
+            
+            if (myNewDebuffs.length > 0) {
+                myNewDebuffs.forEach(db => {
+                    window.showNotification(`💥 Sinua sabotoitiin: ${db.cardName}`, 'debuff');
+                    if (navigator.vibrate) { navigator.vibrate([200, 100, 200]); }
+                });
+                lastPlayedCardTimestamp = Math.max(...playedCards.map(pc => pc.timestamp));
+            }
+        }
     }
 
     window.renderAdminPlayerList();
@@ -1071,9 +1103,10 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderScoreLog(data.scoreLog);
 });
 
-// Aja lisäosat ja generoi GM valikot
+// Aja lisäosat
 window.enableCardHover();
 window.setupSwipeToClose();
+window.initCardSwipe();
 
 window.populateRuleSelect = function() {
     const sel = el('gmRuleSelect');
