@@ -17,20 +17,26 @@ let isExpandedView = false;
 let lastPlayedCardTimestamp = Date.now();
 
 //==============================================
-// TURVALLISUUS- HELPER (ESTÄÄ FIREBASE KAATUMISET JSON-VIRHEISIIN)
+// UUSI POMMINVARMA DATAPESURI (EI KÄYTÄ JSON-PARSE VAIHEITA)
 //==============================================
-window.cleanFirebaseData = function(data) {
-    if (data === undefined || data === null) return null;
-    try {
-        // Estetään jumiutuneiden objektien tallennus kääntämällä data täysin puhtaaksi merkkijonoksi ja takaisin
-        let str = JSON.stringify(data);
-        if (!str || str === 'undefined' || str === '"undefined"' || str === 'null') return null;
-        let parsed = JSON.parse(str);
-        return parsed;
-    } catch (err) {
-        console.error("Firebase payload clean error:", err);
-        return null;
+window.cleanFirebaseData = function(obj) {
+    if (obj === null || obj === undefined) return null;
+    if (typeof obj !== 'object') return obj;
+    
+    if (Array.isArray(obj)) {
+        return obj.map(item => window.cleanFirebaseData(item)).filter(item => item !== null);
     }
+    
+    let cleaned = {};
+    for (let key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            let val = window.cleanFirebaseData(obj[key]);
+            if (val !== null && val !== undefined) {
+                cleaned[key] = val;
+            }
+        }
+    }
+    return cleaned;
 };
 
 //==============================================
@@ -39,11 +45,6 @@ window.cleanFirebaseData = function(data) {
 window.logEvent = function(msg) {
     const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
     push(ref(db, 'gameState/eventLog'), window.cleanFirebaseData({ time: timeStr, msg: msg }));
-};
-
-window.logScore = function(playerName, delta) {
-    const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
-    push(ref(db, 'gameState/scoreLog'), window.cleanFirebaseData({ time: timeStr, playerName: playerName, delta: delta }));
 };
 
 //==============================================
@@ -233,7 +234,6 @@ window.renderActiveHole = function() {
                 ${undoBtnHtml}
             </div>`;
             
-            // LISÄTÄÄN SINUN KORTTEIHIN JOS TARGET OLET SINÄ (Trim varmistaa ettei jää välilyönneistä kiinni)
             if(pc.target && myName && pc.target.trim() === myName.trim()) {
                 let label = cType === 'buff' ? '🛡️ OMA ETU' : '🚨 SABOTAASI';
                 myRulesHtml += `<div class="my-rule-item" style="background:#fff; border: 3px solid ${color}; padding: 16px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
@@ -313,7 +313,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             <div class="physical-card premium-card">
                 <span class="card-price-tag">${item.price} P</span>
                 <div><div class="card-type-tag">💎 PREMIUM KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p></div>
-                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" style="padding:16px; font-size:1rem; color:#000;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem(${JSON.stringify(item).split('"').join('&quot;')})">${btnText}</button>
+                <button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" style="padding:16px; font-size:1rem; color:#000;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
             </div>`;
     });
     
@@ -503,7 +503,6 @@ window.adjustScore = function(idx, amt) {
         allPlayers[idx].score = Math.max(0, (parseInt(allPlayers[idx].score, 10) || 0) + amt);
         set(ref(db, `gameState/players/${idx}/score`), allPlayers[idx].score);
         window.logEvent(`${myName} (GM) antoi ${amt} P pelaajalle ${allPlayers[idx].name}.`);
-        window.logScore(allPlayers[idx].name, amt);
     }
 };
 
@@ -628,7 +627,7 @@ window.saveCourseSetup = function() {
 };
 
 // ===========================================
-// TULOSTEN KERUU (TÄYSIN NIMIRIIPPUMATON PISTEIDENLASKU)
+// TULOSTEN KERUU (INDEKSOITU & ERIKOISMERKIT SALLITTU)
 // ===========================================
 
 window.changeScore = function(safeId, par, delta) {
@@ -677,8 +676,7 @@ window.openScoreModal = function() {
         
         taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${i}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
         
-        // Luodaan id suoraan järjestysnumerosta (i), kestää aivan kaikki erikoismerkit nimessä!
-        let safeId = "player_" + i; 
+        let safeId = "player_" + i;
         html += `
             <div class="score-row">
                 <span class="score-name">${p.name}</span>
@@ -718,7 +716,6 @@ window.submitScores = function() {
     const minStrokes = Math.min(...scores.map(s => s.strokes));
     const maxStrokes = Math.max(...scores.map(s => s.strokes));
     
-    // Etsitään voittajat ja häviäjät indeksin perusteella
     let winnerIndices = scores.filter(s => s.strokes === minStrokes).map(s => s.index);
     let loserIndices = scores.filter(s => s.strokes === maxStrokes).map(s => s.index);
     let taskWinnerIndices = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => parseInt(cb.value, 10));
@@ -731,12 +728,13 @@ window.submitScores = function() {
         let strokeVal = scores.find(s => s.index === index)?.strokes || par;
         p.dgScore = (parseInt(p.dgScore, 10) || 0) + (strokeVal - par);
         
-        p.score = parseInt(p.score, 10) || 0;
+        let currentPoints = parseInt(p.score, 10) || 0;
         
-        // PISTEIDEN JAKO: 1 piste voitosta, 5 tehtävästä!
-        if (winnerIndices.includes(index)) { p.score += 1; }
-        if (taskWinnerIndices.includes(index)) { p.score += 5; }
+        // PISTEIDEN LISÄYS: Voittajat +1, Tehtävä +5
+        if (winnerIndices.includes(index)) { currentPoints += 1; }
+        if (taskWinnerIndices.includes(index)) { currentPoints += 5; }
         
+        p.score = currentPoints;
         p.boughtThisHole = false; 
         
         if (loserIndices.includes(index)) {
@@ -748,7 +746,7 @@ window.submitScores = function() {
         p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
         p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
         
-        p.cards = p.cards.filter(Boolean);
+        p.cards = p.cards.filter(Boolean); 
     });
     
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
@@ -765,6 +763,7 @@ window.submitScores = function() {
     
     activeHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
     
+    // Suodatetaan mahdolliset tyhjät pois vain jos niitä on
     allPlayers = allPlayers.filter(Boolean);
     
     update(ref(db, 'gameState'), window.cleanFirebaseData({
@@ -781,18 +780,18 @@ window.submitScores = function() {
 // KORTTIEN PELUU
 // ===========================================
 
-window.buyShopItem = function(item) {
+window.buyShopItem = function(idStr, nameStr, priceVal) {
     if (!activeHole || !activeHole.shop) { return; }
     const me = allPlayers.find(p => p && p.name === myName);
-    if (!me || me.score < item.price || me.boughtThisHole) { return; }
+    if (!me || me.score < priceVal || me.boughtThisHole) { return; }
 
-    const shopIndex = activeHole.shop.findIndex(i => i && i.id === item.id);
+    const shopIndex = activeHole.shop.findIndex(i => i && i.id === idStr);
     if (shopIndex !== -1) {
-        me.score -= item.price;
+        me.score -= priceVal;
         me.boughtThisHole = true;
         activeHole.shop.splice(shopIndex, 1);
         me.cards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : [];
-        me.cards.push(item.id);
+        me.cards.push(idStr);
 
         let updates = {};
         updates['gameState/players'] = window.cleanFirebaseData(allPlayers);
@@ -800,8 +799,8 @@ window.buyShopItem = function(item) {
         update(ref(db), updates);
 
         if(el('shopModal')) { el('shopModal').style.display = 'none'; }
-        window.logEvent(`${myName} osti edun: ${item.n}.`);
-        window.showNotification(`🛒 Ostit edun: ${item.n}`, 'warning');
+        window.logEvent(`${myName} osti edun: ${nameStr}.`);
+        window.showNotification(`🛒 Ostit edun: ${nameStr}`, 'warning');
     }
 };
 
