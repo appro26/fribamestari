@@ -6,7 +6,7 @@
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png">
     
-    <link rel="stylesheet" href="style.css?v=28">
+    <link rel="stylesheet" href="style.css?v=29">
     <meta name="theme-color" content="#10b981">
 
     <script>
@@ -20,11 +20,7 @@
 
     <div class="container">
         
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div class="role-switcher">
-                <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player')">PELAAJA</button>
-                <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">GM</button>
-            </div>
+        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:12px;">
             <div id="topWallet" class="top-wallet" style="display:none;">💰 <span id="topWalletPoints">0 P</span></div>
         </div>
 
@@ -36,7 +32,7 @@
 
         <div id="gameSetupArea" class="card" style="display:none; text-align:center; border: 3px solid var(--primary);">
             <h2 style="color: var(--text-main); font-size:1.4rem; margin-bottom: 10px;">Peli ei ole käynnissä</h2>
-            <button class="btn btn-primary gm-only" onclick="document.getElementById('courseModal').style.display='flex'">ALOITA UUSI PELI (GM)</button>
+            <button class="btn btn-primary" onclick="document.getElementById('courseModal').style.display='flex'">ALOITA UUSI PELI</button>
         </div>
 
         <div id="mainGameArea" style="display:none;">
@@ -80,8 +76,6 @@
                         <div id="shopItemsExpanded" class="cards-list-1"></div>
                     </div>
                 </div>
-
-                <button class="btn btn-secondary" onclick="if(window.toggleView) window.toggleView()" id="viewToggleBtn" style="margin-bottom:20px; font-size:0.9rem; padding:16px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
             </div>
         </div> 
 
@@ -108,8 +102,20 @@
             <h2 style="color:var(--text-main);">🏆 Frisbeegolf-Tuloskortti</h2>
             <div id="playerList"></div>
         </div>
+
+        <!-- Näkymän valitsimet siirretty sivun alalaitaan -->
+        <div style="margin-top: 20px; border-top: 2px dashed var(--border); padding-top: 20px;">
+            <button class="btn btn-secondary player-only" onclick="if(window.toggleView) window.toggleView()" id="viewToggleBtn" style="margin-bottom:15px; font-size:0.9rem; padding:16px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
+
+            <div class="role-switcher">
+                <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player')">PELAAJA</button>
+                <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">GM</button>
+            </div>
+        </div>
+
     </div>
 
+    <!-- Modaalit -->
     <div id="handModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
@@ -126,6 +132,17 @@
             <button class="close-modal-btn" onclick="document.getElementById('shopModal').style.display='none'">&times;</button>
         </div>
         <div id="shopModalCards" class="cards-grid-2"></div>
+    </div>
+
+    <!-- GM:n uusi korttien lisäys -modaali -->
+    <div id="gmGiveCardModal" class="fullscreen-modal">
+        <div class="swipe-indicator"></div>
+        <div class="fullscreen-modal-header">
+            <h2>KORTIN ANTO</h2>
+            <button class="close-modal-btn" onclick="document.getElementById('gmGiveCardModal').style.display='none'">&times;</button>
+        </div>
+        <input type="text" id="gmCardSearch" placeholder="Etsi korttia nimellä..." onkeyup="if(window.filterGmCards) window.filterGmCards()" style="margin-bottom: 15px;">
+        <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
     <div id="courseModal" class="winner-overlay">
@@ -181,7 +198,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=28"></script>
-    <script type="module" src="script.js?v=28"></script>
+    <script src="tasks.js?v=29"></script>
+    <script type="module" src="script.js?v=29"></script>
 </body>
 </html>
