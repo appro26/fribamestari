@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=53" />
+    <link rel="stylesheet" href="style.css?v=61" />
     <meta id="themeColorMeta" name="theme-color" content="#eefdf4" />
     
     <script>
@@ -15,19 +15,16 @@
 </head>
 <body class="player-mode">
 
-    <!-- UUSI ASENNUS/SELAIN ILMOITUS PWA:ta VARTEN -->
     <div id="installPromptModal" class="winner-overlay" style="z-index: 10010; flex-direction:column; justify-content:center; align-items:center;">
         <div class="card glass-card" style="width: 100%; max-width: 400px; text-align: center; border-color: var(--primary);">
             <div style="font-size:3.5rem; margin-bottom:10px;">📲</div>
             <h2 style="color:var(--text-main); font-size: 1.5rem; margin-bottom: 15px; font-weight:900;">ASENNA SOVELLUS</h2>
             <p id="installInstructions" style="font-size:1.1rem; color:var(--text-muted); line-height:1.5; margin-bottom:25px; font-weight:700;">
-                <!-- JavaScript täyttää käyttöjärjestelmän mukaisen ohjeen tähän -->
-            </p>
-            <button class="btn btn-secondary" onclick="window.dismissInstallPrompt()" style="font-size:1rem; padding:16px;">JATKA SELAIMELLA</button>
+                </p>
+            <button class="btn btn-secondary glass-card" onclick="window.dismissInstallPrompt()" style="font-size:1rem; padding:16px;">JATKA SELAIMELLA</button>
         </div>
     </div>
 
-    <!-- KÄSIRAJAN PAKOTUSNÄKYMÄ -->
     <div id="handLimitModal" class="winner-overlay" style="z-index: 10005; background: rgba(244, 63, 94, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); align-items:flex-start; padding-top:40px;">
         <div style="width:100%; max-width:450px; text-align:center; color:#fff;">
             <div style="font-size:4rem; margin-bottom:10px;">⚠️</div>
@@ -166,7 +163,7 @@
 
         <div style="margin-top: 20px; padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
             <button class="btn btn-secondary player-only glass-card" onclick="if(window.toggleView) { window.toggleView(); }" id="viewToggleBtn" style="font-size:0.9rem; margin:0; padding:16px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
-            <button class="btn btn-secondary glass-card" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
+            <button class="btn btn-secondary glass-card" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU (KORJAA JUMIT)</button>
 
             <div class="role-switcher glass-card">
                 <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) { window.setRole('player'); }">PELAAJA</button>
@@ -176,7 +173,6 @@
 
     </div>
 
-    <!-- Modaalit -->
     <div id="handModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
@@ -206,7 +202,7 @@
             <div id="pendingPurchaseAlert" style="display:none; background:var(--danger); color:#fff; padding:16px; border-radius:12px; margin-bottom:20px; box-shadow:0 6px 15px rgba(244,63,94,0.3);">
                 <div style="font-weight:900; font-size:1.2rem; margin-bottom:8px;">⚠️ KÄSI TÄYNNÄ!</div>
                 <div style="font-size:1.05rem; font-weight:700; margin-bottom:15px; line-height:1.4;">Haluat ostaa kortin <strong id="pendingCardName"></strong>. Myy tai hävitä yksi kortti alta tehdäksesi tilaa, jolloin osto suoritetaan automaattisesti!</div>
-                <button class="btn btn-secondary" style="padding:12px; font-size:0.95rem; color:#000;" onclick="if(window.cancelShopPurchase) window.cancelShopPurchase()">PERUUTA OSTO</button>
+                <button class="btn btn-secondary glass-card" style="padding:12px; font-size:0.95rem; color:#000;" onclick="if(window.cancelShopPurchase) window.cancelShopPurchase()">PERUUTA OSTO</button>
             </div>
             <div id="shopSellCardsContainer" class="cards-grid-2"></div>
         </div>
@@ -240,7 +236,7 @@
             <input type="number" id="setupHoleCount" aria-label="Väylien määrä" placeholder="Väylien määrä" oninput="if(window.generateParInputs) { window.generateParInputs(); }" />
             <div id="parInputsContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
             <button class="btn btn-primary" onclick="if(window.saveCourseSetup) { window.saveCourseSetup(); }">TALLENNA & ALOITA</button>
-            <button class="btn btn-secondary" style="margin-top: 12px;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
+            <button class="btn btn-secondary glass-card" style="margin-top: 12px;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
         </div>
     </div>
 
@@ -261,7 +257,7 @@
             </div>
 
             <button class="btn btn-primary" style="padding: 20px; font-size:1.1rem;" onclick="if(window.submitScores) { window.submitScores(); }">TALLENNA & JATKA</button>
-            <button class="btn btn-secondary" style="margin-top: 15px;" onclick="document.getElementById('scoreModal').style.display='none'">PERUUTA</button>
+            <button class="btn btn-secondary glass-card" style="margin-top: 15px;" onclick="document.getElementById('scoreModal').style.display='none'">PERUUTA</button>
         </div>
     </div>
 
@@ -270,7 +266,7 @@
             <h2 style="color:var(--text-main);">Valitse sabotaasin kohde</h2>
             <p id="targetCardName" style="color: var(--danger); font-weight: 900; margin-bottom: 20px; font-size: 1.5rem; text-align:center; text-transform:uppercase; line-height:1.2;"></p>
             <div id="targetPlayerList" style="margin-bottom: 20px;"></div>
-            <button class="btn btn-secondary" onclick="document.getElementById('targetModal').style.display='none'">PERUUTA</button>
+            <button class="btn btn-secondary glass-card" onclick="document.getElementById('targetModal').style.display='none'">PERUUTA</button>
         </div>
     </div>
 
@@ -279,11 +275,11 @@
             <h2 id="popupTitle" style="color:var(--info); font-size: 1.5rem; margin-bottom: 10px; font-weight: 900;"></h2>
             <p id="popupDesc" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; color: var(--text-main);"></p>
             <div id="popupDetails" style="font-size: 0.95rem; color: var(--text-muted); background: var(--surface-alt); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 700;"></div>
-            <button class="btn btn-secondary" onclick="document.getElementById('lotteryWinner').style.display='none'">SULJE</button>
+            <button class="btn btn-secondary glass-card" onclick="document.getElementById('lotteryWinner').style.display='none'">SULJE</button>
         </div>
     </div>
 
-    <script src="tasks.js?v=53"></script>
-    <script type="module" src="script.js?v=53"></script>
+    <script src="tasks.js?v=61"></script>
+    <script type="module" src="script.js?v=61"></script>
 </body>
 </html>
