@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=45" />
+    <link rel="stylesheet" href="style.css?v=46" />
     
-    <!-- Yläpalkki päivittyy automaattisesti taustan väriseksi -->
     <meta id="themeColorMeta" name="theme-color" content="#eefdf4" />
     
     <script>
@@ -40,7 +39,7 @@
 
         <div id="mainGameArea" style="display:none; margin-top:15px;">
             
-            <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 15px;">
+            <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 25px;">
                 <div id="courseInfoBanner" class="card" style="flex: 1; margin: 0; padding: 12px; display: flex; flex-direction: column; justify-content: center;">
                     <div style="font-size: 0.8rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase;" id="bannerCourseName">Rata</div>
                     <div style="font-weight: 900; font-size: 1.3rem; color: var(--text-main);">VÄYLÄ <span id="bannerHoleNum" style="color: var(--primary);">1</span> <span style="color:var(--text-muted); font-size:0.9rem;">(PAR <span id="bannerPar">3</span>)</span></div>
@@ -48,11 +47,11 @@
                 <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2;">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
-            <!-- VÄYLÄTEHTÄVÄ -->
+            <!-- UUSI MASSIIVINEN VÄYLÄTEHTÄVÄ -->
             <div id="activeHoleContainer"></div>
             
-            <!-- SINUA KOSKEVAT KORTIT -->
-            <div id="myActiveRulesContainer" style="display:none; margin-bottom: 15px;"></div>
+            <!-- UUSI MASSIIVINEN "SINUA KOSKEVAT KORTIT" -->
+            <div id="myActiveRulesContainer" style="display:none; margin-bottom: 30px;"></div>
             
             <!-- TIIVISTETTY KAIKKI PELATUT KORTIT -->
             <div id="activeCardsArea" style="display:none; margin-bottom: 25px;">
@@ -68,7 +67,6 @@
                         <span id="handCountBadge" style="background: #fff; color: var(--danger); padding: 4px 14px; border-radius: 12px; font-size: 0.9rem;">0</span>
                     </button>
                     
-                    <!-- UUSI KAUPPANAPPI, JOSSA ON SALDO INTEGROITUNA -->
                     <button class="btn btn-warning" style="padding: 16px 10px; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px; color:#000;" onclick="document.getElementById('shopModal').style.display='flex'">
                         <span>🛒 Kauppa</span>
                         <span style="background: #000; color: var(--warning); padding: 4px 14px; border-radius: 12px; font-size: 0.95rem;">SALDO: <span id="myResPointsBtn" style="font-weight:900;">0 P</span></span>
@@ -122,7 +120,7 @@
 
         <!-- Alalaidan valikot ja päivitysnappi -->
         <div style="margin-top: 20px; border-top: 2px dashed var(--border); padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
-            <button class="btn btn-secondary" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
+            <button class="btn btn-secondary" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU (KORJAA JUMIT)</button>
 
             <div class="role-switcher">
                 <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) { window.setRole('player'); }">PELAAJA</button>
@@ -223,8 +221,7 @@
         </div>
     </div>
 
-    <!-- PÄIVITETTY VERSIO 45 -->
-    <script src="tasks.js?v=45"></script>
-    <script type="module" src="script.js?v=45"></script>
+    <script src="tasks.js?v=46"></script>
+    <script type="module" src="script.js?v=46"></script>
 </body>
 </html>
