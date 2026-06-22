@@ -16,7 +16,6 @@ let currentHoleIndex = 1;
 let isExpandedView = false; 
 let lastPlayedCardTimestamp = Date.now();
 
-// OLETUSASETUKSET
 window.gameSettings = {
     shopEnabled: true,
     handLimitEnabled: true,
@@ -26,6 +25,8 @@ window.gameSettings = {
     ptsLose: 0,
     ptsPassive: 1
 };
+
+window.pendingShopPurchase = null;
 
 //==============================================
 // UUSI 3D-KORTIN SLAIDAUS
@@ -77,12 +78,13 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
     let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
 
+    // Suurennetut fontit (1.8rem ja 1.4rem)
     el('cardDetail3D').innerHTML = `
         <div class="card-face card-front ${typeClass}">
             <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
-                <div class="card-type-tag" style="font-size:0.95rem; margin-bottom:12px;">${tagTxt}</div>
-                <h3 style="font-size:1.65rem; margin-bottom:15px; color:#000;">${cDef.n}</h3>
-                <p style="font-size:1.15rem; color:#111; font-weight:700; line-height:1.5;">${cDef.d}</p>
+                <div class="card-type-tag" style="font-size:1.05rem; margin-bottom:12px;">${tagTxt}</div>
+                <h3 style="font-size:1.8rem; margin-bottom:20px; color:#000;">${cDef.n}</h3>
+                <p style="font-size:1.4rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
             </div>
         </div>
         <div class="card-face card-back ${backClass}">
@@ -100,9 +102,9 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
         btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
         
         if (cDef.tier === 'normal') {
-            btnHtml += `<button class="btn btn-secondary" style="font-size:1rem; padding:14px; margin-top:5px; color:#000;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
+            btnHtml += `<button class="btn btn-secondary" style="font-size:1.05rem; padding:16px; margin-top:5px; color:#000;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
         } else {
-            btnHtml += `<button class="btn btn-secondary" style="font-size:1rem; padding:14px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
+            btnHtml += `<button class="btn btn-secondary" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
         }
     } else if (mode === 'shop') {
         let price = arg1;
@@ -125,7 +127,7 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
 };
 
 //==============================================
-// KORTIN POISTO / MYYNTI
+// KORTIN POISTO JA KAUPAN VÄLIAIKAINEN OSTO
 //==============================================
 window.forceDiscard = function(cId, isNormal) {
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
@@ -145,7 +147,58 @@ window.forceDiscard = function(cId, isNormal) {
             window.showAppleToast('Kortti poistettu', '🗑️');
         }
     }
+    
+    // Jos olemme tekemässä ostoa kaupasta ja tilaa tuli
+    if (window.pendingShopPurchase) {
+        let pId = window.pendingShopPurchase.id;
+        let pPrice = window.pendingShopPurchase.price;
+        let pName = window.pendingShopPurchase.name;
+        
+        if (me.score >= pPrice) {
+            me.score -= pPrice;
+            me.boughtThisHole = true;
+            me.cards.push(pId);
+            
+            let nextShop = JSON.parse(JSON.stringify(activeHole.shop));
+            const sIdx = nextShop.findIndex(i => i && i.id === pId);
+            if (sIdx !== -1) nextShop.splice(sIdx, 1);
+            
+            let updates = {};
+            updates['gameState/players'] = window.cleanFirebaseData(nextPlayers);
+            updates['gameState/activeHole/shop'] = window.cleanFirebaseData(nextShop);
+            update(ref(db), updates);
+            
+            window.pendingShopPurchase = null;
+            el('shopModal').style.display = 'none';
+            window.showNotification(`🛒 Ostit edun: ${pName}`, 'warning');
+            return;
+        } else {
+            window.pendingShopPurchase = null; 
+        }
+    }
+    
     set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
+};
+
+window.cancelShopPurchase = function() {
+    window.pendingShopPurchase = null;
+    const me = allPlayers.find(p => p && p.name === myName);
+    window.renderShop(activeHole ? activeHole.shop : null, me ? me.score : 0, me ? me.boughtThisHole : false);
+    window.switchShopTab('buy');
+};
+
+window.switchShopTab = function(tab) {
+    if (tab === 'buy') {
+        el('shopBuyArea').style.display = 'block';
+        el('shopSellArea').style.display = 'none';
+        el('shopTabBuyBtn').classList.add('active');
+        el('shopTabSellBtn').classList.remove('active');
+    } else {
+        el('shopBuyArea').style.display = 'none';
+        el('shopSellArea').style.display = 'block';
+        el('shopTabBuyBtn').classList.remove('active');
+        el('shopTabSellBtn').classList.add('active');
+    }
 };
 
 window.showHandLimitModal = function(cards) {
@@ -173,9 +226,6 @@ window.showHandLimitModal = function(cards) {
     el('handLimitModal').style.display = 'flex';
 };
 
-//==============================================
-// GM ASETUSTEN TALLENNUS
-//==============================================
 window.saveGameSettings = function() {
     let newSettings = {
         shopEnabled: el('gmSetShop').checked,
@@ -191,7 +241,7 @@ window.saveGameSettings = function() {
 };
 
 //==============================================
-// YLEISET HELPERIT
+// APPLE-ILMOITUKSET 
 //==============================================
 window.showAppleToast = function(msg, icon = '✨') {
     const toast = el('appleToast');
@@ -199,7 +249,7 @@ window.showAppleToast = function(msg, icon = '✨') {
     el('appleToastIcon').innerText = icon;
     el('appleToastText').innerText = msg;
     toast.classList.add('show');
-    setTimeout(() => { toast.classList.remove('show'); }, 2500); 
+    setTimeout(() => { toast.classList.remove('show'); }, 2000); 
 };
 
 window.cleanFirebaseData = function(obj) {
@@ -224,36 +274,6 @@ window.logEvent = function(msg) {
 window.logScore = function(playerName, delta) {
     const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
     push(ref(db, 'gameState/scoreLog'), window.cleanFirebaseData({ time: timeStr, playerName: playerName, delta: delta }));
-};
-
-window.setupSwipeToClose = function() {
-    document.querySelectorAll('.fullscreen-modal').forEach(modal => {
-        let startY = null;
-        let currentY = null;
-        modal.addEventListener('touchstart', e => {
-            if (modal.scrollTop <= 5) { startY = e.touches[0].clientY; modal.style.transition = 'none'; } else { startY = null; }
-        }, {passive: true});
-        modal.addEventListener('touchmove', e => {
-            if (startY === null) return;
-            currentY = e.touches[0].clientY;
-            let diff = currentY - startY;
-            if (diff > 0) modal.style.transform = `translateY(${diff}px)`;
-        }, {passive: true});
-        modal.addEventListener('touchend', e => {
-            if (startY === null) return;
-            let diff = currentY - startY;
-            modal.style.transition = 'transform 0.3s ease';
-            if (diff > 120) { 
-                modal.style.transform = `translateY(100%)`;
-                setTimeout(() => { modal.style.display = 'none'; modal.style.transform = ''; }, 300);
-            } else { modal.style.transform = ''; }
-            startY = null;
-        });
-    });
-};
-
-window.updateIdentityUI = function() { 
-    if(el('identityCard')) { el('identityCard').style.display = myName ? 'none' : 'block'; }
 };
 
 window.applyViewState = function() {
@@ -347,7 +367,6 @@ window.renderActiveHole = function() {
     let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
     let bountyTag = activeHole.rule.type === 'bounty' ? `🏆 TEHTÄVÄ (+${ptsTask} P)` : '🎲 VÄYLÄSÄÄNTÖ';
     
-    // TÄYSIN INLINE TYYLITETTY PREMIUM BANNERI VÄYLÄLLE, ETTEI CSS CACHE HAITTAA
     if(container) { 
         container.innerHTML = `
             <div style="background: var(--surface); border: 2px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); border-left: 8px solid var(--primary); margin-bottom: 15px; position: relative; overflow: hidden;">
@@ -389,7 +408,6 @@ window.renderActiveHole = function() {
                     ${undoBtn}
                 </div>`;
             
-            // TÄYSIN INLINE TYYLITETTY PREMIUM BANNERI OMILLE KORTEILLE
             if(pc.target && myName && pc.target.trim() === myName.trim()) {
                 let label = cType === 'buff' ? 'OMA ETU' : 'SABOTAASI';
                 myRulesHtml += `
@@ -454,34 +472,70 @@ window.renderPlayerHand = function(cards) {
 window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     const modalContainer = el('shopModalCards');
     const expandedContainer = el('shopItemsExpanded');
+    const sellContainer = el('shopSellCardsContainer');
     
     if(!shopArray || shopArray.length === 0) { 
         let emptyHtml = '<p style="color:var(--text-muted); font-size:1.2rem; text-align:center; padding:20px; font-weight:bold; width:100%; grid-column: 1 / -1;">Kauppa on suljettu.</p>';
         if(modalContainer) modalContainer.innerHTML = emptyHtml; 
         if(expandedContainer) expandedContainer.innerHTML = emptyHtml; 
-        return; 
+    } else {
+        let html = '';
+        shopArray.forEach(item => {
+            if(!item) return; 
+            const canAfford = myPoints >= item.price && !boughtThisHole;
+            let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? 'OSTA ETU' : 'EI VARAA');
+            let btnClass = canAfford ? 'btn-warning' : 'btn-secondary';
+            
+            html += `
+                <div class="physical-card premium-card" style="padding:0; position:relative;">
+                    <span class="card-price-tag" style="top:12px; right:12px;">${item.price} P</span>
+                    <div onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="flex:1; padding:16px; display:flex; flex-direction:column; cursor:pointer;">
+                        <div><div class="card-type-tag">💎 KAUPPA</div><h3 style="padding-right:45px;">${item.n}</h3><p>${item.d}</p></div>
+                        <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
+                    </div>
+                    <button class="btn ${btnClass}" style="border-radius:0 0 14px 14px; font-size:1.05rem; padding:16px; color:#000;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
+                </div>`;
+        });
+        if(modalContainer) modalContainer.innerHTML = html; 
+        if(expandedContainer) expandedContainer.innerHTML = html; 
     }
+
+    // PÄIVITETÄÄN MYÖS MYYNTI-OSIO
+    let me = allPlayers.find(p => p && p.name === myName);
+    let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     
-    let html = '';
-    shopArray.forEach(item => {
-        if(!item) return; 
-        const canAfford = myPoints >= item.price && !boughtThisHole;
-        let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? 'OSTA ETU' : 'EI VARAA');
-        let btnClass = canAfford ? 'btn-warning' : 'btn-secondary';
-        
-        html += `
-            <div class="physical-card premium-card" style="padding:0; position:relative;">
-                <span class="card-price-tag" style="top:12px; right:12px;">${item.price} P</span>
-                <div onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="flex:1; padding:16px; display:flex; flex-direction:column; cursor:pointer;">
-                    <div><div class="card-type-tag">💎 KAUPPA</div><h3 style="padding-right:45px;">${item.n}</h3><p>${item.d}</p></div>
-                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
+    let sellHtml = '';
+    if(myCards.length === 0) {
+         sellHtml = '<p style="color:var(--text-muted); font-size:1.1rem; text-align:center; padding:20px; font-weight:bold; width:100%; grid-column: 1 / -1;">Kätesi on tyhjä.</p>';
+    } else {
+        myCards.forEach(cId => {
+            const cDef = window.allCards.find(sc => sc.id === cId);
+            if(!cDef) return; 
+            let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
+            if(cDef.tier === 'premium') typeClass = 'premium-card'; 
+            let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
+            
+            let isNormal = cDef.tier === 'normal';
+            let btnTxt = isNormal ? '♻️ MYY (+1 P)' : '🗑️ HÄVITÄ';
+            let btnClass = isNormal ? 'btn-success' : 'btn-danger';
+            
+            sellHtml += `
+            <div class="physical-card ${typeClass}" style="padding:0; min-height:180px;">
+                <div style="flex:1; padding:12px; display:flex; flex-direction:column;">
+                    <div class="card-type-tag">${tagTxt}</div><h3 style="font-size:1.05rem;">${cDef.n}</h3>
                 </div>
-                <button class="btn ${btnClass}" style="border-radius:0 0 14px 14px; font-size:1.05rem; padding:16px; color:#000;" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
+                <button class="btn ${btnClass}" style="border-radius:0 0 14px 14px; font-size:1rem; padding:14px; color:#fff;" onclick="window.forceDiscard('${cId}', ${isNormal})">${btnTxt}</button>
             </div>`;
-    });
+        });
+    }
+    if (sellContainer) sellContainer.innerHTML = sellHtml;
     
-    if(modalContainer) modalContainer.innerHTML = html; 
-    if(expandedContainer) expandedContainer.innerHTML = html; 
+    if (window.pendingShopPurchase) {
+         if(el('pendingPurchaseAlert')) el('pendingPurchaseAlert').style.display = 'block';
+         if(el('pendingCardName')) el('pendingCardName').innerText = window.pendingShopPurchase.name;
+    } else {
+         if(el('pendingPurchaseAlert')) el('pendingPurchaseAlert').style.display = 'none';
+    }
 };
 
 window.renderAdminPlayerList = function() {
@@ -846,7 +900,8 @@ window.openScoreModal = function() {
     allPlayers.forEach((p, i) => {
         if(!p) return; 
         
-        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" value="${i}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
+        let encodedName = p.name.replace(/"/g, '&quot;');
+        taskCheckboxes += `<label class="task-checkbox-label"><input type="checkbox" class="task-checkbox" data-name="${encodedName}" style="width:28px; height:28px; margin:0;" /> ${p.name}</label>`;
         
         let safeId = "player_" + i; 
         html += `
@@ -856,7 +911,7 @@ window.openScoreModal = function() {
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, -1)">-</button>
                     <div id="scoreDisplay_${safeId}" class="score-display score-par">${par}</div>
                     <button class="btn-score-ctrl" onclick="window.changeScore('${safeId}', ${par}, 1)">+</button>
-                    <input type="hidden" class="score-input-data" data-index="${i}" id="scoreInput_${safeId}" value="${par}" />
+                    <input type="hidden" class="score-input-data" data-name="${encodedName}" id="scoreInput_${safeId}" value="${par}" />
                 </div>
             </div>`;
     });
@@ -870,6 +925,11 @@ window.openScoreModal = function() {
 window.submitScores = function() {
     let par = currentCourse && currentCourse.pars ? (currentCourse.pars[currentHoleIndex - 1] || 3) : 3;
     
+    let playerResults = {};
+    allPlayers.forEach(p => {
+        if(p) playerResults[p.name] = { strokes: par, taskWon: false }; 
+    });
+    
     const inputs = document.querySelectorAll('.score-input-data');
     if(inputs.length === 0) {
         alert("Virhe: Ei tulosrivejä löydetty! Yritä avata näkymä uudelleen.");
@@ -877,42 +937,59 @@ window.submitScores = function() {
         return;
     }
     
-    let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
-    
-    let scores = [];
     inputs.forEach(input => {
-        let pIndex = parseInt(input.getAttribute('data-index'), 10);
-        let strokes = parseInt(input.value, 10) || par;
-        scores.push({ index: pIndex, strokes: strokes });
+        let attrName = input.getAttribute('data-name');
+        if(playerResults[attrName]) {
+            playerResults[attrName].strokes = parseInt(input.value, 10) || par;
+        }
     });
 
-    let minStrokes = Math.min(...scores.map(s => s.strokes));
-    let maxStrokes = Math.max(...scores.map(s => s.strokes));
+    document.querySelectorAll('.task-checkbox:checked').forEach(cb => {
+        let pName = cb.getAttribute('data-name');
+        if (playerResults[pName]) {
+            playerResults[pName].taskWon = true;
+        }
+    });
+
+    let minStrokes = 9999;
+    let maxStrokes = -9999;
+    for (let key in playerResults) {
+        let s = playerResults[key].strokes;
+        if (s < minStrokes) minStrokes = s;
+        if (s > maxStrokes) maxStrokes = s;
+    }
+
+    let holeWinners = [];
+    let holeLosers = [];
+    for (let key in playerResults) {
+        if (playerResults[key].strokes === minStrokes) holeWinners.push(key);
+        if (playerResults[key].strokes === maxStrokes) holeLosers.push(key);
+    }
     
-    let taskWinnerIndices = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => parseInt(cb.value, 10));
     let normalPool = window.allCards.filter(c => c.tier === "normal");
     
+    let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
+
     let ptsWin = window.gameSettings.ptsWin !== undefined ? window.gameSettings.ptsWin : 2;
     let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
     let ptsLose = window.gameSettings.ptsLose !== undefined ? window.gameSettings.ptsLose : 0;
     let ptsPassive = window.gameSettings.ptsPassive !== undefined ? window.gameSettings.ptsPassive : 1;
     let handLimit = window.gameSettings.handLimit !== undefined ? window.gameSettings.handLimit : 5;
     let limitEnabled = window.gameSettings.handLimitEnabled !== undefined ? window.gameSettings.handLimitEnabled : true;
-    
-    nextPlayers.forEach((p, index) => {
+
+    nextPlayers.forEach(p => {
         if (!p) return; 
+        let res = playerResults[p.name];
+        if (!res) return; 
         
-        let sData = scores.find(s => s.index === index);
-        let strokes = sData ? sData.strokes : par;
-        
-        p.dgScore = (parseInt(p.dgScore, 10) || 0) + (strokes - par);
+        p.dgScore = (parseInt(p.dgScore, 10) || 0) + (res.strokes - par);
         
         let currentPoints = parseInt(p.score, 10) || 0;
         currentPoints += ptsPassive;
         
-        if (strokes === minStrokes) { currentPoints += ptsWin; }
-        if (taskWinnerIndices.includes(index)) { currentPoints += ptsTask; }
-        if (strokes === maxStrokes && minStrokes !== maxStrokes) { 
+        if (holeWinners.includes(p.name)) { currentPoints += ptsWin; }
+        if (res.taskWon) { currentPoints += ptsTask; }
+        if (holeLosers.includes(p.name) && minStrokes !== maxStrokes) { 
             currentPoints -= Math.abs(ptsLose); 
             currentPoints = Math.max(0, currentPoints);
         }
@@ -923,8 +1000,8 @@ window.submitScores = function() {
         p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
         p.cards = p.cards.filter(Boolean);
         
-        // KORTTIEN JAKAMINEN VAIN JOS KÄSIRAJAA EI YLITETÄ
-        let cardsToGive = (strokes === maxStrokes && minStrokes !== maxStrokes) ? 3 : 2;
+        // UUSI: Kortteja ei anneta ollenkaan yli käsirajan
+        let cardsToGive = (holeLosers.includes(p.name) && minStrokes !== maxStrokes) ? 3 : 2;
         
         for(let i=0; i<cardsToGive; i++) {
             if (!limitEnabled || p.cards.length < handLimit) {
@@ -958,7 +1035,7 @@ window.submitScores = function() {
 };
 
 // ===========================================
-// KORTTIEN PELUU
+// KORTTIEN PELUU JA KAUPPA
 // ===========================================
 
 window.buyShopItem = function(idStr, nameStr, priceVal) {
@@ -966,16 +1043,17 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
     const me = nextPlayers.find(p => p && p.name === myName);
     if (!me || me.score < priceVal || me.boughtThisHole) return; 
-    
-    // KÄSIRAJAN VALVONTA KAUPASSA (Varoitus)
+
+    // UUSI: Tarkistetaan käsiraja ja ohjataan myymään kortteja ensin
     let limitEnabled = window.gameSettings.handLimitEnabled !== undefined ? window.gameSettings.handLimitEnabled : true;
     let limit = window.gameSettings.handLimit !== undefined ? window.gameSettings.handLimit : 5;
     let currentCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean).length : 0;
     
     if (limitEnabled && currentCards >= limit) {
-        if (!confirm(`Kätesi on jo täynnä (${currentCards}/${limit})! Jos ostat uuden kortin, joudut heti perään poistamaan tai myymään kortteja jatkaaksesi peliä. Haluatko varmasti ostaa?`)) {
-            return; // Peruuta osto
-        }
+        window.pendingShopPurchase = { id: idStr, name: nameStr, price: priceVal };
+        window.switchShopTab('sell');
+        window.renderShop(activeHole ? activeHole.shop : null, me.score, me.boughtThisHole); 
+        return;
     }
 
     const shopIndex = activeHole.shop.findIndex(i => i && i.id === idStr);
@@ -1007,6 +1085,13 @@ window.openTargetModal = function(cardId) {
     
     if(cardDef.type === 'buff') {
         window.executeCardPlay(myName);
+        return;
+    }
+    
+    // UUSI OMINAISUUS: Jos pelaajia on tasan 2, kohdista automaattisesti vastustajaan!
+    let opponents = allPlayers.filter(p => p && p.name !== myName);
+    if (opponents.length === 1) {
+        window.executeCardPlay(opponents[0].name);
         return;
     }
     
@@ -1182,7 +1267,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderCourseBanner();
     window.renderLeaderboard();
     window.renderActiveHole();
-    window.applyViewState();
+    window.applyViewState(); // Varmistaa, että laajennettu näkymä ei itsekseen sulkeudu
     
     if (myName) {
         const me = allPlayers.find(p => p && p.name === myName);
@@ -1210,15 +1295,13 @@ onValue(ref(db, 'gameState'), (snap) => {
             window.renderPlayerHand(myCards.filter(Boolean));
             window.renderShop(activeHole ? activeHole.shop : null, me.score || 0, me.boughtThisHole);
             
-            if (window.gameSettings.handLimitEnabled && myCards.filter(Boolean).length > window.gameSettings.handLimit) {
-                window.showHandLimitModal(myCards.filter(Boolean));
-            } else {
-                if(el('handLimitModal')) el('handLimitModal').style.display = 'none';
-            }
+            // HUOMIO: Poistin tästä modal-pakotuksen koska uusi koodi ei anna kortteja yli rajan
+            if(el('handLimitModal')) el('handLimitModal').style.display = 'none';
             
             let pts = `${me.score || 0} P`;
             if(el('myResPointsBtn')) el('myResPointsBtn').innerText = pts; 
             if(el('myResPointsExpanded')) el('myResPointsExpanded').innerText = pts; 
+            if(el('mainWalletPoints')) el('mainWalletPoints').innerText = pts; 
             if(el('shopModalWallet')) el('shopModalWallet').innerText = pts; 
             if(el('handCountBadge')) el('handCountBadge').innerText = myCards.filter(Boolean).length; 
         }
