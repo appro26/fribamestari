@@ -17,10 +17,26 @@ body.gm-mode {
     --border: #475569; --text-main: #f8fafc; --text-muted: #94a3b8;
 }
 
-/* VAATIMUS 2: Estää selaimen vahinko-päivitykset (Pull to refresh) */
+/* Estää selaimen vahinko-päivitykset (Pull to refresh) */
 html, body { overscroll-behavior-y: none; overscroll-behavior-x: none; }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+/* Tekstinvalinnan ja kopioinnin esto koko sovelluksessa */
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Inter', -apple-system, sans-serif; 
+    -webkit-tap-highlight-color: transparent; 
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Sallitaan tekstin maalaus ja syöttö vain syöttökentissä */
+input, textarea, select {
+    -webkit-user-select: auto;
+    user-select: auto;
+}
 
 body { background-color: var(--bg-main); color: var(--text-main); padding: 12px; padding-bottom: 90px; transition: background-color 0.3s ease, color 0.3s ease; }
 
@@ -45,7 +61,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .cards-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 25px; }
 .cards-list-1 { display: flex; flex-direction: column; gap: 16px; padding-bottom: 20px; }
 
-/* VAATIMUS 3: VISUAALISET KORTIT JOTKA NOUSEVAT SORMEN ALLA */
+/* VISUAALISET KORTIT JOTKA NOUSEVAT SORMEN ALLA */
 .physical-card {
     background: #fff; border-radius: 16px; padding: 16px;
     min-height: 220px; display: flex; flex-direction: column; justify-content: space-between;
@@ -55,7 +71,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     z-index: 1;
 }
 
-/* Tämä luokka lisätään Javascriptillä sormen osuessa! */
 .card-hovered { 
     transform: scale(1.05) translateY(-8px); 
     box-shadow: 0 15px 30px rgba(0,0,0,0.25); 
@@ -94,7 +109,7 @@ input:focus { border-color: var(--primary); outline: none; }
 body.gm-mode .player-only { display: none !important; }
 body.player-mode .gm-only { display: none !important; }
 
-/* Swipe-to-close Modaalit (overscroll estetty täälläkin) */
+/* Swipe-to-close Modaalit */
 .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-main); display: none; flex-direction: column; z-index: 8000; padding: 15px; overflow-y: auto; padding-bottom: 40px; will-change: transform; overscroll-behavior-y: none; }
 .swipe-indicator { width: 45px; height: 6px; background: var(--border); border-radius: 10px; margin: 0 auto 15px auto; }
 
