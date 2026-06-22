@@ -4,6 +4,7 @@ import { getDatabase, ref, onValue, set, push, update } from "https://www.gstati
 const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-west1.firebasedatabase.app/" };
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+window.fbDb = db;
 
 const el = id => document.getElementById(id);
 
@@ -20,50 +21,13 @@ window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5,
 window.pendingShopPurchase = null;
 
 //==============================================
-// UUSI PWA ASENNUSLOGIIKKA (Chrome Native Prompt)
+// ASENNA SOVELLUS (PWA)
 //==============================================
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    
-    // Jos selain tukee natiivia asennusta, näytä asennusnappi
-    const wantsBrowser = localStorage.getItem('friba_browser_mode');
-    if (!wantsBrowser) {
-        let elModal = el('installPromptModal');
-        let elBtn = el('nativeInstallBtn');
-        let elInst = el('installInstructions');
-        if(elModal && elBtn && elInst) {
-            elInst.innerHTML = "Tämä peli toimii parhaiten puhelimen omana sovelluksena. Asenna se nyt yhdellä painalluksella!";
-            elBtn.style.display = 'block';
-            elModal.style.display = 'flex';
-        }
-    }
-});
-
-window.triggerNativeInstall = async function() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
-        }
-        deferredPrompt = null;
-    } else {
-        alert("Asennus ei onnistunut automaattisesti. Kokeile selaimesi valikosta 'Asenna sovellus' tai 'Lisää aloitusnäyttöön'.");
-    }
-};
-
 window.checkInstallPrompt = function() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
     const wantsBrowser = localStorage.getItem('friba_browser_mode');
     
-    // Jos olemme jo asentaneet tai peruneet, ei tehdä mitään.
-    if (isStandalone || wantsBrowser) return;
-    
-    // Jos deferredPrompt on olemassa, laukaisimme jo natiivin ikkunan (yllä).
-    // Jos ei ole (esim. Safari), näytetään manuaaliset ohjeet.
-    if (!deferredPrompt) {
+    if (!isStandalone && !wantsBrowser) {
         const os = (function() {
             var userAgent = navigator.userAgent || navigator.vendor || window.opera;
             if (/android/i.test(userAgent)) return "Android";
@@ -82,10 +46,8 @@ window.checkInstallPrompt = function() {
         
         let elInst = el('installInstructions');
         let elModal = el('installPromptModal');
-        let elBtn = el('nativeInstallBtn');
         if(elInst && elModal) {
             elInst.innerHTML = instText;
-            if(elBtn) elBtn.style.display = 'none'; // Piilotetaan asennusnappi koska joudutaan tekee manuaalisesti
             elModal.style.display = 'flex';
         }
     }
@@ -96,8 +58,7 @@ window.dismissInstallPrompt = function() {
     if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
 };
 
-// Viivästetty kutsu ohjeille, jos native prompt ei herää
-window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
+window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1000); });
 
 //==============================================
 // KORTIN PELAAMINEN
@@ -326,7 +287,6 @@ window.forceDiscard = function(cId, isNormal) {
             let updates = {};
             updates['gameState/players'] = window.cleanFirebaseData(nextPlayers);
             updates['gameState/activeHole/shop'] = window.cleanFirebaseData(nextShop);
-            
             update(ref(db), updates);
             
             window.pendingShopPurchase = null;
@@ -486,7 +446,7 @@ window.setRole = function(r) {
     if(el('btnGM')) { el('btnGM').classList.toggle('active', r === 'gm'); }
     
     const themeMeta = document.getElementById('themeColorMeta');
-    if(themeMeta) themeMeta.setAttribute('content', r === 'gm' ? '#0f172a' : '#eefdf4');
+    if(themeMeta) themeMeta.setAttribute('content', r === 'gm' ? '#0f172a' : '#d1fae5');
     
     window.renderActiveHole(); 
 };
@@ -563,7 +523,7 @@ window.renderActiveHole = function() {
         container.innerHTML = `
             <div class="glass-card" style="border-left: 8px solid var(--primary); padding: 24px 20px; margin-bottom: 25px; border-radius: 16px; position: relative; overflow: hidden;">
                 <div style="display:inline-block; background:rgba(16, 185, 129, 0.15); color:var(--primary-dark); padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.85rem; margin-bottom:12px; text-transform:uppercase; letter-spacing: 1px; border: 1px solid rgba(16, 185, 129, 0.3);">${bountyTag}</div>
-                <div style="font-size:1.5rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${activeHole.rule.n}</div>
+                <div style="font-size:1.4rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${activeHole.rule.n}</div>
                 <div style="font-size: 1.1rem; line-height: 1.45; font-weight: 700; color: var(--text-muted);">${activeHole.rule.d}</div>
             </div>`; 
     }
@@ -1220,9 +1180,8 @@ window.submitScores = function() {
 };
 
 //==============================================
-// FIREBASE ONVALUE KUUNTELIJA (Vasta kaikkien funktioiden jälkeen)
+// FIREBASE ONVALUE KUUNTELIJA
 //==============================================
-
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
     
@@ -1349,8 +1308,9 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderScoreLog(data.scoreLog);
 });
 
-// Lopuksi käynnistetään init
-if (window.initCardSwipe) window.initCardSwipe();
+// Aja lisäosat
+window.setupSwipeToClose();
+window.initCardSwipe();
 
 window.populateRuleSelect = function() {
     const sel = el('gmRuleSelect');
