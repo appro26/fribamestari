@@ -1,6 +1,6 @@
 :root {
     --bg-main: #eefdf4;
-    --surface: rgba(255, 255, 255, 0.85); /* Läpikuultava tausta */
+    --surface: rgba(255, 255, 255, 0.88); /* Hiukan peittävämpi lasiefekti */
     --primary: #10b981;
     --primary-dark: #059669;
     --danger: #f43f5e;
@@ -8,15 +8,15 @@
     --info: #2563eb;
     --text-main: #000000;
     --text-muted: #334155;
-    --border: rgba(203, 213, 225, 0.6);
-    --surface-alt: rgba(248, 250, 252, 0.7);
+    --border: rgba(203, 213, 225, 0.7);
+    --surface-alt: rgba(248, 250, 252, 0.8);
 }
 
 body.gm-mode {
     --bg-main: #0f172a; 
-    --surface: rgba(30, 41, 59, 0.85); 
-    --surface-alt: rgba(51, 65, 85, 0.7);
-    --border: rgba(71, 85, 105, 0.6); 
+    --surface: rgba(30, 41, 59, 0.88); 
+    --surface-alt: rgba(51, 65, 85, 0.8);
+    --border: rgba(71, 85, 105, 0.7); 
     --text-main: #f8fafc; 
     --text-muted: #94a3b8;
 }
@@ -37,11 +37,10 @@ html, body { overscroll-behavior-y: none; overscroll-behavior-x: none; }
 input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 input[type="checkbox"] { appearance: auto !important; -webkit-appearance: auto !important; pointer-events: auto; }
 
-/* Dynaaminen väriliuku-tausta, joka näkyy lasikorttien läpi */
 body { 
     background-color: var(--bg-main); 
-    background-image: radial-gradient(circle at top left, rgba(16, 185, 129, 0.15) 0%, transparent 40%),
-                      radial-gradient(circle at bottom right, rgba(52, 211, 153, 0.15) 0%, transparent 40%);
+    background-image: radial-gradient(circle at top left, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
+                      radial-gradient(circle at bottom right, rgba(52, 211, 153, 0.15) 0%, transparent 50%);
     background-attachment: fixed;
     color: var(--text-main); 
     padding: 12px; 
@@ -50,17 +49,16 @@ body {
 }
 
 body.gm-mode {
-    background-image: radial-gradient(circle at top left, rgba(37, 99, 235, 0.1) 0%, transparent 40%),
-                      radial-gradient(circle at bottom right, rgba(244, 63, 94, 0.05) 0%, transparent 40%);
+    background-image: radial-gradient(circle at top left, rgba(37, 99, 235, 0.1) 0%, transparent 50%),
+                      radial-gradient(circle at bottom right, rgba(244, 63, 94, 0.05) 0%, transparent 50%);
 }
 
 .container { max-width: 500px; margin: 0 auto; position: relative; }
 
-/* Lasimainen (Glassmorphism) efekti korteille */
 .card { 
     background: var(--surface); 
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
     border: 2px solid var(--border); 
     border-radius: 16px; 
     padding: 16px; 
@@ -126,7 +124,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 input:focus { border-color: var(--primary); outline: none; }
 
 .player-row { display: flex; justify-content: space-between; align-items: center; background: var(--surface-alt); padding: 16px; border-radius: 12px; margin-bottom: 10px; border: 2px solid var(--border); }
-.player-row.me { border: 3px solid var(--primary); background: rgba(16, 185, 129, 0.1); }
+.player-row.me { border: 3px solid var(--primary); background: rgba(16, 185, 129, 0.15); }
 
 .role-switcher { display: flex; background: var(--surface-alt); border-radius: 12px; padding: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex: 1; border: 2px solid var(--border); margin-bottom: 0; }
 .role-btn { flex: 1; padding: 12px; color: var(--text-muted); border-radius: 8px; font-weight: 900; font-size: 0.95rem; cursor: pointer; transition: 0.2s; border:none; background:transparent;}
@@ -161,7 +159,7 @@ body.player-mode .gm-only { display: none !important; }
 
 #notificationContainer { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 10000; pointer-events: none; width: 100%; max-width: 450px; display:flex; flex-direction:column; gap:8px; align-items:center;}
 .notification, .apple-toast {
-    background: rgba(255, 255, 255, 0.65);
+    background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     color: #111;
