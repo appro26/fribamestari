@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=30" />
+    <link rel="stylesheet" href="style.css?v=31" />
     <meta name="theme-color" content="#10b981" />
     <script>
       window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
@@ -81,9 +81,17 @@
             <button class="btn btn-secondary" onclick="document.getElementById('adminPanel').style.display = document.getElementById('adminPanel').style.display === 'none' ? 'block' : 'none'">⚙️ Avaa GM Asetukset</button>
             
             <div id="adminPanel" class="card" style="display:none; margin-top:10px;">
-                <h2>Muokkaa Pelaajia</h2>
+                
+                <h2>Väylätehtävä</h2>
+                <div style="display:flex; gap:10px; margin-bottom: 25px;">
+                    <select id="gmRuleSelect" style="margin:0; padding:12px;"></select>
+                    <button class="btn btn-warning" style="width:auto; padding:0 15px;" onclick="if(window.gmSetRule) { window.gmSetRule(); }">ASETA</button>
+                    <button class="btn btn-primary" style="width:auto; padding:0 15px;" onclick="if(window.gmRollRule) { window.gmRollRule(); }">ARVO</button>
+                </div>
+
+                <h2>Muokkaa Pelaajia & Kortteja</h2>
                 <div id="adminPlayerList"></div>
-                <div style="display: flex; gap: 10px; margin-top:15px; margin-bottom:15px;">
+                <div style="display: flex; gap: 10px; margin-top:15px; margin-bottom:25px;">
                     <input type="text" id="adminNewPlayerName" placeholder="Pelaajan nimi..." aria-label="Uuden pelaajan nimi" style="margin: 0;" />
                     <button class="btn btn-success" style="width: auto; padding: 0 25px;" onclick="if(window.adminAddPlayer) { window.adminAddPlayer(); }">LISÄÄ</button>
                 </div>
@@ -194,7 +202,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=30"></script>
-    <script type="module" src="script.js?v=30"></script>
+    <script src="tasks.js?v=31"></script>
+    <script type="module" src="script.js?v=31"></script>
 </body>
 </html>
