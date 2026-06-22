@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=32" />
+    <link rel="stylesheet" href="style.css?v=33" />
     <meta name="theme-color" content="#10b981" />
     <script>
       window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
@@ -18,7 +18,9 @@
 
     <div class="container">
         
-        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:12px;">
+        <!-- Ylälaita ja uusi päivitysnappi -->
+        <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:12px; gap:10px;">
+            <button class="btn btn-secondary" onclick="location.reload()" style="width:auto; padding:10px 15px; font-size:0.9rem; margin:0;" aria-label="Päivitä sivu">🔄 PÄIVITÄ</button>
             <div id="topWallet" class="top-wallet" style="display:none;">💰 <span id="topWalletPoints">0 P</span></div>
         </div>
 
@@ -40,7 +42,8 @@
                     <div style="font-size: 0.8rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase;" id="bannerCourseName">Rata</div>
                     <div style="font-weight: 900; font-size: 1.3rem; color: var(--text-main);">VÄYLÄ <span id="bannerHoleNum" style="color: var(--primary);">1</span> <span style="color:var(--text-muted); font-size:0.9rem;">(PAR <span id="bannerPar">3</span>)</span></div>
                 </div>
-                <button class="btn btn-primary" onclick="if(window.nextHole) { window.nextHole(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2;">📝 SYÖTÄ<br />TULOS</button>
+                <!-- Korjattu funktiokutsu tähän nappiin -->
+                <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2;">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
             <div id="activeHoleContainer"></div>
@@ -169,7 +172,7 @@
                 <p style="color: var(--text-muted); font-size: 1.2rem; margin-top: 5px; font-weight:800;">Par <strong id="scoreModalPar" style="color:var(--text-main);">3</strong></p>
             </div>
             
-            <!-- Sääntö näytetään nyt automaattisesti ilman nappia -->
+            <!-- Sääntö näkyy automaattisesti! Napit ja toggle-funktiot poistettu -->
             <div id="scoreModalRuleBox" style="display: none; background: #fff; border: 3px solid var(--primary); padding: 16px; border-radius: 12px; margin-bottom: 25px; font-weight: 800; font-size: 1.05rem; color:var(--text-main);"></div>
 
             <div id="scoreInputsContainer" style="margin-bottom: 25px;"></div>
@@ -202,7 +205,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=32"></script>
-    <script type="module" src="script.js?v=32"></script>
+    <script src="tasks.js?v=33"></script>
+    <script type="module" src="script.js?v=33"></script>
 </body>
 </html>
