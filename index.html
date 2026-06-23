@@ -5,23 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Fribamestari</title>
     
-    <script>
-        if ('caches' in window) {
-            caches.keys().then(function(names) {
-                for (let name of names) caches.delete(name);
-            });
-        }
-    </script>
-
-    <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=80" />
+    <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=90" />
     <meta id="themeColorMeta" name="theme-color" content="#d1fae5" />
     
-    <script>
-      window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
 </head>
 <body class="player-mode">
 
@@ -30,7 +18,6 @@
             <div style="font-size:3.5rem; margin-bottom:10px;">📲</div>
             <h2 style="color:var(--text-main); font-size: 1.5rem; margin-bottom: 15px; font-weight:900;">ASENNA SOVELLUS</h2>
             <p id="installInstructions" style="font-size:1.1rem; color:var(--text-muted); line-height:1.5; margin-bottom:25px; font-weight:700;"></p>
-            <button class="btn btn-primary" id="nativeInstallBtn" onclick="if(window.triggerNativeInstall) window.triggerNativeInstall();" style="display:none; margin-bottom:15px;">🚀 ASENNA NYT</button>
             <button class="btn btn-secondary glass-card" onclick="if(window.dismissInstallPrompt) window.dismissInstallPrompt();" style="font-size:1rem; padding:16px;">JATKA SELAIMELLA</button>
         </div>
     </div>
@@ -84,10 +71,6 @@
             </div>
 
             <div class="player-only">
-                <div id="walletDisplayArea" class="player-wallet-box glass-card" style="background:rgba(245, 158, 11, 0.85); color:#000;">
-                    <span>💰 SALDO:</span> <span id="mainWalletPoints">0 P</span>
-                </div>
-
                 <div id="compactViewContainer" class="grid-2" style="margin-bottom: 15px;">
                     <button class="btn btn-danger" style="padding: 16px 10px; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px;" onclick="document.getElementById('handModal').style.display='flex'">
                         <span>🃏 Omat kortit</span>
@@ -96,6 +79,7 @@
                     
                     <button id="shopButtonElement" class="btn btn-warning" style="padding: 16px 10px; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px; color:#000;" onclick="document.getElementById('shopModal').style.display='flex'">
                         <span>🛒 Kauppa</span>
+                        <span style="background: #000; color: var(--warning); padding: 4px 14px; border-radius: 12px; font-size: 0.95rem;">SALDO: <span id="myResPointsBtn" style="font-weight:900;">0 P</span></span>
                     </button>
                 </div>
 
@@ -117,7 +101,6 @@
             
             <div id="adminPanel" class="card glass-card" style="display:none; margin-top:10px;">
                 
-                <!-- UUSI OMINAISUUS: Radan keskeytys -->
                 <button class="btn btn-warning" style="margin-bottom: 25px; color:#000;" onclick="if(window.cancelCourse) { window.cancelCourse(); }">🛑 VAIHDA RATAA / KESKEYTÄ PELI</button>
 
                 <h2 style="margin-top:5px;">Peliasetukset</h2>
@@ -166,7 +149,7 @@
                 <div id="adminEventLog" class="log-box glass-card" style="margin-bottom:15px;"></div>
                 <div id="adminScoreLog" class="log-box glass-card"></div>
 
-                <button class="btn btn-danger" style="margin-top: 20px;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI (Poistaa pelaajat)</button>
+                <button class="btn btn-danger" style="margin-top: 20px;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI</button>
             </div>
         </div>
 
@@ -187,7 +170,6 @@
 
     </div>
 
-    <!-- Modaalit -->
     <div id="handModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
@@ -204,7 +186,7 @@
             <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('shopModal').style.display='none'">&times;</button>
         </div>
         
-        <div class="role-switcher" style="margin-bottom:20px; background:transparent;">
+        <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(0,0,0,0.05); padding:4px;">
             <button id="shopTabBuyBtn" class="role-btn active" onclick="if(window.switchShopTab) window.switchShopTab('buy')">OSTA KORTTEJA</button>
             <button id="shopTabSellBtn" class="role-btn" onclick="if(window.switchShopTab) window.switchShopTab('sell')">OMAT KORTIT</button>
         </div>
@@ -233,10 +215,10 @@
         <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
-    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:20px; overflow:hidden;">
-        <div id="cardCarousel" class="card-carousel-wrapper"></div>
-        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:5px; margin-top:-10px;">👈 VAIHDA KORTTIA 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
-        <div id="cardDetailActionArea" style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;"></div>
+    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;">
+        <div id="cardCarousel" class="fan-carousel-wrapper"></div>
+        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:0px; margin-top:20px;">👈 VAIHDA KORTTIA SIVULLE 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
+        <div id="cardDetailActionArea" style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px; margin-top:10px;"></div>
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
@@ -252,23 +234,23 @@
     </div>
 
     <div id="scoreModal" class="winner-overlay">
-        <div class="card glass-card" style="width: 100%; max-width: 450px;">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="color:var(--text-main); font-size: 1.8rem; margin: 0;">VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
-                <p style="color: var(--text-muted); font-size: 1.2rem; margin-top: 5px; font-weight:800;">Par <strong id="scoreModalPar" style="color:var(--text-main);">3</strong></p>
+        <div class="paper-score-modal">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <h2>VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
+                <p>Par <strong id="scoreModalPar">3</strong></p>
             </div>
             
-            <div id="scoreModalRuleBox" style="display: none; background: #fff; border: 3px solid var(--primary); padding: 16px; border-radius: 12px; margin-bottom: 25px; font-weight: 800; font-size: 1.05rem; color:var(--text-main);"></div>
+            <div id="scoreModalRuleBox" style="display: none; border: 2px solid #0f1b61; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 1.2rem; line-height: 1.2;"></div>
 
-            <div id="scoreInputsContainer" style="margin-bottom: 25px;"></div>
+            <div id="scoreInputsContainer" style="margin-bottom: 20px;"></div>
             
-            <div style="background: rgba(255,255,255,0.5); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 3px solid var(--warning);">
-                <label style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; display: block;">Kuka suoritti tehtävän?</label>
+            <div style="margin-bottom: 25px; border-top: 2px dashed #0f1b61; padding-top:15px;">
+                <label style="font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; display: block;">Kuka suoritti tehtävän?</label>
                 <div id="taskWinnerContainer" class="task-checkbox-grid"></div>
             </div>
 
-            <button class="btn btn-primary" style="padding: 20px; font-size:1.1rem;" onclick="if(window.submitScores) { window.submitScores(); }">TALLENNA & JATKA</button>
-            <button class="btn btn-secondary glass-card" style="margin-top: 15px;" onclick="document.getElementById('scoreModal').style.display='none'">PERUUTA</button>
+            <button class="btn" style="background:#0f1b61; color:#fff; font-family:'Kalam', cursive; font-size:1.6rem; padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2);" onclick="if(window.submitScores) { window.submitScores(); }">TALLENNA</button>
+            <button class="btn" style="background:transparent; border: 2px solid #0f1b61; color:#0f1b61; font-family:'Kalam', cursive; font-size:1.4rem; margin-top:15px; padding:8px;" onclick="document.getElementById('scoreModal').style.display='none'">PERUUTA</button>
         </div>
     </div>
 
@@ -290,7 +272,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=80"></script>
-    <script type="module" src="script.js?v=80"></script>
+    <script src="tasks.js?v=90"></script>
+    <script type="module" src="script.js?v=90"></script>
 </body>
 </html>
