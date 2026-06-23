@@ -1,8 +1,11 @@
-//==============================================
-// INITOINTI (ENNEN FIREBASEA!)
-//==============================================
-window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
-window.pendingShopPurchase = null;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, onValue, set, push, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-west1.firebasedatabase.app/" };
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const el = id => document.getElementById(id);
 
 let myName = localStorage.getItem('friba_name') || null;
 let currentRole = 'player';
@@ -13,233 +16,90 @@ let currentHoleIndex = 1;
 let isExpandedView = false; 
 let lastPlayedCardTimestamp = Date.now();
 
-const el = id => document.getElementById(id);
+window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
+window.pendingShopPurchase = null;
 
-// PWA Asennus
+//==============================================
+// ASENNA SOVELLUS (PWA / KOTIVALIKKO)
+//==============================================
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const wantsBrowser = localStorage.getItem('friba_browser_mode');
+    if (!wantsBrowser) {
+        let elModal = el('installPromptModal');
+        let elBtn = el('nativeInstallBtn');
+        let elInst = el('installInstructions');
+        if(elModal && elBtn && elInst) {
+            elInst.innerHTML = "Tämä peli toimii parhaiten puhelimen omana sovelluksena. Asenna se nyt yhdellä painalluksella!";
+            elBtn.style.display = 'block';
+            elModal.style.display = 'flex';
+        }
+    }
+});
+
+window.triggerNativeInstall = async function() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
+        }
+        deferredPrompt = null;
+    } else {
+        alert("Asennus ei onnistunut automaattisesti. Kokeile selaimesi valikosta 'Asenna sovellus' tai 'Lisää aloitusnäyttöön'.");
+    }
+};
+
 window.checkInstallPrompt = function() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
     const wantsBrowser = localStorage.getItem('friba_browser_mode');
-    if (!isStandalone && !wantsBrowser) {
+    
+    if (isStandalone || wantsBrowser) return;
+    
+    if (!deferredPrompt) {
+        const os = (function() {
+            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            if (/android/i.test(userAgent)) return "Android";
+            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) return "iOS";
+            return "Other";
+        })();
+        
+        let instText = "";
+        if (os === "iOS") {
+            instText = "Parhaan pelikokemuksen saat asentamalla Fribamestarin puhelimeesi!<br><br>Paina selaimen alalaidasta <b>Jaa-kuvaketta</b> (neliö ja nuoli ylös) ja valitse sitten <b>'Lisää kotivalikkoon'</b>.";
+        } else if (os === "Android") {
+            instText = "Parhaan pelikokemuksen saat asentamalla Fribamestarin puhelimeesi!<br><br>Paina selaimesi <b>valikkoa</b> (kolme pistettä ylhäällä) ja valitse <b>'Asenna sovellus'</b> tai <b>'Lisää aloitusnäyttöön'</b>.";
+        } else {
+            instText = "Parhaan pelikokemuksen saat asentamalla pelin selaimesi valikosta (Asenna / Lisää aloitusnäyttöön).";
+        }
+        
         let elInst = el('installInstructions');
         let elModal = el('installPromptModal');
+        let elBtn = el('nativeInstallBtn');
         if(elInst && elModal) {
-            elInst.innerHTML = "Asenna peli valitsemalla selaimesi valikosta <b>'Lisää aloitusnäyttöön'</b> tai <b>'Asenna sovellus'</b>.";
+            elInst.innerHTML = instText;
+            if(elBtn) elBtn.style.display = 'none'; 
             elModal.style.display = 'flex';
         }
     }
 };
+
 window.dismissInstallPrompt = function() {
     localStorage.setItem('friba_browser_mode', 'true');
     if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
 };
-window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1000); });
 
-
-//==============================================
-// KORJAUS 4: TÄYSIN UUSI 3D-KARUSELLI (Sivulle vaihto & Ylös kääntö)
-//==============================================
-window.carouselCards = [];
-window.carouselCurrentIndex = 0;
-window.carouselCurrentMode = 'hand';
-window.carouselArgs = [];
-
-window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
-    // 1. Määritellään mitä listaa karuselli käyttää
-    if (mode === 'hand' || mode === 'sell') {
-        const me = allPlayers.find(p => p && p.name === myName);
-        window.carouselCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
-    } else if (mode === 'shop') {
-        window.carouselCards = activeHole && activeHole.shop ? activeHole.shop.map(c => c.id) : [];
-    } else if (mode === 'gm') {
-        window.carouselCards = window.allCards.map(c => c.id);
-    } else {
-        window.carouselCards = [cId]; // Fallback
-    }
-    
-    window.carouselCurrentMode = mode;
-    window.carouselArgs = [arg1, arg2, arg3];
-    window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
-    if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
-
-    window.renderCarousel();
-    el('cardDetailModal').style.display = 'flex';
-};
-
-window.renderCarousel = function() {
-    const wrapper = el('cardCarousel');
-    if(!wrapper) return;
-    
-    let html = '';
-    // Piirretään edellinen, nykyinen ja seuraava kortti (3 korttia vierekkäin)
-    for(let i = -1; i <= 1; i++) {
-        let index = window.carouselCurrentIndex + i;
-        if (index < 0 || index >= window.carouselCards.length) continue; // Ei korttia tähän suuntaan
-        
-        let cId = window.carouselCards[index];
-        let cDef = window.allCards.find(c => c.id === cId);
-        if(!cDef) continue;
-        
-        let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
-        if(cDef.tier === 'premium') typeClass = 'premium-card';
-        let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
-        let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
-        let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
-        
-        // KORJAUS 3: Isommat tekstit ja word-break
-        let isCenter = (i === 0);
-        let sideClass = isCenter ? '' : 'side-card';
-        
-        html += `
-            <div class="card-3d-container ${sideClass}" id="carousel-card-${index}">
-                <div class="card-3d" id="card3d-inner-${index}">
-                    <div class="card-face card-front ${typeClass}">
-                        <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
-                            <div class="card-type-tag" style="font-size:1.1rem; margin-bottom:12px;">${tagTxt}</div>
-                            <h3 style="font-size:2rem; margin-bottom:20px; color:#000; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
-                            <p style="font-size:1.3rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
-                        </div>
-                    </div>
-                    <div class="card-face card-back ${backClass}">
-                        <div class="card-back-icon">${backIcon}</div>
-                        <div style="color:#fff; font-weight:900; font-size:1.4rem; margin-top:20px; letter-spacing:3px;">FRIBAMESTARI</div>
-                    </div>
-                </div>
-            </div>`;
-    }
-    
-    wrapper.innerHTML = html;
-    window.updateCarouselButtons();
-    window.initCarouselSwipe();
-};
-
-window.updateCarouselButtons = function() {
-    let cId = window.carouselCards[window.carouselCurrentIndex];
-    let cDef = window.allCards.find(c => c.id === cId);
-    if(!cDef) return;
-    
-    let btnHtml = '';
-    let mode = window.carouselCurrentMode;
-    let [arg1, arg2, arg3] = window.carouselArgs;
-
-    if (mode === 'hand') {
-        btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
-        if (cDef.tier === 'normal') {
-            btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:#000;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
-        } else {
-            btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
-        }
-    } else if (mode === 'shop') {
-        // Kaupan lennosta laskettu hinta/varaa logiikka karusellia varten
-        let myScore = 0; let bought = false;
-        const me = allPlayers.find(p => p && p.name === myName);
-        if(me) { myScore = me.score || 0; bought = me.boughtThisHole; }
-        let item = activeHole && activeHole.shop ? activeHole.shop.find(s=>s.id===cId) : null;
-        let price = item ? item.price : 99;
-        
-        let canAfford = myScore >= price && !bought;
-        let btnText = bought ? 'OSTETTU' : (canAfford ? `OSTA ETU (${price} P)` : 'EI VARAA');
-        let btnClass = canAfford && !bought ? 'btn-warning' : 'btn-secondary';
-        let dis = (!canAfford || bought) ? 'disabled' : '';
-        btnHtml = `<button class="btn ${btnClass}" ${dis} style="font-size:1.1rem; padding:18px; color:#000; box-shadow:0 10px 25px rgba(245,158,11,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cId}', '${cDef.n}', ${price})">${btnText}</button>`;
-    } else if (mode === 'sell') {
-        if (cDef.tier === 'normal') {
-            btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(16, 185, 129, 0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
-        } else {
-            btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244, 63, 94, 0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
-        }
-    } else if (mode === 'gm') {
-        btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.giveCardToPlayer('${cId}')">ANNA TÄMÄ</button>`;
-    }
-
-    el('cardDetailActionArea').innerHTML = btnHtml;
-};
-
-// Swaippauslogiikka Karusellille (Sivulle vaihto, Ylös/Alas pyöritys)
-window.initCarouselSwipe = function() {
-    const wrapper = el('cardCarousel');
-    const activeCard = el(`card3d-inner-${window.carouselCurrentIndex}`);
-    if(!wrapper || !activeCard) return;
-    
-    let startX = 0; let startY = 0;
-    let currentX = 0; let currentY = 0;
-    let isDragging = false;
-    let swipeDirection = null; // 'h' (horizontal) tai 'v' (vertical)
-    
-    let currentRotX = window.cardLastRot || 0; // Rotate X-akselin ympäri
-    
-    wrapper.addEventListener('touchstart', e => {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        isDragging = true;
-        swipeDirection = null;
-        activeCard.style.transition = 'none'; 
-    }, {passive: true});
-
-    wrapper.addEventListener('touchmove', e => {
-        if(!isDragging) return;
-        currentX = e.touches[0].clientX;
-        currentY = e.touches[0].clientY;
-        
-        let diffX = currentX - startX;
-        let diffY = currentY - startY;
-        
-        // Päätetään swaippauksen suunta alussa
-        if (!swipeDirection) {
-            if (Math.abs(diffX) > Math.abs(diffY)) swipeDirection = 'h';
-            else swipeDirection = 'v';
-        }
-        
-        if (swipeDirection === 'h') {
-            // Liikutetaan koko karusellia sivuttain
-            wrapper.style.transform = `translateX(${diffX}px)`;
-        } else if (swipeDirection === 'v') {
-            // Pyöritetään aktiivista korttia ympäri
-            let newRot = currentRotX - (diffY * 1.0);
-            activeCard.style.transform = `rotateX(${newRot}deg)`;
-        }
-    }, {passive: true});
-
-    wrapper.addEventListener('touchend', e => {
-        if(!isDragging) return;
-        isDragging = false;
-        
-        if (swipeDirection === 'h') {
-            wrapper.style.transition = 'transform 0.3s ease';
-            wrapper.style.transform = `translateX(0px)`; // Palautetaan karuselli keskelle
-            
-            let diffX = currentX - startX;
-            if (diffX > 60 && window.carouselCurrentIndex > 0) {
-                // Vaihdetaan edelliseen korttiin
-                window.carouselCurrentIndex--;
-                window.cardLastRot = 0;
-                window.renderCarousel();
-            } else if (diffX < -60 && window.carouselCurrentIndex < window.carouselCards.length - 1) {
-                // Vaihdetaan seuraavaan korttiin
-                window.carouselCurrentIndex++;
-                window.cardLastRot = 0;
-                window.renderCarousel();
-            }
-        } else if (swipeDirection === 'v') {
-            // Viimeistellään pyöritys
-            activeCard.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            let transformStr = activeCard.style.transform;
-            let match = transformStr.match(/rotateX\(([-0-9.]+)deg\)/);
-            if(match) {
-                let rot = parseFloat(match[1]);
-                window.cardLastRot = Math.round(rot / 180) * 180;
-                activeCard.style.transform = `rotateX(${window.cardLastRot}deg)`;
-            }
-        }
-    }, {passive: true});
-};
-
+window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
 //==============================================
-// TARGETOINTI JA PELUU
+// KORTIN PELAAMINEN (TARGET MODAL / AUTOMATIIKKA)
 //==============================================
 window.openTargetModal = function(cardId) {
     const cardDef = window.allCards.find(c => c.id === cardId);
     if (!cardDef) return;
+    
     window.pendingCardPlay = { id: cardId, def: cardDef };
     
     if(cardDef.type === 'buff') {
@@ -278,8 +138,11 @@ window.executeCardPlay = function(targetName) {
     if(me && me.cards) { 
         me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards);
         me.cards = me.cards.filter(Boolean);
+        
         let actualIndex = me.cards.indexOf(card.id);
-        if (actualIndex !== -1) { me.cards.splice(actualIndex, 1); }
+        if (actualIndex !== -1) {
+            me.cards.splice(actualIndex, 1); 
+        }
     }
     
     let pCards = {};
@@ -288,22 +151,221 @@ window.executeCardPlay = function(targetName) {
             let oldCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
             oldCards.filter(Boolean).forEach((c, i) => { pCards['old_'+i] = c; });
         }
+        
         let cKey = 'c_' + timestamp + '_' + Math.floor(Math.random()*1000);
-        pCards[cKey] = { cardId: card.id || 'err_id', cardName: card.def.n || 'Nimetön', cardDesc: card.def.d || '-', target: targetName || 'Joku', by: myName || 'Joku', type: card.def.type || 'sabotage', tier: card.def.tier || 'normal', timestamp: timestamp };
+        pCards[cKey] = { 
+            cardId: card.id || 'err_id',
+            cardName: card.def.n || 'Nimetön', 
+            cardDesc: card.def.d || '-', 
+            target: targetName || 'Joku', 
+            by: myName || 'Joku', 
+            type: card.def.type || 'sabotage', 
+            tier: card.def.tier || 'normal',
+            timestamp: timestamp 
+        };
     }
     
     let updates = {};
     updates['gameState/players'] = window.cleanFirebaseData(nextPlayers);
-    if(activeHole) { updates['gameState/activeHole/playedCards'] = window.cleanFirebaseData(pCards); }
+    if(activeHole) { 
+        updates['gameState/activeHole/playedCards'] = window.cleanFirebaseData(pCards); 
+    }
     
-    // FIREBASE LATAUS JOTTA EI KAADU
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.update(fb.ref(window.fbDb), updates);
-    });
+    update(ref(db), updates);
     
     window.logEvent(`${myName} pelasi kortin ${card.def.n} kohteelle ${targetName}.`);
+    
     let type = card.def.type === 'buff' ? 'info' : 'debuff';
     window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, type);
+};
+
+//==============================================
+// 3D-KORTIN KARUSELLI (SLAIDAUS SIVULLE JA YLÖS)
+//==============================================
+window.carouselCards = [];
+window.carouselCurrentIndex = 0;
+window.carouselCurrentMode = 'hand';
+window.carouselArgs = [];
+window.cardLastRot = 0;
+
+window.initCarouselSwipe = function() {
+    const wrapper = el('cardCarousel');
+    const activeCard = el(`card3d-inner-${window.carouselCurrentIndex}`);
+    if(!wrapper || !activeCard) return;
+    
+    let startX = 0; let startY = 0;
+    let currentX = 0; let currentY = 0;
+    let isDragging = false;
+    let swipeDirection = null; 
+    let currentRotX = window.cardLastRot || 0; 
+    
+    wrapper.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        swipeDirection = null;
+        activeCard.style.transition = 'none'; 
+    }, {passive: true});
+
+    wrapper.addEventListener('touchmove', e => {
+        if(!isDragging) return;
+        currentX = e.touches[0].clientX;
+        currentY = e.touches[0].clientY;
+        
+        let diffX = currentX - startX;
+        let diffY = currentY - startY;
+        
+        if (!swipeDirection) {
+            if (Math.abs(diffX) > Math.abs(diffY)) swipeDirection = 'h';
+            else swipeDirection = 'v';
+        }
+        
+        if (swipeDirection === 'h') {
+            wrapper.style.transform = `translateX(${diffX}px)`;
+        } else if (swipeDirection === 'v') {
+            let newRot = currentRotX - (diffY * 1.0);
+            activeCard.style.transform = `rotateX(${newRot}deg)`;
+        }
+    }, {passive: true});
+
+    wrapper.addEventListener('touchend', e => {
+        if(!isDragging) return;
+        isDragging = false;
+        
+        if (swipeDirection === 'h') {
+            wrapper.style.transition = 'transform 0.3s ease';
+            wrapper.style.transform = `translateX(0px)`;
+            
+            let diffX = currentX - startX;
+            if (diffX > 60 && window.carouselCurrentIndex > 0) {
+                window.carouselCurrentIndex--;
+                window.cardLastRot = 0;
+                window.renderCarousel();
+            } else if (diffX < -60 && window.carouselCurrentIndex < window.carouselCards.length - 1) {
+                window.carouselCurrentIndex++;
+                window.cardLastRot = 0;
+                window.renderCarousel();
+            }
+        } else if (swipeDirection === 'v') {
+            activeCard.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            let transformStr = activeCard.style.transform;
+            let match = transformStr.match(/rotateX\(([-0-9.]+)deg\)/);
+            if(match) {
+                let rot = parseFloat(match[1]);
+                window.cardLastRot = Math.round(rot / 180) * 180;
+                activeCard.style.transform = `rotateX(${window.cardLastRot}deg)`;
+            }
+        }
+    }, {passive: true});
+};
+
+window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
+    if (mode === 'hand' || mode === 'sell') {
+        const me = allPlayers.find(p => p && p.name === myName);
+        window.carouselCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
+    } else if (mode === 'shop') {
+        window.carouselCards = activeHole && activeHole.shop ? activeHole.shop.map(c => c.id) : [];
+    } else if (mode === 'gm') {
+        window.carouselCards = window.allCards.map(c => c.id);
+    } else {
+        window.carouselCards = [cId]; 
+    }
+    
+    window.carouselCurrentMode = mode;
+    window.carouselArgs = [arg1, arg2, arg3];
+    window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
+    if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
+    
+    window.cardLastRot = 0;
+    window.renderCarousel();
+    el('cardDetailModal').style.display = 'flex';
+};
+
+window.renderCarousel = function() {
+    const wrapper = el('cardCarousel');
+    if(!wrapper) return;
+    
+    let html = '';
+    for(let i = -1; i <= 1; i++) {
+        let index = window.carouselCurrentIndex + i;
+        if (index < 0 || index >= window.carouselCards.length) continue;
+        
+        let cId = window.carouselCards[index];
+        let cDef = window.allCards.find(c => c.id === cId);
+        if(!cDef) continue;
+        
+        let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
+        if(cDef.tier === 'premium') typeClass = 'premium-card';
+        let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
+        let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
+        let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
+        
+        let isCenter = (i === 0);
+        let sideClass = isCenter ? '' : 'side-card';
+        
+        html += `
+            <div class="card-3d-container ${sideClass}" id="carousel-card-${index}">
+                <div class="card-3d" id="card3d-inner-${index}">
+                    <div class="card-face card-front ${typeClass}">
+                        <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
+                            <div class="card-type-tag" style="font-size:1.1rem; margin-bottom:12px;">${tagTxt}</div>
+                            <h3 style="font-size:2rem; margin-bottom:20px; color:#000; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
+                            <p style="font-size:1.3rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
+                        </div>
+                    </div>
+                    <div class="card-face card-back ${backClass}">
+                        <div class="card-back-icon">${backIcon}</div>
+                        <div style="color:#fff; font-weight:900; font-size:1.4rem; margin-top:20px; letter-spacing:3px;">FRIBAMESTARI</div>
+                    </div>
+                </div>
+            </div>`;
+    }
+    
+    wrapper.innerHTML = html;
+    wrapper.style.transform = `translateX(0px)`;
+    
+    window.updateCarouselButtons();
+    setTimeout(() => { window.initCarouselSwipe(); }, 50);
+};
+
+window.updateCarouselButtons = function() {
+    let cId = window.carouselCards[window.carouselCurrentIndex];
+    let cDef = window.allCards.find(c => c.id === cId);
+    if(!cDef) return;
+    
+    let btnHtml = '';
+    let mode = window.carouselCurrentMode;
+
+    if (mode === 'hand') {
+        btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
+        if (cDef.tier === 'normal') {
+            btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:#000;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
+        } else {
+            btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
+        }
+    } else if (mode === 'shop') {
+        let myScore = 0; let bought = false;
+        const me = allPlayers.find(p => p && p.name === myName);
+        if(me) { myScore = me.score || 0; bought = me.boughtThisHole; }
+        let item = activeHole && activeHole.shop ? activeHole.shop.find(s=>s.id===cId) : null;
+        let price = item ? item.price : 99;
+        
+        let canAfford = myScore >= price && !bought;
+        let btnText = bought ? 'OSTETTU' : (canAfford ? `OSTA ETU (${price} P)` : 'EI VARAA');
+        let btnClass = canAfford && !bought ? 'btn-warning' : 'btn-secondary';
+        let dis = (!canAfford || bought) ? 'disabled' : '';
+        btnHtml = `<button class="btn ${btnClass}" ${dis} style="font-size:1.1rem; padding:18px; color:#000; box-shadow:0 10px 25px rgba(245,158,11,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cId}', '${cDef.n}', ${price})">${btnText}</button>`;
+    } else if (mode === 'sell') {
+        if (cDef.tier === 'normal') {
+            btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(16, 185, 129, 0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
+        } else {
+            btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244, 63, 94, 0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
+        }
+    } else if (mode === 'gm') {
+        btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.giveCardToPlayer('${cId}')">ANNA TÄMÄ</button>`;
+    }
+
+    el('cardDetailActionArea').innerHTML = btnHtml;
 };
 
 //==============================================
@@ -346,9 +408,7 @@ window.forceDiscard = function(cId, isNormal) {
             updates['gameState/players'] = window.cleanFirebaseData(nextPlayers);
             updates['gameState/activeHole/shop'] = window.cleanFirebaseData(nextShop);
             
-            import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-                fb.update(fb.ref(window.fbDb), updates);
-            });
+            update(ref(db), updates);
             
             window.pendingShopPurchase = null;
             el('shopModal').style.display = 'none';
@@ -359,9 +419,7 @@ window.forceDiscard = function(cId, isNormal) {
         }
     }
     
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.set(fb.ref(window.fbDb, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
-    });
+    set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
 };
 
 window.buyShopItem = function(idStr, nameStr, priceVal) {
@@ -396,9 +454,7 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
         updates['gameState/players'] = window.cleanFirebaseData(nextPlayers);
         updates['gameState/activeHole/shop'] = window.cleanFirebaseData(nextShop);
         
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.update(fb.ref(window.fbDb), updates);
-        });
+        update(ref(db), updates);
 
         if(el('shopModal')) el('shopModal').style.display = 'none'; 
         window.logEvent(`${myName} osti edun: ${nameStr}.`);
@@ -417,13 +473,13 @@ window.switchShopTab = function(tab) {
     if (tab === 'buy') {
         el('shopBuyArea').style.display = 'block';
         el('shopSellArea').style.display = 'none';
-        if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.add('active');
-        if(el('shopTabSellBtn')) el('shopTabSellBtn').classList.remove('active');
+        el('shopTabBuyBtn').classList.add('active');
+        el('shopTabSellBtn').classList.remove('active');
     } else {
         el('shopBuyArea').style.display = 'none';
         el('shopSellArea').style.display = 'block';
-        if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.remove('active');
-        if(el('shopTabSellBtn')) el('shopTabSellBtn').classList.add('active');
+        el('shopTabBuyBtn').classList.remove('active');
+        el('shopTabSellBtn').classList.add('active');
     }
 };
 
@@ -452,9 +508,6 @@ window.showHandLimitModal = function(cards) {
     el('handLimitModal').style.display = 'flex';
 };
 
-//==============================================
-// GM ASETUKSET & TOIMINNOT
-//==============================================
 window.saveGameSettings = function() {
     let newSettings = {
         shopEnabled: el('gmSetShop').checked,
@@ -466,13 +519,13 @@ window.saveGameSettings = function() {
         ptsPassive: window.gameSettings.ptsPassive || 1
     };
     
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.set(fb.ref(window.fbDb, 'gameState/settings'), newSettings);
-    });
+    set(ref(db, 'gameState/settings'), newSettings);
     window.showNotification("Asetukset tallennettu!", "info");
 };
 
-// ... HELPERIT ...
+//==============================================
+// HELPERIT
+//==============================================
 window.showAppleToast = function(msg, icon = '✨') {
     const toast = el('appleToast');
     if(!toast) return;
@@ -498,16 +551,12 @@ window.cleanFirebaseData = function(obj) {
 
 window.logEvent = function(msg) {
     const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.push(fb.ref(window.fbDb, 'gameState/eventLog'), window.cleanFirebaseData({ time: timeStr, msg: msg }));
-    });
+    push(ref(db, 'gameState/eventLog'), window.cleanFirebaseData({ time: timeStr, msg: msg }));
 };
 
 window.logScore = function(playerName, delta) {
     const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.push(fb.ref(window.fbDb, 'gameState/scoreLog'), window.cleanFirebaseData({ time: timeStr, playerName: playerName, delta: delta }));
-    });
+    push(ref(db, 'gameState/scoreLog'), window.cleanFirebaseData({ time: timeStr, playerName: playerName, delta: delta }));
 };
 
 window.setupSwipeToClose = function() {
@@ -583,9 +632,7 @@ window.claimIdentity = function() {
     if(!allPlayers.find(x => x && x.name === n)) { 
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); 
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${n} liittyi peliin.`);
     }
 };
@@ -897,9 +944,7 @@ window.giveCardToPlayer = function(cardId) {
     if (p && cardDef) {
         p.cards = p.cards || [];
         p.cards.push(cardId);
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, `gameState/players`), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) antoi kortin ${cardDef.n} pelaajalle ${p.name}.`);
         window.showNotification(`Kortti lisätty pelaajalle ${p.name}!`, "info");
         el('gmGiveCardModal').style.display = 'none';
@@ -913,9 +958,7 @@ window.removeCardFromPlayer = function(pIdx, cIdx) {
         let cId = p.cards[cIdx];
         let cardDef = window.allCards.find(c => c.id === cId);
         p.cards.splice(cIdx, 1);
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, `gameState/players`), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) poisti kortin ${cardDef ? cardDef.n : ''} pelaajalta ${p.name}.`);
     }
 };
@@ -924,9 +967,7 @@ window.gmRollRule = function() {
     if(!activeHole) return; 
     const randomRule = window.holeRules[Math.floor(Math.random() * window.holeRules.length)];
     activeHole.rule = randomRule;
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.set(fb.ref(window.fbDb, 'gameState/activeHole/rule'), window.cleanFirebaseData(randomRule));
-    });
+    set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(randomRule));
     window.logEvent(`${myName} (GM) arpoi uuden väyläsäännön: ${randomRule.n}`);
 };
 
@@ -936,9 +977,7 @@ window.gmSetRule = function() {
     const ruleDef = window.holeRules[sel.value];
     if(ruleDef) {
         activeHole.rule = ruleDef;
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, 'gameState/activeHole/rule'), window.cleanFirebaseData(ruleDef));
-        });
+        set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(ruleDef));
         window.logEvent(`${myName} (GM) asetti väyläsäännön: ${ruleDef.n}`);
     }
 };
@@ -986,9 +1025,7 @@ window.adminAddPlayer = function() {
     if(!allPlayers.find(x => x && x.name === n)) { 
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); 
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, 'gameState/players'), window.cleanFirebaseData(nextPlayers)).then(() => { input.value = ''; });
-        });
+        set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers)).then(() => { input.value = ''; });
         window.logEvent(`${myName} (GM) lisäsi pelaajan ${n}.`);
     }
 };
@@ -998,9 +1035,7 @@ window.adjustScore = function(idx, amt) {
     if(allPlayers[idx]) {
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         nextPlayers[idx].score = Math.max(0, (parseInt(nextPlayers[idx].score, 10) || 0) + amt);
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, `gameState/players`), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) antoi ${amt} P pelaajalle ${nextPlayers[idx].name}.`);
     }
 };
@@ -1010,9 +1045,7 @@ window.adjustDgScore = function(idx, amt) {
     if(allPlayers[idx]) {
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         nextPlayers[idx].dgScore = (parseInt(nextPlayers[idx].dgScore, 10) || 0) + amt;
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, `gameState/players`), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) sääti pelaajan ${nextPlayers[idx].name} heittotulosta (${amt > 0 ? '+'+amt : amt}).`);
     }
 };
@@ -1022,9 +1055,7 @@ window.removePlayer = function(idx) {
         let pName = allPlayers[idx].name;
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         nextPlayers.splice(idx, 1); 
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
-        });
+        set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) poisti pelaajan ${pName}.`);
     } 
 };
@@ -1032,10 +1063,8 @@ window.removePlayer = function(idx) {
 window.resetGame = function() {
     if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos.")) {
         localStorage.removeItem('friba_browser_mode');
-        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-            fb.set(fb.ref(window.fbDb, 'gameState'), window.cleanFirebaseData({ settings: window.gameSettings, players: [], activeHole: null, currentHoleIndex: 1, course: null }))
-            .then(() => { localStorage.clear(); location.reload(); });
-        });
+        set(ref(db, 'gameState'), window.cleanFirebaseData({ settings: window.gameSettings, players: [], activeHole: null, currentHoleIndex: 1, course: null }))
+        .then(() => { localStorage.clear(); location.reload(); });
         window.logEvent(`${myName} (GM) nollasi koko pelin.`);
     }
 };
@@ -1066,14 +1095,12 @@ window.startMeilahti = function() {
         });
     }
     
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.update(fb.ref(window.fbDb, 'gameState'), window.cleanFirebaseData({
-            course: nextCourse,
-            currentHoleIndex: nextHoleIndex,
-            activeHole: nextActiveHole,
-            players: nextPlayers
-        }));
-    });
+    update(ref(db, 'gameState'), window.cleanFirebaseData({
+        course: nextCourse,
+        currentHoleIndex: nextHoleIndex,
+        activeHole: nextActiveHole,
+        players: nextPlayers
+    }));
 
     if(el('courseModal')) el('courseModal').style.display = 'none'; 
     window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}. Kaikki saivat 3 P ja 3 korttia.`);
@@ -1121,14 +1148,12 @@ window.saveCourseSetup = function() {
         });
     }
 
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.update(fb.ref(window.fbDb, 'gameState'), window.cleanFirebaseData({
-            course: nextCourse,
-            currentHoleIndex: nextHoleIndex,
-            activeHole: nextActiveHole,
-            players: nextPlayers
-        }));
-    });
+    update(ref(db, 'gameState'), window.cleanFirebaseData({
+        course: nextCourse,
+        currentHoleIndex: nextHoleIndex,
+        activeHole: nextActiveHole,
+        players: nextPlayers
+    }));
 
     if(el('courseModal')) el('courseModal').style.display = 'none'; 
     window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}. Kaikki saivat 3 P ja 3 korttia.`);
@@ -1249,7 +1274,6 @@ window.submitScores = function() {
     }
     
     let normalPool = window.allCards.filter(c => c.tier === "normal");
-    
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
 
     let ptsWin = window.gameSettings.ptsWin !== undefined ? window.gameSettings.ptsWin : 2;
@@ -1305,20 +1329,18 @@ window.submitScores = function() {
     
     let nextActiveHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
     
-    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js").then(fb => {
-        fb.update(fb.ref(window.fbDb, 'gameState'), window.cleanFirebaseData({
-            players: nextPlayers,
-            currentHoleIndex: nextHoleIndex,
-            activeHole: nextActiveHole
-        }));
-    });
+    update(ref(db, 'gameState'), window.cleanFirebaseData({
+        players: nextPlayers,
+        currentHoleIndex: nextHoleIndex,
+        activeHole: nextActiveHole
+    }));
 
     if(el('scoreModal')) el('scoreModal').style.display = 'none'; 
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
 };
 
 //==============================================
-// FIREBASE ONVALUE KUUNTELIJA
+// FIREBASE ONVALUE KUUNTELIJA ON NYT LOPUSSA
 //==============================================
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
@@ -1446,6 +1468,11 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderScoreLog(data.scoreLog);
 });
 
-// Aja lisäosat
+// Lopuksi ajetaan sivun valmiiksi kokoavat skriptit
 window.setupSwipeToClose();
-
+window.populateRuleSelect = function() {
+    const sel = el('gmRuleSelect');
+    if(!sel || typeof window.holeRules === 'undefined') return; 
+    sel.innerHTML = window.holeRules.map((r, i) => `<option value="${i}">${r.n}</option>`).join('');
+};
+setTimeout(window.populateRuleSelect, 500);
