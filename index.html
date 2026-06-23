@@ -15,7 +15,6 @@
 
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
-    
     <link rel="stylesheet" href="style.css?v=80" />
     <meta id="themeColorMeta" name="theme-color" content="#d1fae5" />
     
@@ -85,7 +84,6 @@
             </div>
 
             <div class="player-only">
-                
                 <div id="walletDisplayArea" class="player-wallet-box glass-card" style="background:rgba(245, 158, 11, 0.85); color:#000;">
                     <span>💰 SALDO:</span> <span id="mainWalletPoints">0 P</span>
                 </div>
@@ -119,6 +117,9 @@
             
             <div id="adminPanel" class="card glass-card" style="display:none; margin-top:10px;">
                 
+                <!-- UUSI OMINAISUUS: Radan keskeytys -->
+                <button class="btn btn-warning" style="margin-bottom: 25px; color:#000;" onclick="if(window.cancelCourse) { window.cancelCourse(); }">🛑 VAIHDA RATAA / KESKEYTÄ PELI</button>
+
                 <h2 style="margin-top:5px;">Peliasetukset</h2>
                 <div class="glass-card" style="padding:15px; border-radius:12px; margin-bottom:25px;">
                     <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.05rem;">
@@ -165,7 +166,7 @@
                 <div id="adminEventLog" class="log-box glass-card" style="margin-bottom:15px;"></div>
                 <div id="adminScoreLog" class="log-box glass-card"></div>
 
-                <button class="btn btn-danger" style="margin-top: 20px;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI</button>
+                <button class="btn btn-danger" style="margin-top: 20px;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI (Poistaa pelaajat)</button>
             </div>
         </div>
 
@@ -186,6 +187,7 @@
 
     </div>
 
+    <!-- Modaalit -->
     <div id="handModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
@@ -202,7 +204,7 @@
             <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('shopModal').style.display='none'">&times;</button>
         </div>
         
-        <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(0,0,0,0.05); padding:4px;">
+        <div class="role-switcher" style="margin-bottom:20px; background:transparent;">
             <button id="shopTabBuyBtn" class="role-btn active" onclick="if(window.switchShopTab) window.switchShopTab('buy')">OSTA KORTTEJA</button>
             <button id="shopTabSellBtn" class="role-btn" onclick="if(window.switchShopTab) window.switchShopTab('sell')">OMAT KORTIT</button>
         </div>
@@ -231,11 +233,61 @@
         <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
-    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:20px;">
+    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:20px; overflow:hidden;">
         <div id="cardCarousel" class="card-carousel-wrapper"></div>
         <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:5px; margin-top:-10px;">👈 VAIHDA KORTTIA 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;"></div>
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
+    </div>
+
+    <div id="courseModal" class="winner-overlay">
+        <div class="card glass-card" style="width: 100%; max-width: 450px;">
+            <h2 style="color:var(--text-main); font-size: 1.4rem;">Luo oma rata</h2>
+            <input type="text" id="setupCourseName" aria-label="Radan nimi" placeholder="Radan nimi..." />
+            <input type="number" id="setupHoleCount" aria-label="Väylien määrä" placeholder="Väylien määrä" oninput="if(window.generateParInputs) { window.generateParInputs(); }" />
+            <div id="parInputsContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            <button class="btn btn-primary" onclick="if(window.saveCourseSetup) { window.saveCourseSetup(); }">TALLENNA & ALOITA</button>
+            <button class="btn btn-secondary glass-card" style="margin-top: 12px;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
+        </div>
+    </div>
+
+    <div id="scoreModal" class="winner-overlay">
+        <div class="card glass-card" style="width: 100%; max-width: 450px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color:var(--text-main); font-size: 1.8rem; margin: 0;">VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
+                <p style="color: var(--text-muted); font-size: 1.2rem; margin-top: 5px; font-weight:800;">Par <strong id="scoreModalPar" style="color:var(--text-main);">3</strong></p>
+            </div>
+            
+            <div id="scoreModalRuleBox" style="display: none; background: #fff; border: 3px solid var(--primary); padding: 16px; border-radius: 12px; margin-bottom: 25px; font-weight: 800; font-size: 1.05rem; color:var(--text-main);"></div>
+
+            <div id="scoreInputsContainer" style="margin-bottom: 25px;"></div>
+            
+            <div style="background: rgba(255,255,255,0.5); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 3px solid var(--warning);">
+                <label style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; text-transform: uppercase; margin-bottom: 15px; display: block;">Kuka suoritti tehtävän?</label>
+                <div id="taskWinnerContainer" class="task-checkbox-grid"></div>
+            </div>
+
+            <button class="btn btn-primary" style="padding: 20px; font-size:1.1rem;" onclick="if(window.submitScores) { window.submitScores(); }">TALLENNA & JATKA</button>
+            <button class="btn btn-secondary glass-card" style="margin-top: 15px;" onclick="document.getElementById('scoreModal').style.display='none'">PERUUTA</button>
+        </div>
+    </div>
+
+    <div id="targetModal" class="winner-overlay" style="z-index: 10001;">
+        <div class="card glass-card" style="width: 100%; max-width: 400px; border: 4px solid var(--danger);">
+            <h2 style="color:var(--text-main);">Valitse sabotaasin kohde</h2>
+            <p id="targetCardName" style="color: var(--danger); font-weight: 900; margin-bottom: 20px; font-size: 1.5rem; text-align:center; text-transform:uppercase; line-height:1.2;"></p>
+            <div id="targetPlayerList" style="margin-bottom: 20px;"></div>
+            <button class="btn btn-secondary glass-card" onclick="document.getElementById('targetModal').style.display='none'">PERUUTA</button>
+        </div>
+    </div>
+
+    <div id="lotteryWinner" class="winner-overlay">
+        <div class="card glass-card" style="width: 100%; max-width: 400px; border: 4px solid var(--info); text-align: center;">
+            <h2 id="popupTitle" style="color:var(--info); font-size: 1.5rem; margin-bottom: 10px; font-weight: 900;"></h2>
+            <p id="popupDesc" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; color: var(--text-main);"></p>
+            <div id="popupDetails" style="font-size: 0.95rem; color: var(--text-muted); background: var(--surface-alt); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 700;"></div>
+            <button class="btn btn-secondary glass-card" onclick="document.getElementById('lotteryWinner').style.display='none'">SULJE</button>
+        </div>
     </div>
 
     <script src="tasks.js?v=80"></script>
