@@ -35,8 +35,8 @@ html, body { overscroll-behavior-y: none; overscroll-behavior-x: none; }
 }
 
 input, textarea, select { -webkit-user-select: auto; user-select: auto; }
-input[type="checkbox"] { appearance: auto !important; -webkit-appearance: auto !important; pointer-events: auto; }
 
+/* VAHVA VÄRILIUKU TAUSTA */
 body { 
     background: linear-gradient(135deg, #a7f3d0 0%, #ecfdf5 100%);
     background-attachment: fixed;
@@ -50,6 +50,7 @@ body.gm-mode { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
 
 .container { max-width: 500px; margin: 0 auto; position: relative; }
 
+/* LASIEFEKTI */
 .glass-card {
     background: var(--surface) !important;
     backdrop-filter: blur(16px) saturate(180%) !important;
@@ -96,30 +97,61 @@ body.gm-mode .btn-secondary { background: rgba(30, 41, 59, 0.5); }
 .physical-card p { font-size: 1.05rem; color: #111; font-weight: 700; line-height: 1.45; flex-grow: 1; margin-bottom: 12px; pointer-events: none; }
 .card-price-tag { position: absolute; top: 10px; right: 10px; background: var(--warning); color: #000; font-weight: 900; padding: 4px 10px; border-radius: 8px; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
-/* UUSI KORTTIVIUHKA (FAN) 3D EFEKTI */
+/* KORTTIKANSIO (MUOVITASKUT) KAUPPAAN */
+.plastic-sleeve {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 18px;
+    padding: 8px;
+    position: relative;
+    box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.6), 0 4px 10px rgba(0,0,0,0.1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+.plastic-sleeve::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, transparent 40%, rgba(255,255,255,0.1) 100%);
+    pointer-events: none; border-radius: 18px; z-index: 10;
+}
+.plastic-sleeve .physical-card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+
+/* KAUPPA KANSIO-NAPPI */
+.binder-btn {
+    background: linear-gradient(to right, #b45309 0%, #f59e0b 20%, #fcd34d 100%);
+    border-radius: 6px 16px 16px 6px;
+    position: relative; color: #000 !important;
+    border: 2px solid #78350f;
+    box-shadow: inset 10px 0 15px rgba(0,0,0,0.3), 0 6px 15px rgba(245, 158, 11, 0.4);
+    padding: 16px 10px 16px 20px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+}
+.binder-btn::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 16px; width: 4px;
+    background: rgba(0,0,0,0.15); border-left: 1px solid rgba(255,255,255,0.4);
+}
+
+/* KANSIO AUKEE -ANIMAATIO */
+@keyframes openBinder {
+    0% { transform: scale(0.7) rotateY(-90deg); opacity: 0; transform-origin: left center; }
+    100% { transform: scale(1) rotateY(0deg); opacity: 1; transform-origin: left center; }
+}
+.binder-modal-anim { animation: openBinder 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+/* KORTTIVIUHKA (FAN) 3D EFEKTI PARANNETTUNA */
 .fan-carousel-wrapper { 
-    position: relative; 
-    width: 100vw; 
-    height: 480px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    margin: 0 auto;
-    overflow: hidden;
+    position: relative; width: 100vw; height: 500px; display: flex; 
+    align-items: center; justify-content: center; margin: 0 auto; overflow: hidden;
 }
 .fan-card-container { 
-    position: absolute; 
-    width: 270px; 
-    height: 400px; 
-    top: 50%; left: 50%;
-    transform-origin: center 150%; /* Pyörityspiste alhaalla */
-    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s, z-index 0.5s;
+    position: absolute; width: 280px; height: 420px; top: 50%; left: 50%;
+    transform-origin: center 150%; 
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s, z-index 0.4s;
     will-change: transform;
 }
 .card-3d { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.1s; }
 .card-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; background: #fff; }
 .card-front { padding: 30px 24px; border: 2px solid var(--border); }
-.card-back { transform: rotateY(180deg); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 6px solid #fff; }
+.card-back { transform: rotateX(180deg); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 6px solid #fff; }
 .card-back-sabotage { background: linear-gradient(135deg, #9f1239, #e11d48); }
 .card-back-buff { background: linear-gradient(135deg, #1e3a8a, #2563eb); }
 .card-back-premium { background: linear-gradient(135deg, #b45309, #f59e0b); }
@@ -128,7 +160,6 @@ body.gm-mode .btn-secondary { background: rgba(30, 41, 59, 0.5); }
 .compact-log-item { background: transparent; border-bottom: 1px solid var(--border); padding: 8px 0px; display: flex; justify-content: space-between; align-items: center; }
 .compact-log-item:last-child { border-bottom: none; }
 
-/* MUUT TYYLIT */
 input[type="text"], input[type="number"], select { width: 100%; padding: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.5); border: 2px solid var(--border); color: var(--text-main); border-radius: 12px; font-size: 1.1rem; font-weight:800; }
 body.gm-mode input, body.gm-mode select { background: rgba(0,0,0,0.2); }
 input:focus { border-color: var(--primary); outline: none; }
@@ -149,7 +180,7 @@ body.player-mode .gm-only { display: none !important; }
 .fullscreen-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 3px solid var(--border); }
 .fullscreen-modal-header h2 { color: var(--text-main); font-size: 1.5rem; margin: 0; font-weight: 900; }
 .close-modal-btn { background: var(--danger); border: none; border-radius: 50%; width:44px; height:44px; color: #fff; font-size: 1.8rem; font-weight:bold; cursor: pointer; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4); }
-.winner-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 16px; overflow-y:auto; overscroll-behavior: none; overflow-x: hidden; }
+.winner-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 16px; overflow-y:auto; overscroll-behavior: none; overflow-x: hidden; } 
 
 /* ========================================= */
 /* FOTOREALISTINEN PAPERI TULOSKORTTI (UUSI) */
@@ -157,42 +188,53 @@ body.player-mode .gm-only { display: none !important; }
 .paper-score-modal {
     background-color: #fdfaf6;
     background-image: 
-        linear-gradient(90deg, transparent 40px, rgba(244, 63, 94, 0.4) 40px, rgba(244, 63, 94, 0.4) 42px, transparent 42px), /* Punainen marginaali */
-        linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px); /* Vaaleat rivit */
+        linear-gradient(90deg, transparent 40px, rgba(244, 63, 94, 0.4) 40px, rgba(244, 63, 94, 0.4) 42px, transparent 42px),
+        linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
     background-size: 100% 2.2rem;
-    font-family: 'Kalam', cursive, sans-serif !important; /* Kuulakärkikynä fontti */
-    color: #0f1b61 !important; /* Mustekynä-sininen */
-    border-radius: 3px 15px 5px 20px / 15px 3px 20px 5px; /* Rypistynyt reuna */
+    font-family: 'Kalam', cursive, sans-serif !important; 
+    color: #0f1b61 !important; 
+    border-radius: 3px 15px 5px 20px / 15px 3px 20px 5px; 
     box-shadow: inset 0 0 20px rgba(0,0,0,0.05), 5px 10px 25px rgba(0,0,0,0.3);
     padding: 30px 20px 20px 20px;
     width: 100%; max-width: 450px;
-    transform: rotate(-1deg); /* Lievä vino asento luonnollisuutta varten */
+    transform: rotate(-1deg); 
 }
 
 .paper-score-modal h2 { font-family: 'Kalam', cursive !important; color: #0f1b61 !important; font-size: 2.2rem; letter-spacing: 0; text-transform: none; text-decoration: underline; margin-bottom: 5px; }
 .paper-score-modal p { font-family: 'Kalam', cursive !important; color: #0f1b61 !important; font-size: 1.4rem; }
 
-.score-row-paper { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.1); }
-.score-name-paper { font-size: 1.8rem; font-weight: 700; color: #0f1b61; font-family: 'Kalam', cursive; padding-left: 30px; } /* padding väistää punaista marginaalia */
+.score-row-paper { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dotted rgba(15, 27, 97, 0.3); }
+.score-row-paper:last-child { border-bottom: none; }
+.score-name-paper { font-size: 1.8rem; font-weight: 700; color: #0f1b61; font-family: 'Kalam', cursive; padding-left: 30px; }
 
 .score-controls-paper { display: flex; align-items: center; gap: 8px; }
-.btn-score-paper { width: 44px; height: 44px; background: transparent; border: none; color: #0f1b61; font-size: 2.5rem; font-family: 'Kalam', cursive; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.btn-score-paper { width: 44px; height: 44px; background: transparent; border: none; color: #0f1b61; font-size: 2.5rem; font-family: 'Kalam', cursive; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; padding-bottom: 8px;}
 
 /* Pallottu kuulakärkikynä-tulos */
 .score-display-paper { 
     width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; 
-    font-size: 2rem; font-weight: 700; color: #0f1b61; font-family: 'Kalam', cursive;
+    font-size: 2.2rem; font-weight: 700; color: #0f1b61; font-family: 'Kalam', cursive;
     background: transparent; border: 2px solid transparent; 
 }
-.score-birdie-paper { border: 2px solid #0f1b61; border-radius: 50% 45% 55% 40%; } /* Piirretty ympyrä */
-.score-bogey-paper { border: 2px solid #0f1b61; border-radius: 5px; transform: rotate(3deg); } /* Piirretty neliö */
+.score-birdie-paper { border: 2px solid #0f1b61; border-radius: 50% 45% 55% 40%; } 
+.score-bogey-paper { border: 2px solid #0f1b61; border-radius: 5px; transform: rotate(3deg); }
 
-/* Tehtävä ruksit paperilla */
+/* Tehtävä ruksit paperilla, pakotettu ylikirjoitus piilottaa sinisen ruudun */
 .task-paper-label { display: flex; align-items: center; gap: 12px; font-family: 'Kalam', cursive; font-size:1.6rem; color: #0f1b61; cursor:pointer;}
-.task-paper-checkbox { appearance: none; -webkit-appearance: none; width: 28px; height: 28px; border: 2px solid #0f1b61; border-radius: 4px; position: relative; cursor: pointer; background: transparent; }
-.task-paper-checkbox:checked::after { content: 'X'; position: absolute; top: -10px; left: 2px; font-size: 2.5rem; color: #0f1b61; font-family: 'Kalam', cursive; }
-
-.task-checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; margin-bottom: 20px; }
+.task-paper-checkbox { 
+    appearance: none !important; 
+    -webkit-appearance: none !important; 
+    width: 28px; height: 28px; 
+    border: 2px solid #0f1b61 !important; 
+    border-radius: 4px; 
+    position: relative; 
+    cursor: pointer; 
+    background: transparent !important; 
+    outline: none;
+}
+.task-paper-checkbox:checked { background: transparent !important; }
+.task-paper-checkbox:checked::after { content: 'X'; position: absolute; top: -12px; left: 2px; font-size: 2.5rem; color: #0f1b61; font-family: 'Kalam', cursive; }
+.task-checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; margin-bottom: 20px; padding-left: 20px;}
 /* ========================================= */
 
 .gm-score-adjust { display: flex; gap: 6px; width: 100%; margin-top: 8px; align-items:center; }
