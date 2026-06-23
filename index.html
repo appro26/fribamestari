@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="friba.png" />
     
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=90" />
+    <link rel="stylesheet" href="style.css?v=100" />
     <meta id="themeColorMeta" name="theme-color" content="#d1fae5" />
     
     <script>
@@ -85,6 +85,7 @@
             </div>
 
             <div class="player-only">
+                
                 <div id="compactViewContainer" class="grid-2" style="margin-bottom: 15px;">
                     <button class="btn btn-danger" style="padding: 16px 10px; font-size: 1rem; display: flex; flex-direction: column; align-items: center; gap: 8px;" onclick="document.getElementById('handModal').style.display='flex'">
                         <span>🃏 Omat kortit</span>
@@ -92,21 +93,11 @@
                     </button>
                     
                     <button id="shopButtonElement" class="btn binder-btn" onclick="document.getElementById('shopModal').style.display='flex'">
-                        <span style="font-size: 1.1rem; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">🎴 KAUPPA</span>
+                        <span style="font-size: 1.1rem; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); letter-spacing:1px;">🎴 KAUPPA</span>
                         <span style="background: rgba(0,0,0,0.4); color: #fbbf24; padding: 4px 12px; border-radius: 12px; font-size: 0.95rem; border:1px solid rgba(255,255,255,0.1);">SALDO: <span id="myResPointsBtn" style="font-weight:900;">0 P</span></span>
                     </button>
                 </div>
 
-                <div id="expandedViewContainer" style="display:none;">
-                    <div class="card glass-card" style="border-top: 5px solid var(--danger);">
-                        <h2 style="color:var(--danger);">🃏 Omat Kortit</h2>
-                        <div id="playerHandExpanded" class="cards-list-1"></div>
-                    </div>
-                    <div class="card glass-card" style="border-top: 5px solid var(--warning);">
-                        <h2 style="color:var(--warning);">🛒 Kauppa <span id="myResPointsExpanded" style="float:right; color:var(--text-main);">0 P</span></h2>
-                        <div id="shopItemsExpanded" class="cards-list-1"></div>
-                    </div>
-                </div>
             </div>
         </div> 
 
@@ -173,7 +164,6 @@
         </div>
 
         <div style="margin-top: 20px; padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
-            <button class="btn btn-secondary player-only glass-card" onclick="if(window.toggleView) { window.toggleView(); }" id="viewToggleBtn" style="font-size:0.9rem; margin:0; padding:16px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
             <button class="btn btn-secondary glass-card" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
 
             <div class="role-switcher glass-card">
@@ -184,6 +174,7 @@
 
     </div>
 
+    <!-- Modaalit -->
     <div id="handModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
@@ -193,17 +184,23 @@
         <div id="handModalCards" class="cards-grid-2"></div>
     </div>
 
-    <div id="shopModal" class="fullscreen-modal">
-        <div class="shop-binder-modal" style="height:100%;">
-            <div class="swipe-indicator"></div>
-            <div class="fullscreen-modal-header" style="margin-bottom:10px;">
-                <h2 style="display:flex; align-items:center; gap:10px;">🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px;">0 P</span></h2>
+    <div id="shopModal" class="fullscreen-modal" style="padding:0; background:transparent;">
+        <div class="shop-binder-modal">
+            <!-- Kansion metallirenkaat -->
+            <div class="binder-spine">
+                <div class="binder-ring"></div>
+                <div class="binder-ring"></div>
+                <div class="binder-ring"></div>
+            </div>
+            
+            <div class="fullscreen-modal-header" style="margin-bottom:15px; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom:15px;">
+                <h2 style="display:flex; align-items:center; gap:10px; color:#fff;">🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px;">0 P</span></h2>
                 <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('shopModal').style.display='none'; document.querySelector('.shop-binder-modal').classList.remove('binder-modal-anim');">&times;</button>
             </div>
             
-            <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(0,0,0,0.05); padding:4px;">
-                <button id="shopTabBuyBtn" class="role-btn active" onclick="if(window.switchShopTab) window.switchShopTab('buy')">OSTA KORTTEJA</button>
-                <button id="shopTabSellBtn" class="role-btn" onclick="if(window.switchShopTab) window.switchShopTab('sell')">OMAT KORTIT</button>
+            <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.1); padding:4px; border:1px solid rgba(255,255,255,0.2);">
+                <button id="shopTabBuyBtn" class="role-btn active" onclick="if(window.switchShopTab) window.switchShopTab('buy')" style="color:#fff;">OSTA KORTTEJA</button>
+                <button id="shopTabSellBtn" class="role-btn" onclick="if(window.switchShopTab) window.switchShopTab('sell')" style="color:#fff;">OMAT KORTIT</button>
             </div>
             
             <div id="shopBuyArea">
@@ -231,11 +228,22 @@
         <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
-    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; overflow:hidden;">
+    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:20px; overflow:hidden;">
         <div id="cardCarousel" class="fan-carousel-wrapper"></div>
-        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:15px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">👈 VAIHDA KORTTIA SIVULLE 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
+        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.85rem; font-weight:900; text-transform:uppercase; margin-bottom:10px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">👈 VAIHDA KORTTIA SIVULLE 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;"></div>
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px; margin-top:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
+    </div>
+
+    <div id="courseModal" class="winner-overlay">
+        <div class="card glass-card" style="width: 100%; max-width: 450px;">
+            <h2 style="color:var(--text-main); font-size: 1.4rem;">Luo oma rata</h2>
+            <input type="text" id="setupCourseName" aria-label="Radan nimi" placeholder="Radan nimi..." />
+            <input type="number" id="setupHoleCount" aria-label="Väylien määrä" placeholder="Väylien määrä" oninput="if(window.generateParInputs) { window.generateParInputs(); }" />
+            <div id="parInputsContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            <button class="btn btn-primary" onclick="if(window.saveCourseSetup) { window.saveCourseSetup(); }">TALLENNA & ALOITA</button>
+            <button class="btn btn-secondary glass-card" style="margin-top: 12px;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
+        </div>
     </div>
 
     <div id="scoreModal" class="winner-overlay">
@@ -249,24 +257,13 @@
 
             <div id="scoreInputsContainer" style="margin-bottom: 20px;"></div>
             
-            <div style="margin-bottom: 25px; border-top: 2px dashed #0f1b61; padding-top:15px;">
+            <div style="margin-bottom: 25px; border-top: 2px dashed #0f1b61; padding-top:15px; position: relative; z-index: 10;">
                 <label style="font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; display: block;">Kuka suoritti tehtävän?</label>
                 <div id="taskWinnerContainer" class="task-checkbox-grid"></div>
             </div>
 
-            <button class="btn" style="background:#0f1b61; color:#fff; font-family:'Kalam', cursive; font-size:1.6rem; padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2);" onclick="if(window.submitScores) { window.submitScores(); }">TALLENNA</button>
-            <button class="btn" style="background:transparent; border: 2px solid #0f1b61; color:#0f1b61; font-family:'Kalam', cursive; font-size:1.4rem; margin-top:15px; padding:8px;" onclick="document.getElementById('scoreModal').style.display='none'">PERUUTA</button>
-        </div>
-    </div>
-
-    <div id="courseModal" class="winner-overlay">
-        <div class="card glass-card" style="width: 100%; max-width: 450px;">
-            <h2 style="color:var(--text-main); font-size: 1.4rem;">Luo oma rata</h2>
-            <input type="text" id="setupCourseName" aria-label="Radan nimi" placeholder="Radan nimi..." />
-            <input type="number" id="setupHoleCount" aria-label="Väylien määrä" placeholder="Väylien määrä" oninput="if(window.generateParInputs) { window.generateParInputs(); }" />
-            <div id="parInputsContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
-            <button class="btn btn-primary" onclick="if(window.saveCourseSetup) { window.saveCourseSetup(); }">TALLENNA & ALOITA</button>
-            <button class="btn btn-secondary glass-card" style="margin-top: 12px;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
+            <button class="btn" style="background:#0f1b61; color:#fff; font-family:'Kalam', cursive; font-size:1.6rem; padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); position:relative; z-index:10;" onclick="if(window.submitScores) { window.submitScores(); }">TALLENNA</button>
+            <button class="btn" style="background:transparent; border: 2px solid #0f1b61; color:#0f1b61; font-family:'Kalam', cursive; font-size:1.4rem; margin-top:15px; padding:8px; position:relative; z-index:10;" onclick="document.getElementById('scoreModal').style.display='none'">PERUUTA</button>
         </div>
     </div>
 
@@ -288,7 +285,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=95"></script>
-    <script type="module" src="script.js?v=95"></script>
+    <script src="tasks.js?v=100"></script>
+    <script type="module" src="script.js?v=100"></script>
 </body>
 </html>
