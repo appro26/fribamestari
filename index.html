@@ -15,7 +15,8 @@
 
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
-    <link rel="stylesheet" href="style.css?v=71" />
+    
+    <link rel="stylesheet" href="style.css?v=80" />
     <meta id="themeColorMeta" name="theme-color" content="#d1fae5" />
     
     <script>
@@ -30,6 +31,7 @@
             <div style="font-size:3.5rem; margin-bottom:10px;">📲</div>
             <h2 style="color:var(--text-main); font-size: 1.5rem; margin-bottom: 15px; font-weight:900;">ASENNA SOVELLUS</h2>
             <p id="installInstructions" style="font-size:1.1rem; color:var(--text-muted); line-height:1.5; margin-bottom:25px; font-weight:700;"></p>
+            <button class="btn btn-primary" id="nativeInstallBtn" onclick="if(window.triggerNativeInstall) window.triggerNativeInstall();" style="display:none; margin-bottom:15px;">🚀 ASENNA NYT</button>
             <button class="btn btn-secondary glass-card" onclick="if(window.dismissInstallPrompt) window.dismissInstallPrompt();" style="font-size:1rem; padding:16px;">JATKA SELAIMELLA</button>
         </div>
     </div>
@@ -83,6 +85,7 @@
             </div>
 
             <div class="player-only">
+                
                 <div id="walletDisplayArea" class="player-wallet-box glass-card" style="background:rgba(245, 158, 11, 0.85); color:#000;">
                     <span>💰 SALDO:</span> <span id="mainWalletPoints">0 P</span>
                 </div>
@@ -173,9 +176,9 @@
 
         <div style="margin-top: 20px; padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
             <button class="btn btn-secondary player-only glass-card" onclick="if(window.toggleView) { window.toggleView(); }" id="viewToggleBtn" style="font-size:0.9rem; margin:0; padding:16px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
-            <button class="btn btn-secondary glass-card" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU (KORJAA JUMIT)</button>
+            <button class="btn btn-secondary glass-card" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
 
-            <div class="role-switcher">
+            <div class="role-switcher glass-card">
                 <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) { window.setRole('player'); }">PELAAJA</button>
                 <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) { window.setRole('gm'); } }">GM</button>
             </div>
@@ -183,7 +186,6 @@
 
     </div>
 
-    <!-- Modaalit -->
     <div id="handModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
@@ -193,7 +195,6 @@
         <div id="handModalCards" class="cards-grid-2"></div>
     </div>
 
-    <!-- KORJAUS 1: Kaupan välilehdet -->
     <div id="shopModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header" style="margin-bottom:10px;">
@@ -201,7 +202,7 @@
             <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('shopModal').style.display='none'">&times;</button>
         </div>
         
-        <div class="role-switcher" style="margin-bottom:20px; background:transparent;">
+        <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(0,0,0,0.05); padding:4px;">
             <button id="shopTabBuyBtn" class="role-btn active" onclick="if(window.switchShopTab) window.switchShopTab('buy')">OSTA KORTTEJA</button>
             <button id="shopTabSellBtn" class="role-btn" onclick="if(window.switchShopTab) window.switchShopTab('sell')">OMAT KORTIT</button>
         </div>
@@ -230,17 +231,14 @@
         <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
-    <!-- KORJAUS 4: 3D-Karuselli Modal -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:20px;">
-        <div id="cardCarousel" class="card-carousel-wrapper">
-            <!-- JS tuottaa kortit tähän vierekkäin -->
-        </div>
+        <div id="cardCarousel" class="card-carousel-wrapper"></div>
         <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.85rem; font-weight:800; text-transform:uppercase; margin-bottom:5px; margin-top:-10px;">👈 VAIHDA KORTTIA 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;"></div>
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
-    <script src="tasks.js?v=71"></script>
-    <script type="module" src="script.js?v=71"></script>
+    <script src="tasks.js?v=80"></script>
+    <script type="module" src="script.js?v=80"></script>
 </body>
 </html>
