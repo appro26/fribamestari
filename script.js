@@ -5,6 +5,7 @@ const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// YLEISET MUUTTUJAT JA FUNKTIOT ENNEN FIREBASEA
 const el = id => document.getElementById(id);
 
 let myName = localStorage.getItem('friba_name') || null;
@@ -19,9 +20,7 @@ let lastPlayedCardTimestamp = Date.now();
 window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
 window.pendingShopPurchase = null;
 
-//==============================================
-// ASENNA SOVELLUS (PWA / KOTIVALIKKO)
-//==============================================
+// ASENNA SOVELLUS (PWA)
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -93,9 +92,7 @@ window.dismissInstallPrompt = function() {
 
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
-//==============================================
-// KORTIN PELAAMINEN (TARGET MODAL / AUTOMATIIKKA)
-//==============================================
+// KORTIN PELAAMINEN
 window.openTargetModal = function(cardId) {
     const cardDef = window.allCards.find(c => c.id === cardId);
     if (!cardDef) return;
@@ -179,118 +176,23 @@ window.executeCardPlay = function(targetName) {
     window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, type);
 };
 
-//==============================================
-// 3D-KORTIN KARUSELLI (SLAIDAUS SIVULLE JA YLÖS)
-//==============================================
+// 3D-KARUSELLI SLAIDAUKSELLA
 window.carouselCards = [];
 window.carouselCurrentIndex = 0;
 window.carouselCurrentMode = 'hand';
 window.carouselArgs = [];
 window.cardLastRot = 0;
 
-window.initCarouselSwipe = function() {
-    const wrapper = el('cardCarousel');
-    const activeCard = el(`card3d-inner-${window.carouselCurrentIndex}`);
-    if(!wrapper || !activeCard) return;
-    
-    let startX = 0; let startY = 0;
-    let currentX = 0; let currentY = 0;
-    let isDragging = false;
-    let swipeDirection = null; 
-    let currentRotX = window.cardLastRot || 0; 
-    
-    wrapper.addEventListener('touchstart', e => {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        isDragging = true;
-        swipeDirection = null;
-        activeCard.style.transition = 'none'; 
-    }, {passive: true});
-
-    wrapper.addEventListener('touchmove', e => {
-        if(!isDragging) return;
-        currentX = e.touches[0].clientX;
-        currentY = e.touches[0].clientY;
-        
-        let diffX = currentX - startX;
-        let diffY = currentY - startY;
-        
-        if (!swipeDirection) {
-            if (Math.abs(diffX) > Math.abs(diffY)) swipeDirection = 'h';
-            else swipeDirection = 'v';
-        }
-        
-        if (swipeDirection === 'h') {
-            wrapper.style.transform = `translateX(${diffX}px)`;
-        } else if (swipeDirection === 'v') {
-            let newRot = currentRotX - (diffY * 1.0);
-            activeCard.style.transform = `rotateX(${newRot}deg)`;
-        }
-    }, {passive: true});
-
-    wrapper.addEventListener('touchend', e => {
-        if(!isDragging) return;
-        isDragging = false;
-        
-        if (swipeDirection === 'h') {
-            wrapper.style.transition = 'transform 0.3s ease';
-            wrapper.style.transform = `translateX(0px)`;
-            
-            let diffX = currentX - startX;
-            if (diffX > 60 && window.carouselCurrentIndex > 0) {
-                window.carouselCurrentIndex--;
-                window.cardLastRot = 0;
-                window.renderCarousel();
-            } else if (diffX < -60 && window.carouselCurrentIndex < window.carouselCards.length - 1) {
-                window.carouselCurrentIndex++;
-                window.cardLastRot = 0;
-                window.renderCarousel();
-            }
-        } else if (swipeDirection === 'v') {
-            activeCard.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            let transformStr = activeCard.style.transform;
-            let match = transformStr.match(/rotateX\(([-0-9.]+)deg\)/);
-            if(match) {
-                let rot = parseFloat(match[1]);
-                window.cardLastRot = Math.round(rot / 180) * 180;
-                activeCard.style.transform = `rotateX(${window.cardLastRot}deg)`;
-            }
-        }
-    }, {passive: true});
-};
-
-window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
-    if (mode === 'hand' || mode === 'sell') {
-        const me = allPlayers.find(p => p && p.name === myName);
-        window.carouselCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
-    } else if (mode === 'shop') {
-        window.carouselCards = activeHole && activeHole.shop ? activeHole.shop.map(c => c.id) : [];
-    } else if (mode === 'gm') {
-        window.carouselCards = window.allCards.map(c => c.id);
-    } else {
-        window.carouselCards = [cId]; 
-    }
-    
-    window.carouselCurrentMode = mode;
-    window.carouselArgs = [arg1, arg2, arg3];
-    window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
-    if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
-    
-    window.cardLastRot = 0;
-    window.renderCarousel();
-    el('cardDetailModal').style.display = 'flex';
-};
-
-window.renderCarousel = function() {
+window.renderCarousel = function(dragX = 0) {
     const wrapper = el('cardCarousel');
     if(!wrapper) return;
     
     let html = '';
-    for(let i = -1; i <= 1; i++) {
-        let index = window.carouselCurrentIndex + i;
-        if (index < 0 || index >= window.carouselCards.length) continue;
+    for(let i = 0; i < window.carouselCards.length; i++) {
+        let diff = i - window.carouselCurrentIndex;
+        if (Math.abs(diff) > 1) continue; 
         
-        let cId = window.carouselCards[index];
+        let cId = window.carouselCards[i];
         let cDef = window.allCards.find(c => c.id === cId);
         if(!cDef) continue;
         
@@ -300,17 +202,21 @@ window.renderCarousel = function() {
         let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
         let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
         
-        let isCenter = (i === 0);
-        let sideClass = isCenter ? '' : 'side-card';
+        let translateX = diff * 115; 
+        let scale = diff === 0 ? 1 : 0.85;
+        let opacity = diff === 0 ? 1 : 0.5;
+        let zIndex = diff === 0 ? 5 : 1;
+        let pixelOffset = diff === 0 ? dragX : (diff < 0 ? dragX - 30 : dragX + 30);
+        let transStyle = dragX === 0 ? 'transform 0.3s ease, opacity 0.3s ease' : 'none';
         
         html += `
-            <div class="card-3d-container ${sideClass}" id="carousel-card-${index}">
-                <div class="card-3d" id="card3d-inner-${index}">
+            <div class="card-3d-container" id="carousel-card-${i}" style="transform: translateX(calc(${translateX}% + ${dragX}px)) scale(${scale}); opacity: ${opacity}; z-index: ${zIndex}; transition: ${transStyle};">
+                <div class="card-3d" id="card3d-inner-${i}">
                     <div class="card-face card-front ${typeClass}">
                         <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
                             <div class="card-type-tag" style="font-size:1.1rem; margin-bottom:12px;">${tagTxt}</div>
-                            <h3 style="font-size:2rem; margin-bottom:20px; color:#000; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
-                            <p style="font-size:1.3rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
+                            <h3 style="font-size:1.85rem; margin-bottom:20px; color:#000; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
+                            <p style="font-size:1.45rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
                         </div>
                     </div>
                     <div class="card-face card-back ${backClass}">
@@ -322,10 +228,14 @@ window.renderCarousel = function() {
     }
     
     wrapper.innerHTML = html;
-    wrapper.style.transform = `translateX(0px)`;
+    
+    let activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
+    if(activeInner && dragX === 0) {
+        activeInner.style.transform = `rotateX(${window.cardLastRot}deg)`;
+        activeInner.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    }
     
     window.updateCarouselButtons();
-    setTimeout(() => { window.initCarouselSwipe(); }, 50);
 };
 
 window.updateCarouselButtons = function() {
@@ -335,6 +245,7 @@ window.updateCarouselButtons = function() {
     
     let btnHtml = '';
     let mode = window.carouselCurrentMode;
+    let [arg1, arg2, arg3] = window.carouselArgs;
 
     if (mode === 'hand') {
         btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
@@ -368,9 +279,99 @@ window.updateCarouselButtons = function() {
     el('cardDetailActionArea').innerHTML = btnHtml;
 };
 
-//==============================================
+window.initCarouselSwipe = function() {
+    const wrapper = el('cardCarousel');
+    if(!wrapper) return;
+    
+    let startX = 0; let startY = 0;
+    let currentX = 0; let currentY = 0;
+    let isDragging = false;
+    let swipeDirection = null; 
+    let currentRotX = window.cardLastRot || 0; 
+    
+    wrapper.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        swipeDirection = null;
+    }, {passive: true});
+
+    wrapper.addEventListener('touchmove', e => {
+        if(!isDragging) return;
+        currentX = e.touches[0].clientX;
+        currentY = e.touches[0].clientY;
+        
+        let diffX = currentX - startX;
+        let diffY = currentY - startY;
+        
+        if (!swipeDirection) {
+            if (Math.abs(diffX) > Math.abs(diffY)) swipeDirection = 'h';
+            else swipeDirection = 'v';
+        }
+        
+        if (swipeDirection === 'h') {
+            window.renderCarousel(diffX);
+        } else if (swipeDirection === 'v') {
+            let activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
+            if(activeInner) {
+                activeInner.style.transition = 'none';
+                let newRot = currentRotX - (diffY * 1.0);
+                activeInner.style.transform = `rotateX(${newRot}deg)`;
+            }
+        }
+    }, {passive: true});
+
+    wrapper.addEventListener('touchend', e => {
+        if(!isDragging) return;
+        isDragging = false;
+        
+        if (swipeDirection === 'h') {
+            let diffX = currentX - startX;
+            if (diffX > 60 && window.carouselCurrentIndex > 0) {
+                window.carouselCurrentIndex--;
+            } else if (diffX < -60 && window.carouselCurrentIndex < window.carouselCards.length - 1) {
+                window.carouselCurrentIndex++;
+            }
+            window.cardLastRot = 0;
+            window.renderCarousel(0); 
+            
+        } else if (swipeDirection === 'v') {
+            let activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
+            if(activeInner) {
+                activeInner.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                let diffY = currentY - startY;
+                let newRot = currentRotX - (diffY * 1.0);
+                window.cardLastRot = Math.round(newRot / 180) * 180;
+                activeInner.style.transform = `rotateX(${window.cardLastRot}deg)`;
+            }
+        }
+    }, {passive: true});
+};
+
+window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
+    if (mode === 'hand' || mode === 'sell') {
+        const me = allPlayers.find(p => p && p.name === myName);
+        window.carouselCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
+    } else if (mode === 'shop') {
+        window.carouselCards = activeHole && activeHole.shop ? activeHole.shop.map(c => c.id) : [];
+    } else if (mode === 'gm') {
+        window.carouselCards = window.allCards.map(c => c.id);
+    } else {
+        window.carouselCards = [cId]; 
+    }
+    
+    window.carouselCurrentMode = mode;
+    window.carouselArgs = [arg1, arg2, arg3];
+    window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
+    if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
+    
+    window.cardLastRot = 0;
+    window.renderCarousel(0);
+    el('cardDetailModal').style.display = 'flex';
+    setTimeout(window.initCarouselSwipe, 100);
+};
+
 // KORTIN POISTO JA KAUPPA
-//==============================================
 window.forceDiscard = function(cId, isNormal) {
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
     const me = nextPlayers.find(p => p && p.name === myName);
@@ -473,13 +474,13 @@ window.switchShopTab = function(tab) {
     if (tab === 'buy') {
         el('shopBuyArea').style.display = 'block';
         el('shopSellArea').style.display = 'none';
-        el('shopTabBuyBtn').classList.add('active');
-        el('shopTabSellBtn').classList.remove('active');
+        if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.add('active');
+        if(el('shopTabSellBtn')) el('shopTabSellBtn').classList.remove('active');
     } else {
         el('shopBuyArea').style.display = 'none';
         el('shopSellArea').style.display = 'block';
-        el('shopTabBuyBtn').classList.remove('active');
-        el('shopTabSellBtn').classList.add('active');
+        if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.remove('active');
+        if(el('shopTabSellBtn')) el('shopTabSellBtn').classList.add('active');
     }
 };
 
@@ -523,18 +524,7 @@ window.saveGameSettings = function() {
     window.showNotification("Asetukset tallennettu!", "info");
 };
 
-//==============================================
 // HELPERIT
-//==============================================
-window.showAppleToast = function(msg, icon = '✨') {
-    const toast = el('appleToast');
-    if(!toast) return;
-    el('appleToastIcon').innerText = icon;
-    el('appleToastText').innerText = msg;
-    toast.classList.add('show');
-    setTimeout(() => { toast.classList.remove('show'); }, 2000); 
-};
-
 window.cleanFirebaseData = function(obj) {
     if (obj === null || obj === undefined) return null;
     if (typeof obj !== 'object') return obj;
@@ -1060,8 +1050,20 @@ window.removePlayer = function(idx) {
     } 
 };
 
+// UUSI OMINAISUUS: RADAN KESKEYTYS
+window.cancelCourse = function() {
+    if (confirm("Haluatko varmasti lopettaa nykyisen radan? Pelaajat säilyttävät rahansa ja korttinsa, mutta palaatte aulaan.")) {
+        update(ref(db, 'gameState'), window.cleanFirebaseData({
+            course: null,
+            activeHole: null,
+            currentHoleIndex: 1
+        }));
+        window.logEvent(`${myName} (GM) keskeytti radan.`);
+    }
+};
+
 window.resetGame = function() {
-    if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos.")) {
+    if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki pelaajat poistetaan.")) {
         localStorage.removeItem('friba_browser_mode');
         set(ref(db, 'gameState'), window.cleanFirebaseData({ settings: window.gameSettings, players: [], activeHole: null, currentHoleIndex: 1, course: null }))
         .then(() => { localStorage.clear(); location.reload(); });
@@ -1103,7 +1105,7 @@ window.startMeilahti = function() {
     }));
 
     if(el('courseModal')) el('courseModal').style.display = 'none'; 
-    window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}. Kaikki saivat 3 P ja 3 korttia.`);
+    window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}.`);
 };
 
 window.generateParInputs = function() {
@@ -1156,7 +1158,7 @@ window.saveCourseSetup = function() {
     }));
 
     if(el('courseModal')) el('courseModal').style.display = 'none'; 
-    window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}. Kaikki saivat 3 P ja 3 korttia.`);
+    window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}.`);
 };
 
 window.changeScore = function(safeId, par, delta) {
@@ -1274,6 +1276,7 @@ window.submitScores = function() {
     }
     
     let normalPool = window.allCards.filter(c => c.tier === "normal");
+    
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
 
     let ptsWin = window.gameSettings.ptsWin !== undefined ? window.gameSettings.ptsWin : 2;
@@ -1339,9 +1342,9 @@ window.submitScores = function() {
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
 };
 
-//==============================================
-// FIREBASE ONVALUE KUUNTELIJA ON NYT LOPUSSA
-//==============================================
+// =============================================
+// LOPUKSI FIREBASE KUUNTELIJA (Kun kaikki on ladattu)
+// =============================================
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
     
@@ -1468,8 +1471,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderScoreLog(data.scoreLog);
 });
 
-// Lopuksi ajetaan sivun valmiiksi kokoavat skriptit
-window.setupSwipeToClose();
+// Lopuksi ajetaan sääntövalikon rakennus
 window.populateRuleSelect = function() {
     const sel = el('gmRuleSelect');
     if(!sel || typeof window.holeRules === 'undefined') return; 
