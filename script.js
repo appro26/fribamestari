@@ -134,7 +134,7 @@ window.executeCardPlay = function(targetName) {
     const card = window.pendingCardPlay;
     const timestamp = Date.now();
     if(el('targetModal')) el('targetModal').style.display = 'none'; 
-    if(el('shopModal')) el('shopModal').style.display = 'none'; 
+    window.closeShopModal();
     
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
     const me = nextPlayers.find(p => p && p.name === myName);
@@ -201,7 +201,7 @@ window.renderCarousel = function() {
                         <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
                             <div class="card-type-tag" style="font-size:1.05rem; margin-bottom:12px;">${tagTxt}</div>
                             <h3 style="font-size:1.85rem; margin-bottom:20px; color:#000; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
-                            <p style="font-size:1.35rem; color:#111; font-weight:800; line-height:1.4; overflow-y:auto; padding-right:5px;">${cDef.d}</p>
+                            <p style="font-size:1.35rem; color:#111; font-weight:800; line-height:1.4; overflow-y:visible; padding-right:5px;">${cDef.d}</p>
                         </div>
                     </div>
                     <div class="card-face card-back ${backClass}">
@@ -424,8 +424,7 @@ window.forceDiscard = function(cId, isNormal) {
             update(ref(db), updates);
             
             window.pendingShopPurchase = null;
-            el('shopModal').style.display = 'none';
-            document.querySelector('.shop-binder-modal').classList.remove('binder-modal-anim');
+            window.closeShopModal();
             window.showNotification(`🛒 Ostit edun: ${pName}`, 'warning');
             return;
         } else {
@@ -471,8 +470,7 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
         
         update(ref(db), updates);
 
-        if(el('shopModal')) el('shopModal').style.display = 'none'; 
-        document.querySelector('.shop-binder-modal').classList.remove('binder-modal-anim');
+        window.closeShopModal();
         window.logEvent(`${myName} osti edun: ${nameStr}.`);
         window.showNotification(`🛒 Ostit edun: ${nameStr}`, 'warning');
     }
@@ -490,6 +488,12 @@ window.openShop = function(tab) {
     let modalEl = document.querySelector('#shopModal .shop-binder-modal');
     if(modalEl) modalEl.classList.add('binder-modal-anim');
     if(window.switchShopTab) window.switchShopTab(tab);
+};
+
+window.closeShopModal = function() {
+    if(el('shopModal')) el('shopModal').style.display = 'none';
+    let modalEl = document.querySelector('#shopModal .shop-binder-modal');
+    if(modalEl) modalEl.classList.remove('binder-modal-anim');
 };
 
 window.switchShopTab = function(tab) {
@@ -763,7 +767,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let sellBtnIcon = isNormal ? '♻️' : '🗑️';
             let sellBtnColor = isNormal ? 'var(--info)' : 'var(--danger)';
             
-            let rot = Math.floor(Math.random() * 6) - 3; 
+            let rot = 0; // Kortit suoristettu, jotta ne ovat täsmälleen linjassa
             
             sellHtml += `
             <div class="shop-item-wrapper messy-card" style="transform: rotate(${rot}deg);">
@@ -1296,7 +1300,7 @@ onValue(ref(db, 'gameState'), (snap) => {
             myName = null;
             localStorage.removeItem('friba_name');
             window.updateIdentityUI();
-            if(el('shopModal')) el('shopModal').style.display = 'none'; 
+            window.closeShopModal();
         }
         currentCourse = null;
         window.renderCourseBanner();
@@ -1322,7 +1326,7 @@ onValue(ref(db, 'gameState'), (snap) => {
         if (!me) {
             myName = null;
             localStorage.removeItem('friba_name');
-            if(el('shopModal')) el('shopModal').style.display = 'none'; 
+            window.closeShopModal();
         }
     }
 
