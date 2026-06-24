@@ -170,7 +170,7 @@ window.executeCardPlay = function(targetName) {
 };
 
 //==============================================
-// NATIIVI KORTTIVIUHKA (TIIVIS VIUHKA)
+// NATIIVI KORTTIVIUHKA (SMOOTH & LEVEÄ)
 //==============================================
 window.carouselCards = [];
 window.carouselCurrentMode = 'hand';
@@ -219,24 +219,32 @@ window.initNativeCarousel = function() {
     const container = el('cardCarousel');
     if(!container) return;
     
+    let isScrolling = false;
+    
     container.addEventListener('scroll', () => {
+        if (!isScrolling) {
+            window.requestAnimationFrame(updateCarouselLayout);
+            isScrolling = true;
+        }
+    }, {passive: true});
+
+    function updateCarouselLayout() {
         const center = container.clientWidth / 2;
         const cards = container.querySelectorAll('.carousel-card-wrapper');
-        
         let closestIndex = 0;
         let minDiff = 9999;
+        const scrollLeft = container.scrollLeft;
 
         cards.forEach((card, index) => {
-            const rect = card.getBoundingClientRect();
-            const cardCenter = rect.left + rect.width / 2;
-            const diff = (cardCenter - center) / 120; // Vaikuttaa kaareen
+            // Huippunopea offsetLeft laskenta getBoundingClientRectin sijaan!
+            const cardCenter = card.offsetLeft - scrollLeft + (card.offsetWidth / 2);
+            const diff = (cardCenter - center) / 140; // Viuhkan asettelu
             
-            // Viuhkan matematiikka - Vedetään kortit toistensa päälle
-            const transX = diff * -130; 
-            const rotZ = diff * 15;
-            const transY = Math.abs(diff) * 30;
-            const scale = Math.max(0.7, 1.25 - Math.abs(diff) * 0.3); // Keskimmäinen on selkeästi isoin
-            const opacity = 1; 
+            const transX = diff * -70; // Leveämpi viuhka, näkyy paremmin
+            const rotZ = diff * 8;
+            const transY = Math.abs(diff) * 20;
+            const scale = Math.max(0.8, 1.15 - Math.abs(diff) * 0.15); // Keskikortti on massiivinen
+            const opacity = 1; // EI LÄPINÄKYVYYTTÄ REUNOILLA!
             
             card.style.transform = `translateX(${transX}px) translateY(${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
             card.style.opacity = opacity;
@@ -250,9 +258,10 @@ window.initNativeCarousel = function() {
         
         window.carouselCurrentIndex = closestIndex;
         window.updateCarouselButtons();
-    }, {passive: true});
+        isScrolling = false;
+    }
     
-    setTimeout(() => { container.dispatchEvent(new Event('scroll')); }, 50);
+    setTimeout(updateCarouselLayout, 50);
 
     let startX = 0; let startY = 0;
     let isSpinning = false;
@@ -353,9 +362,9 @@ window.updateCarouselButtons = function() {
     let [arg1, arg2, arg3] = window.carouselArgs;
 
     if (mode === 'hand' || mode === 'sell') {
-        btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
+        btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(16,185,129,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
         if (cDef.tier === 'normal') {
-            btnHtml += `<button class="btn btn-success" style="font-size:1.1rem; padding:18px; margin-top:5px; background:var(--primary); color:#fff; box-shadow:0 4px 15px rgba(16,185,129,0.5);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
+            btnHtml += `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; margin-top:5px; background:var(--danger); color:#fff; box-shadow:0 4px 15px rgba(220,38,38,0.5);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
         } else {
             btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
         }
@@ -501,11 +510,12 @@ window.closeShopModal = function() {
 
 let shopStartY = 0;
 let shopCurrentY = 0;
+let binderContent = document.querySelector('.binder-content');
 let binderModal = document.querySelector('.shop-binder-modal');
 
-if(binderModal) {
-    binderModal.addEventListener('touchstart', e => {
-        if(binderModal.scrollTop <= 5) {
+if(binderContent && binderModal) {
+    binderContent.addEventListener('touchstart', e => {
+        if(binderContent.scrollTop <= 5) {
             shopStartY = e.touches[0].clientY;
             shopCurrentY = shopStartY; 
         } else {
@@ -513,7 +523,7 @@ if(binderModal) {
         }
     }, {passive: true});
 
-    binderModal.addEventListener('touchmove', e => {
+    binderContent.addEventListener('touchmove', e => {
         if(shopStartY === 0) return;
         shopCurrentY = e.touches[0].clientY;
         let dy = shopCurrentY - shopStartY;
@@ -523,7 +533,7 @@ if(binderModal) {
         }
     }, {passive: false});
 
-    binderModal.addEventListener('touchend', e => {
+    binderContent.addEventListener('touchend', e => {
         if(shopStartY === 0) return;
         let dy = shopCurrentY - shopStartY;
         if(dy > 150 && shopCurrentY !== shopStartY) { 
@@ -742,7 +752,6 @@ window.renderActiveHole = function() {
             let cursorStyle = cardDef ? `cursor:pointer;` : '';
             
             if (pc.target === myName) {
-                // Fyysinen kortti omalle taululle
                 let typeClass = cType === 'buff' ? 'buff-card' : 'debuff-card';
                 if(cTier === 'premium') typeClass = 'premium-card';
                 let tagTxt = cTier === 'premium' ? '💎 PREMIUM' : (cType === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
@@ -751,7 +760,7 @@ window.renderActiveHole = function() {
                 let pinLeft = 50 + (Math.floor(Math.random() * 20) - 10);
                 
                 myDebuffsHtml += `
-                    <div class="pinned-card-container" style="transform: rotate(${rot}deg);">
+                    <div class="pinned-card-container" style="--rot:${rot}deg;">
                         <div class="pushpin" style="left: ${pinLeft}%;"></div>
                         <div class="physical-card ${typeClass}" ${clickAttr} style="${cursorStyle}">
                             <div class="card-type-tag">${tagTxt}</div>
@@ -765,7 +774,6 @@ window.renderActiveHole = function() {
                         </div>
                     </div>`;
             } else {
-                // Pieni rivi muiden korteille (klikattava myös)
                 let typeIcon = cType === 'buff' ? '🛡️' : '🚫';
                 let gmUndo = currentRole === 'gm' ? ` <button style="color:var(--danger); background:none; border:none; font-weight:900; font-size:0.8rem; padding:4px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">[PERU]</button>` : '';
                 otherCardsHtml += `
@@ -818,7 +826,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
         if(modalContainer) modalContainer.innerHTML = html; 
     }
 
-    // OMAT KORTIT -VÄLILEHTI (MYY/PELAA)
+    // OMAT KORTIT -VÄLILEHTI
     let me = (allPlayers || []).find(p => p && p.name === myName);
     let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     
@@ -835,9 +843,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             
             let isNormal = cDef.tier === 'normal';
             let sellBtnIcon = isNormal ? '♻️' : '🗑️';
-            let sellBtnColor = isNormal ? 'var(--info)' : 'var(--danger)';
             
-            // Satunnainen kallistus
             let rot = Math.random() * 8 - 4; 
             
             sellHtml += `
@@ -847,8 +853,8 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
                 <div style="display:flex; gap:5px;">
-                    <button class="shop-item-btn" style="flex:1; background:var(--danger);" onclick="window.openTargetModal('${cId}')">PELAA</button>
-                    <button class="shop-item-btn" style="width:50px; background:${sellBtnColor}; font-size:1.2rem;" onclick="window.forceDiscard('${cId}', ${isNormal})">${sellBtnIcon}</button>
+                    <button class="shop-item-btn" style="flex:1; background:var(--primary);" onclick="window.openTargetModal('${cId}')">PELAA</button>
+                    <button class="shop-item-btn" style="width:50px; background:var(--danger); font-size:1.2rem;" onclick="window.forceDiscard('${cId}', ${isNormal})">${sellBtnIcon}</button>
                 </div>
             </div>`;
         });
