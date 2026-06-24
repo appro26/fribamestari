@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="friba.png" />
     
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=137" />
+    <link rel="stylesheet" href="style.css?v=138" />
     <meta id="themeColorMeta" name="theme-color" content="#cbd5e1" />
     
     <script>
@@ -181,7 +181,7 @@
 
     </div>
 
-    <!-- Modaalit -->
+    <!-- Modaalit (klikkaus taustaan sulkee ne) -->
     <div id="shopModal" class="fullscreen-modal" style="padding:0; background:rgba(0,0,0,0.7);" onclick="if(event.target === this) { window.closeShopModal(); }">
         <div class="shop-binder-modal theme-shop">
             <div class="binder-swipe-handle"></div>
@@ -195,14 +195,15 @@
                 
                 <div class="binder-content">
                     <div class="fullscreen-modal-header" style="margin-bottom:15px; border-bottom: 2px dashed rgba(255,255,255,0.2); padding-bottom:15px; position:relative; z-index:20;">
-                        <h2 style="display:flex; align-items:center; gap:10px; color:#fff; font-size:1.2rem;">🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px; box-shadow:0 2px 5px rgba(0,0,0,0.5);">0 P</span></h2>
-                        <button class="close-modal-btn" aria-label="Sulje" onclick="window.closeShopModal();">&times;</button>
+                        <h2 style="display:flex; align-items:center; gap:10px; color:#fff; font-size:1.2rem; justify-content:space-between; width:100%;">
+                            <span id="shopModalHeaderTitle">🛒 KAUPPA</span>
+                            <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; box-shadow:0 2px 5px rgba(0,0,0,0.5);">0 P</span>
+                        </h2>
                     </div>
                     
                     <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.05); padding:4px; border:1px solid rgba(255,255,255,0.1); position:relative; z-index:20;">
-                        <!-- event.stopPropagation() ESTÄÄ kansion sulkeutumisen -->
-                        <button id="shopTabBuyBtn" class="role-btn active" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('buy')" style="color:#fff;">OSTA KORTTEJA</button>
                         <button id="shopTabSellBtn" class="role-btn" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('sell')" style="color:#fff;">OMAT KORTIT</button>
+                        <button id="shopTabBuyBtn" class="role-btn active" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('buy')" style="color:#fff;">OSTA KORTTEJA</button>
                     </div>
                     
                     <div id="shopBuyArea" style="position:relative; z-index:20;">
@@ -210,11 +211,9 @@
                     </div>
                     
                     <div id="shopSellArea" style="display:none; position:relative; z-index:20;">
-                        <div id="pendingPurchaseAlert" style="display:none; background:var(--danger); color:#fff; padding:16px; border-radius:12px; margin-bottom:20px; box-shadow:0 6px 15px rgba(244,63,94,0.3);">
-                            <div style="font-weight:900; font-size:1.2rem; margin-bottom:8px;">⚠️ KÄSI TÄYNNÄ!</div>
-                            <div style="font-size:1.05rem; font-weight:700; margin-bottom:15px; line-height:1.4;">Haluat ostaa kortin <strong id="pendingCardName"></strong>. Myy tai hävitä yksi kortti alta tehdäksesi tilaa, jolloin osto suoritetaan automaattisesti!</div>
-                            <button class="btn btn-secondary" style="padding:12px; font-size:0.95rem; color:#000;" onclick="event.stopPropagation(); if(window.cancelShopPurchase) window.cancelShopPurchase()">PERUUTA OSTO</button>
-                        </div>
+                        <!-- Dynaaminen varoituslaatikko -->
+                        <div id="pendingPurchaseAlert" style="display:none; background:var(--danger); color:#fff; padding:16px; border-radius:12px; margin-bottom:20px; box-shadow:0 6px 15px rgba(244,63,94,0.3);"></div>
+                        
                         <div id="shopSellCardsContainer" class="cards-grid-2"></div>
                     </div>
 
@@ -237,7 +236,7 @@
     <!-- NATIIVI VIUHKA-KARUSELLI (JÄTTIKOKO) -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container"></div>
-        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">👈 VAIHDA KORTTIA SIVULLE 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
+        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">👈 VAIHDA KORTTIA 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;"></div>
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px; margin-top:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
@@ -273,7 +272,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=137"></script>
-    <script type="module" src="script.js?v=137"></script>
+    <script src="tasks.js?v=138"></script>
+    <script type="module" src="script.js?v=138"></script>
 </body>
 </html>
