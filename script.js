@@ -170,7 +170,7 @@ window.executeCardPlay = function(targetName) {
 };
 
 //==============================================
-// NATIIVI KORTTIVIUHKA (ISO & TIIVIS)
+// NATIIVI KORTTIVIUHKA (TIIVIS VIUHKA)
 //==============================================
 window.carouselCards = [];
 window.carouselCurrentMode = 'hand';
@@ -199,14 +199,14 @@ window.renderCarousel = function() {
                 <div class="card-3d-inner" id="card3d-inner-${i}">
                     <div class="card-face card-front ${typeClass}">
                         <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
-                            <div class="card-type-tag" style="font-size:1.05rem; margin-bottom:12px;">${tagTxt}</div>
-                            <h3 style="font-size:1.85rem; margin-bottom:20px; color:#000; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
-                            <p style="font-size:1.35rem; color:#111; font-weight:800; line-height:1.4; overflow-y:visible; padding-right:5px;">${cDef.d}</p>
+                            <div class="card-type-tag" style="font-size:1.3rem; margin-bottom:12px;">${tagTxt}</div>
+                            <h3 style="font-size:2.4rem; margin-bottom:20px; color:#000; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
+                            <p style="font-size:1.6rem; color:#111; font-weight:800; line-height:1.4; overflow-y:visible; padding-right:5px;">${cDef.d}</p>
                         </div>
                     </div>
                     <div class="card-face card-back ${backClass}">
                         <div class="card-back-icon">${backIcon}</div>
-                        <div style="color:#fff; font-weight:900; font-size:1.4rem; margin-top:20px; letter-spacing:3px;">FRIBAMESTARI</div>
+                        <div style="color:#fff; font-weight:900; font-size:2rem; margin-top:20px; letter-spacing:3px;">FRIBAMESTARI</div>
                     </div>
                 </div>
             </div>`;
@@ -219,7 +219,6 @@ window.initNativeCarousel = function() {
     const container = el('cardCarousel');
     if(!container) return;
     
-    // Viuhkan kaarevuus ja napit rullatessa
     container.addEventListener('scroll', () => {
         const center = container.clientWidth / 2;
         const cards = container.querySelectorAll('.carousel-card-wrapper');
@@ -230,15 +229,16 @@ window.initNativeCarousel = function() {
         cards.forEach((card, index) => {
             const rect = card.getBoundingClientRect();
             const cardCenter = rect.left + rect.width / 2;
-            const diff = (cardCenter - center) / 130; // Tiheämpi jakaja
+            const diff = (cardCenter - center) / 120; // Vaikuttaa kaareen
             
-            // Viuhkan geometria
-            const rotZ = diff * 12;
-            const transY = Math.abs(diff) * 15;
-            const scale = Math.max(0.85, 1.15 - Math.abs(diff) * 0.2); // Keskitetty on isoin
-            const opacity = 1; // EI LÄPINÄKYVYYTTÄ REUNOILLA!
+            // Viuhkan matematiikka - Vedetään kortit toistensa päälle
+            const transX = diff * -130; 
+            const rotZ = diff * 15;
+            const transY = Math.abs(diff) * 30;
+            const scale = Math.max(0.7, 1.25 - Math.abs(diff) * 0.3); // Keskimmäinen on selkeästi isoin
+            const opacity = 1; 
             
-            card.style.transform = `translateY(${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
+            card.style.transform = `translateX(${transX}px) translateY(${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
             card.style.opacity = opacity;
             card.style.zIndex = 100 - Math.floor(Math.abs(diff)*10);
             
@@ -254,7 +254,6 @@ window.initNativeCarousel = function() {
     
     setTimeout(() => { container.dispatchEvent(new Event('scroll')); }, 50);
 
-    // KORTIN OMNI-PYÖRITYS
     let startX = 0; let startY = 0;
     let isSpinning = false;
     
@@ -317,7 +316,7 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     } else if (mode === 'gm') {
         window.carouselCards = (window.allCards || []).map(c => c.id);
     } else if (mode === 'played') {
-        window.carouselCards = [cId]; // Vain katseltava kortti
+        window.carouselCards = [cId]; 
     } else {
         window.carouselCards = [cId]; 
     }
@@ -356,7 +355,6 @@ window.updateCarouselButtons = function() {
     if (mode === 'hand' || mode === 'sell') {
         btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
         if (cDef.tier === 'normal') {
-            // ISO MYY NAPPULA
             btnHtml += `<button class="btn btn-success" style="font-size:1.1rem; padding:18px; margin-top:5px; background:var(--primary); color:#fff; box-shadow:0 4px 15px rgba(16,185,129,0.5);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
         } else {
             btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
@@ -376,7 +374,6 @@ window.updateCarouselButtons = function() {
     } else if (mode === 'gm') {
         btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.giveCardToPlayer('${cId}')">ANNA TÄMÄ</button>`;
     } else if (mode === 'played') {
-        // Pelatussa kortissa ei ole toimintoja, sulku-nappi riittää (se on jo modalin koodissa).
         btnHtml = ``;
     }
 
@@ -510,7 +507,7 @@ if(binderModal) {
     binderModal.addEventListener('touchstart', e => {
         if(binderModal.scrollTop <= 5) {
             shopStartY = e.touches[0].clientY;
-            shopCurrentY = shopStartY; // Reset tracking! Estää phantom swipet
+            shopCurrentY = shopStartY; 
         } else {
             shopStartY = 0;
         }
@@ -529,7 +526,7 @@ if(binderModal) {
     binderModal.addEventListener('touchend', e => {
         if(shopStartY === 0) return;
         let dy = shopCurrentY - shopStartY;
-        if(dy > 150 && shopCurrentY !== shopStartY) { // Varmistetaan että oikeasti liikuttiin
+        if(dy > 150 && shopCurrentY !== shopStartY) { 
             window.closeShopModal();
         } else {
             binderModal.style.transform = '';
@@ -697,7 +694,7 @@ window.renderLeaderboard = function() {
             <span class="paper-name">${i+1}. ${p.name}</span>
             <div style="display:flex; align-items:center; gap: 15px;">
                 <span style="font-size:1.1rem; color:var(--warning); font-weight:900; font-family:'Inter', sans-serif;">${p.score || 0} P</span>
-                <div class="score-display-paper ${scoreClass}" style="width:40px; height:40px; font-size:1.2rem; border-width:2px; ${scoreColor} margin-left:auto;">${dgStr}</div>
+                <div class="score-display-paper ${scoreClass}" style="width:40px !important; height:40px !important; font-size:1.2rem !important; border-width:2px; ${scoreColor} margin-left:auto;">${dgStr}</div>
             </div>
         </div>`;
     });
@@ -722,7 +719,7 @@ window.renderActiveHole = function() {
             <div class="post-it-note">
                 <div class="post-it-tape"></div>
                 <div style="font-weight:900; font-size:0.8rem; margin-bottom:8px; text-transform:uppercase; color:#666; font-family:'Inter', sans-serif;">${bountyTag}</div>
-                <div style="font-size:1.6rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; font-family:'Kalam', cursive; color:#111;">${activeHole.rule.n}</div>
+                <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; font-family:'Inter', sans-serif; color:#111;">${activeHole.rule.n}</div>
                 <div style="font-size: 1.15rem; line-height: 1.4; font-family:'Inter', sans-serif; font-weight:700; color:#222;">${activeHole.rule.d}</div>
             </div>`; 
     }
@@ -841,7 +838,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let sellBtnColor = isNormal ? 'var(--info)' : 'var(--danger)';
             
             // Satunnainen kallistus
-            let rot = Math.random() * 6 - 3; 
+            let rot = Math.random() * 8 - 4; 
             
             sellHtml += `
             <div class="shop-item-wrapper messy-card" style="transform: rotate(${rot}deg);">
