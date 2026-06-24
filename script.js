@@ -230,12 +230,12 @@ window.initNativeCarousel = function() {
         cards.forEach((card, index) => {
             const rect = card.getBoundingClientRect();
             const cardCenter = rect.left + rect.width / 2;
-            const diff = (cardCenter - center) / 130; // Pienempi jakaja = tiiviimpi viuhka
+            const diff = (cardCenter - center) / 130; // Tiheämpi jakaja
             
             // Viuhkan geometria
             const rotZ = diff * 12;
             const transY = Math.abs(diff) * 15;
-            const scale = Math.max(0.85, 1.15 - Math.abs(diff) * 0.2); // Keskimmäinen kortti nousee selkeästi isommaksi
+            const scale = Math.max(0.85, 1.15 - Math.abs(diff) * 0.2); // Keskitetty on isoin
             const opacity = 1; // EI LÄPINÄKYVYYTTÄ REUNOILLA!
             
             card.style.transform = `translateY(${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
@@ -316,6 +316,8 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
         window.carouselCards = activeHole && activeHole.shop ? (activeHole.shop || []).map(c => c.id) : [];
     } else if (mode === 'gm') {
         window.carouselCards = (window.allCards || []).map(c => c.id);
+    } else if (mode === 'played') {
+        window.carouselCards = [cId]; // Vain katseltava kortti
     } else {
         window.carouselCards = [cId]; 
     }
@@ -354,7 +356,6 @@ window.updateCarouselButtons = function() {
     if (mode === 'hand' || mode === 'sell') {
         btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
         if (cDef.tier === 'normal') {
-            // ISO MYY NAPPULA
             btnHtml += `<button class="btn btn-success" style="font-size:1.1rem; padding:18px; margin-top:5px; background:var(--primary); color:#fff; box-shadow:0 4px 15px rgba(16,185,129,0.5);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
         } else {
             btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
@@ -373,6 +374,9 @@ window.updateCarouselButtons = function() {
         btnHtml = `<button class="btn ${btnClass}" ${dis} style="font-size:1.1rem; padding:18px; color:#000; box-shadow:0 10px 25px rgba(245,158,11,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cId}', '${cDef.n}', ${price})">${btnText}</button>`;
     } else if (mode === 'gm') {
         btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.giveCardToPlayer('${cId}')">ANNA TÄMÄ</button>`;
+    } else if (mode === 'played') {
+        // Pelatussa kortissa ei ole toimintoja, sulku-nappi riittää (se on jo modalin koodissa).
+        btnHtml = ``;
     }
 
     el('cardDetailActionArea').innerHTML = btnHtml;
@@ -493,7 +497,7 @@ window.closeShopModal = function() {
     let modalEl = document.querySelector('#shopModal .shop-binder-modal');
     if(modalEl) {
         modalEl.classList.remove('binder-modal-anim');
-        modalEl.style.transform = ''; // Nollaa swipen jättämät arvot
+        modalEl.style.transform = ''; 
     }
 };
 
@@ -503,8 +507,9 @@ let binderModal = document.querySelector('.shop-binder-modal');
 
 if(binderModal) {
     binderModal.addEventListener('touchstart', e => {
-        if(binderModal.scrollTop === 0) {
+        if(binderModal.scrollTop <= 5) {
             shopStartY = e.touches[0].clientY;
+            shopCurrentY = shopStartY; // Reset tracking! Estää phantom swipet
         } else {
             shopStartY = 0;
         }
@@ -523,7 +528,7 @@ if(binderModal) {
     binderModal.addEventListener('touchend', e => {
         if(shopStartY === 0) return;
         let dy = shopCurrentY - shopStartY;
-        if(dy > 150) {
+        if(dy > 150 && shopCurrentY !== shopStartY) { // Varmistetaan että oikeasti liikuttiin
             window.closeShopModal();
         } else {
             binderModal.style.transform = '';
@@ -683,14 +688,15 @@ window.renderLeaderboard = function() {
     sortedPlayers.forEach((p, i) => {
         let dgVal = p.dgScore || 0;
         let dgStr = dgVal > 0 ? `+${dgVal}` : (dgVal === 0 ? 'E' : `${dgVal}`);
-        let dgColor = dgVal > 0 ? 'var(--danger)' : (dgVal < 0 ? 'var(--info)' : 'var(--ink-blue)');
+        let scoreClass = dgVal < 0 ? 'score-birdie-paper' : (dgVal > 0 ? 'score-bogey-paper' : '');
+        let scoreColor = dgVal === 0 ? 'color: var(--ink-blue);' : '';
         
         list.innerHTML += `
         <div class="player-row-paper">
             <span class="paper-name">${i+1}. ${p.name}</span>
             <div style="display:flex; align-items:center; gap: 15px;">
                 <span style="font-size:1.1rem; color:var(--warning); font-weight:900; font-family:'Inter', sans-serif;">${p.score || 0} P</span>
-                <span class="paper-score" style="color:${dgColor}; min-width: 40px; text-align:right;">${dgStr}</span>
+                <div class="score-display-paper ${scoreClass}" style="width:40px; height:40px; font-size:1.2rem; border-width:2px; ${scoreColor} margin-left:auto;">${dgStr}</div>
             </div>
         </div>`;
     });
@@ -714,9 +720,9 @@ window.renderActiveHole = function() {
         container.innerHTML = `
             <div class="post-it-note">
                 <div class="post-it-tape"></div>
-                <div style="font-weight:900; font-size:0.8rem; margin-bottom:8px; text-transform:uppercase; color:#666;">${bountyTag}</div>
+                <div style="font-weight:900; font-size:0.8rem; margin-bottom:8px; text-transform:uppercase; color:#666; font-family:'Inter', sans-serif;">${bountyTag}</div>
                 <div style="font-size:1.6rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; font-family:'Kalam', cursive; color:#111;">${activeHole.rule.n}</div>
-                <div style="font-size: 1.2rem; line-height: 1.4; font-family:'Kalam', cursive; color:#222;">${activeHole.rule.d}</div>
+                <div style="font-size: 1.15rem; line-height: 1.4; font-family:'Inter', sans-serif; font-weight:700; color:#222;">${activeHole.rule.d}</div>
             </div>`; 
     }
     
@@ -734,6 +740,8 @@ window.renderActiveHole = function() {
             let cType = pc.type || (cardDef ? cardDef.type : 'sabotage');
             
             let undoBtn = currentRole === 'gm' ? `<button class="btn btn-danger" style="padding:8px; font-size:0.75rem; margin-top:8px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">PERU</button>` : ``;
+            let clickAttr = cardDef ? `onclick="window.openCardDetail('${cardDef.id}', 'played')"` : '';
+            let cursorStyle = cardDef ? `cursor:pointer;` : '';
             
             if (pc.target === myName) {
                 // Fyysinen kortti omalle taululle
@@ -747,7 +755,7 @@ window.renderActiveHole = function() {
                 myDebuffsHtml += `
                     <div class="pinned-card-container" style="transform: rotate(${rot}deg);">
                         <div class="pushpin" style="left: ${pinLeft}%;"></div>
-                        <div class="physical-card ${typeClass}">
+                        <div class="physical-card ${typeClass}" ${clickAttr} style="${cursorStyle}">
                             <div class="card-type-tag">${tagTxt}</div>
                             <h3 style="font-size:1.05rem;">${pc.cardName}</h3>
                             <p style="font-size:0.85rem;">${pc.cardDesc}</p>
@@ -759,11 +767,11 @@ window.renderActiveHole = function() {
                         </div>
                     </div>`;
             } else {
-                // Pieni rivi muiden korteille
+                // Pieni rivi muiden korteille (klikattava myös)
                 let typeIcon = cType === 'buff' ? '🛡️' : '🚫';
-                let gmUndo = currentRole === 'gm' ? ` <button style="color:var(--danger); background:none; border:none; font-weight:900; font-size:0.8rem; padding:4px;" onclick="window.undoCardPlay(${pc.timestamp})">[PERU]</button>` : '';
+                let gmUndo = currentRole === 'gm' ? ` <button style="color:var(--danger); background:none; border:none; font-weight:900; font-size:0.8rem; padding:4px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">[PERU]</button>` : '';
                 otherCardsHtml += `
-                    <div style="background:rgba(255,255,255,0.7); padding:10px 12px; border-radius:8px; margin-bottom:8px; font-size:0.9rem; color:#111; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="background:rgba(255,255,255,0.7); padding:10px 12px; border-radius:8px; margin-bottom:8px; font-size:0.9rem; color:#111; box-shadow:0 2px 4px rgba(0,0,0,0.1); ${cursorStyle}" ${clickAttr}>
                         <b style="font-size:1rem;">${typeIcon} ${pc.cardName}</b><br>
                         <span style="font-size:0.8rem; color:#555;">Pelaaja <b>${pc.by}</b> pelasi kohteelle <b style="text-transform:uppercase; color:var(--danger);">${pc.target}</b></span>${gmUndo}
                     </div>`;
@@ -831,7 +839,8 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let sellBtnIcon = isNormal ? '♻️' : '🗑️';
             let sellBtnColor = isNormal ? 'var(--info)' : 'var(--danger)';
             
-            let rot = 0; // Kortit suoristettu
+            // Satunnainen kallistus
+            let rot = Math.random() * 6 - 3; 
             
             sellHtml += `
             <div class="shop-item-wrapper messy-card" style="transform: rotate(${rot}deg);">
@@ -1182,7 +1191,7 @@ window.openScoreModal = function() {
             let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
             let bTxt = activeHole.rule.type === 'bounty' ? `TEHTÄVÄ (+${ptsTask} P)` : 'SÄÄNTÖ';
             box.className = 'post-it-note';
-            box.innerHTML = `<div class="post-it-tape"></div><strong style="font-size:1.4rem;">${bTxt}: ${activeHole.rule.n}</strong><br><span style="font-size:1.2rem;">${activeHole.rule.d}</span>`;
+            box.innerHTML = `<div class="post-it-tape"></div><strong style="font-size:1.4rem; font-family:'Inter', sans-serif;">${bTxt}: ${activeHole.rule.n}</strong><br><span style="font-size:1.2rem; font-family:'Inter', sans-serif;">${activeHole.rule.d}</span>`;
             box.style.display = 'block';
         } else {
             box.style.display = 'none';
@@ -1449,7 +1458,7 @@ onValue(ref(db, 'gameState'), (snap) => {
             }
             
             let pts = `${me.score || 0} P`;
-            if(el('myResPointsBtn')) el('myResPointsBtn').innerText = pts; 
+            if(el('myResPointsBtn')) el('myResPointsBtninnerText = pts; 
             if(el('shopModalWallet')) el('shopModalWallet').innerText = pts; 
             if(el('handCountBadge')) el('handCountBadge').innerText = myCards.filter(Boolean).length; 
         }
