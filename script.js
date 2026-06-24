@@ -5,7 +5,6 @@ const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// YLEISET MUUTTUJAT JA FUNKTIOT ENNEN FIREBASEA
 const el = id => document.getElementById(id);
 
 let myName = localStorage.getItem('friba_name') || null;
@@ -20,7 +19,9 @@ let lastPlayedCardTimestamp = Date.now();
 window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
 window.pendingShopPurchase = null;
 
+//==============================================
 // ASENNA SOVELLUS (PWA)
+//==============================================
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -92,7 +93,9 @@ window.dismissInstallPrompt = function() {
 
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
-// KORTIN PELAAMINEN
+//==============================================
+// KORTIN PELAAMINEN (TARGET MODAL / AUTOMATIIKKA)
+//==============================================
 window.openTargetModal = function(cardId) {
     const cardDef = window.allCards.find(c => c.id === cardId);
     if (!cardDef) return;
@@ -176,7 +179,9 @@ window.executeCardPlay = function(targetName) {
     window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, type);
 };
 
-// 3D-KARUSELLI SLAIDAUKSELLA (Nyt näkyy 5 korttia!)
+//==============================================
+// KORTTIVIUHKA (FAN CAROUSEL) JA 360 PYÖRITYS
+//==============================================
 window.carouselCards = [];
 window.carouselCurrentIndex = 0;
 window.carouselCurrentMode = 'hand';
@@ -190,12 +195,11 @@ window.renderCarousel = function(dragX = 0) {
     
     let html = '';
     
-    let dragOffsetIndex = -(dragX / 120); 
+    let dragOffsetIndex = -(dragX / 150); 
     let exactCurrentIndex = window.carouselCurrentIndex + dragOffsetIndex;
 
     window.carouselCards.forEach((cId, i) => {
         let diff = i - exactCurrentIndex;
-        // Näytetään nyt 5 korttia (-2 ... +2)
         if(Math.abs(diff) > 2.5) return; 
         
         let cDef = window.allCards.find(c => c.id === cId);
@@ -207,18 +211,16 @@ window.renderCarousel = function(dragX = 0) {
         let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
         let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
         
-        // Laajennettu viuhka
-        let rotZ = diff * 8; 
-        let transX = diff * 110; // Levitetty
-        let transY = Math.abs(diff) * 20; 
-        let scale = Math.max(0.7, 1 - Math.abs(diff)*0.15);
+        let rotZ = diff * 10; 
+        let transX = diff * 90; 
+        let transY = Math.abs(diff) * 15; 
+        let scale = Math.max(0.6, 1 - Math.abs(diff)*0.15);
         let opacity = Math.max(0, 1 - Math.abs(diff)*0.4);
         let zIndex = 100 - Math.floor(Math.abs(diff)*10);
         
         let transformStr = `translate(calc(-50% + ${transX}px), calc(-50% + ${transY}px)) rotateZ(${rotZ}deg) scale(${scale})`;
         
         let isCenter = Math.abs(diff) < 0.5;
-        // Jos painetaan reunakorttia, vaihdetaan siihen
         let clickHandler = !isCenter ? `onclick="window.changeCarouselIndex(${i})"` : '';
         
         let innerTransform = '';
@@ -233,7 +235,7 @@ window.renderCarousel = function(dragX = 0) {
                         <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
                             <div class="card-type-tag" style="font-size:1.05rem; margin-bottom:12px;">${tagTxt}</div>
                             <h3 style="font-size:1.85rem; margin-bottom:20px; color:#000; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
-                            <p style="font-size:1.3rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
+                            <p style="font-size:1.45rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
                         </div>
                     </div>
                     <div class="card-face card-back ${backClass}">
@@ -292,8 +294,8 @@ window.initCarouselSwipe = function() {
             const activeCard = el(`card3d-inner-${window.carouselCurrentIndex}`);
             if(activeCard) {
                 activeCard.style.transition = 'none';
-                let newRotX = window.cardLastRotX - (diffY * 0.4); // Herkkyys hidastettu puoleen!
-                let newRotY = window.cardLastRotY + (diffX * 0.4); 
+                let newRotX = window.cardLastRotX - (diffY * 0.2); 
+                let newRotY = window.cardLastRotY + (diffX * 0.2); 
                 activeCard.style.transform = `rotateX(${newRotX}deg) rotateY(${newRotY}deg)`;
             }
         }
@@ -305,7 +307,7 @@ window.initCarouselSwipe = function() {
         
         if (swipeDirection === 'h') {
             let diffX = currentX - startX;
-            let indexShift = Math.round(-(diffX / 100)); // Vaihtaa helpommin
+            let indexShift = Math.round(-(diffX / 100));
             
             let newIndex = window.carouselCurrentIndex + indexShift;
             newIndex = Math.max(0, Math.min(window.carouselCards.length - 1, newIndex));
@@ -320,10 +322,9 @@ window.initCarouselSwipe = function() {
             if(activeCard) {
                 let diffY = currentY - startY;
                 let diffX = currentX - startX;
-                let newRotX = window.cardLastRotX - (diffY * 0.4);
-                let newRotY = window.cardLastRotY + (diffX * 0.4);
+                let newRotX = window.cardLastRotX - (diffY * 0.2);
+                let newRotY = window.cardLastRotY + (diffX * 0.2);
                 
-                // Snapataan lähimpään 180 asteeseen (Etu- tai takapuoli)
                 window.cardLastRotX = Math.round(newRotX / 180) * 180;
                 window.cardLastRotY = 0; 
                 
@@ -805,12 +806,12 @@ window.renderPlayerHand = function(cards) {
         let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
         
         html += `
-            <div class="physical-card ${typeClass}">
-                <div onclick="window.openCardDetail('${cId}', 'hand')" style="flex:1; display:flex; flex-direction:column; cursor:pointer;">
-                    <div><div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p></div>
-                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
+            <div class="shop-item-wrapper">
+                <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'hand')" style="cursor:pointer;">
+                    <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p>
+                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
-                <button class="card-action-btn ${btnClass}" onclick="window.openTargetModal('${cId}')">PELAA KORTTI</button>
+                <button class="shop-item-btn ${btnClass}" onclick="window.openTargetModal('${cId}')">PELAA KORTTI</button>
             </div>`;
     });
     
@@ -832,19 +833,20 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
         shopArray.forEach(item => {
             if(!item) return; 
             const canAfford = myPoints >= item.price && !boughtThisHole;
-            let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? 'OSTA ETU' : 'EI VARAA');
-            let btnClass = canAfford ? 'btn-warning' : 'btn-secondary';
+            let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? `OSTA ETU (${item.price} P)` : 'EI VARAA');
+            let btnClass = canAfford && !boughtThisHole ? 'btn-warning' : 'btn-secondary';
+            let dis = (!canAfford || boughtThisHole) ? 'disabled' : '';
             
             html += `
-                <div class="plastic-sleeve">
-                    <div class="physical-card premium-card">
-                        <span class="card-price-tag">${item.price} P</span>
-                        <div onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="flex:1; display:flex; flex-direction:column; cursor:pointer;">
-                            <div><div class="card-type-tag">💎 KAUPPA</div><h3 style="padding-right:35px;">${item.n}</h3><p>${item.d}</p></div>
-                            <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
+                <div class="shop-item-wrapper">
+                    <div class="plastic-sleeve">
+                        <div class="physical-card premium-card" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
+                            <span class="card-price-tag">${item.price} P</span>
+                            <div class="card-type-tag">💎 KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p>
+                            <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px;">🔄 3D TARKASTELU</div>
                         </div>
-                        <button class="card-action-btn ${btnClass}" ${!canAfford ? 'disabled' : ''} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
                     </div>
+                    <button class="shop-item-btn ${btnClass}" ${dis} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
                 </div>`;
         });
         if(modalContainer) modalContainer.innerHTML = html; 
@@ -869,15 +871,16 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let btnTxt = isNormal ? '♻️ MYY (+1 P)' : '🗑️ HÄVITÄ';
             let btnClass = isNormal ? 'btn-success' : 'btn-danger';
             
+            // Random rotatio sekaisuutta varten
+            let rot = Math.floor(Math.random() * 8) - 4; 
+            
             sellHtml += `
-            <div class="plastic-sleeve">
-                <div class="physical-card ${typeClass}">
-                    <div onclick="window.openCardDetail('${cId}', 'sell')" style="flex:1; display:flex; flex-direction:column; cursor:pointer;">
-                        <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3>
-                        <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
-                    </div>
-                    <button class="card-action-btn ${btnClass}" onclick="window.forceDiscard('${cId}', ${isNormal})">${btnTxt}</button>
+            <div class="shop-item-wrapper messy-card-wrapper" style="transform: rotate(${rot}deg);">
+                <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer; min-height:160px;">
+                    <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3>
+                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
+                <button class="shop-item-btn ${btnClass}" onclick="window.forceDiscard('${cId}', ${isNormal})">${btnTxt}</button>
             </div>`;
         });
     }
@@ -959,12 +962,12 @@ window.renderGmCardList = function(filterTxt) {
         let btnClass = c.tier === 'premium' ? 'btn-warning' : (c.type === 'buff' ? 'btn-success' : 'btn-danger');
         
         html += `
-            <div class="physical-card ${typeClass}">
-                <div onclick="window.openCardDetail('${c.id}', 'gm')" style="flex:1; display:flex; flex-direction:column; cursor:pointer;">
-                    <div><div class="card-type-tag">${tagTxt}</div><h3>${c.n}</h3><p style="font-size:0.85rem; overflow:hidden;">${c.d}</p></div>
-                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
+            <div class="shop-item-wrapper">
+                <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${c.id}', 'gm')" style="cursor:pointer;">
+                    <div class="card-type-tag">${tagTxt}</div><h3 style="font-size:1rem;">${c.n}</h3><p style="font-size:0.8rem;">${c.d}</p>
+                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
-                <button class="card-action-btn ${btnClass}" onclick="window.giveCardToPlayer('${c.id}')">ANNA TÄMÄ</button>
+                <button class="shop-item-btn ${btnClass}" onclick="window.giveCardToPlayer('${c.id}')">ANNA TÄMÄ</button>
             </div>`;
     });
     container.innerHTML = html;
@@ -1154,7 +1157,7 @@ window.startMeilahti = function() {
     }));
 
     if(el('courseModal')) el('courseModal').style.display = 'none'; 
-    window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}.`);
+    window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}. Kaikki saivat 3 P ja 3 korttia.`);
 };
 
 window.generateParInputs = function() {
@@ -1207,13 +1210,12 @@ window.saveCourseSetup = function() {
     }));
 
     if(el('courseModal')) el('courseModal').style.display = 'none'; 
-    window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}.`);
+    window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}. Kaikki saivat 3 P ja 3 korttia.`);
 };
 
 // ===========================================
 // PISTEIDEN KERUU JA PAPERIKORTTI
 // ===========================================
-
 window.changeScore = function(safeId, par, delta) {
     let input = el(`scoreInput_${safeId}`);
     if(!input) return; 
@@ -1392,7 +1394,7 @@ window.submitScores = function() {
 };
 
 // =============================================
-// LOPUKSI FIREBASE KUUNTELIJA
+// FIREBASE KUUNTELIJA ON TÄÄLLÄ POHJALLA
 // =============================================
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
@@ -1519,6 +1521,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderScoreLog(data.scoreLog);
 });
 
+// SUORITA LISÄOSAT JOTKA EIVÄT RIIPPU FIREBASESTA
 window.setupSwipeToClose();
 
 window.populateRuleSelect = function() {
