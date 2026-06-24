@@ -25,7 +25,7 @@ input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 /* TAUSTASEINÄ (BODY) & ILMOITUSTAULU        */
 /* ========================================= */
 body { 
-    background-color: #1e293b; /* Tumma tapettiseinä taulun takana */
+    background-color: #1e293b; 
     background-image: linear-gradient(0deg, #0f172a 0%, transparent 100%);
     color: var(--text-main); 
     min-height: 100vh; overflow-x: hidden;
@@ -83,18 +83,28 @@ body.gm-mode .player-only { display: none !important; }
 body.player-mode .gm-only { display: none !important; }
 
 /* ========================================= */
-/* KUITTIKONE (RECEIPT PRINTER)              */
+/* KUITTIKONE (KULAHTANUT VALKOINEN)         */
 /* ========================================= */
-#receipt-printer-container { position: fixed; top: 15px; left: 15px; z-index: 9500; width: 130px; cursor: pointer; transition: transform 0.2s; pointer-events: auto; }
+#receipt-printer-container { 
+    position: fixed; bottom: 130px; left: 15px; z-index: 9500; width: 140px; 
+    cursor: pointer; transition: transform 0.2s; pointer-events: auto; 
+}
 #receipt-printer-container:active { transform: scale(0.95); }
-.printer-slot {
-    width: 100%; height: 18px; background: #111; border-radius: 4px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.5), inset 0 -2px 4px rgba(255,255,255,0.2);
-    position: relative; z-index: 10;
+.printer-machine {
+    width: 140px; height: 35px;
+    background: linear-gradient(to bottom, #eceae0, #cfcbb8); /* Kulahtanut / likainen muovi */
+    border: 1px solid #b0ad9e; border-bottom: 3px solid #918e80;
+    border-radius: 8px; position: relative; z-index: 10;
+    box-shadow: 2px 4px 8px rgba(0,0,0,0.5), inset 0 2px 3px rgba(255,255,255,0.7);
+    display: flex; align-items: center; justify-content: center;
+}
+.printer-machine::after {
+    content: ''; width: 85%; height: 6px; background: #1a1a1a; /* Tumma rako paperille */
+    border-radius: 3px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
 }
 .receipt-paper {
-    width: 88%; margin: 0 auto; margin-top: -10px; background: #fff;
-    padding: 20px 10px 15px 10px; box-shadow: 0 8px 15px rgba(0,0,0,0.4);
+    width: 85%; margin: 0 auto; margin-top: -10px; background: #fff;
+    padding: 20px 10px 15px 10px; box-shadow: 0 8px 15px rgba(0,0,0,0.5);
     font-family: 'Courier New', Courier, monospace; font-size: 0.8rem;
     color: #111; position: relative; background-image: linear-gradient(to bottom, #fff, #f4f4f5);
 }
@@ -104,19 +114,18 @@ body.player-mode .gm-only { display: none !important; }
     background-size: 6px 6px; background-repeat: repeat-x;
 }
 .r-title { font-weight: 900; text-align: center; border-bottom: 1px dashed #111; padding-bottom: 5px; margin-bottom: 5px; font-size:0.9rem; }
-.r-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
-.r-tot-sec { border-top: 2px dashed #111; margin-top: 5px; padding-top: 5px; font-weight: 900; font-size: 0.95rem; }
+.r-row { display: flex; justify-content: space-between; margin-bottom: 3px; font-weight:bold; }
+.r-tot-sec { border-top: 2px dashed #111; margin-top: 8px; padding-top: 8px; font-weight: 900; font-size: 1.05rem; }
 .r-hole-title { font-weight: 900; margin-top: 8px; font-size: 0.75rem; text-transform: uppercase; }
 
 .full-receipt .r-title { font-size: 1.5rem; margin-bottom: 15px; }
 .full-receipt .r-hole-title { font-size: 1rem; margin-top: 15px; }
-.full-receipt .r-row { font-size: 1.1rem; margin-bottom: 5px; }
-.full-receipt .r-tot-sec { font-size: 1.4rem; margin-top: 20px; padding-top: 15px; }
+.full-receipt .r-row { font-size: 1.1rem; margin-bottom: 5px; font-weight:bold; }
+.full-receipt .r-tot-sec { font-size: 1.5rem; margin-top: 20px; padding-top: 15px; }
 
 /* ========================================= */
 /* AITOA KOKOA OLEVAT ELEMENTIT TAULULLA     */
 /* ========================================= */
-/* Väyläkortti pienennettiin */
 .hole-cell .index-card { width: 220px; padding: 10px 15px; margin-bottom: 15px; margin-left: 0; align-self: flex-start; position: relative; }
 .index-card .banner-title { font-size: 1.8rem; margin-bottom: 2px; }
 .index-card .banner-par { font-size: 1.1rem; }
@@ -310,15 +319,16 @@ body.player-mode .gm-only { display: none !important; }
 /* LOKERIKKO & JÄTTIKANSIOT                  */
 /* ========================================= */
 .corkboard-pocket-container {
-    position: fixed; bottom: 0; left: 0; right: 0; height: 120px; /* Pienennetty */
-    display: flex; justify-content: space-evenly; align-items: flex-end;
+    position: fixed; bottom: 0; left: 0; right: 0; height: 120px; 
+    display: flex; justify-content: space-between; align-items: flex-end;
     padding: 0 10px 20px 10px; z-index: 9000; pointer-events: none;
 }
 #ownCardsButtonElement { background: linear-gradient(to right, #451a03, #78350f, #92400e); border-color: #381302; }
 #shopButtonElement { background: linear-gradient(to right, #111, #333, #111); border-color: #000; }
+#boardButtonElement { background: linear-gradient(to right, #1e293b, #475569, #1e293b); border-color: #0f172a; } /* Koko taulu -napin tyyli */
 
 .binder-spine-btn {
-    width: 45%; max-width: 150px; height: 100px; /* Pienennetty */
+    width: 32%; max-width: 130px; height: 100px; 
     border-radius: 12px 12px 0 0; position: relative; transition: transform 0.3s;
     cursor: pointer; pointer-events: auto;
     box-shadow: -5px -10px 20px rgba(0,0,0,0.5), inset 2px 2px 10px rgba(255,255,255,0.2);
@@ -326,7 +336,7 @@ body.player-mode .gm-only { display: none !important; }
     padding-top: 15px; border: 2px solid; border-bottom: none;
 }
 .binder-spine-btn:hover, .binder-spine-btn:active { transform: translateY(-15px); }
-.binder-spine-text { color: #fcd34d; font-family: 'Kalam', cursive; font-size: 1.2rem; font-weight: bold; letter-spacing: 1px; text-shadow: 2px 2px 4px #000; }
+.binder-spine-text { color: #fcd34d; font-family: 'Kalam', cursive; font-size: 1.1rem; font-weight: bold; letter-spacing: 1px; text-shadow: 2px 2px 4px #000; }
 
 .binder-badge { 
     position: absolute; top: -10px; right: -10px; 
@@ -381,7 +391,7 @@ body.player-mode .gm-only { display: none !important; }
 .native-carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 40px calc(50vw - 140px); gap: 0px; width: 100vw; height: 600px; align-items: center; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
 .native-carousel-container::-webkit-scrollbar { display: none; }
 .carousel-card-wrapper { flex: 0 0 280px; scroll-snap-align: center; perspective: 1200px; position: relative; height: 392px; will-change: transform; }
-.card-3d-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
+.card-3d-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); } /* Nopea 0.2s transition irrotettaessa */
 .card-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 12px; box-shadow: -10px 20px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; background: #fff; border: 2px solid var(--border); }
 .card-front { padding: 22px 18px; transform: rotateY(0deg) translateZ(1px); } 
 .card-back { transform: rotateY(180deg) translateZ(1px); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 6px solid #fff; }
@@ -399,14 +409,19 @@ body.player-mode .gm-only { display: none !important; }
 /* FOTOREALISTINEN PAPERITULOSKORTTI (MODAL) */
 /* ========================================= */
 .paper-score-modal {
-    background-color: #fdfaf6; background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px); background-size: 100% 2.2rem;
+    background-color: #fdfaf6;
+    background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
+    background-size: 100% 2.2rem;
     font-family: 'Kalam', cursive, sans-serif !important; color: var(--ink-blue) !important; 
     border-radius: 3px 15px 5px 20px / 15px 3px 20px 5px; 
     box-shadow: 10px 20px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(0,0,0,0.05); 
     padding: 25px 15px 15px 15px; width: 100%; max-width: 450px; 
     transform: perspective(1000px) rotate(-1deg) rotateX(2deg); position: relative;
 }
-.paper-score-modal::before { content: ''; position: absolute; top: 0; bottom: 0; left: 25px; width: 2px; background: rgba(244, 63, 94, 0.5); z-index: 15; pointer-events: none; }
+.paper-score-modal::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 25px; width: 2px;
+    background: rgba(244, 63, 94, 0.5); z-index: 15; pointer-events: none; 
+}
 .paper-score-modal h2 { font-family: 'Kalam', cursive !important; color: var(--ink-blue) !important; font-size: 2.6rem; letter-spacing: 0; text-transform: none; text-decoration: underline; margin-bottom: 5px; position: relative; z-index: 5;}
 .paper-score-modal p { font-family: 'Kalam', cursive !important; color: var(--ink-blue) !important; font-size: 1.6rem; position: relative; z-index: 5;}
 .player-row-paper { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dotted rgba(15, 27, 97, 0.3); position: relative; z-index: 5; }
@@ -448,8 +463,9 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 
 /* MÖNKIJÄ-ANIMAATIO (AITO JALKOJEN LIIKE-ILLUUSIO) */
 .ambiance-bug-wrapper { position: absolute; pointer-events: none; z-index: 40; }
-.ambiance-bug-inner { font-size: 1.5rem; filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.5)); animation: bugWiggle 0.15s infinite linear; }
-@keyframes bugWiggle { 0% { transform: rotate(-15deg); } 50% { transform: rotate(15deg); } 100% { transform: rotate(-15deg); } }
+.ambiance-bug-inner { font-size: 1.5rem; filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.5)); animation: bugWiggle 0.1s infinite linear; }
+/* Pyörähtää ja skaalautuu hieman X-akselilla erittäin nopeasti luoden kiipeämisen illuusion */
+@keyframes bugWiggle { 0% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } 100% { transform: rotate(-10deg); } }
 
 .ambiance-shadow { position: absolute; background: rgba(0,0,0,0.15); filter: blur(15px); pointer-events: none; z-index: 9900; border-radius: 50%; }
 .ambiance-svg { position: absolute; pointer-events: none; z-index: 45; stroke-dasharray: 200; stroke-dashoffset: 200; animation: drawDoodle 2s forwards, fadeDoodle 15s forwards; }
