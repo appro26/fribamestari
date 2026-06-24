@@ -246,7 +246,6 @@ window.initNativeCarousel = function() {
         let closestIndex = 0;
         let minDiff = 9999;
 
-        // Puhdas matematiikka ilman DOM-lukemista silmukassa (Takaa 60fps)
         for (let index = 0; index < cards.length; index++) {
             const card = cards[index];
             const cardCenter = paddingLeft + (index * cardWidth) + (cardWidth / 2) - scrollLeft;
@@ -276,7 +275,6 @@ window.initNativeCarousel = function() {
     
     setTimeout(updateCarouselLayout, 50);
 
-    // KORTIN OMNI-PYÖRITYS (Ylös/alas pyyhkäisy)
     let startX = 0; let startY = 0;
     let isSpinning = false;
     
@@ -751,11 +749,10 @@ window.renderActiveHole = function() {
     
     if(container) { 
         container.innerHTML = `
-            <div class="spiral-note">
-                <div class="spiral-note-tape"></div>
-                <div style="font-weight:900; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; color:#666; font-family:'Inter', sans-serif; letter-spacing:1px;">${bountyTag}</div>
-                <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; font-family:'Inter', sans-serif; color:#111; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">${activeHole.rule.n}</div>
-                <div style="font-size: 1.15rem; line-height: 1.4; font-family:'Inter', sans-serif; font-weight:700; color:#222;">${activeHole.rule.d}</div>
+            <div class="post-it-note">
+                <div style="font-weight:900; font-size:0.95rem; margin-bottom:8px; text-transform:uppercase; color:#666; font-family:'Inter', sans-serif; letter-spacing:1px;">📌 ${bountyTag}</div>
+                <div style="font-size:1.8rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; color:#111;">${activeHole.rule.n}</div>
+                <div style="font-size: 1.25rem; line-height: 1.4; font-weight:700; color:#222;">${activeHole.rule.d}</div>
             </div>`; 
     }
     
@@ -1051,7 +1048,6 @@ window.giveCardToPlayer = function(cardId) {
         set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) antoi kortin ${cardDef.n} pelaajalle ${p.name}.`);
         window.showAppleToast(`Kortti ${cardDef.n} annettu!`, '✅');
-        // HUOM! EI suljeta modaalia automaattisesti, vaan annetaan GM:n jakaa useita kortteja
     }
 };
 
@@ -1240,12 +1236,12 @@ window.openScoreModal = function() {
             let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
             let bTxt = activeHole.rule.type === 'bounty' ? `TEHTÄVÄ (+${ptsTask} P)` : 'SÄÄNTÖ';
             
-            // Käytetään modaalin sisällä uutta spiral-note luokkaa säännölle, mutta nollataan 3D-kallistus
-            box.className = 'spiral-note';
+            box.className = 'post-it-note';
             box.style.transform = 'none'; 
             box.style.margin = '0 auto 20px auto';
+            box.style.width = '100%';
             
-            box.innerHTML = `<div class="spiral-note-tape"></div><div style="font-weight:900; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; color:#666; font-family:'Inter', sans-serif;">${bTxt}</div>
+            box.innerHTML = `<div style="font-weight:900; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; color:#666; font-family:'Inter', sans-serif;">📌 ${bTxt}</div>
                              <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; font-family:'Inter', sans-serif; color:#111;">${activeHole.rule.n}</div>
                              <div style="font-size: 1.15rem; line-height: 1.4; font-family:'Inter', sans-serif; font-weight:700; color:#222;">${activeHole.rule.d}</div>`;
             box.style.display = 'block';
