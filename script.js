@@ -170,7 +170,7 @@ window.executeCardPlay = function(targetName) {
 };
 
 //==============================================
-// UUSI NATIIVI KORTTIVIUHKA (EI LÄPINÄKYVYYTTÄ, TIHEÄ)
+// NATIIVI KORTTIVIUHKA (ISO & TIIVIS)
 //==============================================
 window.carouselCards = [];
 window.carouselCurrentMode = 'hand';
@@ -229,15 +229,13 @@ window.initNativeCarousel = function() {
 
         cards.forEach((card, index) => {
             const rect = card.getBoundingClientRect();
-            // Laske kortin keskipisteen etäisyys näytön keskikohdasta
             const cardCenter = rect.left + rect.width / 2;
-            const diff = (cardCenter - center) / 140; // Tiheämpi
+            const diff = (cardCenter - center) / 130; // Pienempi jakaja = tiiviimpi viuhka
             
             // Viuhkan geometria
-            const rotZ = diff * 10;
-            const transY = Math.abs(diff) * 20;
-            // Keskimäinen kortti on selkeästi isompi kuin taustalla olevat
-            const scale = Math.max(0.85, 1.2 - Math.abs(diff) * 0.25);
+            const rotZ = diff * 12;
+            const transY = Math.abs(diff) * 15;
+            const scale = Math.max(0.85, 1.15 - Math.abs(diff) * 0.2); // Keskimmäinen kortti nousee selkeästi isommaksi
             const opacity = 1; // EI LÄPINÄKYVYYTTÄ REUNOILLA!
             
             card.style.transform = `translateY(${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
@@ -256,7 +254,7 @@ window.initNativeCarousel = function() {
     
     setTimeout(() => { container.dispatchEvent(new Event('scroll')); }, 50);
 
-    // KORTIN OMNI-PYÖRITYS (Kuuntelee pystyvetoa)
+    // KORTIN OMNI-PYÖRITYS
     let startX = 0; let startY = 0;
     let isSpinning = false;
     
@@ -276,28 +274,25 @@ window.initNativeCarousel = function() {
         let dx = currentX - startX;
         let dy = currentY - startY;
         
-        // Jos käyttäjä vetää enemmän pystysuuntaan (kortin pyöritys)
         if (!isSpinning && Math.abs(dy) > Math.abs(dx) + 10) {
             isSpinning = true;
         }
         
         if (isSpinning) {
-            e.preventDefault(); // Pysäyttää sivuttaisscrollauksen
+            e.preventDefault(); 
             const activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
             if(activeInner) {
-                // Hidastettu rotaatio! (0.4 multiplier)
                 let newRotX = window.cardLastRotX - (dy * 0.4); 
                 let newRotY = window.cardLastRotY + (dx * 0.4); 
                 activeInner.style.transform = `rotateX(${newRotX}deg) rotateY(${newRotY}deg)`;
             }
         }
-    }, {passive: false}); // passive false tarvitaan preventDefaultille
+    }, {passive: false});
 
     container.addEventListener('touchend', e => {
         if (isSpinning) {
             const activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
             if(activeInner) {
-                // Snapataan etu tai takapuolelle 180 asteen välein
                 let transformStr = activeInner.style.transform;
                 let match = transformStr.match(/rotateX\(([-0-9.]+)deg\)/);
                 if(match) {
@@ -359,7 +354,8 @@ window.updateCarouselButtons = function() {
     if (mode === 'hand' || mode === 'sell') {
         btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
         if (cDef.tier === 'normal') {
-            btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:#fff;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
+            // ISO MYY NAPPULA
+            btnHtml += `<button class="btn btn-success" style="font-size:1.1rem; padding:18px; margin-top:5px; background:var(--primary); color:#fff; box-shadow:0 4px 15px rgba(16,185,129,0.5);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
         } else {
             btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
         }
@@ -484,6 +480,7 @@ window.cancelShopPurchase = function() {
     window.switchShopTab('buy');
 };
 
+// KANSION AVAAMINEN JA SULKEMINEN (SWIPE)
 window.openShop = function(tab) {
     if(el('shopModal')) el('shopModal').style.display = 'flex';
     let modalEl = document.querySelector('#shopModal .shop-binder-modal');
@@ -494,20 +491,67 @@ window.openShop = function(tab) {
 window.closeShopModal = function() {
     if(el('shopModal')) el('shopModal').style.display = 'none';
     let modalEl = document.querySelector('#shopModal .shop-binder-modal');
-    if(modalEl) modalEl.classList.remove('binder-modal-anim');
+    if(modalEl) {
+        modalEl.classList.remove('binder-modal-anim');
+        modalEl.style.transform = ''; // Nollaa swipen jättämät arvot
+    }
 };
 
+let shopStartY = 0;
+let shopCurrentY = 0;
+let binderModal = document.querySelector('.shop-binder-modal');
+
+if(binderModal) {
+    binderModal.addEventListener('touchstart', e => {
+        if(binderModal.scrollTop === 0) {
+            shopStartY = e.touches[0].clientY;
+        } else {
+            shopStartY = 0;
+        }
+    }, {passive: true});
+
+    binderModal.addEventListener('touchmove', e => {
+        if(shopStartY === 0) return;
+        shopCurrentY = e.touches[0].clientY;
+        let dy = shopCurrentY - shopStartY;
+        if(dy > 0) {
+            binderModal.style.transform = `translateY(${dy}px)`;
+            if (e.cancelable) e.preventDefault();
+        }
+    }, {passive: false});
+
+    binderModal.addEventListener('touchend', e => {
+        if(shopStartY === 0) return;
+        let dy = shopCurrentY - shopStartY;
+        if(dy > 150) {
+            window.closeShopModal();
+        } else {
+            binderModal.style.transform = '';
+        }
+        shopStartY = 0;
+    }, {passive: true});
+}
+
 window.switchShopTab = function(tab) {
+    const modalEl = document.querySelector('#shopModal .shop-binder-modal');
     if (tab === 'buy') {
         el('shopBuyArea').style.display = 'block';
         el('shopSellArea').style.display = 'none';
         if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.add('active');
         if(el('shopTabSellBtn')) el('shopTabSellBtn').classList.remove('active');
+        if(modalEl) {
+            modalEl.classList.remove('theme-own');
+            modalEl.classList.add('theme-shop');
+        }
     } else {
         el('shopBuyArea').style.display = 'none';
         el('shopSellArea').style.display = 'block';
         if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.remove('active');
         if(el('shopTabSellBtn')) el('shopTabSellBtn').classList.add('active');
+        if(modalEl) {
+            modalEl.classList.remove('theme-shop');
+            modalEl.classList.add('theme-own');
+        }
     }
 };
 
@@ -756,7 +800,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             html += `
                 <div class="shop-item-wrapper">
                     <div class="plastic-sleeve">
-                        <div class="physical-card premium-card" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
+                        <div class="physical-card premium-card foil-shine" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
                             <span class="card-price-tag">${item.price} P</span>
                             <div class="card-type-tag">💎 KAUPPA</div><h3 style="padding-right:35px;">${item.n}</h3><p>${item.d}</p>
                             <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px; margin-top:auto;">🔄 3D TARKASTELU</div>
@@ -791,7 +835,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             
             sellHtml += `
             <div class="shop-item-wrapper messy-card" style="transform: rotate(${rot}deg);">
-                <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer;">
+                <div class="physical-card worn-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer;">
                     <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p>
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
