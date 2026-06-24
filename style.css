@@ -71,6 +71,7 @@ body.player-mode .gm-only { display: none !important; }
 .torn-paper {
     background: var(--paper-bg);
     padding: 24px; margin-bottom: 25px; position: relative;
+    width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;
     box-shadow: 2px 5px 15px rgba(0,0,0,0.4);
     /* Saha-reuna alhaalla ja ylhäällä */
     clip-path: polygon(0% 2%, 5% 0%, 10% 3%, 15% 0%, 20% 2%, 25% 0%, 30% 3%, 35% 0%, 40% 2%, 45% 0%, 50% 3%, 55% 0%, 60% 2%, 65% 0%, 70% 3%, 75% 0%, 80% 2%, 85% 0%, 90% 3%, 95% 0%, 100% 2%, 100% 98%, 95% 100%, 90% 97%, 85% 100%, 80% 98%, 75% 100%, 70% 97%, 65% 100%, 60% 98%, 55% 100%, 50% 97%, 45% 100%, 40% 98%, 35% 100%, 30% 97%, 25% 100%, 20% 98%, 15% 100%, 10% 97%, 5% 100%, 0% 98%);
@@ -87,6 +88,34 @@ body.player-mode .gm-only { display: none !important; }
 .tape-br { bottom: -2px; right: -10px; transform: rotate(-45deg); }
 
 /* ========================================= */
+/* VÄYLÄN TIETO BANNERI (UUSI)               */
+/* ========================================= */
+.course-banner-card {
+    padding: 15px 20px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-radius: 12px;
+    box-shadow: 2px 6px 15px rgba(0,0,0,0.4);
+    position: relative;
+    transform: rotate(-1deg);
+    display: flex; flex-direction: column; justify-content: center;
+    border: 2px solid rgba(255,255,255,0.2);
+}
+.course-banner-card::before {
+    content: ''; position: absolute; top: -8px; left: 20px;
+    width: 40px; height: 14px; background: rgba(255,255,255,0.7);
+    transform: rotate(-5deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+.course-banner-card .banner-subtitle {
+    font-size: 0.85rem; font-weight: 900; color: rgba(255,255,255,0.85); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px;
+}
+.course-banner-card .banner-title {
+    font-weight: 900; font-size: 2rem; color: #fff; text-shadow: 1px 2px 4px rgba(0,0,0,0.3); line-height: 1.1;
+}
+.course-banner-card .banner-par {
+    display: inline-block; background: rgba(0,0,0,0.25); color: #fff; font-weight: 900; padding: 4px 10px; border-radius: 8px; font-size: 0.95rem; margin-top: 8px; border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ========================================= */
 /* NIDOTTU PAPERI (TULOSKORTTI)              */
 /* ========================================= */
 .stapled-paper {
@@ -96,6 +125,7 @@ body.player-mode .gm-only { display: none !important; }
         linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
     background-size: 100% 2.2rem;
     position: relative; padding: 25px 15px 15px 15px; margin-top: 20px;
+    width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;
     box-shadow: 3px 6px 15px rgba(0,0,0,0.4);
     border-radius: 2px;
 }
@@ -292,13 +322,13 @@ body.player-mode .gm-only { display: none !important; }
 .score-controls-paper { display: flex; align-items: center; gap: 8px; }
 .btn-score-paper { width: 44px; height: 44px; background: transparent; border: none; color: var(--ink-blue); font-size: 2.5rem; font-family: 'Kalam', cursive; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; padding-bottom: 8px;}
 
-/* Sini/Puna Ympyrät (Birdie / Bogey) */
+/* Sini/Puna/Vihreä Ympyrät (Birdie / Bogey / Par) */
 .score-display-paper { 
     width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; 
     font-size: 2.2rem; font-weight: 700; color: var(--ink-blue); font-family: 'Kalam', cursive;
     background: transparent; border: 3px solid transparent; 
 }
-.score-birdie-paper { border: 3px solid var(--ink-blue); border-radius: 50% 45% 55% 40%; color: var(--ink-blue) !important;} 
+.score-birdie-paper { border: 3px solid var(--primary); border-radius: 50% 45% 55% 40%; color: var(--primary) !important;} 
 .score-bogey-paper { border: 3px solid var(--danger); border-radius: 50% 55% 45% 40%; color: var(--danger) !important;}
 
 /* Tehtävä ruksit paperilla */
