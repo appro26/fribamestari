@@ -22,16 +22,15 @@ html, body { overscroll-behavior-y: none; overscroll-behavior-x: none; }
 input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 
 /* ========================================= */
-/* FOTOREALISTINEN KORKKITAULU & PUUKEHYS    */
+/* MODERNISOITU KORKKITAULU & METALLIKEHYS   */
 /* ========================================= */
 body { 
-    background-color: #a06e45;
+    background-color: #d8c3a5; /* Moderni ja puhdas hienokorkki */
     background-image: 
-        radial-gradient(rgba(0,0,0,0.15) 1px, transparent 2px),
-        radial-gradient(rgba(0,0,0,0.1) 2px, transparent 3px),
-        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 2px);
-    background-size: 10px 10px, 14px 14px, 5px 5px;
-    background-position: 0 0, 5px 5px, 2px 2px;
+        radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+        radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 8px 8px, 6px 6px;
+    background-position: 0 0, 3px 3px;
     color: var(--text-main); 
     padding: 18px 12px 100px 12px; /* Alhaalla tilaa lokerikolle */
     min-height: 100vh;
@@ -39,9 +38,10 @@ body {
 
 body::after {
     content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    border: 12px ridge #4a2e15; /* Puukehys */
+    border: 10px solid #2d3748; /* Tyylikäs tummanharmaa / mattametallinen kehys */
+    border-radius: 6px;
     pointer-events: none; z-index: 5000;
-    box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.4), 0 0 10px rgba(0,0,0,0.5);
 }
 
 .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 10; }
@@ -72,13 +72,13 @@ body.player-mode .gm-only { display: none !important; }
     background: var(--paper-bg);
     padding: 24px; margin-bottom: 25px; position: relative;
     width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;
-    box-shadow: 2px 5px 15px rgba(0,0,0,0.4);
+    box-shadow: 2px 5px 15px rgba(0,0,0,0.3);
     /* Saha-reuna alhaalla ja ylhäällä */
     clip-path: polygon(0% 2%, 5% 0%, 10% 3%, 15% 0%, 20% 2%, 25% 0%, 30% 3%, 35% 0%, 40% 2%, 45% 0%, 50% 3%, 55% 0%, 60% 2%, 65% 0%, 70% 3%, 75% 0%, 80% 2%, 85% 0%, 90% 3%, 95% 0%, 100% 2%, 100% 98%, 95% 100%, 90% 97%, 85% 100%, 80% 98%, 75% 100%, 70% 97%, 65% 100%, 60% 98%, 55% 100%, 50% 97%, 45% 100%, 40% 98%, 35% 100%, 30% 97%, 25% 100%, 20% 98%, 15% 100%, 10% 97%, 5% 100%, 0% 98%);
 }
 .tape {
     position: absolute; width: 50px; height: 18px;
-    background: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.6);
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     z-index: 5;
 }
@@ -88,31 +88,34 @@ body.player-mode .gm-only { display: none !important; }
 .tape-br { bottom: -2px; right: -10px; transform: rotate(-45deg); }
 
 /* ========================================= */
-/* VÄYLÄN TIETO BANNERI (UUSI)               */
+/* VÄYLÄN TIETO BANNERI (LEHTIÖN SIVU)       */
 /* ========================================= */
-.course-banner-card {
+.course-banner-paper {
+    background-color: #fdfaf6;
+    background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
+    background-size: 100% 2.2rem;
     padding: 15px 20px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    border-radius: 12px;
-    box-shadow: 2px 6px 15px rgba(0,0,0,0.4);
     position: relative;
     transform: rotate(-1deg);
     display: flex; flex-direction: column; justify-content: center;
-    border: 2px solid rgba(255,255,255,0.2);
+    border-left: 2px solid rgba(244, 63, 94, 0.4); /* Lehtiön marginaaliviiva */
+    box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
 }
-.course-banner-card::before {
-    content: ''; position: absolute; top: -8px; left: 20px;
-    width: 40px; height: 14px; background: rgba(255,255,255,0.7);
-    transform: rotate(-5deg); box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+.tape-top-center {
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(-2deg);
+    width: 60px; height: 20px;
+    background: rgba(255,255,255,0.7);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    z-index: 5;
 }
-.course-banner-card .banner-subtitle {
-    font-size: 0.85rem; font-weight: 900; color: rgba(255,255,255,0.85); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px;
+.course-banner-paper .banner-subtitle {
+    font-size: 0.85rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px;
 }
-.course-banner-card .banner-title {
-    font-weight: 900; font-size: 2rem; color: #fff; text-shadow: 1px 2px 4px rgba(0,0,0,0.3); line-height: 1.1;
+.course-banner-paper .banner-title {
+    font-weight: 700; font-size: 2.2rem; color: var(--ink-blue); font-family: 'Kalam', cursive; line-height: 1.1; margin-bottom: 5px;
 }
-.course-banner-card .banner-par {
-    display: inline-block; background: rgba(0,0,0,0.25); color: #fff; font-weight: 900; padding: 4px 10px; border-radius: 8px; font-size: 0.95rem; margin-top: 8px; border: 1px solid rgba(255,255,255,0.1);
+.course-banner-paper .banner-par {
+    display: inline-block; color: var(--ink-blue); font-weight: 700; font-size: 1.3rem; border: none; font-family: 'Kalam', cursive;
 }
 
 /* ========================================= */
@@ -126,7 +129,7 @@ body.player-mode .gm-only { display: none !important; }
     background-size: 100% 2.2rem;
     position: relative; padding: 25px 15px 15px 15px; margin-top: 20px;
     width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;
-    box-shadow: 3px 6px 15px rgba(0,0,0,0.4);
+    box-shadow: 3px 6px 15px rgba(0,0,0,0.3);
     border-radius: 2px;
 }
 .stapled-paper::before {
@@ -154,12 +157,12 @@ body.player-mode .gm-only { display: none !important; }
 /* KORTTIEN MITTASUHTEET JA TYYLIT           */
 /* ========================================= */
 .physical-card {
-    background: #fff; border-radius: 10px; padding: 10px;
-    width: 100%; height: auto;
-    aspect-ratio: 5 / 7; 
+    background: #fff; border-radius: 10px; padding: 12px;
+    width: 100%; height: 100%;
+    aspect-ratio: 2 / 3.2; /* TÄMÄ TAKAA ETTÄ KAIKKI KORTIT OVAT IDENTTISIÄ JA TEKSTIT MAHTUVAT KOKONAAN */
     display: flex; flex-direction: column; justify-content: flex-start;
     box-shadow: 2px 5px 12px rgba(0,0,0,0.3); border: 1px solid #ccc;
-    position: relative; overflow: hidden; z-index: 1; 
+    position: relative; overflow: visible; z-index: 1; 
 }
 .debuff-card { border-top: 8px solid var(--danger); }
 .buff-card { border-top: 8px solid var(--info); }
@@ -168,10 +171,8 @@ body.player-mode .gm-only { display: none !important; }
 .debuff-card .card-type-tag { color: var(--danger); }
 .buff-card .card-type-tag { color: var(--info); }
 .premium-card .card-type-tag { color: var(--warning); }
-.physical-card h3 { font-size: clamp(0.85rem, 4vw, 1.1rem); font-weight: 900; color: #000; line-height: 1.15; margin-bottom: 6px; text-transform: uppercase; word-break: break-word; hyphens: auto; flex-shrink: 0;}
-.physical-card p { font-size: clamp(0.75rem, 3.5vw, 0.9rem); color: #111; font-weight: 700; line-height: 1.35; margin-bottom: 4px; overflow-y: auto; flex: 1; }
-.physical-card p::-webkit-scrollbar { width: 3px; }
-.physical-card p::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 3px; }
+.physical-card h3 { font-size: clamp(0.85rem, 4vw, 1.05rem); font-weight: 900; color: #000; line-height: 1.15; margin-bottom: 6px; text-transform: uppercase; word-break: break-word; hyphens: auto; flex-shrink: 0;}
+.physical-card p { font-size: clamp(0.75rem, 3.5vw, 0.9rem); color: #111; font-weight: 700; line-height: 1.35; margin-bottom: 4px; flex: 1; overflow-y: visible; }
 .card-price-tag { position: absolute; top: 6px; right: 6px; background: var(--warning); color: #000; font-weight: 900; padding: 4px 8px; border-radius: 8px; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index:5; }
 
 /* NUPPINEULAT (ACTIVE SABOTAGES) */
@@ -238,12 +239,12 @@ body.player-mode .gm-only { display: none !important; }
     margin-left: 20px;
 }
 
-/* Muovitasku joka yltää vain 85% kortista */
+/* Muovitasku joka yltää vain PUOLIVÄLIIN kortista */
 .plastic-sleeve {
-    position: relative; padding: 4px; display: flex; flex-direction: column;
+    position: relative; padding: 4px; display: flex; flex-direction: column; height: 100%;
 }
 .plastic-sleeve::after {
-    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 85%;
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 50%; /* Nyt vain puolen kortin korkuinen! */
     background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 40%, rgba(255,255,255,0.05) 100%);
     border: 2px solid rgba(255,255,255,0.4); border-top: 3px solid rgba(255,255,255,0.7);
     border-radius: 0 0 10px 10px; pointer-events: none; z-index: 10;
@@ -251,7 +252,7 @@ body.player-mode .gm-only { display: none !important; }
 }
 .plastic-sleeve .physical-card { margin: 0; }
 
-.shop-item-wrapper { display: flex; flex-direction: column; gap: 8px; }
+.shop-item-wrapper { display: flex; flex-direction: column; gap: 8px; height: 100%; }
 .shop-item-btn { width: 100%; padding: 12px; font-size: 0.95rem; border-radius: 8px; font-weight: 900; text-transform: uppercase; border: none; cursor: pointer; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 .shop-item-btn.btn-warning { background: var(--warning); color: #000; }
 .shop-item-btn.btn-success { background: var(--info); }
@@ -279,7 +280,7 @@ body.player-mode .gm-only { display: none !important; }
 
 .carousel-card-wrapper {
     flex: 0 0 240px; scroll-snap-align: center; perspective: 1200px;
-    position: relative; transition: transform 0.1s, opacity 0.1s; height: 336px; 
+    position: relative; transition: transform 0.1s, opacity 0.1s; height: 384px; /* Skaalattu korkeammalle aspektille */
 }
 .card-3d-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .card-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column; overflow: hidden; background: #fff; border: 2px solid var(--border); }
