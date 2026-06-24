@@ -22,6 +22,7 @@ let currentHoleIndex = 1;
 let lastPlayedCardTimestamp = Date.now();
 window.gameHistory = []; 
 let isZoomedOut = false;
+window.viewHoleIndex = null; // Käytetään, kun klikataan väylää "koko taulu" -näkymässä
 
 window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
 window.pendingShopPurchase = null;
@@ -29,15 +30,10 @@ window.pendingShopPurchase = null;
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
 const getRandomColor = () => postItColors[Math.floor(Math.random() * postItColors.length)];
 
-// 7 Eri kynätyyliä väylän vaihtumista varten
+// 7 Eri kynätyyliä
 const penColors = [
-    { c1: '#0284c7', c2: '#38bdf8' }, // Sininen
-    { c1: '#dc2626', c2: '#f87171' }, // Punainen
-    { c1: '#16a34a', c2: '#4ade80' }, // Vihreä
-    { c1: '#d97706', c2: '#fbbf24' }, // Oranssi
-    { c1: '#9333ea', c2: '#c084fc' }, // Violetti
-    { c1: '#db2777', c2: '#f472b6' }, // Pinkki
-    { c1: '#475569', c2: '#94a3b8' }, // Tummanharmaa
+    { c1: '#0284c7', c2: '#38bdf8' }, { c1: '#dc2626', c2: '#f87171' }, { c1: '#16a34a', c2: '#4ade80' },
+    { c1: '#d97706', c2: '#fbbf24' }, { c1: '#9333ea', c2: '#c084fc' }, { c1: '#db2777', c2: '#f472b6' }, { c1: '#475569', c2: '#94a3b8' }
 ];
 const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length)];
 
@@ -181,10 +177,31 @@ window.addEventListener('load', () => {
 // KAMERA & ILMOITUSTAULU (GRID)
 //==============================================
 window.toggleZoom = function() {
-    isZoomedOut = !isZoomedOut;
-    let btn = el('zoomToggleBtn');
-    if(btn) btn.innerText = isZoomedOut ? '🔙 PALAA VÄYLÄLLE' : '🔍 KOKO TAULU';
+    if (isZoomedOut) {
+        isZoomedOut = false; window.viewHoleIndex = null;
+    } else if (window.viewHoleIndex !== null && window.viewHoleIndex !== currentHoleIndex) {
+        window.viewHoleIndex = null;
+    } else {
+        isZoomedOut = true;
+    }
+    
+    let btn = el('boardBtnText');
+    if(btn) {
+        if (isZoomedOut) btn.innerText = 'PALAA';
+        else if (window.viewHoleIndex !== null && window.viewHoleIndex !== currentHoleIndex) btn.innerText = 'NYKYINEN';
+        else btn.innerText = 'TAULU';
+    }
     window.updateCamera();
+};
+
+window.zoomToHole = function(hIndex) {
+    if(isZoomedOut) {
+        isZoomedOut = false;
+        window.viewHoleIndex = hIndex;
+        let btn = el('boardBtnText');
+        if(btn) btn.innerText = (hIndex === currentHoleIndex) ? 'TAULU' : 'NYKYINEN';
+        window.updateCamera();
+    }
 };
 
 window.updateCamera = function() {
@@ -194,7 +211,7 @@ window.updateCamera = function() {
     if (isZoomedOut) {
         let maxCol = Math.min(9, currentHoleIndex);
         let maxRow = Math.ceil(currentHoleIndex / 9);
-        let activeWidth = 120 + maxCol * 380 + (maxCol - 1) * 30;
+        let activeWidth = 120 + maxCol * 380 + (maxCol - 1) * 30; // 120 = padding * 2
         let activeHeight = 120 + maxRow * 950 + (maxRow - 1) * 30;
         
         let scaleX = window.innerWidth / activeWidth;
@@ -207,8 +224,9 @@ window.updateCamera = function() {
         
         board.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     } else {
-        let col = (currentHoleIndex - 1) % 9;
-        let row = Math.floor((currentHoleIndex - 1) / 9);
+        let targetHole = window.viewHoleIndex || currentHoleIndex;
+        let col = (targetHole - 1) % 9;
+        let row = Math.floor((targetHole - 1) / 9);
         let cellX = 60 + col * 410; 
         let cellY = 60 + row * 980; 
         
@@ -220,7 +238,8 @@ window.updateCamera = function() {
 };
 
 window.getHoleCellHTML = function(hData, hIndex, isActive) {
-    let html = `<div class="hole-cell">`;
+    let clickAttr = `onclick="if(window.zoomToHole) window.zoomToHole(${hIndex})" style="cursor:${isZoomedOut ? 'pointer' : 'default'};"`;
+    let html = `<div class="hole-cell" ${clickAttr}>`;
     let par = currentCourse.pars ? (currentCourse.pars[hIndex - 1] || 3) : 3;
     
     html += `<div class="index-card">`;
@@ -228,7 +247,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
     
     if (isActive && hData.penColor) {
         html += `
-        <div class="pen-container" onclick="if(window.openScoreModal) { window.openScoreModal(); }">
+        <div class="pen-container" onclick="event.stopPropagation(); if(window.openScoreModal) { window.openScoreModal(); }">
             <div class="pen-string"></div>
             <div class="pen-body" style="background: linear-gradient(to right, ${hData.penColor.c1}, ${hData.penColor.c2}, ${hData.penColor.c1});">
                 <span class="pen-text">MERKKAA</span>
@@ -651,7 +670,7 @@ window.showHandLimitModal = function(cards) {
 };
 
 //==============================================
-// 3D KORTTIVIUHKA (KARUSELLI)
+// 3D KORTTIVIUHKA (KARUSELLI) OMNI-PYÖRITYS
 //==============================================
 window.renderCarousel = function() {
     const container = el('cardCarousel');
@@ -732,12 +751,16 @@ window.initNativeCarousel = function() {
 
     container.addEventListener('touchmove', e => {
         let dx = e.touches[0].clientX - startX; let dy = e.touches[0].clientY - startY;
-        if (!isSpinning && Math.abs(dy) > Math.abs(dx) + 10) isSpinning = true;
+        
+        // Vapaa pyöritys: käynnistyy herkästi kun liikutetaan vähänkään pystysuunnassa (ei puhdas horisontaalinen scroll)
+        if (!isSpinning && Math.abs(dy) > 5) isSpinning = true;
+        
         if (isSpinning) {
             e.preventDefault(); 
             const activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
             if(activeInner) {
-                let newRotX = window.cardLastRotX - (dy * 0.4); let newRotY = window.cardLastRotY + (dx * 0.4); 
+                let newRotX = window.cardLastRotX - (dy * 0.4); 
+                let newRotY = window.cardLastRotY + (dx * 0.4); 
                 activeInner.style.transform = `rotateX(${newRotX}deg) rotateY(${newRotY}deg)`;
             }
         }
@@ -751,7 +774,7 @@ window.initNativeCarousel = function() {
                 let match = transformStr.match(/rotateX\(([-0-9.]+)deg\)/);
                 if(match) {
                     let rx = parseFloat(match[1]); window.cardLastRotX = Math.round(rx / 180) * 180; window.cardLastRotY = 0;
-                    activeInner.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                    activeInner.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)'; // Nopea snap takaisin
                     activeInner.style.transform = `rotateX(${window.cardLastRotX}deg) rotateY(0deg)`;
                 }
             }
@@ -984,7 +1007,7 @@ window.cancelCourse = function() {
     if (confirm("Haluatko varmasti lopettaa nykyisen radan? Pelaajat säilyttävät rahansa ja korttinsa, mutta palaatte aulaan.")) {
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         update(ref(db, 'gameState'), window.cleanFirebaseData({ course: null, activeHole: null, currentHoleIndex: 1, players: nextPlayers, history: [] }));
-        window.logEvent(`${myName} (GM) keskeytti radan.`);
+        window.logEvent(`${myName} (Asetukset) keskeytti radan.`);
     }
 };
 
@@ -1023,13 +1046,14 @@ window.logEvent = function(msg) { push(ref(db, 'gameState/eventLog'), window.cle
 window.updateIdentityUI = function() { if(el('identityCard')) { el('identityCard').style.display = myName ? 'none' : 'block'; } };
 window.showNotification = function(message, type = 'info') { const container = el('notificationContainer'); if(!container) return; const toast = document.createElement('div'); toast.className = `notification ${type}`; toast.innerHTML = `<span style="font-size:1.3rem;">${type === 'warning' ? '🛒' : (type === 'debuff' ? '💥' : 'ℹ️')}</span> <span>${message}</span>`; container.appendChild(toast); setTimeout(() => { toast.remove(); }, 2000); };
 window.claimIdentity = function() { let n = el('playerNameInput').value.trim(); if(!n || n.length > 15) return alert("Syötä nimi!"); myName = n; localStorage.setItem('friba_name', n); window.updateIdentityUI(); if(!(allPlayers || []).find(x => x && x.name === n)) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers)); window.logEvent(`${n} liittyi peliin.`); } };
+window.setRole = function(r) { currentRole = r; document.body.className = r + '-mode'; if(el('btnPlayer')) el('btnPlayer').classList.toggle('active', r === 'player'); if(el('btnGM')) el('btnGM').classList.toggle('active', r === 'gm'); window.renderBoard(); };
 
 window.adminAddPlayer = function() { const input = el('adminNewPlayerName'); if(!input) return; const name = input.value.trim(); if(!name || (allPlayers || []).find(p => p && p.name === name)) return; let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: name, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); input.value = ''; window.logEvent(`${myName} (Asetukset) lisäsi pelaajan: ${name}`); };
 window.removePlayer = function(index) { if(confirm("Haluatko poistaa?")) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.splice(index, 1); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); } };
 window.adjustScore = function(index, delta) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); if(nextPlayers[index]) { nextPlayers[index].score = (parseInt(nextPlayers[index].score) || 0) + delta; update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); } };
 window.adjustDgScore = function(index, delta) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); if(nextPlayers[index]) { nextPlayers[index].dgScore = (parseInt(nextPlayers[index].dgScore) || 0) + delta; update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); } };
 window.gmRollRule = function() { if(!activeHole || window.holeRules.length === 0) return; const randomRule = window.holeRules[Math.floor(Math.random() * window.holeRules.length)]; set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(randomRule)); document.getElementById('settingsModal').style.display='none';};
-window.gmSetRule = function() { if(!activeHole) return; const sel = el('gmRuleSelect'); const ruleDef = window.holeRules[sel.value]; if(ruleDef) { set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(ruleDef)); } };
+window.gmSetRule = function() { if(!activeHole) return; const sel = el('gmRuleSelect'); const ruleDef = window.holeRules[sel.value]; if(ruleDef) { set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(ruleDef)); document.getElementById('settingsModal').style.display='none'; } };
 
 window.renderAdminPlayerList = function() {
     const list = el('adminPlayerList'); if(!list) return; list.innerHTML = "";
@@ -1097,7 +1121,6 @@ onValue(ref(db, 'gameState'), (snap) => {
     const lobbyContainer = el('lobbyContainer');
     const corkboardViewport = el('corkboard-viewport');
     const gameSetupArea = el('gameSetupArea');
-    const btnZoom = el('zoomToggleBtn');
     const btnSettings = el('settingsToggleBtn');
     const pocket = el('pocketContainer');
     
@@ -1106,21 +1129,18 @@ onValue(ref(db, 'gameState'), (snap) => {
             if(lobbyContainer) lobbyContainer.style.display = 'block';
             if(gameSetupArea) gameSetupArea.style.display = 'block';
             if(corkboardViewport) corkboardViewport.style.display = 'none';
-            if(btnZoom) btnZoom.style.display = 'none';
             if(btnSettings) btnSettings.style.display = 'none';
             if(pocket) pocket.style.display = 'none';
         } else {
             if(lobbyContainer) lobbyContainer.style.display = 'none';
             if(corkboardViewport) corkboardViewport.style.display = 'block';
-            if(btnZoom) btnZoom.style.display = 'block';
-            if(btnSettings) btnSettings.style.display = 'block';
+            if(btnSettings) btnSettings.style.display = 'flex';
             if(pocket) pocket.style.display = 'flex';
         }
     } else {
         if(lobbyContainer) lobbyContainer.style.display = 'block';
         if(gameSetupArea) gameSetupArea.style.display = 'none';
         if(corkboardViewport) corkboardViewport.style.display = 'none';
-        if(btnZoom) btnZoom.style.display = 'none';
         if(btnSettings) btnSettings.style.display = 'none';
         if(pocket) pocket.style.display = 'none';
     }
