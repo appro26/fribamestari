@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="friba.png" />
     
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=141" />
+    <link rel="stylesheet" href="style.css?v=142" />
     <meta id="themeColorMeta" name="theme-color" content="#cbd5e1" />
     
     <script>
@@ -69,7 +69,7 @@
 
         <div id="mainGameArea" style="display:none; margin-top:15px;">
             
-            <!-- VÄYLÄN TIEDOT (KLASSINEN HAKEMISTOKORTTI) -->
+            <!-- VÄYLÄN TIEDOT (HAKEMISTOKORTTI) -->
             <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 35px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
                 <div id="courseInfoBanner" class="index-card" style="flex: 1; margin: 0;">
                     <div class="banner-subtitle" id="bannerCourseName">Rata</div>
@@ -79,7 +79,7 @@
                 <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; line-height:1.2; box-shadow: 4px 6px 15px rgba(0,0,0,0.5); border-radius: 6px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.6rem; transform: perspective(800px) rotateX(2deg) translateZ(5px);">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
-            <!-- VÄYLÄSÄÄNTÖ / TEHTÄVÄ (KIERREVIHKON SIVU) -->
+            <!-- VÄYLÄSÄÄNTÖ / TEHTÄVÄ (NEON LEVY) -->
             <div id="activeHoleContainer"></div>
             
             <!-- SABOTAASI KORTIT -->
@@ -89,10 +89,8 @@
             </div>
             
             <div class="player-only">
-                <!-- TULOSKORTTI -->
-                <div class="stapled-paper">
-                    <div class="staple staple-1"></div>
-                    <div class="staple staple-2"></div>
+                <!-- TULOSKORTTI (KIERREVIHKO) -->
+                <div class="score-spiral-note">
                     <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:1.8rem; text-decoration:underline; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">🏆 Tuloskortti</h2>
                     <div id="playerList"></div>
                 </div>
@@ -232,7 +230,7 @@
         <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
-    <!-- NATIIVI VIUHKA-KARUSELLI (JÄTTIKOKO) -->
+    <!-- NATIIVI VIUHKA-KARUSELLI -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container"></div>
         <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">👈 VAIHDA KORTTIA 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
@@ -240,12 +238,12 @@
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px; margin-top:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
-    <!-- FOTOREALISTINEN PAPERITULOSKORTTI -->
+    <!-- FOTOREALISTINEN PAPERITULOSKORTTI (MODAALISSA) -->
     <div id="scoreModal" class="winner-overlay" onclick="if(event.target === this) { this.style.display='none'; }">
-        <div class="paper-score-modal">
+        <div class="score-spiral-note" style="margin-top:0; transform:none; max-height: 90vh; overflow-y:auto;">
             <div style="text-align: center; margin-bottom: 15px; position:relative; z-index:30;">
-                <h2>VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
-                <p>Par <strong id="scoreModalPar">3</strong></p>
+                <h2 style="font-size: 2.6rem; margin-bottom: 5px; color: var(--ink-blue); font-family: 'Kalam', cursive; text-transform: none; text-decoration: underline;">VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
+                <p style="font-size: 1.6rem; color: var(--ink-blue); font-family: 'Kalam', cursive;">Par <strong id="scoreModalPar">3</strong></p>
             </div>
             
             <div id="scoreModalRuleBox" style="display: none; z-index: 25;"></div>
@@ -271,7 +269,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=141"></script>
-    <script type="module" src="script.js?v=141"></script>
+    <script src="tasks.js?v=142"></script>
+    <script type="module" src="script.js?v=142"></script>
 </body>
 </html>
