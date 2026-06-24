@@ -15,10 +15,9 @@
 
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
-    
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=145" />
-    <meta id="themeColorMeta" name="theme-color" content="#5c4033" />
+    <link rel="stylesheet" href="style.css?v=146" />
+    <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
       window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
@@ -29,8 +28,13 @@
     <!-- AMBIENT ANIMAATIOIDEN KONTTI -->
     <div id="ambiance-container" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:4500; overflow:hidden;"></div>
 
-    <button id="zoomToggleBtn" class="btn btn-primary" onclick="if(window.toggleZoom) window.toggleZoom();" style="position:fixed; top:15px; right:15px; z-index:9500; width:auto; padding:10px 15px; font-size:0.8rem; box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none;">🔍 KOKO TAULU</button>
+    <!-- PÄÄNAPIT YLHÄÄLLÄ (ZOOM JA ASETUKSET) -->
+    <div style="position:fixed; top:15px; right:15px; z-index:9500; display:flex; gap:10px;">
+        <button id="zoomToggleBtn" class="btn btn-primary" onclick="if(window.toggleZoom) window.toggleZoom();" style="width:auto; padding:12px 18px; font-size:0.85rem; box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none;">🔍 KOKO TAULU</button>
+        <button id="settingsToggleBtn" class="btn btn-secondary" onclick="document.getElementById('settingsModal').style.display='flex'" style="width:auto; padding:12px 18px; font-size:1.2rem; background:rgba(255,255,255,0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none;">⚙️</button>
+    </div>
 
+    <!-- ASENNUSKEHOTE -->
     <div id="installPromptModal" class="winner-overlay" style="z-index: 10010; flex-direction:column; justify-content:center; align-items:center;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align: center;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
@@ -42,6 +46,7 @@
         </div>
     </div>
 
+    <!-- LIIKAA KORTTEJA -MODAALI -->
     <div id="handLimitModal" class="winner-overlay" style="z-index: 10005;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align:center;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
@@ -74,94 +79,88 @@
 
     <!-- PELIN ILMOITUSTAULU (GRID VIEWPORT) -->
     <div id="corkboard-viewport" style="display:none;">
+        <!-- Tämä tausta laajenee dynaamisesti -->
         <div id="corkboard-surface"></div>
     </div>
 
-    <div class="container" id="adminContainer" style="pointer-events: none;">
-        <div class="gm-only" style="margin-top: 15px; pointer-events: auto;">
-            <button class="btn btn-secondary glass-card" style="width:100%; margin-bottom: 15px;" onclick="document.getElementById('adminPanel').style.display = document.getElementById('adminPanel').style.display === 'none' ? 'block' : 'none'">⚙️ Avaa GM Asetukset</button>
-            
-            <div id="adminPanel" class="card glass-card" style="display:none; margin-bottom: 100px;">
-                <button class="btn btn-warning" style="margin-bottom: 25px; color:#000;" onclick="if(window.cancelCourse) { window.cancelCourse(); }">🛑 VAIHDA RATAA / KESKEYTÄ PELI</button>
-                <h2 style="margin-top:5px;">Peliasetukset</h2>
-                <div class="glass-card" style="padding:15px; border-radius:12px; margin-bottom:25px;">
-                    <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.05rem;">
-                        <input type="checkbox" id="gmSetShop" style="width:24px; height:24px; margin:0; appearance:auto; pointer-events:auto;"> Kauppa käytössä
-                    </label>
-                    <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.05rem;">
-                        <input type="checkbox" id="gmSetLimitCheck" style="width:24px; height:24px; margin:0; appearance:auto; pointer-events:auto;"> Käsiraja käytössä
-                    </label>
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-                        <span style="font-weight:800;">Maksimikortit:</span>
-                        <input type="number" id="gmSetLimitCount" style="width:80px; padding:10px; margin:0;">
-                    </div>
-                    <div style="border-top:2px solid var(--border); margin:15px 0;"></div>
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-                        <span style="font-weight:800;">Pelirahaa voitosta:</span>
-                        <input type="number" id="gmSetPtsWin" style="width:80px; padding:10px; margin:0;">
-                    </div>
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-                        <span style="font-weight:800;">Rahaa tehtävästä:</span>
-                        <input type="number" id="gmSetPtsTask" style="width:80px; padding:10px; margin:0;">
-                    </div>
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-                        <span style="font-weight:800;">Miinusta häviöstä:</span>
-                        <input type="number" id="gmSetPtsLose" style="width:80px; padding:10px; margin:0;">
-                    </div>
-                    <button class="btn btn-primary" style="padding:16px; margin-top:10px;" onclick="if(window.saveGameSettings) window.saveGameSettings();">TALLENNA ASETUKSET</button>
-                </div>
-                <h2>Väylätehtävä</h2>
-                <div style="display:flex; gap:10px; margin-bottom: 25px;">
-                    <select id="gmRuleSelect" style="margin:0; padding:12px;"></select>
-                    <button class="btn btn-warning" style="width:auto; padding:0 15px;" onclick="if(window.gmSetRule) { window.gmSetRule(); }">ASETA</button>
-                    <button class="btn btn-primary" style="width:auto; padding:0 15px;" onclick="if(window.gmRollRule) { window.gmRollRule(); }">ARVO</button>
-                </div>
-                <h2>Muokkaa Pelaajia & Kortteja</h2>
-                <div id="adminPlayerList"></div>
-                <div style="display: flex; gap: 10px; margin-top:15px; margin-bottom:25px;">
-                    <input type="text" id="adminNewPlayerName" placeholder="Pelaajan nimi..." aria-label="Uuden pelaajan nimi" style="margin: 0;" />
-                    <button class="btn btn-success" style="width: auto; padding: 0 25px;" onclick="if(window.adminAddPlayer) { window.adminAddPlayer(); }">LISÄÄ</button>
-                </div>
-                <h2>Lokit</h2>
-                <div id="adminEventLog" class="log-box" style="margin-bottom:15px;"></div>
-                <div id="adminScoreLog" class="log-box"></div>
-                <button class="btn btn-danger" style="margin-top: 20px;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI</button>
-            </div>
+    <!-- LOKERIKKO JA KANSIOT (BOTTOM NAV) - Nyt aina näkyvissä -->
+    <div class="corkboard-pocket-container" id="pocketContainer" style="display:none;">
+        <div class="binder-spine-btn" id="ownCardsButtonElement" onclick="if(window.openShop) window.openShop('sell')">
+            <span class="binder-spine-text">OMAT KORTIT</span>
+            <div class="binder-badge" id="handCountBadge">0</div>
         </div>
+        <div class="binder-spine-btn" id="shopButtonElement" onclick="if(window.openShop) window.openShop('buy')">
+            <span class="binder-spine-text">KAUPPA</span>
+            <div class="binder-badge money-badge" id="myResPointsBtn">0 P</div>
+        </div>
+        <div class="pocket-lip">LOKERIKKO</div>
+    </div>
 
-        <div style="margin-top: 20px; padding-top: 20px; display:flex; flex-direction:column; gap:12px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto; margin-bottom: 180px; pointer-events: auto;">
-            <button class="btn btn-secondary" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px; opacity:0.8;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
-
-            <!-- ROOLIN VALINTA -->
-            <div class="role-switcher">
-                <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player');">PELAAJA</button>
-                <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">GM</button>
+    <!-- KESKITETTY ASETUSMODAALI -->
+    <div id="settingsModal" class="fullscreen-modal" style="background:rgba(0,0,0,0.9); padding:20px; align-items:flex-start; overflow-y:auto; overscroll-behavior:contain;" onclick="if(event.target === this) { this.style.display='none'; }">
+        <div style="width:100%; max-width:500px; margin:0 auto; padding-bottom:50px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h1 style="color:#fff; font-size:1.8rem; font-weight:900;">⚙️ ASETUKSET</h1>
+                <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('settingsModal').style.display='none'">&times;</button>
             </div>
+
+            <button class="btn btn-secondary" onclick="location.reload()" style="font-size:1rem; margin-bottom:25px; padding:18px; box-shadow:0 4px 10px rgba(0,0,0,0.5);">🔄 PÄIVITÄ SIVU (RELOAD)</button>
+            
+            <button class="btn btn-warning" style="margin-bottom: 25px; color:#000; padding:18px;" onclick="if(window.cancelCourse) { window.cancelCourse(); document.getElementById('settingsModal').style.display='none'; }">🛑 LOPETA NYKYINEN RATA</button>
+            
+            <h2 style="color:#cbd5e1; margin-top:20px; font-size:1rem;">Peliasetukset (GM)</h2>
+            <div class="glass-card" style="padding:20px; border-radius:12px; margin-bottom:25px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
+                <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.05rem; color:#fff;">
+                    <input type="checkbox" id="gmSetShop" style="width:24px; height:24px; margin:0;"> Kauppa käytössä
+                </label>
+                <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.05rem; color:#fff;">
+                    <input type="checkbox" id="gmSetLimitCheck" style="width:24px; height:24px; margin:0;"> Käsiraja käytössä
+                </label>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                    <span style="font-weight:800;">Maksimikortit:</span>
+                    <input type="number" id="gmSetLimitCount" style="width:80px; padding:10px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                </div>
+                <div style="border-top:2px solid rgba(255,255,255,0.2); margin:15px 0;"></div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                    <span style="font-weight:800;">Pelirahaa voitosta:</span>
+                    <input type="number" id="gmSetPtsWin" style="width:80px; padding:10px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                    <span style="font-weight:800;">Rahaa tehtävästä:</span>
+                    <input type="number" id="gmSetPtsTask" style="width:80px; padding:10px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                    <span style="font-weight:800;">Miinusta häviöstä:</span>
+                    <input type="number" id="gmSetPtsLose" style="width:80px; padding:10px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                </div>
+                <button class="btn btn-primary" style="padding:16px; margin-top:15px;" onclick="if(window.saveGameSettings) window.saveGameSettings();">TALLENNA ASETUKSET</button>
+            </div>
+
+            <h2 style="color:#cbd5e1; font-size:1rem;">Muokkaa Pelaajia (GM)</h2>
+            <div id="adminPlayerList"></div>
+            <div style="display: flex; gap: 10px; margin-top:15px; margin-bottom:30px;">
+                <input type="text" id="adminNewPlayerName" placeholder="Pelaajan nimi..." style="margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);" />
+                <button class="btn btn-success" style="width: auto; padding: 0 25px;" onclick="if(window.adminAddPlayer) { window.adminAddPlayer(); }">LISÄÄ</button>
+            </div>
+
+            <h2 style="color:#cbd5e1; font-size:1rem;">Manuaalinen Väyläsääntö (GM)</h2>
+            <div style="display:flex; gap:10px; margin-bottom: 30px;">
+                <select id="gmRuleSelect" style="margin:0; padding:12px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); flex:1;"></select>
+                <button class="btn btn-warning" style="width:auto; padding:0 15px;" onclick="if(window.gmSetRule) { window.gmSetRule(); document.getElementById('settingsModal').style.display='none';}">ASETA</button>
+            </div>
+
+            <h2 style="color:#cbd5e1; font-size:1rem;">Tapahtumalokit</h2>
+            <div id="adminEventLog" class="log-box" style="margin-bottom:15px;"></div>
+            <div id="adminScoreLog" class="log-box"></div>
+            
+            <button class="btn btn-danger" style="margin-top: 40px; padding:20px;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI (WIPE)</button>
         </div>
     </div>
 
-    <!-- LOKERIKKO JA KANSIOT (BOTTOM NAV) -->
-    <div class="player-only">
-        <div class="corkboard-pocket-container">
-            <div class="binder-spine-btn" id="ownCardsButtonElement" onclick="if(window.openShop) window.openShop('sell')">
-                <span class="binder-spine-text">OMAT KORTIT</span>
-                <div class="binder-badge" id="handCountBadge">0</div>
-            </div>
-            
-            <div class="binder-spine-btn" id="shopButtonElement" onclick="if(window.openShop) window.openShop('buy')">
-                <span class="binder-spine-text">KAUPPA</span>
-                <div class="binder-badge money-badge" id="myResPointsBtn">0 P</div>
-            </div>
-
-            <div class="pocket-lip">LOKERIKKO</div>
-        </div>
-    </div>
-
-    <!-- Modaalit (klikkaus taustaan sulkee ne) -->
+    <!-- Modaalit (Kauppa, kortin anto, kohde jne) -->
     <div id="shopModal" class="fullscreen-modal" style="padding:0; background:rgba(0,0,0,0.7);" onclick="if(event.target === this) { window.closeShopModal(); }">
         <div class="shop-binder-modal theme-shop">
             <div class="binder-swipe-handle"></div>
-            
             <div style="display: flex; flex: 1; overflow: hidden; position: relative;">
                 <div class="binder-spine">
                     <div class="binder-ring" style="margin-top: 30px;"></div>
@@ -177,7 +176,7 @@
                         </h2>
                     </div>
                     
-                    <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.05); padding:4px; border:1px solid rgba(255,255,255,0.1); position:relative; z-index:20;">
+                    <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.05); padding:4px; border:1px solid rgba(255,255,255,0.1); position:relative; z-index:20; display:flex;">
                         <button id="shopTabSellBtn" class="role-btn" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('sell')" style="color:#fff;">OMAT KORTIT</button>
                         <button id="shopTabBuyBtn" class="role-btn active" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('buy')" style="color:#fff;">OSTA KORTTEJA</button>
                     </div>
@@ -200,11 +199,11 @@
     <div id="gmGiveCardModal" class="fullscreen-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
-            <h2>KORTIN ANTO</h2>
+            <h2 style="color:#fff;">KORTIN ANTO</h2>
             <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('gmGiveCardModal').style.display='none'">&times;</button>
         </div>
-        <input type="text" id="gmCardSearch" aria-label="Etsi korttia" placeholder="Etsi korttia nimellä..." onkeyup="if(window.filterGmCards) { window.filterGmCards(); }" style="margin-bottom: 15px;" />
-        <div id="gmGiveCardList" class="cards-grid-2"></div>
+        <input type="text" id="gmCardSearch" aria-label="Etsi korttia" placeholder="Etsi korttia nimellä..." onkeyup="if(window.filterGmCards) { window.filterGmCards(); }" style="margin-bottom: 15px; width:100%; max-width:400px;" />
+        <div id="gmGiveCardList" class="cards-grid-2" style="max-width:400px; width:100%;"></div>
     </div>
 
     <!-- NATIIVI VIUHKA-KARUSELLI -->
@@ -248,7 +247,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=145"></script>
-    <script type="module" src="script.js?v=145"></script>
+    <script src="tasks.js?v=146"></script>
+    <script type="module" src="script.js?v=146"></script>
 </body>
 </html>
