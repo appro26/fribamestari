@@ -16,7 +16,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=146" />
+    <link rel="stylesheet" href="style.css?v=147" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
@@ -28,7 +28,13 @@
     <!-- AMBIENT ANIMAATIOIDEN KONTTI -->
     <div id="ambiance-container" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:4500; overflow:hidden;"></div>
 
-    <!-- PÄÄNAPIT YLHÄÄLLÄ (ZOOM JA ASETUKSET) -->
+    <!-- KUITTIKONE (KOKONAISTULOS) -->
+    <div id="receipt-printer-container" onclick="document.getElementById('receiptModal').style.display='flex'" style="display:none;">
+        <div class="printer-slot"></div>
+        <div class="receipt-paper" id="receipt-mini-content"></div>
+    </div>
+
+    <!-- PÄÄNAPIT YLHÄÄLLÄ -->
     <div style="position:fixed; top:15px; right:15px; z-index:9500; display:flex; gap:10px;">
         <button id="zoomToggleBtn" class="btn btn-primary" onclick="if(window.toggleZoom) window.toggleZoom();" style="width:auto; padding:12px 18px; font-size:0.85rem; box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none;">🔍 KOKO TAULU</button>
         <button id="settingsToggleBtn" class="btn btn-secondary" onclick="document.getElementById('settingsModal').style.display='flex'" style="width:auto; padding:12px 18px; font-size:1.2rem; background:rgba(255,255,255,0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none;">⚙️</button>
@@ -79,11 +85,10 @@
 
     <!-- PELIN ILMOITUSTAULU (GRID VIEWPORT) -->
     <div id="corkboard-viewport" style="display:none;">
-        <!-- Tämä tausta laajenee dynaamisesti -->
         <div id="corkboard-surface"></div>
     </div>
 
-    <!-- LOKERIKKO JA KANSIOT (BOTTOM NAV) - Nyt aina näkyvissä -->
+    <!-- LOKERIKKO JA KANSIOT (BOTTOM NAV) -->
     <div class="corkboard-pocket-container" id="pocketContainer" style="display:none;">
         <div class="binder-spine-btn" id="ownCardsButtonElement" onclick="if(window.openShop) window.openShop('sell')">
             <span class="binder-spine-text">OMAT KORTIT</span>
@@ -105,7 +110,6 @@
             </div>
 
             <button class="btn btn-secondary" onclick="location.reload()" style="font-size:1rem; margin-bottom:25px; padding:18px; box-shadow:0 4px 10px rgba(0,0,0,0.5);">🔄 PÄIVITÄ SIVU (RELOAD)</button>
-            
             <button class="btn btn-warning" style="margin-bottom: 25px; color:#000; padding:18px;" onclick="if(window.cancelCourse) { window.cancelCourse(); document.getElementById('settingsModal').style.display='none'; }">🛑 LOPETA NYKYINEN RATA</button>
             
             <h2 style="color:#cbd5e1; margin-top:20px; font-size:1rem;">Peliasetukset (GM)</h2>
@@ -157,7 +161,11 @@
         </div>
     </div>
 
-    <!-- Modaalit (Kauppa, kortin anto, kohde jne) -->
+    <!-- Modaalit (Kuitit, Kauppa, jne) -->
+    <div id="receiptModal" class="fullscreen-modal" onclick="if(event.target === this) { this.style.display='none'; }">
+        <div class="receipt-paper full-receipt" id="receipt-full-content" style="max-height:85vh; overflow-y:auto; width:90%; max-width:400px; padding:30px 20px;"></div>
+    </div>
+
     <div id="shopModal" class="fullscreen-modal" style="padding:0; background:rgba(0,0,0,0.7);" onclick="if(event.target === this) { window.closeShopModal(); }">
         <div class="shop-binder-modal theme-shop">
             <div class="binder-swipe-handle"></div>
@@ -206,7 +214,6 @@
         <div id="gmGiveCardList" class="cards-grid-2" style="max-width:400px; width:100%;"></div>
     </div>
 
-    <!-- NATIIVI VIUHKA-KARUSELLI -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container"></div>
         <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">👈 VAIHDA KORTTIA 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
@@ -214,7 +221,6 @@
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px; margin-top:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
-    <!-- FOTOREALISTINEN PAPERITULOSKORTTI (MODAALISSA) -->
     <div id="scoreModal" class="winner-overlay" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="paper-score-modal" style="max-height: 90vh; overflow-y:auto;">
             <div class="pin pin-green" style="top: 15px; right: 20px;"></div>
@@ -247,7 +253,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=146"></script>
-    <script type="module" src="script.js?v=146"></script>
+    <script src="tasks.js?v=147"></script>
+    <script type="module" src="script.js?v=147"></script>
 </body>
 </html>
