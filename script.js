@@ -1,4 +1,4 @@
-// SUOJATTU YHTEYS: Määritellään tyhjät taulukot, jos tasks.js ei jostain syystä latautuisi
+// SUOJATTU ALUSTUS JOTTA PELI EI KAADU VAIKKA TASKS.JS PUUTTUISI
 window.allCards = window.allCards || [];
 window.holeRules = window.holeRules || [];
 
@@ -9,7 +9,7 @@ const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// YLEISET MUUTTUJAT JA FUNKTIOT
+// YLEISET MUUTTUJAT
 const el = id => document.getElementById(id);
 
 let myName = localStorage.getItem('friba_name') || null;
@@ -96,9 +96,9 @@ window.dismissInstallPrompt = function() {
 
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
-// KORTIN PELAAMINEN
+// KORTIN PELAAMINEN (TARGET MODAL / AUTOMATIIKKA)
 window.openTargetModal = function(cardId) {
-    const cardDef = (window.allCards || []).find(c => c.id === cardId);
+    const cardDef = (window.allCards || []).find(c => c && c.id === cardId);
     if (!cardDef) return;
     
     window.pendingCardPlay = { id: cardId, def: cardDef };
@@ -134,7 +134,7 @@ window.executeCardPlay = function(targetName) {
     if(el('handModal')) el('handModal').style.display = 'none'; 
     
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
-    const me = (nextPlayers || []).find(p => p && p.name === myName);
+    const me = nextPlayers.find(p => p && p.name === myName);
     
     if(me && me.cards) { 
         me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards);
@@ -181,28 +181,21 @@ window.executeCardPlay = function(targetName) {
 };
 
 //==============================================
-// LAAJENNETTU 3D-KORTTIVIUHKA (SLAIDAUS SIVULLE JA YLÖS)
+// UUSI NATIIVI KORTTIVIUHKA (SMOOTH SCROLL)
 //==============================================
 window.carouselCards = [];
-window.carouselCurrentIndex = 0;
 window.carouselCurrentMode = 'hand';
 window.carouselArgs = [];
 window.cardLastRotX = 0;
 window.cardLastRotY = 0;
 
-window.renderCarousel = function(dragX = 0) {
-    const wrapper = el('cardCarousel');
-    if(!wrapper) return;
+window.renderCarousel = function() {
+    const container = el('cardCarousel');
+    if(!container) return;
     
     let html = '';
-    let dragOffsetIndex = -(dragX / 160); 
-    let exactCurrentIndex = window.carouselCurrentIndex + dragOffsetIndex;
-
     window.carouselCards.forEach((cId, i) => {
-        let diff = i - exactCurrentIndex;
-        if(Math.abs(diff) > 2.5) return; // Renderöidään kerralla 5 korttia
-        
-        let cDef = (window.allCards || []).find(c => c.id === cId);
+        let cDef = (window.allCards || []).find(c => c && c.id === cId);
         if(!cDef) return;
         
         let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
@@ -211,32 +204,14 @@ window.renderCarousel = function(dragX = 0) {
         let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
         let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
         
-        // Leveämpi viuhka
-        let rotZ = diff * 8; 
-        let transX = diff * 160; 
-        let transY = Math.abs(diff) * 15; 
-        let scale = Math.max(0.7, 1 - Math.abs(diff)*0.12);
-        let opacity = Math.max(0, 1 - Math.abs(diff)*0.3);
-        let zIndex = 100 - Math.floor(Math.abs(diff)*10);
-        
-        let transformStr = `translate(calc(-50% + ${transX}px), calc(-50% + ${transY}px)) rotateZ(${rotZ}deg) scale(${scale})`;
-        
-        let isCenter = Math.abs(diff) < 0.5;
-        let clickHandler = !isCenter ? `onclick="window.changeCarouselIndex(${i})"` : '';
-        
-        let innerTransform = '';
-        if (isCenter && dragX === 0) {
-            innerTransform = `transform: rotateX(${window.cardLastRotX}deg) rotateY(${window.cardLastRotY}deg); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);`;
-        }
-
         html += `
-            <div class="fan-card-container" style="transform: ${transformStr}; z-index: ${zIndex}; opacity: ${opacity};" ${clickHandler}>
-                <div class="card-3d" id="card3d-inner-${i}" style="${innerTransform}">
+            <div class="carousel-card-wrapper" id="carousel-wrapper-${i}">
+                <div class="card-3d-inner" id="card3d-inner-${i}">
                     <div class="card-face card-front ${typeClass}">
                         <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
                             <div class="card-type-tag" style="font-size:1.05rem; margin-bottom:12px;">${tagTxt}</div>
                             <h3 style="font-size:1.85rem; margin-bottom:20px; color:#000; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
-                            <p style="font-size:1.35rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
+                            <p style="font-size:1.35rem; color:#111; font-weight:800; line-height:1.4; overflow-y:auto; padding-right:5px;">${cDef.d}</p>
                         </div>
                     </div>
                     <div class="card-face card-back ${backClass}">
@@ -247,92 +222,104 @@ window.renderCarousel = function(dragX = 0) {
             </div>`;
     });
     
-    wrapper.innerHTML = html;
-    if(dragX === 0) window.updateCarouselButtons();
+    container.innerHTML = html;
 };
 
-window.changeCarouselIndex = function(newIndex) {
-    if (newIndex >= 0 && newIndex < window.carouselCards.length) {
-        window.carouselCurrentIndex = newIndex;
-        window.cardLastRotX = 0;
-        window.cardLastRotY = 0;
-        window.renderCarousel();
-    }
-};
-
-window.initCarouselSwipe = function() {
-    const wrapper = el('cardCarousel');
-    if(!wrapper) return;
+window.initNativeCarousel = function() {
+    const container = el('cardCarousel');
+    if(!container) return;
     
+    // Viuhkan kaarevuus ja napit rullatessa
+    container.addEventListener('scroll', () => {
+        const center = container.clientWidth / 2;
+        const cards = container.querySelectorAll('.carousel-card-wrapper');
+        
+        let closestIndex = 0;
+        let minDiff = 9999;
+
+        cards.forEach((card, index) => {
+            const rect = card.getBoundingClientRect();
+            // Laske kortin keskipisteen etäisyys laitteen näytön keskikohdasta
+            const cardCenter = rect.left + rect.width / 2;
+            const diff = (cardCenter - center) / 160; 
+            
+            // Viuhkan geometria
+            const rotZ = diff * 15;
+            const transY = Math.abs(diff) * 35;
+            const scale = Math.max(0.75, 1 - Math.abs(diff) * 0.15);
+            const opacity = Math.max(0.2, 1 - Math.abs(diff) * 0.4);
+            
+            card.style.transform = `translateY(${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
+            card.style.opacity = opacity;
+            card.style.zIndex = 100 - Math.floor(Math.abs(diff)*10);
+            
+            if (Math.abs(diff) < minDiff) {
+                minDiff = Math.abs(diff);
+                closestIndex = index;
+            }
+        });
+        
+        // Päivitä napit vastaamaan keskimmäistä korttia
+        window.carouselCurrentIndex = closestIndex;
+        window.updateCarouselButtons();
+    }, {passive: true});
+    
+    // Suorita kerran käynnistyksessä
+    setTimeout(() => { container.dispatchEvent(new Event('scroll')); }, 50);
+
+    // KORTIN OMNI-PYÖRITYS (Kuuntelee pystyvetoa)
     let startX = 0; let startY = 0;
-    let currentX = 0; let currentY = 0;
-    let isDragging = false;
-    let swipeDirection = null; 
+    let isSpinning = false;
     
-    wrapper.addEventListener('touchstart', e => {
+    container.addEventListener('touchstart', e => {
+        if(e.touches.length > 1) return;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
-        isDragging = true;
-        swipeDirection = null;
+        isSpinning = false;
+        
+        const activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
+        if(activeInner) activeInner.style.transition = 'none';
     }, {passive: true});
 
-    wrapper.addEventListener('touchmove', e => {
-        if(!isDragging) return;
-        currentX = e.touches[0].clientX;
-        currentY = e.touches[0].clientY;
+    container.addEventListener('touchmove', e => {
+        let currentX = e.touches[0].clientX;
+        let currentY = e.touches[0].clientY;
+        let dx = currentX - startX;
+        let dy = currentY - startY;
         
-        let diffX = currentX - startX;
-        let diffY = currentY - startY;
-        
-        if (!swipeDirection) {
-            if (Math.abs(diffX) > Math.abs(diffY) + 10) swipeDirection = 'h'; 
-            else swipeDirection = 'omni'; 
+        // Jos käyttäjä vetää enemmän pystysuuntaan (kortin pyöritys), estetään karusellin natiivi rullaus
+        if (!isSpinning && Math.abs(dy) > Math.abs(dx) + 10) {
+            isSpinning = true;
         }
         
-        if (swipeDirection === 'h') {
-            window.renderCarousel(diffX);
-        } else if (swipeDirection === 'omni') {
-            const activeCard = el(`card3d-inner-${window.carouselCurrentIndex}`);
-            if(activeCard) {
-                activeCard.style.transition = 'none';
-                let newRotX = window.cardLastRotX - (diffY * 0.5); 
-                let newRotY = window.cardLastRotY + (diffX * 0.5); 
-                activeCard.style.transform = `rotateX(${newRotX}deg) rotateY(${newRotY}deg)`;
+        if (isSpinning) {
+            e.preventDefault(); // Tämä pysäyttää scrollauksen sivulle
+            const activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
+            if(activeInner) {
+                let newRotX = window.cardLastRotX - (dy * 0.5); 
+                let newRotY = window.cardLastRotY + (dx * 0.5); 
+                activeInner.style.transform = `rotateX(${newRotX}deg) rotateY(${newRotY}deg)`;
             }
         }
-    }, {passive: true});
+    }, {passive: false}); // passive false tarvitaan jotta e.preventDefault() toimii!
 
-    wrapper.addEventListener('touchend', e => {
-        if(!isDragging) return;
-        isDragging = false;
-        
-        if (swipeDirection === 'h') {
-            let diffX = currentX - startX;
-            let indexShift = Math.round(-(diffX / 100));
-            
-            let newIndex = window.carouselCurrentIndex + indexShift;
-            newIndex = Math.max(0, Math.min(window.carouselCards.length - 1, newIndex));
-            
-            window.carouselCurrentIndex = newIndex;
-            window.cardLastRotX = 0; window.cardLastRotY = 0;
-            
-            window.renderCarousel(0); 
-            
-        } else if (swipeDirection === 'omni') {
-            const activeCard = el(`card3d-inner-${window.carouselCurrentIndex}`);
-            if(activeCard) {
-                let diffY = currentY - startY;
-                let diffX = currentX - startX;
-                let newRotX = window.cardLastRotX - (diffY * 0.5);
-                let newRotY = window.cardLastRotY + (diffX * 0.5);
-                
-                window.cardLastRotX = Math.round(newRotX / 180) * 180;
-                window.cardLastRotY = 0; 
-                
-                activeCard.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
-                activeCard.style.transform = `rotateX(${window.cardLastRotX}deg) rotateY(0deg)`;
+    container.addEventListener('touchend', e => {
+        if (isSpinning) {
+            const activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
+            if(activeInner) {
+                // Snapataan etu tai takapuolelle
+                let transformStr = activeInner.style.transform;
+                let match = transformStr.match(/rotateX\(([-0-9.]+)deg\)/);
+                if(match) {
+                    let rx = parseFloat(match[1]);
+                    window.cardLastRotX = Math.round(rx / 180) * 180;
+                    window.cardLastRotY = 0;
+                    activeInner.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                    activeInner.style.transform = `rotateX(${window.cardLastRotX}deg) rotateY(0deg)`;
+                }
             }
         }
+        isSpinning = false;
     }, {passive: true});
 };
 
@@ -355,14 +342,24 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     
     window.cardLastRotX = 0;
     window.cardLastRotY = 0;
-    window.renderCarousel(0);
+    
+    window.renderCarousel();
     el('cardDetailModal').style.display = 'flex';
-    setTimeout(window.initCarouselSwipe, 100);
+    
+    setTimeout(() => {
+        window.initNativeCarousel();
+        // Rullaa oikean kortin kohdalle alussa
+        const container = el('cardCarousel');
+        const targetCard = el(`carousel-wrapper-${window.carouselCurrentIndex}`);
+        if(container && targetCard) {
+            container.scrollLeft = targetCard.offsetLeft - (container.clientWidth / 2) + (targetCard.clientWidth / 2);
+        }
+    }, 100);
 };
 
 window.updateCarouselButtons = function() {
     let cId = window.carouselCards[window.carouselCurrentIndex];
-    let cDef = (window.allCards || []).find(c => c.id === cId);
+    let cDef = (window.allCards || []).find(c => c && c.id === cId);
     if(!cDef) return;
     
     let btnHtml = '';
@@ -445,7 +442,7 @@ window.forceDiscard = function(cId, isNormal) {
             
             window.pendingShopPurchase = null;
             el('shopModal').style.display = 'none';
-            document.querySelector('.shop-binder-modal').classList.remove('binder-modal-anim');
+            document.querySelector('.binder-wrapper').classList.remove('binder-modal-anim');
             window.showNotification(`🛒 Ostit edun: ${pName}`, 'warning');
             return;
         } else {
@@ -470,7 +467,7 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
         window.pendingShopPurchase = { id: idStr, name: nameStr, price: priceVal };
         window.switchShopTab('sell');
         window.renderShop(activeHole ? activeHole.shop : null, me.score, me.boughtThisHole); 
-        document.querySelector('.shop-binder-modal').classList.add('binder-modal-anim');
+        document.querySelector('.binder-wrapper').classList.add('binder-modal-anim');
         return;
     }
 
@@ -492,7 +489,7 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
         update(ref(db), updates);
 
         if(el('shopModal')) el('shopModal').style.display = 'none'; 
-        document.querySelector('.shop-binder-modal').classList.remove('binder-modal-anim');
+        document.querySelector('.binder-wrapper').classList.remove('binder-modal-anim');
         window.logEvent(`${myName} osti edun: ${nameStr}.`);
         window.showNotification(`🛒 Ostit edun: ${nameStr}`, 'warning');
     }
@@ -525,7 +522,7 @@ window.showHandLimitModal = function(cards) {
     el('handLimitCount').innerText = `${cards.length} / ${limit}`;
     let html = '';
     cards.forEach(cId => {
-        const cDef = (window.allCards || []).find(c => c.id === cId);
+        const cDef = (window.allCards || []).find(c => c && c.id === cId);
         if(!cDef) return;
         let isNormal = cDef.tier === 'normal';
         let btnTxt = isNormal ? '♻️ MYY (+1 P)' : '🗑️ POISTA';
@@ -560,7 +557,7 @@ window.saveGameSettings = function() {
 };
 
 //==============================================
-// HELPERIT JA UI PÄIVITYKSET
+// UI PÄIVITYKSET & HELPERIT
 //==============================================
 window.showAppleToast = function(msg, icon = '✨') {
     const toast = el('appleToast');
@@ -593,32 +590,6 @@ window.logEvent = function(msg) {
 window.logScore = function(playerName, delta) {
     const timeStr = new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'});
     push(ref(db, 'gameState/scoreLog'), window.cleanFirebaseData({ time: timeStr, playerName: playerName, delta: delta }));
-};
-
-window.setupSwipeToClose = function() {
-    document.querySelectorAll('.fullscreen-modal').forEach(modal => {
-        let startY = null;
-        let currentY = null;
-        modal.addEventListener('touchstart', e => {
-            if (modal.scrollTop <= 5) { startY = e.touches[0].clientY; modal.style.transition = 'none'; } else { startY = null; }
-        }, {passive: true});
-        modal.addEventListener('touchmove', e => {
-            if (startY === null) return;
-            currentY = e.touches[0].clientY;
-            let diff = currentY - startY;
-            if (diff > 0) modal.style.transform = `translateY(${diff}px)`;
-        }, {passive: true});
-        modal.addEventListener('touchend', e => {
-            if (startY === null) return;
-            let diff = currentY - startY;
-            modal.style.transition = 'transform 0.3s ease';
-            if (diff > 120) { 
-                modal.style.transform = `translateY(100%)`;
-                setTimeout(() => { modal.style.display = 'none'; modal.style.transform = ''; }, 300);
-            } else { modal.style.transform = ''; }
-            startY = null;
-        });
-    });
 };
 
 window.updateIdentityUI = function() { 
@@ -733,7 +704,7 @@ window.renderActiveHole = function() {
         let myRulesHtml = '';
         
         playedCards.forEach(pc => {
-            let cardDef = (window.allCards || []).find(c => c.n === pc.cardName);
+            let cardDef = (window.allCards || []).find(c => c && c.n === pc.cardName);
             let cTier = pc.tier || (cardDef ? cardDef.tier : 'normal');
             let cType = pc.type || (cardDef ? cardDef.type : 'sabotage');
             
@@ -798,7 +769,7 @@ window.renderPlayerHand = function(cards) {
     
     let html = '';
     cards.forEach((cId) => {
-        const cDef = (window.allCards || []).find(sc => sc.id === cId);
+        const cDef = (window.allCards || []).find(sc => sc && sc.id === cId);
         if(!cDef) return; 
         let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
         if(cDef.tier === 'premium') typeClass = 'premium-card'; 
@@ -810,7 +781,7 @@ window.renderPlayerHand = function(cards) {
             <div class="shop-item-wrapper">
                 <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'hand')" style="cursor:pointer;">
                     <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p>
-                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px;">🔄 3D TARKASTELU</div>
+                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px; margin-top:auto;">🔄 3D TARKASTELU</div>
                 </div>
                 <button class="shop-item-btn ${btnClass}" onclick="window.openTargetModal('${cId}')">PELAA KORTTI</button>
             </div>`;
@@ -844,7 +815,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
                         <div class="physical-card premium-card" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
                             <span class="card-price-tag">${item.price} P</span>
                             <div class="card-type-tag">💎 KAUPPA</div><h3 style="padding-right:35px;">${item.n}</h3><p>${item.d}</p>
-                            <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px;">🔄 3D TARKASTELU</div>
+                            <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px; margin-top:auto;">🔄 3D TARKASTELU</div>
                         </div>
                     </div>
                     <button class="shop-item-btn ${btnClass}" ${dis} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
@@ -862,7 +833,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
          sellHtml = '<p style="color:var(--text-muted); font-size:1.1rem; text-align:center; padding:20px; font-weight:bold; width:100%; grid-column: 1 / -1;">Kätesi on tyhjä.</p>';
     } else {
         myCards.forEach(cId => {
-            const cDef = (window.allCards || []).find(sc => sc.id === cId);
+            const cDef = (window.allCards || []).find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
             if(cDef.tier === 'premium') typeClass = 'premium-card'; 
@@ -905,7 +876,7 @@ window.renderAdminPlayerList = function() {
         if(p.cards && p.cards.length > 0) {
             cardsHtml = `<div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; width:100%;">`;
             p.cards.forEach((cId, cIdx) => {
-                let cardDef = (window.allCards || []).find(c => c.id === cId);
+                let cardDef = (window.allCards || []).find(c => c && c.id === cId);
                 if(cardDef) {
                     cardsHtml += `<div style="background:var(--surface-alt); border:2px solid var(--border); padding:4px 8px; border-radius:6px; font-size:0.8rem; display:flex; align-items:center; gap:5px;">
                         ${cardDef.n} <button style="color:var(--danger); font-weight:900; font-size:1.1rem; padding:0 4px; line-height:1;" onclick="window.removeCardFromPlayer(${i}, ${cIdx})">&times;</button>
@@ -965,7 +936,7 @@ window.renderGmCardList = function(filterTxt) {
             <div class="shop-item-wrapper">
                 <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${c.id}', 'gm')" style="cursor:pointer;">
                     <div class="card-type-tag">${tagTxt}</div><h3 style="font-size:1rem;">${c.n}</h3><p style="font-size:0.8rem;">${c.d}</p>
-                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px;">🔄 3D TARKASTELU</div>
+                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
                 <button class="shop-item-btn ${btnClass}" onclick="window.giveCardToPlayer('${c.id}')">ANNA TÄMÄ</button>
             </div>`;
@@ -981,7 +952,7 @@ window.giveCardToPlayer = function(cardId) {
     if (window.selectedPlayerForCard === null) return; 
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
     let p = nextPlayers[window.selectedPlayerForCard];
-    let cardDef = (window.allCards || []).find(c => c.id === cardId);
+    let cardDef = (window.allCards || []).find(c => c && c.id === cardId);
     if (p && cardDef) {
         p.cards = p.cards || [];
         p.cards.push(cardId);
@@ -997,7 +968,7 @@ window.removeCardFromPlayer = function(pIdx, cIdx) {
     let p = nextPlayers[pIdx];
     if(p && p.cards) {
         let cId = p.cards[cIdx];
-        let cardDef = (window.allCards || []).find(c => c.id === cId);
+        let cardDef = (window.allCards || []).find(c => c && c.id === cId);
         p.cards.splice(cIdx, 1);
         set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) poisti kortin ${cardDef ? cardDef.n : ''} pelaajalta ${p.name}.`);
@@ -1130,7 +1101,7 @@ window.startMeilahti = function() {
     let nextCourse = { name: "Meilahti", pars: Array(16).fill(3) };
     let nextHoleIndex = 1;
     
-    let premiumPool = (window.allCards || []).filter(c => c.tier === "premium");
+    let premiumPool = (window.allCards || []).filter(c => c && c.tier === "premium");
     let uniqueShop = []; let used = new Set();
     for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
         if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
@@ -1141,7 +1112,7 @@ window.startMeilahti = function() {
     const randomRule = rules.length > 0 ? rules[Math.floor(Math.random() * rules.length)] : {type:"rule", n:"Peli Alkaa", d:""};
     let nextActiveHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
     
-    let normalPool = (window.allCards || []).filter(c => c.tier === "normal");
+    let normalPool = (window.allCards || []).filter(c => c && c.tier === "normal");
     let nextPlayers = [];
     if(allPlayers) {
         nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean).map(p => {
@@ -1188,7 +1159,7 @@ window.saveCourseSetup = function() {
     let nextCourse = { name: name, pars: pars };
     let nextHoleIndex = 1;
     
-    let premiumPool = (window.allCards || []).filter(c => c.tier === "premium");
+    let premiumPool = (window.allCards || []).filter(c => c && c.tier === "premium");
     let uniqueShop = []; let used = new Set();
     for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
         if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
@@ -1199,7 +1170,7 @@ window.saveCourseSetup = function() {
     const randomRule = rules.length > 0 ? rules[Math.floor(Math.random() * rules.length)] : {type:"rule", n:"Peli Alkaa", d:""};
     let nextActiveHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
     
-    let normalPool = (window.allCards || []).filter(c => c.tier === "normal");
+    let normalPool = (window.allCards || []).filter(c => c && c.tier === "normal");
     let nextPlayers = [];
     if(allPlayers) {
         nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean).map(p => {
@@ -1226,6 +1197,9 @@ window.saveCourseSetup = function() {
     window.logEvent(`${myName} aloitti uuden pelin radalla: ${nextCourse.name}.`);
 };
 
+// ===========================================
+// PISTEIDEN KERUU
+// ===========================================
 window.changeScore = function(safeId, par, delta) {
     let input = el(`scoreInput_${safeId}`);
     if(!input) return; 
@@ -1336,7 +1310,7 @@ window.submitScores = function() {
         if (playerResults[key].strokes === maxStrokes) holeLosers.push(key);
     }
     
-    let normalPool = (window.allCards || []).filter(c => c.tier === "normal");
+    let normalPool = (window.allCards || []).filter(c => c && c.tier === "normal");
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
 
     let ptsWin = window.gameSettings.ptsWin !== undefined ? window.gameSettings.ptsWin : 2;
@@ -1386,7 +1360,7 @@ window.submitScores = function() {
     const rules = window.holeRules || [];
     const randomRule = rules.length > 0 ? rules[Math.floor(Math.random() * rules.length)] : {type:"rule", n:"Peli Jatkuu", d:""};
     
-    let premiumPool = (window.allCards || []).filter(c => c.tier === "premium");
+    let premiumPool = (window.allCards || []).filter(c => c && c.tier === "premium");
     let uniqueShop = []; let used = new Set();
     if(premiumPool.length > 0) {
         for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
@@ -1408,7 +1382,7 @@ window.submitScores = function() {
 };
 
 // =============================================
-// FIREBASE KUUNTELIJA (AJETAAN LOPUKSI)
+// FIREBASE KUUNTELIJA ON TÄÄLLÄ POHJALLA
 // =============================================
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
@@ -1535,8 +1509,9 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderScoreLog(data.scoreLog);
 });
 
-// AJA INITOINNIT
+// AJA INITOINNIT LOPUKSI
 window.setupSwipeToClose();
+
 window.populateRuleSelect = function() {
     const sel = el('gmRuleSelect');
     const rules = window.holeRules || [];
