@@ -14,7 +14,7 @@ const db = getDatabase(app);
 const el = id => document.getElementById(id);
 
 let myName = localStorage.getItem('friba_name') || null;
-let currentRole = 'player'; // Taustarooli lokitukseen
+let currentRole = 'player';
 let allPlayers = [];
 let activeHole = null;
 let currentCourse = null;
@@ -89,15 +89,12 @@ window.initAmbiance = function() {
     if(!container) return;
 
     const events = [];
-    // 10 Läikkää
     const sColors = ['rgba(62,39,35,0.7)', 'rgba(0,0,0,0.5)', 'rgba(183,28,28,0.6)', 'rgba(13,71,161,0.4)', 'rgba(27,94,32,0.5)', 'rgba(230,81,0,0.6)', 'rgba(74,20,140,0.5)', 'rgba(62,39,35,0.8)', 'rgba(38,50,56,0.6)', 'rgba(255,255,255,0.4)'];
     for(let i=0; i<10; i++) events.push({ type: 'stain', color: sColors[i], size: 30 + Math.random()*50, isLonkero: i===0 });
     
-    // 10 Mönkijää
     const bugs = ['🐜', '🕷️', '🐞', '🐛', '🪲', '🐜', '🕷️', '🐞', '🐛', '🪲'];
     for(let i=0; i<10; i++) events.push({ type: 'bug', emoji: bugs[i] });
 
-    // 10 Piirrosta
     const paths = [
         'M10,10 Q30,40 50,10 Q70,40 90,10', 'M20,20 L80,80 M20,80 L80,20', 'M50,10 L60,40 L90,50 L60,60 L50,90 L40,60 L10,50 L40,40 Z',
         'M10,50 Q50,10 90,50 Q50,90 10,50', 'M50,10 A40,40 0 1,1 49.9,10', 'M10,90 L50,10 L90,90 Z', 
@@ -105,15 +102,13 @@ window.initAmbiance = function() {
     ];
     for(let i=0; i<10; i++) events.push({ type: 'doodle', path: paths[i] });
 
-    // 10 Varjoa
     for(let i=0; i<10; i++) events.push({ type: 'shadow', w: 100 + Math.random()*200, h: 100 + Math.random()*200 });
 
-    // 10 Taulumerkkiä
     const marks = ['📌', '📍', '🩹', '🔥', '🕳️', '📌', '📍', '🩹', '🔥', '🕳️'];
     for(let i=0; i<10; i++) events.push({ type: 'mark', content: marks[i] });
 
     function triggerRandom() {
-        if(isZoomedOut || el('shopModal').style.display === 'flex' || el('scoreModal').style.display === 'flex' || el('settingsModal').style.display === 'flex') {
+        if(isZoomedOut || el('shopModal').style.display === 'flex' || el('scoreModal').style.display === 'flex' || el('settingsModal').style.display === 'flex' || el('receiptModal').style.display === 'flex') {
             setTimeout(triggerRandom, 5000); return; 
         }
 
@@ -140,7 +135,7 @@ window.initAmbiance = function() {
             wrapper.className = 'ambiance-bug-wrapper';
             wrapper.style.left = x + 'vw'; wrapper.style.top = y + 'vh';
             
-            elDiv.className = 'ambiance-bug-inner'; // Wiggle-animaatio (jalat käy)
+            elDiv.className = 'ambiance-bug-inner'; 
             elDiv.innerText = ev.emoji;
             wrapper.appendChild(elDiv);
             
@@ -197,17 +192,14 @@ window.updateCamera = function() {
     if (!board || !currentCourse) return;
     
     if (isZoomedOut) {
-        // Lasketaan pelattujen väylien vaatima tilalaatikko (sis. nykyisen)
         let maxCol = Math.min(9, currentHoleIndex);
         let maxRow = Math.ceil(currentHoleIndex / 9);
-        
-        // Paddin + colW + gap + padding
         let activeWidth = 120 + maxCol * 380 + (maxCol - 1) * 30;
         let activeHeight = 120 + maxRow * 950 + (maxRow - 1) * 30;
         
         let scaleX = window.innerWidth / activeWidth;
         let scaleY = window.innerHeight / activeHeight;
-        let scale = Math.min(scaleX, scaleY) * 0.95; // 5% marginaali reunoille
+        let scale = Math.min(scaleX, scaleY) * 0.95; 
         if(scale > 1) scale = 1;
         
         let offsetX = (window.innerWidth - activeWidth * scale) / 2;
@@ -217,13 +209,11 @@ window.updateCamera = function() {
     } else {
         let col = (currentHoleIndex - 1) % 9;
         let row = Math.floor((currentHoleIndex - 1) / 9);
-        // Solun origo suhteessa taulun vasempaan yläkulmaan (mukaan lukien 60px padding)
         let cellX = 60 + col * 410; 
         let cellY = 60 + row * 980; 
         
-        // Keskitetään 380px leveä solu keskelle näyttöä
         let offsetX = (window.innerWidth - 380) / 2 - cellX;
-        let offsetY = 50 - cellY; // 50px ylämarginaali
+        let offsetY = 50 - cellY; 
         
         board.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(1)`;
     }
@@ -231,17 +221,11 @@ window.updateCamera = function() {
 
 window.getHoleCellHTML = function(hData, hIndex, isActive) {
     let html = `<div class="hole-cell">`;
-    
-    // Index Card
     let par = currentCourse.pars ? (currentCourse.pars[hIndex - 1] || 3) : 3;
-    html += `
-    <div class="index-card">
-        <div class="banner-subtitle">${currentCourse.name}</div>
-        <div class="banner-title">VÄYLÄ <span>${hIndex}</span></div>
-        <div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>
-    </div>`;
-
-    // Pen (Only on active hole, dynamically colored)
+    
+    html += `<div class="index-card">`;
+    html += `<div class="banner-subtitle">${currentCourse.name}</div><div class="banner-title">VÄYLÄ <span>${hIndex}</span></div><div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>`;
+    
     if (isActive && hData.penColor) {
         html += `
         <div class="pen-container" onclick="if(window.openScoreModal) { window.openScoreModal(); }">
@@ -251,8 +235,8 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
             </div>
         </div>`;
     }
+    html += `</div>`;
 
-    // Rule Post-it
     if (hData.rule) {
         let bTxt = hData.rule.type === 'bounty' ? `🏆 TEHTÄVÄ` : '🎲 VÄYLÄSÄÄNTÖ';
         let bgCol = hData.color || '#fef08a';
@@ -264,11 +248,9 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
         </div>`;
     }
 
-    // Played Cards
     let playedCards = Object.values(hData.playedCards || {}).filter(Boolean);
     if(playedCards.length > 0) {
         html += `<div style="width: 100%; max-width:340px; margin-bottom: 15px;"><h2 style="color:var(--text-main); font-size:0.85rem; margin-bottom:10px; background:rgba(255,255,255,0.7); padding:4px 8px; border-radius:4px; display:inline-block;">📌 PELATUT KORTIT</h2><div class="cards-grid-2">`;
-        
         playedCards.forEach(pc => {
             if (pc.target === myName || !isActive) {
                 let typeClass = pc.type === 'buff' ? 'buff-card' : 'debuff-card';
@@ -303,7 +285,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
         html += `</div></div>`;
     }
 
-    // Scorecard
     let playersToRender = hData.players || allPlayers;
     let sortedPlayers = [...playersToRender].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
     
@@ -311,19 +292,26 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
     <div class="score-spiral-note">
         <div class="pin pin-blue" style="top: 15px; right: 20px;"></div>
         <div class="pin pin-red" style="bottom: 25px; right: 15px;"></div>
-        <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:1.6rem; text-decoration:underline;">🏆 Tuloskortti</h2>`;
+        <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:1.6rem; text-decoration:underline;">🏆 Tulos</h2>`;
         
+    let isHistory = !isActive;
+    
     sortedPlayers.forEach((p, i) => {
-        let dgVal = p.dgScore || 0;
-        let dgStr = dgVal > 0 ? `+${dgVal}` : (dgVal === 0 ? 'E' : `${dgVal}`);
-        let scoreClass = dgVal < 0 ? 'score-birdie-paper' : (dgVal > 0 ? 'score-bogey-paper' : '');
-        let scoreColor = dgVal === 0 ? 'color: var(--ink-blue);' : '';
+        let strokes = isHistory && hData.holeResults ? hData.holeResults[p.name] : null;
+        let scoreText = strokes || '-';
+        let scoreClass = ''; let scoreColor = '';
+        if (strokes) {
+            let diff = strokes - par;
+            scoreClass = diff < 0 ? 'score-birdie-paper' : (diff > 0 ? 'score-bogey-paper' : '');
+            scoreColor = diff === 0 ? 'color: var(--ink-blue);' : '';
+        }
+
         html += `
         <div class="player-row-paper">
-            <span class="paper-name" style="font-size:1.4rem;">${i+1}. ${p.name}</span>
+            <span class="paper-name" style="font-size:1.4rem;">${p.name}</span>
             <div style="display:flex; align-items:center; gap: 10px;">
                 <span style="font-size:1rem; color:var(--warning); font-weight:900;">${p.score || 0} P</span>
-                <div class="score-display-paper ${scoreClass}" style="width:34px !important; height:34px !important; font-size:1rem !important; border-width:2px; ${scoreColor} margin-left:auto;">${dgStr}</div>
+                <div class="score-display-paper ${scoreClass}" style="width:34px !important; height:34px !important; font-size:1.2rem !important; border-width:2px; ${scoreColor} margin-left:auto;">${scoreText}</div>
             </div>
         </div>`;
     });
@@ -336,31 +324,57 @@ window.renderBoard = function() {
     const board = el('corkboard-surface');
     if (!board) return;
     
-    if (!currentCourse) {
-        board.innerHTML = '';
-        return;
-    }
+    if (!currentCourse) { board.innerHTML = ''; return; }
     
     let html = '';
-    
-    // Historia
     window.gameHistory.forEach((h, index) => {
         html += window.getHoleCellHTML(h, index + 1, false);
     });
     
-    // Nykyinen väylä
     if (activeHole) {
         html += window.getHoleCellHTML({
-            rule: activeHole.rule,
-            playedCards: activeHole.playedCards,
-            color: activeHole.color,
-            penColor: activeHole.penColor,
-            players: allPlayers
+            rule: activeHole.rule, playedCards: activeHole.playedCards,
+            color: activeHole.color, penColor: activeHole.penColor, players: allPlayers
         }, currentHoleIndex, true);
     }
     
     board.innerHTML = html;
     window.updateCamera();
+};
+
+window.renderReceipt = function() {
+    if(!allPlayers || allPlayers.length === 0 || !currentCourse) {
+        if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'none';
+        return;
+    }
+    if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'flex';
+
+    let generateHTML = (isMini) => {
+        let html = `<div class="r-title">KASSAKUITTI</div>`;
+        let startIdx = isMini ? Math.max(0, window.gameHistory.length - 2) : 0;
+        
+        for(let i=startIdx; i<window.gameHistory.length; i++) {
+            let h = window.gameHistory[i];
+            html += `<div class="r-hole-title">Väylä ${i+1}</div>`;
+            if(h.holeResults) {
+                for(let pName in h.holeResults) {
+                    html += `<div class="r-row"><span>${pName.substring(0, isMini?6:12)}</span><span>${h.holeResults[pName]}</span></div>`;
+                }
+            }
+        }
+        
+        html += `<div class="r-tot-sec"><div style="text-align:center; margin-bottom:5px;">KOKONAISTULOS</div>`;
+        let sorted = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore||0) - (b.dgScore||0));
+        sorted.forEach(p => {
+            let dgStr = p.dgScore > 0 ? `+${p.dgScore}` : (p.dgScore === 0 ? 'E' : p.dgScore);
+            html += `<div class="r-row"><span>${p.name.substring(0, isMini?6:12)}</span><span>${dgStr}</span></div>`;
+        });
+        html += `</div>`;
+        return html;
+    };
+
+    if(el('receipt-mini-content')) el('receipt-mini-content').innerHTML = generateHTML(true);
+    if(el('receipt-full-content')) el('receipt-full-content').innerHTML = generateHTML(false);
 };
 
 //==============================================
@@ -369,10 +383,8 @@ window.renderBoard = function() {
 window.openTargetModal = function(cardId) {
     const cardDef = (window.allCards || []).find(c => c && c.id === cardId);
     if (!cardDef) return;
-    
     window.pendingCardPlay = { id: cardId, def: cardDef };
     if(cardDef.type === 'buff') { window.executeCardPlay(myName); return; }
-    
     let opponents = (allPlayers || []).filter(p => p && p.name !== myName);
     if (opponents.length === 1) { window.executeCardPlay(opponents[0].name); return; }
     
@@ -389,8 +401,7 @@ window.openTargetModal = function(cardId) {
 
 window.executeCardPlay = function(targetName) {
     if(!window.pendingCardPlay) return; 
-    const card = window.pendingCardPlay;
-    const timestamp = Date.now();
+    const card = window.pendingCardPlay; const timestamp = Date.now();
     if(el('targetModal')) el('targetModal').style.display = 'none'; 
     window.closeShopModal();
     
@@ -427,9 +438,7 @@ window.undoCardPlay = function(timestamp) {
     if(!activeHole || !activeHole.playedCards) return;
     let nextCards = {};
     let oldCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
-    oldCards.filter(Boolean).forEach((c, i) => { 
-        if(c.timestamp !== timestamp) nextCards['c_'+i] = c; 
-    });
+    oldCards.filter(Boolean).forEach((c, i) => { if(c.timestamp !== timestamp) nextCards['c_'+i] = c; });
     update(ref(db), { 'gameState/activeHole/playedCards': window.cleanFirebaseData(nextCards) });
 };
 
@@ -449,8 +458,7 @@ window.forceDiscard = function(cId, isNormal) {
     }
     
     if (window.pendingShopPurchase) {
-        let pId = window.pendingShopPurchase.id;
-        let pPrice = window.pendingShopPurchase.price;
+        let pId = window.pendingShopPurchase.id; let pPrice = window.pendingShopPurchase.price;
         if (me.score >= pPrice) {
             me.score -= pPrice; me.boughtThisHole = true; me.cards.push(pId);
             let nextShop = JSON.parse(JSON.stringify(activeHole.shop));
@@ -643,7 +651,7 @@ window.showHandLimitModal = function(cards) {
 };
 
 //==============================================
-// 3D KORTTIVIUHKA (KARUSELLI) - POISTETTU FOIL SAFARI-BUGIN TAKIA
+// 3D KORTTIVIUHKA (KARUSELLI)
 //==============================================
 window.renderCarousel = function() {
     const container = el('cardCarousel');
@@ -902,13 +910,17 @@ window.submitScores = function() {
         p.cards = p.cards.filter(Boolean);
     });
     
-    // TALLENNETAAN HISTORIAAN ENNEN VAIHTOA
+    // Tallenna tarkat heittomäärät historiaan
+    let holeStrokes = {};
+    for (let key in playerResults) { holeStrokes[key] = playerResults[key].strokes; }
+
     let nextHistory = JSON.parse(JSON.stringify(window.gameHistory || []));
     let pastHole = {
         rule: activeHole.rule,
         playedCards: activeHole.playedCards,
         color: activeHole.color || '#fef08a',
-        players: JSON.parse(JSON.stringify(nextPlayers)) // Tallennetaan väylän tilanne
+        holeResults: holeStrokes,
+        players: JSON.parse(JSON.stringify(nextPlayers))
     };
     nextHistory.push(pastHole);
     
@@ -1063,6 +1075,7 @@ onValue(ref(db, 'gameState'), (snap) => {
         if(el('zoomToggleBtn')) el('zoomToggleBtn').style.display = 'none';
         if(el('settingsToggleBtn')) el('settingsToggleBtn').style.display = 'none';
         if(el('pocketContainer')) el('pocketContainer').style.display = 'none';
+        if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'none';
         return;
     }
 
@@ -1113,6 +1126,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     }
 
     window.renderBoard();
+    window.renderReceipt();
     
     if (myName) {
         const me = allPlayers.find(p => p && p.name === myName);
