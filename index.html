@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="friba.png" />
     
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=133" />
+    <link rel="stylesheet" href="style.css?v=134" />
     <meta id="themeColorMeta" name="theme-color" content="#cbd5e1" />
     
     <script>
@@ -51,7 +51,6 @@
 
     <div class="container">
 
-        <!-- ALKUNÄKYMÄ -->
         <div id="identityCard" class="torn-paper" style="text-align: center; margin-top:15px;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
             <div class="tape tape-bl"></div><div class="tape tape-br"></div>
@@ -69,7 +68,6 @@
 
         <div id="mainGameArea" style="display:none; margin-top:15px;">
             
-            <!-- VÄYLÄN TIEDOT -->
             <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 25px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
                 <div id="courseInfoBanner" class="course-banner-paper" style="flex: 1; margin: 0;">
                     <div class="tape tape-top-center"></div>
@@ -80,17 +78,14 @@
                 <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2; box-shadow: 2px 4px 8px rgba(0,0,0,0.4); border-radius: 4px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.4rem;">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
-            <!-- VÄYLÄSÄÄNTÖ / TEHTÄVÄ (POST-IT) -->
             <div id="activeHoleContainer"></div>
             
-            <!-- SABOTAASI KORTIT -->
             <div id="activeCardsArea" style="display:none; margin-bottom: 25px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
                 <h2 style="color: var(--text-main); font-size: 0.8rem; margin-bottom: 15px; display:flex; align-items:center; gap:8px;">📌 PELATUT KORTIT</h2>
                 <div id="activeCardsContainer" class="cards-grid-2"></div>
             </div>
             
             <div class="player-only">
-                <!-- TULOSKORTTI -->
                 <div class="stapled-paper">
                     <div class="staple staple-1"></div>
                     <div class="staple staple-2"></div>
@@ -155,14 +150,12 @@
         <div style="margin-top: 20px; padding-top: 20px; display:flex; flex-direction:column; gap:12px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
             <button class="btn btn-secondary" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px; opacity:0.8;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
 
-            <!-- ROOLIN VALINTA -->
             <div class="role-switcher">
                 <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player');">PELAAJA</button>
                 <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">GM</button>
             </div>
         </div>
 
-        <!-- LOKERIKKO JA KANSIOT (BOTTOM NAV) -->
         <div class="player-only">
             <div class="corkboard-pocket-container">
                 <div class="binder-spine-btn" onclick="if(window.openShop) window.openShop('sell')">
@@ -181,10 +174,9 @@
 
     </div>
 
-    <!-- Modaalit (klikkaus taustaan sulkee ne) -->
     <div id="shopModal" class="fullscreen-modal" style="padding:0; background:rgba(0,0,0,0.7);" onclick="if(event.target === this) { window.closeShopModal(); }">
-        <div class="shop-binder-modal">
-            <div class="binder-spine">
+        <div class="shop-binder-modal theme-shop">
+            <div class="binder-swipe-handle"></div> <div class="binder-spine">
                 <div class="binder-ring"></div>
                 <div class="binder-ring"></div>
                 <div class="binder-ring"></div>
@@ -227,7 +219,6 @@
         <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
-    <!-- NATIIVI VIUHKA-KARUSELLI -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container"></div>
         <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.85rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">👈 VAIHDA KORTTIA SIVULLE 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
@@ -235,26 +226,24 @@
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px; margin-top:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
-    <!-- FOTOREALISTINEN PAPERITULOSKORTTI -->
     <div id="scoreModal" class="winner-overlay" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="paper-score-modal">
-            <div style="text-align: center; margin-bottom: 15px;">
+            <div style="text-align: center; margin-bottom: 15px; position:relative; z-index:30;">
                 <h2>VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
                 <p>Par <strong id="scoreModalPar">3</strong></p>
             </div>
             
-            <!-- Tästä tulee nyt Post-it tyylinen dynaamisesti script.js:ssä -->
             <div id="scoreModalRuleBox" style="display: none;"></div>
 
             <div id="scoreInputsContainer" style="margin-bottom: 20px;"></div>
             
-            <div style="margin-bottom: 25px; border-top: 2px dashed var(--ink-blue); padding-top:15px; position: relative; z-index: 10; background: #fdfaf6;">
+            <div style="margin-bottom: 25px; border-top: 2px dashed var(--ink-blue); padding-top:15px; position: relative; z-index: 5; background: transparent;">
                 <label style="font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; display: block; font-family:'Kalam', cursive; color:var(--ink-blue);">Kuka suoritti tehtävän?</label>
                 <div id="taskWinnerContainer" class="task-checkbox-grid"></div>
             </div>
 
-            <button class="btn" style="background:var(--ink-blue); color:#fff; font-family:'Kalam', cursive; font-size:1.6rem; padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); position:relative; z-index:10;" onclick="if(window.submitScores) { window.submitScores(); }">TALLENNA</button>
-            <button class="btn" style="background:transparent; border: 2px solid var(--ink-blue); color:var(--ink-blue); font-family:'Kalam', cursive; font-size:1.4rem; margin-top:15px; padding:8px; position:relative; z-index:10;" onclick="document.getElementById('scoreModal').style.display='none'">PERUUTA</button>
+            <button class="btn" style="background:var(--ink-blue); color:#fff; font-family:'Kalam', cursive; font-size:1.6rem; padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); position:relative; z-index:30;" onclick="if(window.submitScores) { window.submitScores(); }">TALLENNA</button>
+            <button class="btn" style="background:transparent; border: 2px solid var(--ink-blue); color:var(--ink-blue); font-family:'Kalam', cursive; font-size:1.4rem; margin-top:15px; padding:8px; position:relative; z-index:30;" onclick="document.getElementById('scoreModal').style.display='none'">PERUUTA</button>
         </div>
     </div>
 
@@ -267,7 +256,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=133"></script>
-    <script type="module" src="script.js?v=133"></script>
+    <script src="tasks.js?v=134"></script>
+    <script type="module" src="script.js?v=134"></script>
 </body>
 </html>
