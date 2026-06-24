@@ -356,6 +356,7 @@ window.updateCarouselButtons = function() {
     if (mode === 'hand' || mode === 'sell') {
         btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
         if (cDef.tier === 'normal') {
+            // ISO MYY NAPPULA
             btnHtml += `<button class="btn btn-success" style="font-size:1.1rem; padding:18px; margin-top:5px; background:var(--primary); color:#fff; box-shadow:0 4px 15px rgba(16,185,129,0.5);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
         } else {
             btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
@@ -1458,7 +1459,7 @@ onValue(ref(db, 'gameState'), (snap) => {
             }
             
             let pts = `${me.score || 0} P`;
-            if(el('myResPointsBtn')) el('myResPointsBtninnerText = pts; 
+            if(el('myResPointsBtn')) el('myResPointsBtn').innerText = pts; 
             if(el('shopModalWallet')) el('shopModalWallet').innerText = pts; 
             if(el('handCountBadge')) el('handCountBadge').innerText = myCards.filter(Boolean).length; 
         }
