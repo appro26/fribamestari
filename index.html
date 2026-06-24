@@ -16,7 +16,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=148" />
+    <link rel="stylesheet" href="style.css?v=149" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
@@ -25,17 +25,8 @@
 </head>
 <body class="player-mode">
 
-    <!-- AMBIENT ANIMAATIOIDEN KONTTI -->
-    <div id="ambiance-container" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:4500; overflow:hidden;"></div>
-
-    <!-- PÄÄNAPIT YLHÄÄLLÄ (Vain asetusratas jäljellä) -->
-    <button id="settingsToggleBtn" class="btn btn-secondary" onclick="document.getElementById('settingsModal').style.display='flex'" style="position:fixed; top:15px; right:15px; z-index:9500; width:50px; height:50px; padding:0; border-radius:50%; font-size:1.6rem; background:rgba(255,255,255,0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center;">⚙️</button>
-
-    <!-- KUITTIKONE (KOKONAISTULOS VASEN ALAKULMA) -->
-    <div id="receipt-printer-container" onclick="document.getElementById('receiptModal').style.display='flex'" style="display:none;">
-        <div class="printer-machine"></div>
-        <div class="receipt-paper" id="receipt-mini-content"></div>
-    </div>
+    <!-- PÄÄNAPIT YLHÄÄLLÄ (Vain Asetukset pyöreänä) -->
+    <button id="settingsToggleBtn" onclick="document.getElementById('settingsModal').style.display='flex'" style="position:fixed; top:15px; right:15px; z-index:9500; width:45px; height:45px; border-radius:50%; border:none; background:rgba(255,255,255,0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; font-size:1.5rem; cursor:pointer; color:#111;">⚙️</button>
 
     <!-- ASENNUSKEHOTE -->
     <div id="installPromptModal" class="winner-overlay" style="z-index: 10010; flex-direction:column; justify-content:center; align-items:center;" onclick="if(event.target === this) { this.style.display='none'; }">
@@ -82,29 +73,45 @@
 
     <!-- PELIN ILMOITUSTAULU (GRID VIEWPORT) -->
     <div id="corkboard-viewport" style="display:none;">
-        <div id="corkboard-surface"></div>
+        <div id="corkboard-surface">
+            <!-- DOODLES KONTTI (Tussipiirrokset taulun pinnalla) -->
+            <div id="doodles-container"></div>
+        </div>
     </div>
 
-    <!-- LOKERIKKO JA KANSIOT (BOTTOM NAV) -->
+    <!-- LOKERIKKO, KANSIOT JA KUITTIKONE (BOTTOM NAV) -->
     <div class="corkboard-pocket-container" id="pocketContainer" style="display:none;">
-        <div class="binder-spine-btn" id="ownCardsButtonElement" onclick="if(window.openShop) window.openShop('sell')">
-            <span class="binder-spine-text">KORTIT</span>
-            <div class="binder-badge" id="handCountBadge">0</div>
-        </div>
-        <div class="binder-spine-btn" id="shopButtonElement" onclick="if(window.openShop) window.openShop('buy')">
-            <span class="binder-spine-text">KAUPPA</span>
-            <div class="binder-badge money-badge" id="myResPointsBtn">0 P</div>
-        </div>
-        <!-- UUSI KOKO TAULU -NAPPI TÄÄLLÄ -->
-        <div class="binder-spine-btn" id="boardButtonElement" onclick="if(window.toggleZoom) window.toggleZoom()">
-            <span class="binder-spine-text" id="boardBtnText">TAULU</span>
+        <!-- LOKERIKON SISÄLTÖ (3 Riviin Flexillä) -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; width:100%; position:relative; z-index:10; padding: 0 10px;">
+            
+            <!-- 1. Likainen Ruokakaupan Kuitintulostin -->
+            <div id="receipt-printer-container" onclick="document.getElementById('receiptModal').style.display='flex'">
+                <div class="printer-machine">
+                    <div class="printer-slot"></div>
+                </div>
+                <!-- Kääritään kuitti lyhyeksi, näytetään vain Totals -->
+                <div class="receipt-paper roll-receipt" id="receipt-mini-content"></div>
+            </div>
+
+            <!-- 2. Omat Kortit -->
+            <div class="binder-spine-btn" id="ownCardsButtonElement" onclick="if(window.openShop) window.openShop('sell')">
+                <span class="binder-spine-text">KORTIT</span>
+                <div class="binder-badge" id="handCountBadge">0</div>
+            </div>
+            
+            <!-- 3. Kauppa -->
+            <div class="binder-spine-btn" id="shopButtonElement" onclick="if(window.openShop) window.openShop('buy')">
+                <span class="binder-spine-text">KAUPPA</span>
+                <div class="binder-badge money-badge" id="myResPointsBtn">0 P</div>
+            </div>
         </div>
         
-        <div class="pocket-lip">LOKERIKKO</div>
+        <!-- TAULU-NAPPI TOIMII NYT KOKO POCKETIN ETUHUULENA -->
+        <div class="pocket-lip board-lip-btn" id="boardBtnText" onclick="if(window.toggleZoom) window.toggleZoom()">🔍 KOKO TAULU</div>
     </div>
 
     <!-- KESKITETTY ASETUSMODAALI -->
-    <div id="settingsModal" class="fullscreen-modal" style="background:rgba(0,0,0,0.95); padding: 40px 15px 80px 15px; align-items:flex-start; justify-content:flex-start; overflow-y:auto; overscroll-behavior:contain;" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="settingsModal" class="fullscreen-modal" style="background:rgba(0,0,0,0.95); padding: 40px 15px 80px 15px; align-items:flex-start; justify-content:center; overflow-y:auto; overscroll-behavior:contain;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div style="width:100%; max-width:500px; margin:0 auto;">
             
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
@@ -269,7 +276,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=148"></script>
-    <script type="module" src="script.js?v=148"></script>
+    <script src="tasks.js?v=149"></script>
+    <script type="module" src="script.js?v=149"></script>
 </body>
 </html>
