@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="friba.png" />
     
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=135" />
+    <link rel="stylesheet" href="style.css?v=136" />
     <meta id="themeColorMeta" name="theme-color" content="#cbd5e1" />
     
     <script>
@@ -77,7 +77,7 @@
                     <div class="banner-title">VÄYLÄ <span id="bannerHoleNum">1</span></div>
                     <div style="margin-top: 5px;"><span class="banner-par">PAR <span id="bannerPar">3</span></span></div>
                 </div>
-                <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2; box-shadow: 2px 4px 8px rgba(0,0,0,0.4); border-radius: 4px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.4rem;">📝 SYÖTÄ<br />TULOS</button>
+                <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; line-height:1.2; box-shadow: 4px 6px 12px rgba(0,0,0,0.4); border-radius: 6px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.6rem; transform: perspective(800px) rotateX(2deg);">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
             <!-- VÄYLÄSÄÄNTÖ / TEHTÄVÄ (POST-IT) -->
@@ -94,7 +94,7 @@
                 <div class="stapled-paper">
                     <div class="staple staple-1"></div>
                     <div class="staple staple-2"></div>
-                    <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:1.6rem; text-decoration:underline;">🏆 Tuloskortti</h2>
+                    <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:1.8rem; text-decoration:underline; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">🏆 Tuloskortti</h2>
                     <div id="playerList"></div>
                 </div>
             </div>
@@ -172,7 +172,7 @@
                 
                 <div class="binder-spine-btn" id="shopButtonElement" onclick="if(window.openShop) window.openShop('buy')">
                     <span class="binder-spine-text">KAUPPA</span>
-                    <div class="binder-badge" style="color:var(--warning);"><span id="myResPointsBtn">0 P</span></div>
+                    <div class="binder-badge money-badge" id="myResPointsBtn">0 P</div>
                 </div>
 
                 <div class="pocket-lip">LOKERIKKO</div>
@@ -181,10 +181,10 @@
 
     </div>
 
-    <!-- Modaalit (klikkaus taustaan sulkee ne) -->
+    <!-- Modaalit -->
     <div id="shopModal" class="fullscreen-modal" style="padding:0; background:rgba(0,0,0,0.7);" onclick="if(event.target === this) { window.closeShopModal(); }">
         <div class="shop-binder-modal theme-shop">
-            <div class="binder-swipe-handle"></div> <!-- Uusi kahva ylhäällä -->
+            <div class="binder-swipe-handle"></div>
             <div class="binder-spine">
                 <div class="binder-ring"></div>
                 <div class="binder-ring"></div>
@@ -192,13 +192,14 @@
             </div>
             
             <div class="fullscreen-modal-header" style="margin-bottom:15px; border-bottom: 2px dashed rgba(255,255,255,0.2); padding-bottom:15px; position:relative; z-index:20;">
-                <h2 style="display:flex; align-items:center; gap:10px; color:#fff;">🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px;">0 P</span></h2>
+                <h2 style="display:flex; align-items:center; gap:10px; color:#fff; font-size:1.2rem;">🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px; box-shadow:0 2px 5px rgba(0,0,0,0.5);">0 P</span></h2>
                 <button class="close-modal-btn" aria-label="Sulje" onclick="window.closeShopModal();">&times;</button>
             </div>
             
             <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.05); padding:4px; border:1px solid rgba(255,255,255,0.1); position:relative; z-index:20;">
-                <button id="shopTabBuyBtn" class="role-btn active" onclick="if(window.switchShopTab) window.switchShopTab('buy')" style="color:#fff;">OSTA KORTTEJA</button>
-                <button id="shopTabSellBtn" class="role-btn" onclick="if(window.switchShopTab) window.switchShopTab('sell')" style="color:#fff;">OMAT KORTIT</button>
+                <!-- event.stopPropagation() ESTÄÄ kansion sulkeutumisen nappeja painaessa -->
+                <button id="shopTabBuyBtn" class="role-btn active" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('buy')" style="color:#fff;">OSTA KORTTEJA</button>
+                <button id="shopTabSellBtn" class="role-btn" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('sell')" style="color:#fff;">OMAT KORTIT</button>
             </div>
             
             <div id="shopBuyArea" style="position:relative; z-index:20;">
@@ -209,12 +210,12 @@
                 <div id="pendingPurchaseAlert" style="display:none; background:var(--danger); color:#fff; padding:16px; border-radius:12px; margin-bottom:20px; box-shadow:0 6px 15px rgba(244,63,94,0.3);">
                     <div style="font-weight:900; font-size:1.2rem; margin-bottom:8px;">⚠️ KÄSI TÄYNNÄ!</div>
                     <div style="font-size:1.05rem; font-weight:700; margin-bottom:15px; line-height:1.4;">Haluat ostaa kortin <strong id="pendingCardName"></strong>. Myy tai hävitä yksi kortti alta tehdäksesi tilaa, jolloin osto suoritetaan automaattisesti!</div>
-                    <button class="btn btn-secondary" style="padding:12px; font-size:0.95rem; color:#000;" onclick="if(window.cancelShopPurchase) window.cancelShopPurchase()">PERUUTA OSTO</button>
+                    <button class="btn btn-secondary" style="padding:12px; font-size:0.95rem; color:#000;" onclick="event.stopPropagation(); if(window.cancelShopPurchase) window.cancelShopPurchase()">PERUUTA OSTO</button>
                 </div>
                 <div id="shopSellCardsContainer" class="cards-grid-2"></div>
             </div>
 
-            <button class="btn btn-secondary" style="margin-top: 35px; background: rgba(255,255,255,0.1); color: #fff; border: 1px dashed rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onclick="window.closeShopModal()">SULJE KANSIO</button>
+            <button class="btn btn-secondary" style="margin-top: 35px; background: rgba(255,255,255,0.1); color: #fff; border: 1px dashed rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onclick="event.stopPropagation(); window.closeShopModal()">SULJE KANSIO</button>
         </div>
     </div>
 
@@ -228,10 +229,10 @@
         <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
-    <!-- NATIIVI VIUHKA-KARUSELLI -->
+    <!-- NATIIVI VIUHKA-KARUSELLI (JÄTTIKOKO) -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container"></div>
-        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.85rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">👈 VAIHDA KORTTIA SIVULLE 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
+        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">👈 VAIHDA KORTTIA SIVULLE 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;"></div>
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px; margin-top:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
@@ -267,7 +268,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=135"></script>
-    <script type="module" src="script.js?v=135"></script>
+    <script src="tasks.js?v=136"></script>
+    <script type="module" src="script.js?v=136"></script>
 </body>
 </html>
