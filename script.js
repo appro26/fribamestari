@@ -95,7 +95,71 @@ window.dismissInstallPrompt = function() {
     localStorage.setItem('friba_browser_mode', 'true');
     if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
 };
-window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
+
+//==============================================
+// AMBIENT ANIMAATIOJÄRJESTELMÄ (Taustalla pyörivä)
+//==============================================
+window.initAmbiance = function() {
+    const container = el('ambiance-container');
+    if(!container) return;
+
+    function triggerRandom() {
+        const types = ['lonkero', 'paper', 'fly'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        
+        const elDiv = document.createElement('div');
+        
+        if (type === 'lonkero') {
+            let x = 10 + Math.random() * 70; 
+            let y = 30 + Math.random() * 50; 
+            
+            let stain = document.createElement('div');
+            stain.className = 'ambiance-stain';
+            stain.style.left = x + 'vw';
+            stain.style.top = y + 'vh';
+            stain.style.width = '60px';
+            stain.style.height = '60px';
+            
+            let wrapper = document.createElement('div');
+            wrapper.className = 'ambiance-can-wrapper';
+            wrapper.style.left = (x + 10) + 'vw';
+            wrapper.style.top = (y - 50) + 'vh';
+            
+            let can = document.createElement('div');
+            can.className = 'css-lonkero';
+            wrapper.appendChild(can);
+            
+            container.appendChild(stain);
+            container.appendChild(wrapper);
+            
+            setTimeout(() => { if(stain.parentNode) stain.remove(); }, 20000);
+            setTimeout(() => { if(wrapper.parentNode) wrapper.remove(); }, 4000);
+        } 
+        else if (type === 'paper') {
+            elDiv.className = 'ambiance-paper';
+            container.appendChild(elDiv);
+            setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 7000);
+        }
+        else if (type === 'fly') {
+            let startY = 10 + Math.random() * 80;
+            elDiv.className = 'ambiance-fly';
+            elDiv.innerText = '🪰';
+            elDiv.style.top = startY + 'vh';
+            container.appendChild(elDiv);
+            setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 6000);
+        }
+
+        let nextTime = 12000 + Math.random() * 20000; // Väliaika 12-32 sekuntia
+        setTimeout(triggerRandom, nextTime);
+    }
+
+    setTimeout(triggerRandom, 8000); // Ensimmäinen animaatio 8s päästä
+};
+
+window.addEventListener('load', () => { 
+    setTimeout(window.checkInstallPrompt, 1500); 
+    window.initAmbiance();
+});
 
 //==============================================
 // KORTIN PELAAMINEN (TARGET MODAL / AUTOMATIIKKA)
