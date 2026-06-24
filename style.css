@@ -33,8 +33,7 @@ body {
     background-size: 8px 8px, 4px 4px, 4px 4px;
     background-position: 0 0, 0 0, 2px 2px;
     color: var(--text-main); 
-    padding: 18px 12px 220px 12px; 
-    min-height: 100vh;
+    min-height: 100vh; overflow-x: hidden;
 }
 
 body::after {
@@ -42,7 +41,7 @@ body::after {
     border: 18px solid #5c4033; /* Puun värinen peruskehys */
     border-top-color: #7b4e35; border-left-color: #7b4e35; /* Valo ylhäältä/vasemmalta */
     border-bottom-color: #3e2723; border-right-color: #3e2723; /* Varjo alhaalla/oikealla */
-    pointer-events: none; z-index: 5000;
+    pointer-events: none; z-index: 10000;
     box-shadow: inset 0 15px 30px rgba(0,0,0,0.7), inset 0 0 15px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.6); 
 }
 
@@ -62,17 +61,47 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .btn-warning { background-color: var(--warning); color: #000; }
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.cards-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; padding-bottom: 25px; box-sizing: border-box; overflow: visible; }
+.cards-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 10px; box-sizing: border-box; overflow: visible; width: 100%;}
 
 body.gm-mode .player-only { display: none !important; }
 body.player-mode .gm-only { display: none !important; }
 
 /* ========================================= */
-/* REPÄISTY PAPERI (LOGIN)                   */
+/* KOKO TAULUN GRID VIEWPORT                 */
+/* ========================================= */
+#corkboard-viewport {
+    width: 100vw; height: 100vh;
+    overflow: hidden; position: fixed;
+    top: 0; left: 0; z-index: 5;
+}
+#corkboard-surface {
+    display: grid;
+    grid-template-columns: repeat(9, 380px);
+    grid-auto-rows: 950px;
+    gap: 30px; padding: 40px;
+    transform-origin: top left;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hole-cell {
+    width: 380px; height: 100%;
+    position: relative; display: flex; flex-direction: column; align-items: center;
+}
+
+/* ========================================= */
+/* AITOA KOKOA OLEVAT ELEMENTIT TAULULLA     */
+/* ========================================= */
+.hole-cell .index-card { width: 260px; margin-bottom: 25px; align-self: flex-start; margin-left: 20px; }
+.hole-cell .post-it-note { width: 220px; margin-bottom: 25px; padding: 15px 20px; }
+.hole-cell .cards-grid-2 { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 340px; }
+.hole-cell .pinned-card-container { margin-bottom: 10px; }
+.hole-cell .physical-card { width: 140px; min-height: 200px; padding: 10px; }
+.hole-cell .score-spiral-note { width: 320px; margin-top: 15px; padding: 15px 15px 15px 45px;}
+
+/* ========================================= */
+/* REPÄISTY PAPERI (LOGIN & AULA)            */
 /* ========================================= */
 .torn-paper {
-    background: var(--paper-bg);
-    padding: 24px; margin-bottom: 25px; position: relative;
+    background: var(--paper-bg); padding: 24px; margin-bottom: 25px; position: relative;
     width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;
     box-shadow: 5px 15px 30px rgba(0,0,0,0.4), inset 0px 0px 20px rgba(255,255,255,0.7); 
     transform: perspective(800px) rotateX(2deg) translateZ(5px); 
@@ -91,8 +120,7 @@ body.player-mode .gm-only { display: none !important; }
     background: #fdfaf6;
     background-image: repeating-linear-gradient(transparent, transparent 23px, #bae6fd 24px);
     border-top: 16px solid #ef4444; 
-    border-radius: 4px;
-    padding: 15px 20px; position: relative; 
+    border-radius: 4px; padding: 15px 20px; position: relative; 
     transform: perspective(1000px) rotate(-1.5deg) translateZ(8px); 
     display: flex; flex-direction: column; justify-content: center;
     box-shadow: 6px 12px 20px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.05);
@@ -112,112 +140,84 @@ body.player-mode .gm-only { display: none !important; }
 /* ========================================= */
 /* NUPPINEULAT (PIN)                         */
 /* ========================================= */
-.pin { position: absolute; width: 14px; height: 14px; border-radius: 50%; box-shadow: 2px 4px 6px rgba(0,0,0,0.5), inset -2px -2px 4px rgba(0,0,0,0.3); z-index: 20; }
+.pin { position: absolute; width: 14px; height: 14px; border-radius: 50%; box-shadow: 2px 4px 6px rgba(0,0,0,0.5), inset -2px -2px 4px rgba(0,0,0,0.3); z-index: 20; pointer-events:none;}
 .pin::after { content:''; position:absolute; top:3px; left:3px; width:4px; height:4px; background:rgba(255,255,255,0.7); border-radius:50%; box-shadow: 0 0 2px rgba(255,255,255,0.8); }
 .pin-blue { background: radial-gradient(circle at 30% 30%, #3b82f6, #1e3a8a); }
 .pin-red { background: radial-gradient(circle at 30% 30%, #ef4444, #7f1d1d); }
 .pin-green { background: radial-gradient(circle at 30% 30%, #10b981, #064e3b); }
 .pin-yellow { background: radial-gradient(circle at 30% 30%, #f59e0b, #78350f); }
+.pin-orange { background: radial-gradient(circle at 30% 30%, #f97316, #9a3412); }
 
 /* ========================================= */
 /* ROIKKUVA KYNÄ (TULOSKORTTI-NAPPI)         */
 /* ========================================= */
 .pen-container {
-    position: absolute; right: 2%; top: -30px; 
+    position: absolute; right: -20px; top: -10px; 
     display: flex; flex-direction: column; align-items: center;
     transform-origin: top center;
     animation: penSwing 4s ease-in-out infinite;
-    cursor: pointer;
-    z-index: 40;
+    cursor: pointer; z-index: 40;
 }
 .pen-container:active { transform: scale(0.95); }
 
-.pen-string {
-    width: 2px; height: 45px;
-    background: #94a3b8; 
-    box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-}
-
+.pen-string { width: 2px; height: 45px; background: #94a3b8; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
 .pen-body {
     width: 26px; height: 110px;
     background: linear-gradient(to right, #0284c7, #38bdf8, #0284c7);
     border-radius: 4px 4px 15px 15px; 
     box-shadow: 4px 6px 10px rgba(0,0,0,0.6), inset 2px 0 5px rgba(255,255,255,0.5);
-    position: relative;
-    display: flex; align-items: center; justify-content: center;
+    position: relative; display: flex; align-items: center; justify-content: center;
 }
-
 .pen-body::before {
     content: ''; position: absolute; top: -10px; left: 4px; right: 4px; height: 10px;
     background: linear-gradient(to right, #1e293b, #475569, #1e293b);
     border-radius: 3px 3px 0 0;
 }
-
 .pen-body::after {
     content: ''; position: absolute; bottom: -12px; left: 8px; right: 8px; height: 12px;
     background: linear-gradient(to right, #94a3b8, #cbd5e1, #94a3b8);
     clip-path: polygon(0 0, 100% 0, 50% 100%);
 }
-
 .pen-text {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
+    writing-mode: vertical-rl; text-orientation: mixed;
     color: #fff; font-family: 'Inter', sans-serif; font-weight: 900; font-size: 0.9rem;
     letter-spacing: 2px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-    transform: rotate(180deg);
-    pointer-events: none;
+    transform: rotate(180deg); pointer-events: none;
 }
-
-@keyframes penSwing {
-    0%, 100% { transform: rotate(6deg); }
-    50% { transform: rotate(-6deg); }
-}
+@keyframes penSwing { 0%, 100% { transform: rotate(6deg); } 50% { transform: rotate(-6deg); } }
 
 /* ========================================= */
 /* VÄYLÄTEHTÄVÄN POST-IT LAPPU               */
 /* ========================================= */
 .post-it-note {
-    background: #fef08a;
     background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(0,0,0,0.02) 100%);
-    padding: 20px 25px 25px 20px;
-    margin-bottom: 35px; position: relative;
-    width: 90%; max-width: 400px; margin-left: auto; margin-right: auto;
     box-shadow: 3px 8px 15px rgba(0,0,0,0.2), inset -1px -1px 5px rgba(0,0,0,0.05);
     transform: perspective(800px) rotate(2deg) translateZ(10px);
     border-radius: 2px 2px 20px 2px / 2px 2px 5px 2px;
-    color: #333;
+    color: #111; position: relative;
 }
 .post-it-note::before {
     content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(-3deg);
     width: 60px; height: 25px; background: rgba(255,255,255,0.6);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 5;
 }
 
 /* ========================================= */
-/* TULOSKORTTI & SÄÄNNÖT (KIERREVIHKO SIVU)  */
+/* TULOSKORTTI (KIERREVIHKO SIVU)            */
 /* ========================================= */
 .score-spiral-note {
     background: #fdfaf6;
     background-image:
         linear-gradient(90deg, transparent 38px, rgba(244, 63, 94, 0.4) 38px, rgba(244, 63, 94, 0.4) 40px, transparent 40px), 
         repeating-linear-gradient(transparent, transparent 23px, #e2e8f0 24px);
-    padding: 20px 15px 20px 50px; margin-bottom: 35px; position: relative;
-    width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;
     box-shadow: 6px 15px 25px rgba(0,0,0,0.4);
     transform: perspective(1000px) rotate(1deg) translateZ(10px);
-    color: #111; border-radius: 2px 8px 8px 2px;
+    color: #111; border-radius: 2px 8px 8px 2px; position: relative;
 }
 .score-spiral-note::before {
     content: ''; position: absolute; top: 0; bottom: 0; left: 8px; width: 20px;
     background-image: radial-gradient(circle at 50% 50%, #cbd5e1 5px, transparent 6px); 
-    background-size: 100% 24px; background-position: 0 12px;
-}
-.spiral-note-tape { 
-    position: absolute; top: -12px; left: 50%; transform: translateX(-50%) rotate(-2deg); 
-    width: 60px; height: 25px; background: rgba(255,255,255,0.6); 
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2), inset 0 1px 3px rgba(255,255,255,0.8); 
-    z-index: 5;
+    background-size: 100% 24px; background-position: 0 12px; pointer-events:none;
 }
 
 /* ========================================= */
@@ -225,7 +225,6 @@ body.player-mode .gm-only { display: none !important; }
 /* ========================================= */
 .physical-card {
     background: #fff; border-radius: 10px; padding: 12px; width: 100%; 
-    height: auto; min-height: 250px; 
     display: flex; flex-direction: column; justify-content: flex-start;
     box-shadow: 6px 15px 30px rgba(0,0,0,0.5), inset -1px 2px 4px rgba(255,255,255,0.9);
     border: 1px solid #ccc; position: relative; z-index: 1;
@@ -236,27 +235,29 @@ body.player-mode .gm-only { display: none !important; }
 .debuff-card .card-type-tag { color: var(--danger); }
 .buff-card .card-type-tag { color: var(--info); }
 
-.physical-card h3 { font-size: clamp(0.95rem, 4vw, 1.1rem); font-weight: 900; color: #000; line-height: 1.15; margin-bottom: 6px; text-transform: uppercase; word-break: break-word; hyphens: auto; flex-shrink: 0;}
-.physical-card p { font-size: clamp(0.75rem, 3.5vw, 0.9rem); color: #111; font-weight: 700; line-height: 1.35; margin-bottom: 4px; flex: 1; padding-right: 4px; overflow-y: auto; }
+.physical-card h3 { font-size: clamp(0.85rem, 4vw, 1.0rem); font-weight: 900; color: #000; line-height: 1.15; margin-bottom: 6px; text-transform: uppercase; word-break: break-word; hyphens: auto; flex-shrink: 0;}
+.physical-card p { font-size: clamp(0.7rem, 3.5vw, 0.85rem); color: #111; font-weight: 700; line-height: 1.35; margin-bottom: 4px; flex: 1; padding-right: 4px; overflow-y: auto; }
 
-/* Korjattu Premium-kortti: Tyylikäs ja hillitty, ei riko Safari 3D:tä */
+/* Kaupan ja Kansion kortit pysyvät isoina */
+.shop-item-wrapper .physical-card { width: 100%; min-height: 250px; }
+
+/* Premium-kortti (Turvallinen kiilto) */
 .premium-card { 
     background: linear-gradient(145deg, #1e293b, #0f172a) !important; 
-    border: 2px solid #fbd38d !important; 
-    border-top: 8px solid #fbd38d !important;
+    border: 2px solid #fbd38d !important; border-top: 8px solid #fbd38d !important;
     color: #f8fafc !important; 
 }
 .premium-card h3 { color: #fde047 !important; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
 .premium-card p { color: #f1f5f9 !important; }
 .premium-card .card-type-tag { color: #fbd38d !important; }
 
+/* Hillitty ja 3D-turvallinen kiilto (vain kaupassa/lokerikossa) */
 .foil-fx {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.05) 40%, rgba(255, 215, 0, 0.1) 50%, rgba(255, 255, 255, 0.05) 60%, transparent 70%);
-    background-size: 200% 200%;
-    animation: foilGleam 6s infinite linear; /* Hidas ja tasainen animointi */
-    pointer-events: none; z-index: 10;
-    clip-path: inset(0 round 8px); /* Turvallinen rajaus 3D:n kanssa */
+    background-size: 200% 200%; pointer-events: none; z-index: 10;
+    animation: foilGleam 6s infinite linear; 
+    clip-path: inset(0 round 8px); 
 }
 @keyframes foilGleam { 0% { background-position: 200% 200%; } 100% { background-position: -100% -100%; } }
 
@@ -265,20 +266,12 @@ body.player-mode .gm-only { display: none !important; }
 .worn-card { 
     background: #faf5eb; 
     box-shadow: inset 0 0 30px rgba(139, 69, 19, 0.15), 5px 10px 20px rgba(0,0,0,0.4) !important;
-    border: 1px solid #c2b2a3 !important;
-    filter: sepia(0.2) contrast(0.95);
-}
-.worn-card::before { 
-    content: ''; position: absolute; top:0; left:0; right:0; bottom:0;
-    background: radial-gradient(circle at 20% 80%, rgba(0,0,0,0.08) 0%, transparent 40%),
-                radial-gradient(circle at 80% 20%, rgba(0,0,0,0.08) 0%, transparent 40%);
-    pointer-events: none; z-index: 10; border-radius: inherit; overflow: hidden;
+    border: 1px solid #c2b2a3 !important; filter: sepia(0.2) contrast(0.95);
 }
 
-.pinned-card-container { position: relative; margin-bottom: 30px; transition: transform 0.2s; transform-style: preserve-3d; transform: perspective(1000px) rotate(var(--rot)) translateZ(20px); }
+.pinned-card-container { position: relative; transition: transform 0.2s; transform-style: preserve-3d; transform: perspective(1000px) rotate(var(--rot)) translateZ(20px); }
 .pinned-card-container:active { transform: scale(0.95) translateZ(0) !important; } 
 .pinned-card-container .physical-card { box-shadow: 15px 25px 40px rgba(0,0,0,0.6), inset -1px 2px 4px rgba(255,255,255,0.9); cursor: pointer; }
-.pushpin { position: absolute; top: -6px; left: 50%; transform: translateX(-50%) translateZ(10px); width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b); box-shadow: 6px 12px 15px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,255,255,0.5); z-index: 10; }
 
 /* ========================================= */
 /* LOKERIKKO & JÄTTIKANSIOT                  */
@@ -286,7 +279,7 @@ body.player-mode .gm-only { display: none !important; }
 .corkboard-pocket-container {
     position: fixed; bottom: 0; left: 0; right: 0; height: 160px;
     display: flex; justify-content: space-evenly; align-items: flex-end;
-    padding: 0 20px 30px 20px; z-index: 4000;
+    padding: 0 20px 30px 20px; z-index: 9000; /* Nousee viewportin päälle */
 }
 #ownCardsButtonElement { background: linear-gradient(to right, #451a03, #78350f, #92400e); border-color: #381302; }
 #shopButtonElement { background: linear-gradient(to right, #111, #333, #111); border-color: #000; }
@@ -304,22 +297,17 @@ body.player-mode .gm-only { display: none !important; }
 
 .binder-badge { 
     position: absolute; top: -15px; right: -10px; 
-    width: 50px; height: 50px; border-radius: 50%;
-    background: #111; color: #fff; 
+    width: 50px; height: 50px; border-radius: 50%; background: #111; color: #fff; 
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; font-weight: 900; 
-    border: 4px solid #cbd5e1;
+    font-size: 1.3rem; font-weight: 900; border: 4px solid #cbd5e1;
     box-shadow: 0 5px 12px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.3); 
 }
-.binder-badge.money-badge { 
-    width: 60px; height: 60px; right: -15px; top: -20px;
-    font-size: 1.4rem; background: var(--warning); color: #000; 
-}
+.binder-badge.money-badge { width: 60px; height: 60px; right: -15px; top: -20px; font-size: 1.4rem; background: var(--warning); color: #000; }
 
 .pocket-lip {
     position: absolute; bottom: 0; left: -5%; width: 110%; height: 70px;
-    background: #475569; box-shadow: 0 -8px 20px rgba(0,0,0,0.7);
-    border-top: 2px dashed #1e293b; z-index: 5; display: flex; justify-content: center; align-items: center;
+    background: #475569; box-shadow: 0 -8px 20px rgba(0,0,0,0.7); border-top: 2px dashed #1e293b; 
+    z-index: 5; display: flex; justify-content: center; align-items: center;
     color: #1e293b; font-weight: 900; font-size: 1.6rem; letter-spacing: 8px;
 }
 
@@ -328,18 +316,11 @@ body.player-mode .gm-only { display: none !important; }
 /* ========================================= */
 .shop-binder-modal {
     position: absolute; top: 5%; left: 0; right: 0; bottom: 5%; width: 95%; max-width: 500px; margin: 0 auto;
-    border-radius: 5px 15px 15px 5px; 
-    display: flex; flex-direction: column; overflow: hidden; 
+    border-radius: 5px 15px 15px 5px; display: flex; flex-direction: column; overflow: hidden; 
     border-left: none; box-sizing: border-box; padding-top: 15px;
-    transition: background 0.4s, border 0.4s, box-shadow 0.4s;
-    will-change: transform;
+    transition: background 0.4s, border 0.4s, box-shadow 0.4s; will-change: transform;
 }
-.binder-content {
-    flex: 1; overflow-y: auto; overflow-x: hidden;
-    padding: 10px 25px 20px 55px; 
-    position: relative;
-}
-
+.binder-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 25px 20px 55px; position: relative; }
 .binder-swipe-handle { width: 60px; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 4px rgba(0,0,0,0.5); flex-shrink: 0; }
 
 .theme-shop { background-color: #1a1a1a; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 2px, transparent 2px, transparent 4px); border: 1px solid #333; box-shadow: inset -5px 0 15px rgba(0,0,0,0.5), 10px 20px 40px rgba(0,0,0,0.9); }
@@ -364,23 +345,10 @@ body.player-mode .gm-only { display: none !important; }
 /* ========================================= */
 /* NATIIVI 3D KORTTIVIUHKA (SAUMATON, LEVEÄ) */
 /* ========================================= */
-.native-carousel-container {
-    display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-    padding: 40px calc(50vw - 140px); gap: 0px; width: 100vw; height: 600px; 
-    align-items: center; scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y;
-}
+.native-carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 40px calc(50vw - 140px); gap: 0px; width: 100vw; height: 600px; align-items: center; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
 .native-carousel-container::-webkit-scrollbar { display: none; }
-
-.carousel-card-wrapper {
-    flex: 0 0 280px; 
-    scroll-snap-align: center; perspective: 1200px;
-    position: relative; height: 392px; 
-    will-change: transform;
-}
-.card-3d-inner { 
-    position: relative; width: 100%; height: 100%; transform-style: preserve-3d; 
-}
+.carousel-card-wrapper { flex: 0 0 280px; scroll-snap-align: center; perspective: 1200px; position: relative; height: 392px; will-change: transform; }
+.card-3d-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
 .card-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 12px; box-shadow: -10px 20px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; background: #fff; border: 2px solid var(--border); }
 .card-front { padding: 22px 18px; transform: rotateY(0deg) translateZ(1px); } 
 .card-back { transform: rotateY(180deg) translateZ(1px); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 6px solid #fff; }
@@ -390,12 +358,12 @@ body.player-mode .gm-only { display: none !important; }
 .card-back-icon { font-size: 6rem; opacity: 0.4; }
 
 /* MODAALIT */
-.fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items:center; justify-content:center; z-index: 8000; padding: 15px; overflow-y: hidden; overscroll-behavior-y: none; }
+.fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items:center; justify-content:center; z-index: 10000; padding: 15px; overflow-y: hidden; overscroll-behavior-y: none; }
 .close-modal-btn { background: var(--danger); border: none; border-radius: 50%; width:44px; height:44px; color: #fff; font-size: 1.8rem; font-weight:bold; cursor: pointer; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4); z-index:100; }
-.winner-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 16px; overflow-y:auto; overscroll-behavior: none; overflow-x: hidden; } 
+.winner-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: none; align-items: center; justify-content: center; z-index: 10500; padding: 16px; overflow-y:auto; overscroll-behavior: none; overflow-x: hidden; } 
 
 /* ========================================= */
-/* FOTOREALISTINEN PAPERITULOSKORTTI (3D)    */
+/* FOTOREALISTINEN PAPERITULOSKORTTI (MODAL) */
 /* ========================================= */
 .paper-score-modal {
     background-color: #fdfaf6;
@@ -411,42 +379,23 @@ body.player-mode .gm-only { display: none !important; }
     content: ''; position: absolute; top: 0; bottom: 0; left: 25px; width: 2px;
     background: rgba(244, 63, 94, 0.5); z-index: 15; pointer-events: none; 
 }
-
 .paper-score-modal h2 { font-family: 'Kalam', cursive !important; color: var(--ink-blue) !important; font-size: 2.6rem; letter-spacing: 0; text-transform: none; text-decoration: underline; margin-bottom: 5px; position: relative; z-index: 5;}
 .paper-score-modal p { font-family: 'Kalam', cursive !important; color: var(--ink-blue) !important; font-size: 1.6rem; position: relative; z-index: 5;}
-
 .player-row-paper { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dotted rgba(15, 27, 97, 0.3); position: relative; z-index: 5; }
 .player-row-paper:last-child { border-bottom: none; }
 .paper-name { font-size: 1.6rem; font-weight: 700; color: var(--ink-blue); font-family: 'Kalam', cursive; padding-left: 10px; }
-
 .score-row-paper { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px dotted rgba(15, 27, 97, 0.3); position: relative; z-index: 5; background: transparent;}
 .score-row-paper:last-child { border-bottom: none; }
 .score-name-paper { font-size: clamp(1.4rem, 5vw, 2.2rem); font-weight: 700; color: var(--ink-blue); font-family: 'Kalam', cursive; padding-left: 20px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
 .score-controls-paper { display: flex; align-items: center; gap: 8px; z-index: 5;}
 .btn-score-paper { width: 35px; height: 50px; background: transparent; border: none; color: var(--ink-blue); font-size: 2.8rem; font-family: 'Kalam', cursive; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; padding-bottom: 10px;}
-
-.score-display-paper { 
-    width: 50px !important; height: 50px !important; 
-    display: flex; align-items: center; justify-content: center; 
-    font-size: 2.5rem !important; font-weight: 700; font-family: 'Kalam', cursive; 
-    background: transparent; border: 3px solid transparent; 
-}
+.score-display-paper { width: 50px !important; height: 50px !important; display: flex; align-items: center; justify-content: center; font-size: 2.5rem !important; font-weight: 700; font-family: 'Kalam', cursive; background: transparent; border: 3px solid transparent; }
 .score-birdie-paper { border-color: var(--primary) !important; border-radius: 50% 45% 55% 40%; color: var(--primary) !important;} 
 .score-bogey-paper { border-color: var(--danger) !important; border-radius: 50% 55% 45% 40%; color: var(--danger) !important;}
-
 .task-paper-label { display: flex; align-items: center; gap: 10px; font-family: 'Kalam', cursive; font-size: clamp(1.2rem, 5vw, 1.8rem); color: var(--ink-blue); cursor:pointer; position: relative; z-index: 5; background: transparent;}
-.task-paper-checkbox { 
-    appearance: none !important; -webkit-appearance: none !important; 
-    width: 30px !important; height: 30px !important; border: 4px solid var(--ink-blue) !important; 
-    border-radius: 6px; position: relative; cursor: pointer; background: transparent !important; outline: none; margin: 0 !important; z-index: 20; 
-}
+.task-paper-checkbox { appearance: none !important; -webkit-appearance: none !important; width: 30px !important; height: 30px !important; border: 4px solid var(--ink-blue) !important; border-radius: 6px; position: relative; cursor: pointer; background: transparent !important; outline: none; margin: 0 !important; z-index: 20; }
 .task-paper-checkbox:checked { background: transparent !important; border-color: var(--ink-blue) !important; }
-.task-paper-checkbox:checked::after { 
-    content: 'X'; position: absolute; 
-    top: 50%; left: 50%; transform: translate(-50%, -50%); 
-    font-size: 3.5rem; color: var(--ink-blue); font-family: 'Kalam', cursive; font-weight: 700; 
-}
+.task-paper-checkbox:checked::after { content: 'X'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; color: var(--ink-blue); font-family: 'Kalam', cursive; font-weight: 700; }
 .task-checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; margin-bottom: 25px; padding-left: 20px; position: relative; z-index: 5; background: transparent;}
 
 input[type="text"], input[type="number"], select { width: 100%; padding: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.8); border: 2px solid var(--border); color: var(--text-main); border-radius: 12px; font-size: 1.1rem; font-weight:800; }
@@ -456,7 +405,6 @@ body.gm-mode input, body.gm-mode select { background: rgba(0,0,0,0.2); color:#ff
 .role-btn { flex: 1; padding: 14px; color: var(--text-muted); background: rgba(255,255,255,0.8); border: 2px solid var(--border); border-radius: 12px; font-weight: 900; font-size: 0.95rem; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.05);}
 body.gm-mode .role-btn { background: rgba(30, 41, 59, 0.5); color:#fff; }
 .role-btn.active { background: var(--primary); color: #fff; border-color: var(--primary-dark); }
-
 .log-box { height:150px; overflow-y:auto; padding:12px; border-radius:12px; border:2px solid var(--border); font-size:0.95rem; font-weight:700; background: var(--paper-bg); color: var(--text-main); }
 
 #notificationContainer { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 10000; pointer-events: none; width: 100%; max-width: 450px; display:flex; flex-direction:column; gap:8px; align-items:center;}
@@ -466,73 +414,39 @@ body.gm-mode .role-btn { background: rgba(30, 41, 59, 0.5); color:#fff; }
 @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
 
 /* ========================================= */
-/* AMBIENT ANIMAATIOT (Lonkero, Lappu, Kärpänen) */
+/* AMBIENT ANIMAATIOT (50 Eri Tapahtumaa)    */
 /* ========================================= */
 .ambiance-stain {
-    position: fixed; border-radius: 50%; background: rgba(15, 23, 42, 0.15);
+    position: absolute; border-radius: 50%; 
     box-shadow: inset 0 0 5px rgba(0,0,0,0.2); filter: blur(2px);
-    animation: stainFade 20s forwards;
-    pointer-events: none; z-index: 50; 
+    animation: stainFade forwards; pointer-events: none; z-index: 50; 
 }
-@keyframes stainFade { 
-    0% { opacity: 0; transform: scale(0.5); } 
-    2% { opacity: 1; transform: scale(1); } 
-    70% { opacity: 1; } 
-    100% { opacity: 0; } 
-}
+@keyframes stainFade { 0% { opacity: 0; transform: scale(0.5); } 2% { opacity: 1; transform: scale(1); } 70% { opacity: 1; } 100% { opacity: 0; } }
 
 .ambiance-can-wrapper {
-    position: fixed; filter: drop-shadow(4px 10px 8px rgba(0,0,0,0.5));
+    position: absolute; filter: drop-shadow(4px 10px 8px rgba(0,0,0,0.5));
     animation: canPlonk 4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     pointer-events: none; z-index: 9000;
 }
-@keyframes canPlonk { 
-    0% { transform: translateY(100vh) rotate(30deg); opacity: 0; } 
-    10% { transform: translateY(0) rotate(5deg); opacity: 1; } 
-    70% { transform: translateY(0) rotate(5deg); opacity: 1; } 
-    100% { transform: translateY(100vh) rotate(-15deg); opacity: 0; } 
-}
+@keyframes canPlonk { 0% { transform: translateY(100vh) rotate(30deg); opacity: 0; } 10% { transform: translateY(0) rotate(5deg); opacity: 1; } 70% { transform: translateY(0) rotate(5deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(-15deg); opacity: 0; } }
 
-.css-lonkero {
-    width: 35px; height: 65px; 
-    background: linear-gradient(90deg, #94a3b8 0%, #f1f5f9 30%, #94a3b8 70%, #475569 100%);
-    border-radius: 4px; position: relative;
-    box-shadow: inset -2px 0 5px rgba(0,0,0,0.3), inset 2px 0 5px rgba(255,255,255,0.7);
-}
-.css-lonkero::after {
-    content: ''; position: absolute; top: 12px; bottom: 12px; left: 0; right: 0;
-    background: repeating-linear-gradient(0deg, #0ea5e9, #0ea5e9 8px, transparent 8px, transparent 16px);
-    opacity: 0.85;
-}
-.css-lonkero::before {
-    content: ''; position: absolute; top: -2px; left: 10px; right: 10px; height: 3px;
-    background: #cbd5e1; border-radius: 2px;
-    box-shadow: 0 -1px 2px rgba(0,0,0,0.5);
-}
+.css-lonkero { width: 35px; height: 65px; background: linear-gradient(90deg, #94a3b8 0%, #f1f5f9 30%, #94a3b8 70%, #475569 100%); border-radius: 4px; position: relative; box-shadow: inset -2px 0 5px rgba(0,0,0,0.3), inset 2px 0 5px rgba(255,255,255,0.7); }
+.css-lonkero::after { content: ''; position: absolute; top: 12px; bottom: 12px; left: 0; right: 0; background: repeating-linear-gradient(0deg, #0ea5e9, #0ea5e9 8px, transparent 8px, transparent 16px); opacity: 0.85; }
+.css-lonkero::before { content: ''; position: absolute; top: -2px; left: 10px; right: 10px; height: 3px; background: #cbd5e1; border-radius: 2px; box-shadow: 0 -1px 2px rgba(0,0,0,0.5); }
 
-.ambiance-paper {
-    position: fixed; width: 60px; height: 60px; background: #fef08a;
-    box-shadow: 2px 4px 8px rgba(0,0,0,0.3);
-    pointer-events: none; z-index: 9001;
-    animation: paperBlow 7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+.ambiance-bug {
+    position: absolute; font-size: 1.2rem; filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.5));
+    pointer-events: none; z-index: 40;
 }
-@keyframes paperBlow {
-    0% { transform: translate(-10vw, 50vh) rotate(-20deg) rotateX(10deg); opacity: 0; }
-    10% { opacity: 1; }
-    50% { transform: translate(50vw, 30vh) rotate(180deg) rotateX(45deg); }
-    90% { opacity: 1; }
-    100% { transform: translate(110vw, 60vh) rotate(360deg) rotateX(80deg); opacity: 0; }
+.ambiance-shadow {
+    position: absolute; background: rgba(0,0,0,0.15); filter: blur(15px);
+    pointer-events: none; z-index: 9900; border-radius: 50%;
 }
+.ambiance-svg {
+    position: absolute; pointer-events: none; z-index: 45; stroke-dasharray: 200; stroke-dashoffset: 200;
+    animation: drawDoodle 2s forwards, fadeDoodle 15s forwards;
+}
+@keyframes drawDoodle { to { stroke-dashoffset: 0; } }
+@keyframes fadeDoodle { 0%, 80% { opacity: 0.6; } 100% { opacity: 0; } }
 
-.ambiance-fly {
-    position: fixed; font-size: 1.5rem; filter: drop-shadow(1px 3px 2px rgba(0,0,0,0.4));
-    animation: flyBuzz 6s cubic-bezier(0.4, 0, 0.6, 1) forwards;
-    pointer-events: none; z-index: 9002;
-}
-@keyframes flyBuzz { 
-    0% { transform: translate(-50px, 0) scale(1); } 
-    25% { transform: translate(30vw, -50px) scale(1.5); } 
-    50% { transform: translate(60vw, 20px) scale(0.8); } 
-    75% { transform: translate(80vw, -30px) scale(1.2); } 
-    100% { transform: translate(120vw, -10px) scale(1); } 
-}
+.ambiance-mark { position: absolute; pointer-events: none; z-index: 35; animation: fadeDoodle 25s forwards; }
