@@ -17,8 +17,8 @@
     <link rel="apple-touch-icon" href="friba.png" />
     
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=131" />
-    <meta id="themeColorMeta" name="theme-color" content="#a06e45" />
+    <link rel="stylesheet" href="style.css?v=132" />
+    <meta id="themeColorMeta" name="theme-color" content="#d8c3a5" />
     
     <script>
       window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
@@ -26,7 +26,7 @@
 </head>
 <body class="player-mode">
 
-    <div id="installPromptModal" class="winner-overlay" style="z-index: 10010; flex-direction:column; justify-content:center; align-items:center;">
+    <div id="installPromptModal" class="winner-overlay" style="z-index: 10010; flex-direction:column; justify-content:center; align-items:center;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align: center;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
             <div style="font-size:3.5rem; margin-bottom:10px;">📲</div>
@@ -37,7 +37,7 @@
         </div>
     </div>
 
-    <div id="handLimitModal" class="winner-overlay" style="z-index: 10005;">
+    <div id="handLimitModal" class="winner-overlay" style="z-index: 10005;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align:center;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
             <div style="font-size:4rem; margin-bottom:10px;">⚠️</div>
@@ -71,12 +71,13 @@
             
             <!-- VÄYLÄN TIEDOT TORN PAPER / BANNER -->
             <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 25px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
-                <div id="courseInfoBanner" class="course-banner-card" style="flex: 1; margin: 0;">
+                <div id="courseInfoBanner" class="course-banner-paper" style="flex: 1; margin: 0;">
+                    <div class="tape tape-top-center"></div>
                     <div class="banner-subtitle" id="bannerCourseName">Rata</div>
-                    <div class="banner-title">VÄYLÄ <span id="bannerHoleNum" style="color: #fcd34d;">1</span></div>
-                    <div style="align-self: flex-start;"><span class="banner-par">PAR <span id="bannerPar">3</span></span></div>
+                    <div class="banner-title">VÄYLÄ <span id="bannerHoleNum">1</span></div>
+                    <div style="margin-top: 5px;"><span class="banner-par">PAR <span id="bannerPar">3</span></span></div>
                 </div>
-                <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2; box-shadow: 2px 4px 8px rgba(0,0,0,0.4); border-radius: 12px; background: var(--ink-blue);">📝 SYÖTÄ<br />TULOS</button>
+                <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2; box-shadow: 2px 4px 8px rgba(0,0,0,0.4); border-radius: 4px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.4rem;">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
             <!-- TEIPATTU SÄÄNTÖPAPERI -->
@@ -86,7 +87,7 @@
             <div id="myActiveRulesContainer" style="display:none; margin-bottom: 30px;"></div>
             
             <div id="activeCardsArea" style="display:none; margin-bottom: 25px;">
-                <h2 style="color: #fff; text-shadow: 1px 1px 2px #000; font-size: 0.8rem; margin-bottom: 15px; display:flex; align-items:center; gap:8px;">📌 KAIKKI PELATUT KORTIT</h2>
+                <h2 style="color: var(--text-main); font-size: 0.8rem; margin-bottom: 15px; display:flex; align-items:center; gap:8px;">📌 KAIKKI PELATUT KORTIT</h2>
                 <div id="activeCardsContainer" class="cards-grid-2"></div>
             </div>
             
@@ -181,8 +182,8 @@
 
     </div>
 
-    <!-- Modaalit -->
-    <div id="shopModal" class="fullscreen-modal" style="padding:0; background:transparent;">
+    <!-- Modaalit (klikkaus taustaan sulkee ne) -->
+    <div id="shopModal" class="fullscreen-modal" style="padding:0; background:rgba(0,0,0,0.7);" onclick="if(event.target === this) { window.closeShopModal(); }">
         <div class="shop-binder-modal">
             <div class="binder-spine">
                 <div class="binder-ring"></div>
@@ -192,7 +193,7 @@
             
             <div class="fullscreen-modal-header" style="margin-bottom:15px; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom:15px; position:relative; z-index:20;">
                 <h2 style="display:flex; align-items:center; gap:10px; color:#fff;">🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px;">0 P</span></h2>
-                <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('shopModal').style.display='none'; document.querySelector('#shopModal .shop-binder-modal').classList.remove('binder-modal-anim');">&times;</button>
+                <button class="close-modal-btn" aria-label="Sulje" onclick="window.closeShopModal();">&times;</button>
             </div>
             
             <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.1); padding:4px; border:1px solid rgba(255,255,255,0.2); position:relative; z-index:20;">
@@ -212,10 +213,13 @@
                 </div>
                 <div id="shopSellCardsContainer" class="cards-grid-2"></div>
             </div>
+
+            <!-- Helppo sulkemisnappi myös kansion alalaitaan -->
+            <button class="btn btn-secondary" style="margin-top: 35px; background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onclick="window.closeShopModal()">SULJE KANSIO</button>
         </div>
     </div>
 
-    <div id="gmGiveCardModal" class="fullscreen-modal">
+    <div id="gmGiveCardModal" class="fullscreen-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
             <h2>KORTIN ANTO</h2>
@@ -226,7 +230,7 @@
     </div>
 
     <!-- NATIIVI VIUHKA-KARUSELLI -->
-    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;">
+    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container"></div>
         <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.85rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">👈 VAIHDA KORTTIA SIVULLE 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;"></div>
@@ -234,7 +238,7 @@
     </div>
 
     <!-- FOTOREALISTINEN PAPERITULOSKORTTI -->
-    <div id="scoreModal" class="winner-overlay">
+    <div id="scoreModal" class="winner-overlay" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="paper-score-modal">
             <div style="text-align: center; margin-bottom: 15px;">
                 <h2>VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
@@ -255,7 +259,7 @@
         </div>
     </div>
 
-    <div id="targetModal" class="winner-overlay" style="z-index: 10001;">
+    <div id="targetModal" class="winner-overlay" style="z-index: 10001;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="card glass-card" style="width: 100%; max-width: 400px; border: 4px solid var(--danger);">
             <h2 style="color:var(--text-main);">Valitse sabotaasin kohde</h2>
             <p id="targetCardName" style="color: var(--danger); font-weight: 900; margin-bottom: 20px; font-size: 1.5rem; text-align:center; text-transform:uppercase; line-height:1.2;"></p>
@@ -264,7 +268,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=131"></script>
-    <script type="module" src="script.js?v=131"></script>
+    <script src="tasks.js?v=132"></script>
+    <script type="module" src="script.js?v=132"></script>
 </body>
 </html>
