@@ -236,15 +236,14 @@ window.initNativeCarousel = function() {
         const scrollLeft = container.scrollLeft;
 
         cards.forEach((card, index) => {
-            // Huippunopea offsetLeft laskenta getBoundingClientRectin sijaan!
             const cardCenter = card.offsetLeft - scrollLeft + (card.offsetWidth / 2);
-            const diff = (cardCenter - center) / 140; // Viuhkan asettelu
+            const diff = (cardCenter - center) / 140; 
             
-            const transX = diff * -70; // Leveämpi viuhka, näkyy paremmin
+            const transX = diff * -70; 
             const rotZ = diff * 8;
             const transY = Math.abs(diff) * 20;
-            const scale = Math.max(0.8, 1.15 - Math.abs(diff) * 0.15); // Keskikortti on massiivinen
-            const opacity = 1; // EI LÄPINÄKYVYYTTÄ REUNOILLA!
+            const scale = Math.max(0.8, 1.15 - Math.abs(diff) * 0.15); 
+            const opacity = 1; 
             
             card.style.transform = `translateX(${transX}px) translateY(${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
             card.style.opacity = opacity;
@@ -256,8 +255,11 @@ window.initNativeCarousel = function() {
             }
         });
         
-        window.carouselCurrentIndex = closestIndex;
-        window.updateCarouselButtons();
+        if (window.carouselCurrentIndex !== closestIndex) {
+            window.carouselCurrentIndex = closestIndex;
+            window.updateCarouselButtons();
+        }
+        
         isScrolling = false;
     }
     
@@ -500,6 +502,7 @@ window.openShop = function(tab) {
 };
 
 window.closeShopModal = function() {
+    window.pendingShopPurchase = null; // Aina nollataan varmuuden vuoksi kun kansio menee kiinni
     if(el('shopModal')) el('shopModal').style.display = 'none';
     let modalEl = document.querySelector('#shopModal .shop-binder-modal');
     if(modalEl) {
@@ -547,7 +550,10 @@ if(binderContent && binderModal) {
 
 window.switchShopTab = function(tab) {
     const modalEl = document.querySelector('#shopModal .shop-binder-modal');
+    const headerTitle = el('shopModalHeaderTitle');
+    
     if (tab === 'buy') {
+        window.pendingShopPurchase = null; // Jos peruutetaan kaupan puolelle
         el('shopBuyArea').style.display = 'block';
         el('shopSellArea').style.display = 'none';
         if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.add('active');
@@ -556,6 +562,7 @@ window.switchShopTab = function(tab) {
             modalEl.classList.remove('theme-own');
             modalEl.classList.add('theme-shop');
         }
+        if(headerTitle) headerTitle.innerText = '🛒 KAUPPA';
     } else {
         el('shopBuyArea').style.display = 'none';
         el('shopSellArea').style.display = 'block';
@@ -565,7 +572,15 @@ window.switchShopTab = function(tab) {
             modalEl.classList.remove('theme-shop');
             modalEl.classList.add('theme-own');
         }
+        if(headerTitle) {
+            let pName = myName ? myName.toUpperCase() : 'PELAAJA';
+            headerTitle.innerText = `🗂️ ${pName} - KORTIT`;
+        }
     }
+    
+    // Uudelleenrenderöidään kauppa, jotta varoituslaatikko osaa piiloutua tarvittaessa
+    let me = (allPlayers || []).find(p => p && p.name === myName);
+    window.renderShop(activeHole ? activeHole.shop : null, me ? me.score : 0, me ? me.boughtThisHole : false);
 };
 
 window.showHandLimitModal = function(cards) {
@@ -861,11 +876,25 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     }
     if (sellContainer) sellContainer.innerHTML = sellHtml;
     
-    if (window.pendingShopPurchase) {
-         if(el('pendingPurchaseAlert')) el('pendingPurchaseAlert').style.display = 'block';
-         if(el('pendingCardName')) el('pendingCardName').innerText = window.pendingShopPurchase.name;
-    } else {
-         if(el('pendingPurchaseAlert')) el('pendingPurchaseAlert').style.display = 'none';
+    // Dynaaminen varoitus "Käsiraja ylitetty" TAI "Käsi täynnä (osto)"
+    let alertEl = el('pendingPurchaseAlert');
+    if (alertEl) {
+        let limitEnabled = window.gameSettings.handLimitEnabled !== undefined ? window.gameSettings.handLimitEnabled : true;
+        let limit = window.gameSettings.handLimit !== undefined ? window.gameSettings.handLimit : 5;
+        let isOverLimit = limitEnabled && myCards.length > limit;
+
+        if (window.pendingShopPurchase) {
+            alertEl.style.display = 'block';
+            alertEl.innerHTML = `<div style="font-weight:900; font-size:1.2rem; margin-bottom:8px;">⚠️ KÄSI TÄYNNÄ!</div>
+                                 <div style="font-size:1.05rem; font-weight:700; margin-bottom:15px; line-height:1.4;">Haluat ostaa kortin <strong id="pendingCardName">${window.pendingShopPurchase.name}</strong>. Myy tai hävitä yksi kortti alta tehdäksesi tilaa, jolloin osto suoritetaan automaattisesti!</div>
+                                 <button class="btn btn-secondary" style="padding:12px; font-size:0.95rem; color:#000;" onclick="event.stopPropagation(); if(window.cancelShopPurchase) window.cancelShopPurchase()">PERUUTA OSTO</button>`;
+        } else if (isOverLimit) {
+            alertEl.style.display = 'block';
+            alertEl.innerHTML = `<div style="font-weight:900; font-size:1.2rem; margin-bottom:8px;">⚠️ KÄSIRAJA YLITETTY!</div>
+                                 <div style="font-size:1.05rem; font-weight:700; line-height:1.4;">Sinulla on liikaa kortteja kädessäsi (${myCards.length}/${limit}). Myy tai hävitä kortteja päästäksesi takaisin sallittuun rajaan!</div>`;
+        } else {
+            alertEl.style.display = 'none';
+        }
     }
 };
 
