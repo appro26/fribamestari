@@ -170,7 +170,7 @@ window.executeCardPlay = function(targetName) {
 };
 
 //==============================================
-// UUSI NATIIVI KORTTIVIUHKA (SMOOTH SCROLL)
+// UUSI NATIIVI KORTTIVIUHKA (EI LÄPINÄKYVYYTTÄ, TIHEÄ)
 //==============================================
 window.carouselCards = [];
 window.carouselCurrentMode = 'hand';
@@ -231,13 +231,14 @@ window.initNativeCarousel = function() {
             const rect = card.getBoundingClientRect();
             // Laske kortin keskipisteen etäisyys näytön keskikohdasta
             const cardCenter = rect.left + rect.width / 2;
-            const diff = (cardCenter - center) / 160; 
+            const diff = (cardCenter - center) / 140; // Tiheämpi
             
             // Viuhkan geometria
-            const rotZ = diff * 15;
-            const transY = Math.abs(diff) * 35;
-            const scale = Math.max(0.75, 1 - Math.abs(diff) * 0.15);
-            const opacity = Math.max(0.2, 1 - Math.abs(diff) * 0.4);
+            const rotZ = diff * 10;
+            const transY = Math.abs(diff) * 20;
+            // Keskimäinen kortti on selkeästi isompi kuin taustalla olevat
+            const scale = Math.max(0.85, 1.2 - Math.abs(diff) * 0.25);
+            const opacity = 1; // EI LÄPINÄKYVYYTTÄ REUNOILLA!
             
             card.style.transform = `translateY(${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
             card.style.opacity = opacity;
@@ -667,11 +668,11 @@ window.renderActiveHole = function() {
     
     if(container) { 
         container.innerHTML = `
-            <div class="torn-paper">
-                <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
-                <div style="display:inline-block; background:rgba(16, 185, 129, 0.15); color:var(--primary-dark); padding:6px 12px; border-radius:8px; font-weight:900; font-size:0.85rem; margin-bottom:12px; text-transform:uppercase; letter-spacing: 1px; border: 1px solid rgba(16, 185, 129, 0.3);">${bountyTag}</div>
-                <div style="font-size:1.5rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; color:var(--text-main);">${activeHole.rule.n}</div>
-                <div style="font-size: 1.1rem; line-height: 1.45; font-weight: 700; color: var(--text-muted);">${activeHole.rule.d}</div>
+            <div class="post-it-note">
+                <div class="post-it-tape"></div>
+                <div style="font-weight:900; font-size:0.8rem; margin-bottom:8px; text-transform:uppercase; color:#666;">${bountyTag}</div>
+                <div style="font-size:1.6rem; margin-bottom: 8px; text-transform: uppercase; font-weight: 900; line-height: 1.1; font-family:'Kalam', cursive; color:#111;">${activeHole.rule.n}</div>
+                <div style="font-size: 1.2rem; line-height: 1.4; font-family:'Kalam', cursive; color:#222;">${activeHole.rule.d}</div>
             </div>`; 
     }
     
@@ -679,39 +680,58 @@ window.renderActiveHole = function() {
 
     if(playedCards.length > 0) {
         if(cardsArea) cardsArea.style.display = 'block'; 
-        let cardsHtml = '';
+        
+        let myDebuffsHtml = '';
+        let otherCardsHtml = '';
         
         playedCards.forEach((pc, i) => {
             let cardDef = (window.allCards || []).find(c => c && c.n === pc.cardName);
             let cTier = pc.tier || (cardDef ? cardDef.tier : 'normal');
             let cType = pc.type || (cardDef ? cardDef.type : 'sabotage');
             
-            let typeClass = cType === 'buff' ? 'buff-card' : 'debuff-card';
-            if(cTier === 'premium') typeClass = 'premium-card';
-            let tagTxt = cTier === 'premium' ? '💎 PREMIUM' : (cType === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
-            
             let undoBtn = currentRole === 'gm' ? `<button class="btn btn-danger" style="padding:8px; font-size:0.75rem; margin-top:8px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">PERU</button>` : ``;
             
-            let rot = Math.floor(Math.random() * 10) - 5; 
-            let pinLeft = 50 + (Math.floor(Math.random() * 20) - 10);
-            
-            cardsHtml += `
-                <div class="pinned-card-container" style="transform: rotate(${rot}deg);">
-                    <div class="pushpin" style="left: ${pinLeft}%;"></div>
-                    <div class="physical-card ${typeClass}">
-                        <div class="card-type-tag">${tagTxt}</div>
-                        <h3 style="font-size:1.05rem;">${pc.cardName}</h3>
-                        <p style="font-size:0.85rem;">${pc.cardDesc}</p>
-                        <div style="background:rgba(0,0,0,0.05); padding:6px; border-radius:6px; font-size:0.8rem; text-align:center; color:var(--text-main); font-weight:bold; margin-top:auto;">
-                            Kohde: <span style="text-transform:uppercase; color:var(--danger);">${pc.target}</span><br>
-                            <span style="font-weight:normal;">(Pelaaja: ${pc.by})</span>
+            if (pc.target === myName) {
+                // Fyysinen kortti omalle taululle
+                let typeClass = cType === 'buff' ? 'buff-card' : 'debuff-card';
+                if(cTier === 'premium') typeClass = 'premium-card';
+                let tagTxt = cTier === 'premium' ? '💎 PREMIUM' : (cType === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
+                
+                let rot = Math.floor(Math.random() * 10) - 5; 
+                let pinLeft = 50 + (Math.floor(Math.random() * 20) - 10);
+                
+                myDebuffsHtml += `
+                    <div class="pinned-card-container" style="transform: rotate(${rot}deg);">
+                        <div class="pushpin" style="left: ${pinLeft}%;"></div>
+                        <div class="physical-card ${typeClass}">
+                            <div class="card-type-tag">${tagTxt}</div>
+                            <h3 style="font-size:1.05rem;">${pc.cardName}</h3>
+                            <p style="font-size:0.85rem;">${pc.cardDesc}</p>
+                            <div style="background:rgba(0,0,0,0.05); padding:6px; border-radius:6px; font-size:0.8rem; text-align:center; color:var(--text-main); font-weight:bold; margin-top:auto;">
+                                Pelattu sinulle<br>
+                                <span style="font-weight:normal;">(Pelaaja: ${pc.by})</span>
+                            </div>
+                            ${undoBtn}
                         </div>
-                        ${undoBtn}
-                    </div>
-                </div>`;
+                    </div>`;
+            } else {
+                // Pieni rivi muiden korteille
+                let typeIcon = cType === 'buff' ? '🛡️' : '🚫';
+                let gmUndo = currentRole === 'gm' ? ` <button style="color:var(--danger); background:none; border:none; font-weight:900; font-size:0.8rem; padding:4px;" onclick="window.undoCardPlay(${pc.timestamp})">[PERU]</button>` : '';
+                otherCardsHtml += `
+                    <div style="background:rgba(255,255,255,0.7); padding:10px 12px; border-radius:8px; margin-bottom:8px; font-size:0.9rem; color:#111; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                        <b style="font-size:1rem;">${typeIcon} ${pc.cardName}</b><br>
+                        <span style="font-size:0.8rem; color:#555;">Pelaaja <b>${pc.by}</b> pelasi kohteelle <b style="text-transform:uppercase; color:var(--danger);">${pc.target}</b></span>${gmUndo}
+                    </div>`;
+            }
         });
         
-        if(cardsContainer) cardsContainer.innerHTML = cardsHtml; 
+        if(cardsContainer) {
+            cardsContainer.innerHTML = myDebuffsHtml;
+            if(otherCardsHtml !== '') {
+                cardsContainer.innerHTML += `<div style="grid-column: 1 / -1; margin-top: 15px;"><h3 style="font-size:0.75rem; margin-bottom:10px; color:var(--text-muted); text-transform:uppercase;">Muiden väliset tapahtumat</h3>${otherCardsHtml}</div>`;
+            }
+        }
     } else {
         if(cardsArea) cardsArea.style.display = 'none'; 
     }
@@ -739,7 +759,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
                         <div class="physical-card premium-card" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
                             <span class="card-price-tag">${item.price} P</span>
                             <div class="card-type-tag">💎 KAUPPA</div><h3 style="padding-right:35px;">${item.n}</h3><p>${item.d}</p>
-                            <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px;">🔄 3D TARKASTELU</div>
+                            <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px; margin-top:auto;">🔄 3D TARKASTELU</div>
                         </div>
                     </div>
                     <button class="shop-item-btn ${btnClass}" ${dis} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
@@ -767,7 +787,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let sellBtnIcon = isNormal ? '♻️' : '🗑️';
             let sellBtnColor = isNormal ? 'var(--info)' : 'var(--danger)';
             
-            let rot = 0; // Kortit suoristettu, jotta ne ovat täsmälleen linjassa
+            let rot = 0; // Kortit suoristettu
             
             sellHtml += `
             <div class="shop-item-wrapper messy-card" style="transform: rotate(${rot}deg);">
@@ -1117,7 +1137,8 @@ window.openScoreModal = function() {
         if(activeHole && activeHole.rule) {
             let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
             let bTxt = activeHole.rule.type === 'bounty' ? `TEHTÄVÄ (+${ptsTask} P)` : 'SÄÄNTÖ';
-            box.innerHTML = `<strong style="font-size:1.4rem;">${bTxt}: ${activeHole.rule.n}</strong><br><span style="font-size:1.2rem;">${activeHole.rule.d}</span>`;
+            box.className = 'post-it-note';
+            box.innerHTML = `<div class="post-it-tape"></div><strong style="font-size:1.4rem;">${bTxt}: ${activeHole.rule.n}</strong><br><span style="font-size:1.2rem;">${activeHole.rule.d}</span>`;
             box.style.display = 'block';
         } else {
             box.style.display = 'none';
