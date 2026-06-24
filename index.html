@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="friba.png" />
     
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=138" />
+    <link rel="stylesheet" href="style.css?v=139" />
     <meta id="themeColorMeta" name="theme-color" content="#cbd5e1" />
     
     <script>
@@ -51,7 +51,6 @@
 
     <div class="container">
 
-        <!-- ALKUNÄKYMÄ -->
         <div id="identityCard" class="torn-paper" style="text-align: center; margin-top:15px;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
             <div class="tape tape-bl"></div><div class="tape tape-br"></div>
@@ -69,28 +68,24 @@
 
         <div id="mainGameArea" style="display:none; margin-top:15px;">
             
-            <!-- VÄYLÄN TIEDOT -->
             <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 35px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
-                <div id="courseInfoBanner" class="course-banner-paper" style="flex: 1; margin: 0;">
+                <div id="courseInfoBanner" class="course-banner-cardboard" style="flex: 1; margin: 0;">
                     <div class="tape tape-top-center"></div>
                     <div class="banner-subtitle" id="bannerCourseName">Rata</div>
-                    <div class="banner-title">VÄYLÄ <span id="bannerHoleNum">1</span></div>
+                    <div class="banner-title">VÄYLÄ <span id="bannerHoleNum" style="color: var(--warning);">1</span></div>
                     <div style="margin-top: 5px;"><span class="banner-par">PAR <span id="bannerPar">3</span></span></div>
                 </div>
-                <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; line-height:1.2; box-shadow: 4px 6px 12px rgba(0,0,0,0.4); border-radius: 6px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.6rem; transform: perspective(800px) rotateX(2deg) translateZ(5px);">📝 SYÖTÄ<br />TULOS</button>
+                <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; line-height:1.2; box-shadow: 4px 6px 15px rgba(0,0,0,0.5); border-radius: 6px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.6rem; transform: perspective(800px) rotateX(2deg) translateZ(5px);">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
-            <!-- VÄYLÄSÄÄNTÖ / TEHTÄVÄ (POST-IT) -->
             <div id="activeHoleContainer"></div>
             
-            <!-- SABOTAASI KORTIT -->
             <div id="activeCardsArea" style="display:none; margin-bottom: 35px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
                 <h2 style="color: var(--text-main); font-size: 0.85rem; margin-bottom: 15px; display:flex; align-items:center; gap:8px;">📌 PELATUT KORTIT</h2>
                 <div id="activeCardsContainer" class="cards-grid-2"></div>
             </div>
             
             <div class="player-only">
-                <!-- TULOSKORTTI -->
                 <div class="stapled-paper">
                     <div class="staple staple-1"></div>
                     <div class="staple staple-2"></div>
@@ -155,14 +150,12 @@
         <div style="margin-top: 20px; padding-top: 20px; display:flex; flex-direction:column; gap:12px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
             <button class="btn btn-secondary" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px; opacity:0.8;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
 
-            <!-- ROOLIN VALINTA -->
             <div class="role-switcher">
                 <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player');">PELAAJA</button>
                 <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">GM</button>
             </div>
         </div>
 
-        <!-- LOKERIKKO JA KANSIOT (BOTTOM NAV) -->
         <div class="player-only">
             <div class="corkboard-pocket-container">
                 <div class="binder-spine-btn" id="ownCardsButtonElement" onclick="if(window.openShop) window.openShop('sell')">
@@ -181,7 +174,6 @@
 
     </div>
 
-    <!-- Modaalit (klikkaus taustaan sulkee ne) -->
     <div id="shopModal" class="fullscreen-modal" style="padding:0; background:rgba(0,0,0,0.7);" onclick="if(event.target === this) { window.closeShopModal(); }">
         <div class="shop-binder-modal theme-shop">
             <div class="binder-swipe-handle"></div>
@@ -197,7 +189,7 @@
                     <div class="fullscreen-modal-header" style="margin-bottom:15px; border-bottom: 2px dashed rgba(255,255,255,0.2); padding-bottom:15px; position:relative; z-index:20;">
                         <h2 style="display:flex; align-items:center; gap:10px; color:#fff; font-size:1.2rem; justify-content:space-between; width:100%;">
                             <span id="shopModalHeaderTitle">🛒 KAUPPA</span>
-                            <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; box-shadow:0 2px 5px rgba(0,0,0,0.5);">0 P</span>
+                            <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px; box-shadow:0 2px 5px rgba(0,0,0,0.5);">0 P</span>
                         </h2>
                     </div>
                     
@@ -211,7 +203,6 @@
                     </div>
                     
                     <div id="shopSellArea" style="display:none; position:relative; z-index:20;">
-                        <!-- Dynaaminen varoituslaatikko -->
                         <div id="pendingPurchaseAlert" style="display:none; background:var(--danger); color:#fff; padding:16px; border-radius:12px; margin-bottom:20px; box-shadow:0 6px 15px rgba(244,63,94,0.3);"></div>
                         
                         <div id="shopSellCardsContainer" class="cards-grid-2"></div>
@@ -233,7 +224,6 @@
         <div id="gmGiveCardList" class="cards-grid-2"></div>
     </div>
 
-    <!-- NATIIVI VIUHKA-KARUSELLI (JÄTTIKOKO) -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container"></div>
         <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">👈 VAIHDA KORTTIA 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
@@ -241,7 +231,6 @@
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px; margin-top:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
-    <!-- FOTOREALISTINEN PAPERITULOSKORTTI -->
     <div id="scoreModal" class="winner-overlay" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="paper-score-modal">
             <div style="text-align: center; margin-bottom: 15px; position:relative; z-index:30;">
@@ -272,7 +261,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=138"></script>
-    <script type="module" src="script.js?v=138"></script>
+    <script src="tasks.js?v=139"></script>
+    <script type="module" src="script.js?v=139"></script>
 </body>
 </html>
