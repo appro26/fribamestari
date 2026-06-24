@@ -1,4 +1,3 @@
-
 //==============================================
 // SUOJATTU ALUSTUS: Varmistetaan että tiedot löytyy aina
 //==============================================
@@ -135,7 +134,7 @@ window.executeCardPlay = function(targetName) {
     const card = window.pendingCardPlay;
     const timestamp = Date.now();
     if(el('targetModal')) el('targetModal').style.display = 'none'; 
-    if(el('handModal')) el('handModal').style.display = 'none'; 
+    if(el('shopModal')) el('shopModal').style.display = 'none'; 
     
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
     const me = nextPlayers.find(p => p && p.name === myName);
@@ -356,7 +355,7 @@ window.updateCarouselButtons = function() {
     let mode = window.carouselCurrentMode;
     let [arg1, arg2, arg3] = window.carouselArgs;
 
-    if (mode === 'hand') {
+    if (mode === 'hand' || mode === 'sell') {
         btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
         if (cDef.tier === 'normal') {
             btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:#fff;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
@@ -375,12 +374,6 @@ window.updateCarouselButtons = function() {
         let btnClass = canAfford && !bought ? 'btn-warning' : 'btn-secondary';
         let dis = (!canAfford || bought) ? 'disabled' : '';
         btnHtml = `<button class="btn ${btnClass}" ${dis} style="font-size:1.1rem; padding:18px; color:#000; box-shadow:0 10px 25px rgba(245,158,11,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cId}', '${cDef.n}', ${price})">${btnText}</button>`;
-    } else if (mode === 'sell') {
-        if (cDef.tier === 'normal') {
-            btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(16, 185, 129, 0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
-        } else {
-            btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244, 63, 94, 0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
-        }
     } else if (mode === 'gm') {
         btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.giveCardToPlayer('${cId}')">ANNA TÄMÄ</button>`;
     }
@@ -490,6 +483,13 @@ window.cancelShopPurchase = function() {
     const me = (allPlayers || []).find(p => p && p.name === myName);
     window.renderShop(activeHole ? activeHole.shop : null, me ? me.score : 0, me ? me.boughtThisHole : false);
     window.switchShopTab('buy');
+};
+
+window.openShop = function(tab) {
+    if(el('shopModal')) el('shopModal').style.display = 'flex';
+    let modalEl = document.querySelector('#shopModal .shop-binder-modal');
+    if(modalEl) modalEl.classList.add('binder-modal-anim');
+    if(window.switchShopTab) window.switchShopTab(tab);
 };
 
 window.switchShopTab = function(tab) {
@@ -713,39 +713,11 @@ window.renderActiveHole = function() {
     }
 };
 
-window.renderPlayerHand = function(cards) {
-    const modalContainer = el('handModalCards');
-    if (!cards || cards.length === 0) { 
-        if(modalContainer) modalContainer.innerHTML = '<p style="color:#fff; font-size:1.2rem; text-align:center; padding:20px; font-weight:bold; width:100%; grid-column: 1 / -1;">Kätesi on tyhjä.</p>';
-        return; 
-    }
-    
-    let html = '';
-    cards.forEach((cId) => {
-        const cDef = (window.allCards || []).find(sc => sc && sc.id === cId);
-        if(!cDef) return; 
-        let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
-        if(cDef.tier === 'premium') typeClass = 'premium-card'; 
-        
-        let btnClass = cDef.tier === 'premium' ? 'btn-warning' : (cDef.type === 'buff' ? 'btn-success' : 'btn-danger');
-        let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
-        
-        html += `
-            <div class="shop-item-wrapper">
-                <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'hand')" style="cursor:pointer;">
-                    <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p>
-                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px; margin-top:auto;">🔄 3D TARKASTELU</div>
-                </div>
-                <button class="shop-item-btn ${btnClass}" onclick="window.openTargetModal('${cId}')">PELAA KORTTI</button>
-            </div>`;
-    });
-    if(modalContainer) modalContainer.innerHTML = html; 
-};
-
 window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     const modalContainer = el('shopModalCards');
     const sellContainer = el('shopSellCardsContainer');
     
+    // OSTA-VÄLILEHTI
     if(!shopArray || shopArray.length === 0) { 
         if(modalContainer) modalContainer.innerHTML = '<p style="color:var(--text-muted); font-size:1.2rem; text-align:center; padding:20px; font-weight:bold; width:100%; grid-column: 1 / -1;">Kauppa on suljettu.</p>';
     } else {
@@ -772,6 +744,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
         if(modalContainer) modalContainer.innerHTML = html; 
     }
 
+    // OMAT KORTIT -VÄLILEHTI (MYY/PELAA)
     let me = (allPlayers || []).find(p => p && p.name === myName);
     let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     
@@ -787,18 +760,21 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
             
             let isNormal = cDef.tier === 'normal';
-            let btnTxt = isNormal ? '♻️ MYY (+1 P)' : '🗑️ HÄVITÄ';
-            let btnClass = isNormal ? 'btn-success' : 'btn-danger';
+            let sellBtnIcon = isNormal ? '♻️' : '🗑️';
+            let sellBtnColor = isNormal ? 'var(--info)' : 'var(--danger)';
             
             let rot = Math.floor(Math.random() * 6) - 3; 
             
             sellHtml += `
             <div class="shop-item-wrapper messy-card" style="transform: rotate(${rot}deg);">
                 <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer;">
-                    <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3>
+                    <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p>
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
-                <button class="shop-item-btn ${btnClass}" onclick="window.forceDiscard('${cId}', ${isNormal})">${btnTxt}</button>
+                <div style="display:flex; gap:5px;">
+                    <button class="shop-item-btn" style="flex:1; background:var(--danger);" onclick="window.openTargetModal('${cId}')">PELAA</button>
+                    <button class="shop-item-btn" style="width:50px; background:${sellBtnColor}; font-size:1.2rem;" onclick="window.forceDiscard('${cId}', ${isNormal})">${sellBtnIcon}</button>
+                </div>
             </div>`;
         });
     }
@@ -843,19 +819,62 @@ window.renderAdminPlayerList = function() {
                     </div>
                 </div>
                 ${cardsHtml}
-                <div class="gm-score-adjust">
-                    <span style="font-size:0.85rem; color:var(--text-muted); width:50px; font-weight:bold;">Raha</span>
-                    <input type="number" id="gmScoreAdjust_${i}" value="1">
-                    <button class="btn btn-primary" onclick="if(window.adjustScore) { window.adjustScore(${i}, parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0); }">Lisää</button>
-                    <button class="btn btn-danger" onclick="if(window.adjustScore) { window.adjustScore(${i}, -(parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0)); }">Vähennä</button>
+                <div class="gm-score-adjust" style="display:flex; gap:10px; margin-top:10px;">
+                    <span style="font-size:0.85rem; color:var(--text-muted); width:50px; font-weight:bold; align-self:center;">Raha</span>
+                    <input type="number" id="gmScoreAdjust_${i}" value="1" style="width:60px; margin:0; padding:10px;">
+                    <button class="btn btn-primary" style="padding:10px;" onclick="if(window.adjustScore) { window.adjustScore(${i}, parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0); }">Lisää</button>
+                    <button class="btn btn-danger" style="padding:10px;" onclick="if(window.adjustScore) { window.adjustScore(${i}, -(parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0)); }">Vähennä</button>
                 </div>
-                <div class="gm-score-adjust">
-                    <span style="font-size:0.85rem; color:var(--text-muted); width:50px; font-weight:bold;">Tulos</span>
-                    <button class="btn btn-secondary" onclick="if(window.adjustDgScore) { window.adjustDgScore(${i}, 1); }">+1 Heitto</button>
-                    <button class="btn btn-secondary" onclick="if(window.adjustDgScore) { window.adjustDgScore(${i}, -1); }">-1 Heitto</button>
+                <div class="gm-score-adjust" style="display:flex; gap:10px; margin-top:5px;">
+                    <span style="font-size:0.85rem; color:var(--text-muted); width:50px; font-weight:bold; align-self:center;">Tulos</span>
+                    <button class="btn btn-secondary" style="padding:10px;" onclick="if(window.adjustDgScore) { window.adjustDgScore(${i}, 1); }">+1 Heitto</button>
+                    <button class="btn btn-secondary" style="padding:10px;" onclick="if(window.adjustDgScore) { window.adjustDgScore(${i}, -1); }">-1 Heitto</button>
                 </div>
             </div>`;
     });
+};
+
+// GM-TOIMINNOT
+window.adminAddPlayer = function() {
+    const input = el('adminNewPlayerName');
+    if(!input) return;
+    const name = input.value.trim();
+    if(!name) return alert("Syötä pelaajan nimi!");
+    if((allPlayers || []).find(p => p && p.name === name)) return alert("Pelaaja on jo pelissä!");
+    
+    let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
+    nextPlayers.push({ name: name, score: 3, dgScore: 0, cards: [], boughtThisHole: false });
+    update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) });
+    input.value = '';
+    window.logEvent(`${myName} (GM) lisäsi pelaajan: ${name}`);
+};
+
+window.removePlayer = function(index) {
+    if(confirm("Haluatko varmasti poistaa tämän pelaajan?")) {
+        let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
+        let removedName = nextPlayers[index] ? nextPlayers[index].name : "Tuntematon";
+        nextPlayers.splice(index, 1);
+        update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) });
+        window.logEvent(`${myName} (GM) poisti pelaajan: ${removedName}`);
+    }
+};
+
+window.adjustScore = function(index, delta) {
+    let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
+    if(nextPlayers[index]) {
+        nextPlayers[index].score = (parseInt(nextPlayers[index].score) || 0) + delta;
+        update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) });
+        window.logEvent(`${myName} (GM) sääti pelaajan ${nextPlayers[index].name} rahamäärää.`);
+    }
+};
+
+window.adjustDgScore = function(index, delta) {
+    let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
+    if(nextPlayers[index]) {
+        nextPlayers[index].dgScore = (parseInt(nextPlayers[index].dgScore) || 0) + delta;
+        update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) });
+        window.logEvent(`${myName} (GM) sääti pelaajan ${nextPlayers[index].name} tulosta.`);
+    }
 };
 
 window.openGmGiveCard = function(playerIndex) {
@@ -1267,7 +1286,7 @@ window.renderScoreLog = function(logData) {
 };
 
 // =============================================
-// FIREBASE KUUNTELIJA LOPUSSA (KAIKKI FUNKTIOT ON NYT VARMASTI MÄÄRITETTY)
+// FIREBASE KUUNTELIJA LOPUSSA
 // =============================================
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
@@ -1277,7 +1296,6 @@ onValue(ref(db, 'gameState'), (snap) => {
             myName = null;
             localStorage.removeItem('friba_name');
             window.updateIdentityUI();
-            if(el('handModal')) el('handModal').style.display = 'none'; 
             if(el('shopModal')) el('shopModal').style.display = 'none'; 
         }
         currentCourse = null;
@@ -1304,7 +1322,6 @@ onValue(ref(db, 'gameState'), (snap) => {
         if (!me) {
             myName = null;
             localStorage.removeItem('friba_name');
-            if(el('handModal')) el('handModal').style.display = 'none'; 
             if(el('shopModal')) el('shopModal').style.display = 'none'; 
         }
     }
@@ -1354,7 +1371,6 @@ onValue(ref(db, 'gameState'), (snap) => {
             }
 
             let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : [];
-            window.renderPlayerHand(myCards.filter(Boolean));
             window.renderShop(activeHole ? activeHole.shop : null, me.score || 0, me.boughtThisHole);
             
             if (window.gameSettings.handLimitEnabled && myCards.filter(Boolean).length > window.gameSettings.handLimit) {
@@ -1388,8 +1404,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderScoreLog(data.scoreLog);
 });
 
-// INITIALISOIDAAN RULLAUKSET JA ASETUKSET SIVUN LATAUDUTTUA
-window.setupSwipeToClose();
+// ASETUKSET SIVUN LATAUDUTTUA
 window.populateRuleSelect = function() {
     const sel = el('gmRuleSelect');
     const rules = window.holeRules || [];
