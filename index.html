@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="friba.png" />
     
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=136" />
+    <link rel="stylesheet" href="style.css?v=137" />
     <meta id="themeColorMeta" name="theme-color" content="#cbd5e1" />
     
     <script>
@@ -70,22 +70,22 @@
         <div id="mainGameArea" style="display:none; margin-top:15px;">
             
             <!-- VÄYLÄN TIEDOT -->
-            <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 25px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
+            <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 35px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
                 <div id="courseInfoBanner" class="course-banner-paper" style="flex: 1; margin: 0;">
                     <div class="tape tape-top-center"></div>
                     <div class="banner-subtitle" id="bannerCourseName">Rata</div>
                     <div class="banner-title">VÄYLÄ <span id="bannerHoleNum">1</span></div>
                     <div style="margin-top: 5px;"><span class="banner-par">PAR <span id="bannerPar">3</span></span></div>
                 </div>
-                <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; line-height:1.2; box-shadow: 4px 6px 12px rgba(0,0,0,0.4); border-radius: 6px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.6rem; transform: perspective(800px) rotateX(2deg);">📝 SYÖTÄ<br />TULOS</button>
+                <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; line-height:1.2; box-shadow: 4px 6px 12px rgba(0,0,0,0.4); border-radius: 6px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.6rem; transform: perspective(800px) rotateX(2deg) translateZ(5px);">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
             <!-- VÄYLÄSÄÄNTÖ / TEHTÄVÄ (POST-IT) -->
             <div id="activeHoleContainer"></div>
             
             <!-- SABOTAASI KORTIT -->
-            <div id="activeCardsArea" style="display:none; margin-bottom: 25px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
-                <h2 style="color: var(--text-main); font-size: 0.8rem; margin-bottom: 15px; display:flex; align-items:center; gap:8px;">📌 PELATUT KORTIT</h2>
+            <div id="activeCardsArea" style="display:none; margin-bottom: 35px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
+                <h2 style="color: var(--text-main); font-size: 0.85rem; margin-bottom: 15px; display:flex; align-items:center; gap:8px;">📌 PELATUT KORTIT</h2>
                 <div id="activeCardsContainer" class="cards-grid-2"></div>
             </div>
             
@@ -165,7 +165,7 @@
         <!-- LOKERIKKO JA KANSIOT (BOTTOM NAV) -->
         <div class="player-only">
             <div class="corkboard-pocket-container">
-                <div class="binder-spine-btn" onclick="if(window.openShop) window.openShop('sell')">
+                <div class="binder-spine-btn" id="ownCardsButtonElement" onclick="if(window.openShop) window.openShop('sell')">
                     <span class="binder-spine-text">OMAT KORTIT</span>
                     <div class="binder-badge" id="handCountBadge">0</div>
                 </div>
@@ -185,37 +185,42 @@
     <div id="shopModal" class="fullscreen-modal" style="padding:0; background:rgba(0,0,0,0.7);" onclick="if(event.target === this) { window.closeShopModal(); }">
         <div class="shop-binder-modal theme-shop">
             <div class="binder-swipe-handle"></div>
-            <div class="binder-spine">
-                <div class="binder-ring"></div>
-                <div class="binder-ring"></div>
-                <div class="binder-ring"></div>
-            </div>
             
-            <div class="fullscreen-modal-header" style="margin-bottom:15px; border-bottom: 2px dashed rgba(255,255,255,0.2); padding-bottom:15px; position:relative; z-index:20;">
-                <h2 style="display:flex; align-items:center; gap:10px; color:#fff; font-size:1.2rem;">🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px; box-shadow:0 2px 5px rgba(0,0,0,0.5);">0 P</span></h2>
-                <button class="close-modal-btn" aria-label="Sulje" onclick="window.closeShopModal();">&times;</button>
-            </div>
-            
-            <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.05); padding:4px; border:1px solid rgba(255,255,255,0.1); position:relative; z-index:20;">
-                <!-- event.stopPropagation() ESTÄÄ kansion sulkeutumisen nappeja painaessa -->
-                <button id="shopTabBuyBtn" class="role-btn active" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('buy')" style="color:#fff;">OSTA KORTTEJA</button>
-                <button id="shopTabSellBtn" class="role-btn" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('sell')" style="color:#fff;">OMAT KORTIT</button>
-            </div>
-            
-            <div id="shopBuyArea" style="position:relative; z-index:20;">
-                <div id="shopModalCards" class="cards-grid-2"></div>
-            </div>
-            
-            <div id="shopSellArea" style="display:none; position:relative; z-index:20;">
-                <div id="pendingPurchaseAlert" style="display:none; background:var(--danger); color:#fff; padding:16px; border-radius:12px; margin-bottom:20px; box-shadow:0 6px 15px rgba(244,63,94,0.3);">
-                    <div style="font-weight:900; font-size:1.2rem; margin-bottom:8px;">⚠️ KÄSI TÄYNNÄ!</div>
-                    <div style="font-size:1.05rem; font-weight:700; margin-bottom:15px; line-height:1.4;">Haluat ostaa kortin <strong id="pendingCardName"></strong>. Myy tai hävitä yksi kortti alta tehdäksesi tilaa, jolloin osto suoritetaan automaattisesti!</div>
-                    <button class="btn btn-secondary" style="padding:12px; font-size:0.95rem; color:#000;" onclick="event.stopPropagation(); if(window.cancelShopPurchase) window.cancelShopPurchase()">PERUUTA OSTO</button>
+            <div style="display: flex; flex: 1; overflow: hidden; position: relative;">
+                <div class="binder-spine">
+                    <div class="binder-ring" style="margin-top: 30px;"></div>
+                    <div class="binder-ring"></div>
+                    <div class="binder-ring" style="margin-bottom: 30px;"></div>
                 </div>
-                <div id="shopSellCardsContainer" class="cards-grid-2"></div>
-            </div>
+                
+                <div class="binder-content">
+                    <div class="fullscreen-modal-header" style="margin-bottom:15px; border-bottom: 2px dashed rgba(255,255,255,0.2); padding-bottom:15px; position:relative; z-index:20;">
+                        <h2 style="display:flex; align-items:center; gap:10px; color:#fff; font-size:1.2rem;">🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px; box-shadow:0 2px 5px rgba(0,0,0,0.5);">0 P</span></h2>
+                        <button class="close-modal-btn" aria-label="Sulje" onclick="window.closeShopModal();">&times;</button>
+                    </div>
+                    
+                    <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.05); padding:4px; border:1px solid rgba(255,255,255,0.1); position:relative; z-index:20;">
+                        <!-- event.stopPropagation() ESTÄÄ kansion sulkeutumisen -->
+                        <button id="shopTabBuyBtn" class="role-btn active" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('buy')" style="color:#fff;">OSTA KORTTEJA</button>
+                        <button id="shopTabSellBtn" class="role-btn" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('sell')" style="color:#fff;">OMAT KORTIT</button>
+                    </div>
+                    
+                    <div id="shopBuyArea" style="position:relative; z-index:20;">
+                        <div id="shopModalCards" class="cards-grid-2"></div>
+                    </div>
+                    
+                    <div id="shopSellArea" style="display:none; position:relative; z-index:20;">
+                        <div id="pendingPurchaseAlert" style="display:none; background:var(--danger); color:#fff; padding:16px; border-radius:12px; margin-bottom:20px; box-shadow:0 6px 15px rgba(244,63,94,0.3);">
+                            <div style="font-weight:900; font-size:1.2rem; margin-bottom:8px;">⚠️ KÄSI TÄYNNÄ!</div>
+                            <div style="font-size:1.05rem; font-weight:700; margin-bottom:15px; line-height:1.4;">Haluat ostaa kortin <strong id="pendingCardName"></strong>. Myy tai hävitä yksi kortti alta tehdäksesi tilaa, jolloin osto suoritetaan automaattisesti!</div>
+                            <button class="btn btn-secondary" style="padding:12px; font-size:0.95rem; color:#000;" onclick="event.stopPropagation(); if(window.cancelShopPurchase) window.cancelShopPurchase()">PERUUTA OSTO</button>
+                        </div>
+                        <div id="shopSellCardsContainer" class="cards-grid-2"></div>
+                    </div>
 
-            <button class="btn btn-secondary" style="margin-top: 35px; background: rgba(255,255,255,0.1); color: #fff; border: 1px dashed rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onclick="event.stopPropagation(); window.closeShopModal()">SULJE KANSIO</button>
+                    <button class="btn btn-secondary" style="margin-top: 35px; margin-bottom: 20px; background: rgba(255,255,255,0.1); color: #fff; border: 1px dashed rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onclick="event.stopPropagation(); window.closeShopModal()">SULJE KANSIO</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -247,9 +252,9 @@
             
             <div id="scoreModalRuleBox" style="display: none; z-index: 25;"></div>
 
-            <div id="scoreInputsContainer" style="margin-bottom: 20px;"></div>
+            <div id="scoreInputsContainer" style="margin-bottom: 20px; position:relative; z-index:30;"></div>
             
-            <div style="margin-bottom: 25px; border-top: 2px dashed var(--ink-blue); padding-top:15px; position: relative; z-index: 5; background: transparent;">
+            <div style="margin-bottom: 25px; border-top: 2px dashed var(--ink-blue); padding-top:15px; position: relative; z-index: 30; background: transparent;">
                 <label style="font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; display: block; font-family:'Kalam', cursive; color:var(--ink-blue);">Kuka suoritti tehtävän?</label>
                 <div id="taskWinnerContainer" class="task-checkbox-grid"></div>
             </div>
@@ -268,7 +273,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=136"></script>
-    <script type="module" src="script.js?v=136"></script>
+    <script src="tasks.js?v=137"></script>
+    <script type="module" src="script.js?v=137"></script>
 </body>
 </html>
