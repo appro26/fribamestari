@@ -22,7 +22,7 @@ let currentHoleIndex = 1;
 let lastPlayedCardTimestamp = Date.now();
 window.gameHistory = []; 
 let isZoomedOut = false;
-window.viewHoleIndex = null; // Käytetään, kun klikataan väylää "koko taulu" -näkymässä
+window.viewHoleIndex = null; 
 
 window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
 window.pendingShopPurchase = null;
@@ -30,16 +30,34 @@ window.pendingShopPurchase = null;
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
 const getRandomColor = () => postItColors[Math.floor(Math.random() * postItColors.length)];
 
-// 7 Eri kynätyyliä
 const penColors = [
     { c1: '#0284c7', c2: '#38bdf8' }, { c1: '#dc2626', c2: '#f87171' }, { c1: '#16a34a', c2: '#4ade80' },
     { c1: '#d97706', c2: '#fbbf24' }, { c1: '#9333ea', c2: '#c084fc' }, { c1: '#db2777', c2: '#f472b6' }, { c1: '#475569', c2: '#94a3b8' }
 ];
 const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length)];
 
-//==============================================
-// PWA ASENNUS & OHJEET
-//==============================================
+// Kiroileva Siili -Doodles
+const doodleData = [
+    { svg: "M40,20 Q50,10 60,20 Q70,40 50,60 Q30,40 40,20 Z M45,30 L45,35 M55,30 L55,35 M50,45 L50,50", text: "Taas puuhun! Perkele! -Siili" },
+    { svg: "M30,30 Q50,10 70,30 Q80,50 50,70 Q20,50 30,30 M40,40 L45,40 M60,40 L55,40", text: "Varo käpyjäsi, tunari! -Orava" },
+    { svg: "M20,20 L50,80 L80,20 Q50,10 20,20 M40,40 A5,5 0 1,1 40,41 M60,40 A5,5 0 1,1 60,41", text: "Pariin? Älä naurata. -Kettu" },
+    { svg: "M10,50 A40,40 0 1,1 90,50 A40,40 0 1,1 10,50 M30,40 A5,5 0 1,1 30,41 M70,40 A5,5 0 1,1 70,41 M40,60 Q50,70 60,60", text: "Herätit mut tän takia? -Karhu" },
+    { svg: "M50,40 A30,30 0 1,1 50,90 A30,30 0 1,1 50,40 M30,40 L20,10 L40,30 M70,40 L80,10 L60,30", text: "Kiekko on nyt mun. -Pupu" },
+    { svg: "M20,50 A30,30 0 1,1 80,50 A30,30 0 1,1 20,50 M35,45 A10,10 0 1,1 35,46 M65,45 A10,10 0 1,1 65,46 M50,60 L45,70 L55,70 Z", text: "Huu-huu, huono heitto! -Pöllö" },
+    { svg: "M10,50 Q50,10 90,50 Q50,90 10,50 M30,40 A5,5 0 1,1 30,41 M70,40 A5,5 0 1,1 70,41", text: "Kaivaisit säkin kuoppia. -Mäyrä" },
+    { svg: "M40,50 Q50,30 60,50 Q70,80 50,90 Q30,80 40,50 M20,20 L40,50 M80,20 L60,50", text: "Sarvetki lentää pidemmälle. -Hirvi" },
+    { svg: "M30,30 Q50,20 70,30 L80,60 L20,60 Z M40,60 L40,70 M60,60 L60,70", text: "Jyrsin ton puunkaatajan. -Majava" },
+    { svg: "M20,70 Q50,40 80,70 Q50,100 20,70 M30,50 A5,5 0 1,1 30,51 M70,50 A5,5 0 1,1 70,51", text: "Kurnau, suossa taas. -Sammakko" },
+    { svg: "M10,80 Q30,40 50,80 T90,80 M20,70 A2,2 0 1,1 20,71 M30,75 L40,75", text: "Sssssurkea esitys. -Käärme" },
+    { svg: "M40,20 L70,50 L40,80 Z M30,50 L40,50 M60,40 A2,2 0 1,1 60,41", text: "Kop kop, oliko taas puu? -Tikka" },
+    { svg: "M30,30 L50,70 L70,30 M30,30 L20,10 L40,30 M70,30 L80,10 L60,30 M40,40 A2,2 0 1,1 40,41 M60,40 A2,2 0 1,1 60,41", text: "Ei ota tuulta alle. -Ilves" },
+    { svg: "M20,50 Q50,10 80,50 Q50,90 20,50 M40,40 L50,50 L60,40 M10,10 L30,40 M90,10 L70,40", text: "Komea uho, paska heitto. -Metso" },
+    { svg: "M40,50 A20,20 0 1,1 60,50 A20,20 0 1,1 40,50 M30,30 A10,10 0 1,1 40,40 M70,30 A10,10 0 1,1 60,40", text: "Varo mihin roiskit! -Hiiri" },
+    { svg: "M10,50 Q50,30 90,50 Q50,70 10,50 M30,45 A2,2 0 1,1 30,46 M70,45 A2,2 0 1,1 70,46", text: "Osumatarkkuus nolla. -Kärppä" },
+    { svg: "M30,20 L50,50 L70,20 L80,50 L50,90 L20,50 Z M40,40 A2,2 0 1,1 40,41 M60,40 A2,2 0 1,1 60,41", text: "Tuskallista katsottavaa. -Susi" },
+    { svg: "M20,30 A40,40 0 1,1 80,30 A40,40 0 1,1 20,30 M40,40 L45,45 M60,40 L55,45", text: "Pysyisithän poissa. -Ahma" }
+];
+
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault(); deferredPrompt = e;
@@ -49,7 +67,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
         el('installPromptModal').style.display = 'flex';
     }
 });
-
 window.triggerNativeInstall = async function() {
     if (deferredPrompt) {
         deferredPrompt.prompt();
@@ -58,7 +75,6 @@ window.triggerNativeInstall = async function() {
         deferredPrompt = null;
     }
 };
-
 window.checkInstallPrompt = function() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
     if (isStandalone || localStorage.getItem('friba_browser_mode')) return;
@@ -67,139 +83,35 @@ window.checkInstallPrompt = function() {
         let instText = os === "iOS" ? "Paina selaimen alalaidasta <b>Jaa-kuvaketta</b> ja valitse <b>'Lisää kotivalikkoon'</b>." : 
                        (os === "Android" ? "Paina selaimen <b>valikkoa</b> ja valitse <b>'Asenna sovellus'</b>." : "Asenna peli selaimesi valikosta.");
         el('installInstructions').innerHTML = instText;
-        el('nativeInstallBtn').style.display = 'none'; 
-        el('installPromptModal').style.display = 'flex';
+        el('nativeInstallBtn').style.display = 'none'; el('installPromptModal').style.display = 'flex';
     }
 };
+window.dismissInstallPrompt = function() { localStorage.setItem('friba_browser_mode', 'true'); if(el('installPromptModal')) el('installPromptModal').style.display = 'none'; };
 
-window.dismissInstallPrompt = function() {
-    localStorage.setItem('friba_browser_mode', 'true');
-    if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
-};
+window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
 //==============================================
-// 50 AMBIENT ANIMAATIOIDEN GENERAATTORI
-//==============================================
-window.initAmbiance = function() {
-    const container = el('ambiance-container');
-    if(!container) return;
-
-    const events = [];
-    const sColors = ['rgba(62,39,35,0.7)', 'rgba(0,0,0,0.5)', 'rgba(183,28,28,0.6)', 'rgba(13,71,161,0.4)', 'rgba(27,94,32,0.5)', 'rgba(230,81,0,0.6)', 'rgba(74,20,140,0.5)', 'rgba(62,39,35,0.8)', 'rgba(38,50,56,0.6)', 'rgba(255,255,255,0.4)'];
-    for(let i=0; i<10; i++) events.push({ type: 'stain', color: sColors[i], size: 30 + Math.random()*50, isLonkero: i===0 });
-    
-    const bugs = ['🐜', '🕷️', '🐞', '🐛', '🪲', '🐜', '🕷️', '🐞', '🐛', '🪲'];
-    for(let i=0; i<10; i++) events.push({ type: 'bug', emoji: bugs[i] });
-
-    const paths = [
-        'M10,10 Q30,40 50,10 Q70,40 90,10', 'M20,20 L80,80 M20,80 L80,20', 'M50,10 L60,40 L90,50 L60,60 L50,90 L40,60 L10,50 L40,40 Z',
-        'M10,50 Q50,10 90,50 Q50,90 10,50', 'M50,10 A40,40 0 1,1 49.9,10', 'M10,90 L50,10 L90,90 Z', 
-        'M30,30 Q50,10 70,30 Q90,70 50,90 Q10,70 30,30', 'M10,50 L80,50 L60,30 M80,50 L60,70', 'M20,80 Q50,20 80,80', 'M20,20 Q50,50 80,20 Q50,80 20,20'
-    ];
-    for(let i=0; i<10; i++) events.push({ type: 'doodle', path: paths[i] });
-
-    for(let i=0; i<10; i++) events.push({ type: 'shadow', w: 100 + Math.random()*200, h: 100 + Math.random()*200 });
-
-    const marks = ['📌', '📍', '🩹', '🔥', '🕳️', '📌', '📍', '🩹', '🔥', '🕳️'];
-    for(let i=0; i<10; i++) events.push({ type: 'mark', content: marks[i] });
-
-    function triggerRandom() {
-        if(isZoomedOut || el('shopModal').style.display === 'flex' || el('scoreModal').style.display === 'flex' || el('settingsModal').style.display === 'flex' || el('receiptModal').style.display === 'flex') {
-            setTimeout(triggerRandom, 5000); return; 
-        }
-
-        const ev = events[Math.floor(Math.random() * events.length)];
-        const elDiv = document.createElement('div');
-        let x = 10 + Math.random() * 80; let y = 20 + Math.random() * 60;
-        
-        if (ev.type === 'stain') {
-            elDiv.className = 'ambiance-stain';
-            elDiv.style.left = x + 'vw'; elDiv.style.top = y + 'vh';
-            elDiv.style.width = ev.size + 'px'; elDiv.style.height = ev.size + 'px';
-            elDiv.style.background = ev.color; elDiv.style.animationDuration = (15 + Math.random()*15) + 's';
-            if(ev.isLonkero) {
-                let wrapper = document.createElement('div'); wrapper.className = 'ambiance-can-wrapper';
-                wrapper.style.left = (x + 2) + 'vw'; wrapper.style.top = (y - 10) + 'vh';
-                let can = document.createElement('div'); can.className = 'css-lonkero';
-                wrapper.appendChild(can); container.appendChild(wrapper);
-                setTimeout(() => { if(wrapper.parentNode) wrapper.remove(); }, 4000);
-            }
-            container.appendChild(elDiv); setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 30000);
-        } 
-        else if (ev.type === 'bug') {
-            let wrapper = document.createElement('div');
-            wrapper.className = 'ambiance-bug-wrapper';
-            wrapper.style.left = x + 'vw'; wrapper.style.top = y + 'vh';
-            
-            elDiv.className = 'ambiance-bug-inner'; 
-            elDiv.innerText = ev.emoji;
-            wrapper.appendChild(elDiv);
-            
-            let rot = Math.random() * 360; let endX = (Math.random() * 300 - 150); let endY = (Math.random() * 300 - 150);
-            wrapper.style.transform = `rotate(${rot}deg)`;
-            container.appendChild(wrapper);
-            
-            wrapper.animate([
-                { transform: `translate(0,0) rotate(${rot}deg)` },
-                { transform: `translate(${endX}px, ${endY}px) rotate(${rot + (Math.random()*40-20)}deg)` }
-            ], { duration: 8000 + Math.random()*5000, easing: 'ease-in-out', fill: 'forwards' });
-            setTimeout(() => { if(wrapper.parentNode) wrapper.remove(); }, 14000);
-        }
-        else if (ev.type === 'doodle') {
-            elDiv.className = 'ambiance-svg'; elDiv.style.left = x + 'vw'; elDiv.style.top = y + 'vh';
-            elDiv.innerHTML = `<svg width="100" height="100" viewBox="0 0 100 100"><path d="${ev.path}" fill="none" stroke="rgba(15,27,97,0.6)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-            container.appendChild(elDiv); setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 16000);
-        }
-        else if (ev.type === 'shadow') {
-            elDiv.className = 'ambiance-shadow'; elDiv.style.width = ev.w + 'px'; elDiv.style.height = ev.h + 'px';
-            elDiv.style.top = y + 'vh'; elDiv.style.left = '-20vw';
-            container.appendChild(elDiv);
-            elDiv.animate([{ transform: `translateX(0)` }, { transform: `translateX(140vw)` }], { duration: 4000 + Math.random()*4000, easing: 'linear', fill: 'forwards' });
-            setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 9000);
-        }
-        else if (ev.type === 'mark') {
-            elDiv.className = 'ambiance-mark'; elDiv.innerText = ev.content; elDiv.style.left = x + 'vw'; elDiv.style.top = y + 'vh';
-            elDiv.style.fontSize = (0.8 + Math.random()*0.8) + 'rem'; elDiv.style.transform = `rotate(${Math.random()*360}deg)`;
-            container.appendChild(elDiv); setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 26000);
-        }
-
-        setTimeout(triggerRandom, 10000 + Math.random() * 20000); 
-    }
-    setTimeout(triggerRandom, 8000); 
-};
-
-window.addEventListener('load', () => { 
-    setTimeout(window.checkInstallPrompt, 1500); 
-    window.initAmbiance();
-});
-
-//==============================================
-// KAMERA & ILMOITUSTAULU (GRID)
+// KAMERA, TAULU & DOODLES
 //==============================================
 window.toggleZoom = function() {
-    if (isZoomedOut) {
-        isZoomedOut = false; window.viewHoleIndex = null;
-    } else if (window.viewHoleIndex !== null && window.viewHoleIndex !== currentHoleIndex) {
-        window.viewHoleIndex = null;
-    } else {
-        isZoomedOut = true;
-    }
+    if (isZoomedOut) { isZoomedOut = false; window.viewHoleIndex = null; } 
+    else if (window.viewHoleIndex !== null && window.viewHoleIndex !== currentHoleIndex) { window.viewHoleIndex = null; } 
+    else { isZoomedOut = true; }
     
     let btn = el('boardBtnText');
     if(btn) {
-        if (isZoomedOut) btn.innerText = 'PALAA';
+        if (isZoomedOut) btn.innerText = '🔙 PALAA';
         else if (window.viewHoleIndex !== null && window.viewHoleIndex !== currentHoleIndex) btn.innerText = 'NYKYINEN';
-        else btn.innerText = 'TAULU';
+        else btn.innerText = '🔍 KOKO TAULU';
     }
     window.updateCamera();
 };
 
 window.zoomToHole = function(hIndex) {
     if(isZoomedOut) {
-        isZoomedOut = false;
-        window.viewHoleIndex = hIndex;
+        isZoomedOut = false; window.viewHoleIndex = hIndex;
         let btn = el('boardBtnText');
-        if(btn) btn.innerText = (hIndex === currentHoleIndex) ? 'TAULU' : 'NYKYINEN';
+        if(btn) btn.innerText = (hIndex === currentHoleIndex) ? '🔍 KOKO TAULU' : 'NYKYINEN';
         window.updateCamera();
     }
 };
@@ -215,12 +127,12 @@ window.updateCamera = function() {
         let activeHeight = 120 + maxRow * 950 + (maxRow - 1) * 30;
         
         let scaleX = window.innerWidth / activeWidth;
-        let scaleY = window.innerHeight / activeHeight;
+        let scaleY = (window.innerHeight - 110) / activeHeight; // Jätetään tilaa alavalikolle
         let scale = Math.min(scaleX, scaleY) * 0.95; 
         if(scale > 1) scale = 1;
         
         let offsetX = (window.innerWidth - activeWidth * scale) / 2;
-        let offsetY = (window.innerHeight - activeHeight * scale) / 2;
+        let offsetY = ((window.innerHeight - 110) - activeHeight * scale) / 2;
         
         board.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     } else {
@@ -234,6 +146,41 @@ window.updateCamera = function() {
         let offsetY = 50 - cellY; 
         
         board.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(1)`;
+    }
+};
+
+window.renderDoodles = function() {
+    const container = el('doodles-container');
+    if(!container) return;
+    container.innerHTML = '';
+    
+    let holesPlayed = window.gameHistory.length;
+    for(let i=0; i<holesPlayed; i++) {
+        let d = doodleData[i % doodleData.length];
+        
+        // Sijoitetaan doodle kyseisen väylän (solun) lähelle
+        let col = i % 9; let row = Math.floor(i / 9);
+        let cellX = 60 + col * 410; let cellY = 60 + row * 980;
+        
+        // Random offset solun sisällä (esim. yläpuolella tai alapuolella)
+        let offsetX = cellX + (Math.random() * 300);
+        let offsetY = cellY + 800 + (Math.random() * 150); // Alaosassa
+        let rot = -15 + Math.random() * 30;
+        
+        // Animoidaan vain juuri pelatun väylän doodle
+        let isNew = (i === holesPlayed - 1);
+        let drawnClass = isNew ? 'drawn' : '';
+        if(!isNew) { // Jos vanha, se on jo valmiiksi näkyvillä
+            drawnClass = '';
+        }
+        
+        let opacityStyle = isNew ? '' : 'opacity: 0.6; transform: rotate('+rot+'deg) scale(1);';
+        
+        container.innerHTML += `
+        <div class="doodle-drawing ${drawnClass}" style="left:${offsetX}px; top:${offsetY}px; --rot:${rot}deg; ${opacityStyle}">
+            <svg class="doodle-svg doodle-path" viewBox="0 0 100 100"><path d="${d.svg}"/></svg>
+            <div class="doodle-bubble">${d.text}</div>
+        </div>`;
     }
 };
 
@@ -343,9 +290,12 @@ window.renderBoard = function() {
     const board = el('corkboard-surface');
     if (!board) return;
     
-    if (!currentCourse) { board.innerHTML = ''; return; }
+    if (!currentCourse) { 
+        Array.from(board.children).forEach(c => { if(c.id !== 'doodles-container') c.remove(); });
+        return; 
+    }
     
-    let html = '';
+    let html = `<div id="doodles-container"></div>`; 
     window.gameHistory.forEach((h, index) => {
         html += window.getHoleCellHTML(h, index + 1, false);
     });
@@ -358,6 +308,7 @@ window.renderBoard = function() {
     }
     
     board.innerHTML = html;
+    window.renderDoodles();
     window.updateCamera();
 };
 
@@ -374,10 +325,10 @@ window.renderReceipt = function() {
         
         for(let i=startIdx; i<window.gameHistory.length; i++) {
             let h = window.gameHistory[i];
-            html += `<div class="r-hole-title">Väylä ${i+1}</div>`;
-            if(h.holeResults) {
+            if(!isMini) html += `<div class="r-hole-title">Väylä ${i+1}</div>`;
+            if(h.holeResults && !isMini) {
                 for(let pName in h.holeResults) {
-                    html += `<div class="r-row"><span>${pName.substring(0, isMini?6:12)}</span><span>${h.holeResults[pName]}</span></div>`;
+                    html += `<div class="r-row"><span>${pName.substring(0, 12)}</span><span>${h.holeResults[pName]}</span></div>`;
                 }
             }
         }
@@ -589,7 +540,6 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             html += `
                 <div class="shop-item-wrapper">
                     <div class="physical-card premium-card" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
-                        <div class="foil-fx"></div>
                         <span class="card-price-tag">${item.price} P</span>
                         <div class="card-type-tag">💎 KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p>
                         <div style="text-align:center; font-weight:900; font-size:0.75rem; color:#94a3b8; padding-top:10px; margin-top:auto;">🔄 3D TARKASTELU</div>
@@ -611,8 +561,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             const cDef = (window.allCards || []).find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
-            let foilDiv = '';
-            if(cDef.tier === 'premium') { typeClass = 'premium-card'; foilDiv = `<div class="foil-fx"></div>`; }
+            if(cDef.tier === 'premium') { typeClass = 'premium-card'; }
             let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
             let isNormal = cDef.tier === 'normal';
             let sellBtnIcon = isNormal ? '♻️' : '🗑️';
@@ -621,7 +570,6 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             sellHtml += `
             <div class="shop-item-wrapper messy-card" style="transform: rotate(${rot}deg);">
                 <div class="physical-card worn-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer;">
-                    ${foilDiv}
                     <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p>
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
@@ -688,7 +636,7 @@ window.renderCarousel = function() {
         
         html += `
             <div class="carousel-card-wrapper" id="carousel-wrapper-${i}">
-                <div class="card-3d-inner" id="card3d-inner-${i}">
+                <div class="card-3d-inner" id="card3d-inner-${i}" data-rx="0" data-ry="0">
                     <div class="card-face card-front ${typeClass}">
                         <div style="text-align:left; display:flex; flex-direction:column; height:100%; position:relative; z-index:20;">
                             <div class="card-type-tag" style="font-size:1.3rem; margin-bottom:12px;">${tagTxt}</div>
@@ -744,23 +692,27 @@ window.initNativeCarousel = function() {
     let startX = 0; let startY = 0; let isSpinning = false;
     container.addEventListener('touchstart', e => {
         if(e.touches.length > 1) return;
-        startX = e.touches[0].clientX; startY = e.touches[0].clientY; isSpinning = false;
-        const activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
-        if(activeInner) activeInner.style.transition = 'none';
-    }, {passive: true});
+        let touchCard = e.target.closest('.card-3d-inner');
+        if (touchCard && touchCard.id === `card3d-inner-${window.carouselCurrentIndex}`) {
+            startX = e.touches[0].clientX; startY = e.touches[0].clientY; 
+            isSpinning = true;
+            touchCard.style.transition = 'none';
+        } else {
+            isSpinning = false;
+        }
+    }, {passive: false});
 
     container.addEventListener('touchmove', e => {
-        let dx = e.touches[0].clientX - startX; let dy = e.touches[0].clientY - startY;
-        
-        // Vapaa pyöritys: käynnistyy herkästi kun liikutetaan vähänkään pystysuunnassa (ei puhdas horisontaalinen scroll)
-        if (!isSpinning && Math.abs(dy) > 5) isSpinning = true;
-        
         if (isSpinning) {
             e.preventDefault(); 
+            let dx = e.touches[0].clientX - startX; 
+            let dy = e.touches[0].clientY - startY;
             const activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
             if(activeInner) {
-                let newRotX = window.cardLastRotX - (dy * 0.4); 
-                let newRotY = window.cardLastRotY + (dx * 0.4); 
+                let baseRx = parseFloat(activeInner.dataset.rx || 0);
+                let baseRy = parseFloat(activeInner.dataset.ry || 0);
+                let newRotX = baseRx - (dy * 0.5); 
+                let newRotY = baseRy + (dx * 0.5); 
                 activeInner.style.transform = `rotateX(${newRotX}deg) rotateY(${newRotY}deg)`;
             }
         }
@@ -771,11 +723,12 @@ window.initNativeCarousel = function() {
             const activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
             if(activeInner) {
                 let transformStr = activeInner.style.transform;
-                let match = transformStr.match(/rotateX\(([-0-9.]+)deg\)/);
-                if(match) {
-                    let rx = parseFloat(match[1]); window.cardLastRotX = Math.round(rx / 180) * 180; window.cardLastRotY = 0;
-                    activeInner.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)'; // Nopea snap takaisin
-                    activeInner.style.transform = `rotateX(${window.cardLastRotX}deg) rotateY(0deg)`;
+                let matchX = transformStr.match(/rotateX\(([-0-9.]+)deg\)/);
+                let matchY = transformStr.match(/rotateY\(([-0-9.]+)deg\)/);
+                if(matchX && matchY) {
+                    activeInner.dataset.rx = matchX[1];
+                    activeInner.dataset.ry = matchY[1];
+                    activeInner.style.transition = 'transform 0.1s ease-out'; // Jätä pyöritykseen
                 }
             }
         }
@@ -796,7 +749,6 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
     if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
     
-    window.cardLastRotX = 0; window.cardLastRotY = 0;
     window.renderCarousel(); el('cardDetailModal').style.display = 'flex';
     
     setTimeout(() => {
@@ -1096,10 +1048,8 @@ onValue(ref(db, 'gameState'), (snap) => {
         currentCourse = null;
         if(el('lobbyContainer')) el('lobbyContainer').style.display = 'block';
         if(el('corkboard-viewport')) el('corkboard-viewport').style.display = 'none';
-        if(el('zoomToggleBtn')) el('zoomToggleBtn').style.display = 'none';
         if(el('settingsToggleBtn')) el('settingsToggleBtn').style.display = 'none';
         if(el('pocketContainer')) el('pocketContainer').style.display = 'none';
-        if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'none';
         return;
     }
 
