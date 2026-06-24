@@ -235,24 +235,23 @@ window.initNativeCarousel = function() {
         const scrollLeft = container.scrollLeft;
         const containerWidth = container.clientWidth;
         const centerOffset = containerWidth / 2;
-        const cardWidth = 280; // Määrätty CSS:ssä
-        const paddingLeft = centerOffset - (cardWidth / 2); // Keskittää ensimmäisen kortin
+        const cardWidth = 280; 
+        const paddingLeft = centerOffset - (cardWidth / 2); 
         
         let closestIndex = 0;
         let minDiff = 9999;
 
-        // Puhdas matematiikka ilman DOM-lukemista silmukassa (60fps takuu!)
+        // PUHDAS MATEMATIIKKA ILMAN DOM-LUKEMISTA
         for (let index = 0; index < cards.length; index++) {
             const card = cards[index];
             const cardCenter = paddingLeft + (index * cardWidth) + (cardWidth / 2) - scrollLeft;
-            const diff = (cardCenter - centerOffset) / 140; // Levittää viuhkaa
+            const diff = (cardCenter - centerOffset) / 140; 
             
-            const transX = diff * -70; // Tuo vierekkäisiä kortteja näkyviin sivuille
-            const rotZ = diff * 8;     // Kaarevuus
-            const transY = Math.abs(diff) * 20; // Pudotus
-            const scale = Math.max(0.8, 1.15 - Math.abs(diff) * 0.15); // Keskikortti on massiivinen
+            const transX = diff * -70; 
+            const rotZ = diff * 8;     
+            const transY = Math.abs(diff) * 20; 
+            const scale = Math.max(0.8, 1.15 - Math.abs(diff) * 0.15); 
             
-            // translate3d ottaa käyttöön rautakiihdytyksen
             card.style.transform = `translate3d(${transX}px, ${transY}px, 0) rotateZ(${rotZ}deg) scale(${scale})`;
             card.style.zIndex = 100 - Math.floor(Math.abs(diff)*10);
             
@@ -270,7 +269,6 @@ window.initNativeCarousel = function() {
         isScrolling = false;
     }
     
-    // Alustus
     setTimeout(updateCarouselLayout, 50);
 
     // KORTIN OMNI-PYÖRITYS (Ylös/alas pyyhkäisy)
@@ -357,7 +355,7 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
         const container = el('cardCarousel');
         const targetCard = el(`carousel-wrapper-${window.carouselCurrentIndex}`);
         if(container && targetCard) {
-            container.scrollLeft = (window.carouselCurrentIndex * 280); // Manuaalinen vieritys oikeaan korttiin ilman offsetLeftiä
+            container.scrollLeft = (window.carouselCurrentIndex * 280); 
         }
     }, 100);
 };
@@ -749,8 +747,8 @@ window.renderActiveHole = function() {
     
     if(container) { 
         container.innerHTML = `
-            <div class="post-it-note">
-                <div class="post-it-tape"></div>
+            <div class="spiral-note">
+                <div class="spiral-note-tape"></div>
                 <div style="font-weight:900; font-size:0.8rem; margin-bottom:8px; text-transform:uppercase; color:#666; font-family:'Inter', sans-serif;">${bountyTag}</div>
                 <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; font-family:'Inter', sans-serif; color:#111;">${activeHole.rule.n}</div>
                 <div style="font-size: 1.15rem; line-height: 1.4; font-family:'Inter', sans-serif; font-weight:700; color:#222;">${activeHole.rule.d}</div>
@@ -836,12 +834,10 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             
             html += `
                 <div class="shop-item-wrapper">
-                    <div class="plastic-sleeve">
-                        <div class="physical-card premium-card foil-shine" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
-                            <span class="card-price-tag">${item.price} P</span>
-                            <div class="card-type-tag">💎 KAUPPA</div><h3 style="padding-right:35px;">${item.n}</h3><p>${item.d}</p>
-                            <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px; margin-top:auto;">🔄 3D TARKASTELU</div>
-                        </div>
+                    <div class="physical-card premium-card foil-shine" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
+                        <span class="card-price-tag">${item.price} P</span>
+                        <div class="card-type-tag">💎 KAUPPA</div><h3 style="padding-right:35px;">${item.n}</h3><p>${item.d}</p>
+                        <div style="text-align:center; font-weight:900; font-size:0.75rem; color:#cbd5e1; padding-top:10px; margin-top:auto;">🔄 3D TARKASTELU</div>
                     </div>
                     <button class="shop-item-btn ${btnClass}" ${dis} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
                 </div>`;
@@ -876,8 +872,8 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
                 <div style="display:flex; gap:5px;">
-                    <button class="shop-item-btn" style="flex:1; background:var(--primary);" onclick="window.openTargetModal('${cId}')">PELAA</button>
-                    <button class="shop-item-btn" style="width:50px; background:var(--danger); font-size:1.2rem;" onclick="window.forceDiscard('${cId}', ${isNormal})">${sellBtnIcon}</button>
+                    <button class="shop-item-btn btn-success" style="flex:1;" onclick="window.openTargetModal('${cId}')">PELAA</button>
+                    <button class="shop-item-btn btn-danger" style="width:50px; font-size:1.2rem;" onclick="window.forceDiscard('${cId}', ${isNormal})">${sellBtnIcon}</button>
                 </div>
             </div>`;
         });
@@ -1231,8 +1227,8 @@ window.openScoreModal = function() {
         if(activeHole && activeHole.rule) {
             let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
             let bTxt = activeHole.rule.type === 'bounty' ? `TEHTÄVÄ (+${ptsTask} P)` : 'SÄÄNTÖ';
-            box.className = 'post-it-note';
-            box.innerHTML = `<div class="post-it-tape"></div><strong style="font-size:1.4rem; font-family:'Inter', sans-serif;">${bTxt}: ${activeHole.rule.n}</strong><br><span style="font-size:1.2rem; font-family:'Inter', sans-serif;">${activeHole.rule.d}</span>`;
+            box.className = 'spiral-note';
+            box.innerHTML = `<div class="spiral-note-tape"></div><strong style="font-size:1.4rem; font-family:'Inter', sans-serif;">${bTxt}: ${activeHole.rule.n}</strong><br><span style="font-size:1.2rem; font-family:'Inter', sans-serif;">${activeHole.rule.d}</span>`;
             box.style.display = 'block';
         } else {
             box.style.display = 'none';
