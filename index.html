@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="friba.png" />
     
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=140" />
+    <link rel="stylesheet" href="style.css?v=141" />
     <meta id="themeColorMeta" name="theme-color" content="#cbd5e1" />
     
     <script>
@@ -69,17 +69,17 @@
 
         <div id="mainGameArea" style="display:none; margin-top:15px;">
             
-            <!-- VÄYLÄN TIEDOT (UUSI AKRYYLI/METALLIKYLTTI) -->
+            <!-- VÄYLÄN TIEDOT (KLASSINEN HAKEMISTOKORTTI) -->
             <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 35px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
-                <div id="courseInfoBanner" class="course-banner-plate" style="flex: 1; margin: 0;">
+                <div id="courseInfoBanner" class="index-card" style="flex: 1; margin: 0;">
                     <div class="banner-subtitle" id="bannerCourseName">Rata</div>
-                    <div class="banner-title">VÄYLÄ <span id="bannerHoleNum" style="color: var(--primary);">1</span></div>
+                    <div class="banner-title">VÄYLÄ <span id="bannerHoleNum">1</span></div>
                     <div style="margin-top: 5px;"><span class="banner-par">PAR <span id="bannerPar">3</span></span></div>
                 </div>
                 <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; line-height:1.2; box-shadow: 4px 6px 15px rgba(0,0,0,0.5); border-radius: 6px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.6rem; transform: perspective(800px) rotateX(2deg) translateZ(5px);">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
-            <!-- VÄYLÄSÄÄNTÖ / TEHTÄVÄ (POST-IT) -->
+            <!-- VÄYLÄSÄÄNTÖ / TEHTÄVÄ (KIERREVIHKON SIVU) -->
             <div id="activeHoleContainer"></div>
             
             <!-- SABOTAASI KORTIT -->
@@ -201,7 +201,6 @@
                     </div>
                     
                     <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.05); padding:4px; border:1px solid rgba(255,255,255,0.1); position:relative; z-index:20;">
-                        <!-- event.stopPropagation() ESTÄÄ kansion sulkeutumisen -->
                         <button id="shopTabSellBtn" class="role-btn" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('sell')" style="color:#fff;">OMAT KORTIT</button>
                         <button id="shopTabBuyBtn" class="role-btn active" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('buy')" style="color:#fff;">OSTA KORTTEJA</button>
                     </div>
@@ -272,7 +271,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=140"></script>
-    <script type="module" src="script.js?v=140"></script>
+    <script src="tasks.js?v=141"></script>
+    <script type="module" src="script.js?v=141"></script>
 </body>
 </html>
