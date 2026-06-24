@@ -30,34 +30,38 @@ window.pendingShopPurchase = null;
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
 const getRandomColor = () => postItColors[Math.floor(Math.random() * postItColors.length)];
 
+// 7 Eri kynätyyliä
 const penColors = [
     { c1: '#0284c7', c2: '#38bdf8' }, { c1: '#dc2626', c2: '#f87171' }, { c1: '#16a34a', c2: '#4ade80' },
     { c1: '#d97706', c2: '#fbbf24' }, { c1: '#9333ea', c2: '#c084fc' }, { c1: '#db2777', c2: '#f472b6' }, { c1: '#475569', c2: '#94a3b8' }
 ];
 const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length)];
 
-// Kiroileva Siili -Doodles
+// Kiroileva Siili -Doodles Pelaajan Solvauksilla
 const doodleData = [
-    { svg: "M40,20 Q50,10 60,20 Q70,40 50,60 Q30,40 40,20 Z M45,30 L45,35 M55,30 L55,35 M50,45 L50,50", text: "Taas puuhun! Perkele! -Siili" },
-    { svg: "M30,30 Q50,10 70,30 Q80,50 50,70 Q20,50 30,30 M40,40 L45,40 M60,40 L55,40", text: "Varo käpyjäsi, tunari! -Orava" },
+    { svg: "M40,20 Q50,10 60,20 Q70,40 50,60 Q30,40 40,20 Z M45,30 L45,35 M55,30 L55,35 M50,45 L50,50", text: "Käsi irti kiekosta, et sä osaa! -Siili" },
+    { svg: "M30,30 Q50,10 70,30 Q80,50 50,70 Q20,50 30,30 M40,40 L45,40 M60,40 L55,40", text: "Ostit kalleimman kiekon metsään heitettäväksi. -Orava" },
     { svg: "M20,20 L50,80 L80,20 Q50,10 20,20 M40,40 A5,5 0 1,1 40,41 M60,40 A5,5 0 1,1 60,41", text: "Pariin? Älä naurata. -Kettu" },
-    { svg: "M10,50 A40,40 0 1,1 90,50 A40,40 0 1,1 10,50 M30,40 A5,5 0 1,1 30,41 M70,40 A5,5 0 1,1 70,41 M40,60 Q50,70 60,60", text: "Herätit mut tän takia? -Karhu" },
-    { svg: "M50,40 A30,30 0 1,1 50,90 A30,30 0 1,1 50,40 M30,40 L20,10 L40,30 M70,40 L80,10 L60,30", text: "Kiekko on nyt mun. -Pupu" },
-    { svg: "M20,50 A30,30 0 1,1 80,50 A30,30 0 1,1 20,50 M35,45 A10,10 0 1,1 35,46 M65,45 A10,10 0 1,1 65,46 M50,60 L45,70 L55,70 Z", text: "Huu-huu, huono heitto! -Pöllö" },
-    { svg: "M10,50 Q50,10 90,50 Q50,90 10,50 M30,40 A5,5 0 1,1 30,41 M70,40 A5,5 0 1,1 70,41", text: "Kaivaisit säkin kuoppia. -Mäyrä" },
-    { svg: "M40,50 Q50,30 60,50 Q70,80 50,90 Q30,80 40,50 M20,20 L40,50 M80,20 L60,50", text: "Sarvetki lentää pidemmälle. -Hirvi" },
-    { svg: "M30,30 Q50,20 70,30 L80,60 L20,60 Z M40,60 L40,70 M60,60 L60,70", text: "Jyrsin ton puunkaatajan. -Majava" },
-    { svg: "M20,70 Q50,40 80,70 Q50,100 20,70 M30,50 A5,5 0 1,1 30,51 M70,50 A5,5 0 1,1 70,51", text: "Kurnau, suossa taas. -Sammakko" },
+    { svg: "M10,50 A40,40 0 1,1 90,50 A40,40 0 1,1 10,50 M30,40 A5,5 0 1,1 30,41 M70,40 A5,5 0 1,1 70,41 M40,60 Q50,70 60,60", text: "Voisitko heittää edes kerran suoraan? -Karhu" },
+    { svg: "M50,40 A30,30 0 1,1 50,90 A30,30 0 1,1 50,40 M30,40 L20,10 L40,30 M70,40 L80,10 L60,30", text: "Otitko sokean opaskoiran caddieksi? -Pupu" },
+    { svg: "M20,50 A30,30 0 1,1 80,50 A30,30 0 1,1 20,50 M35,45 A10,10 0 1,1 35,46 M65,45 A10,10 0 1,1 65,46 M50,60 L45,70 L55,70 Z", text: "Mummokin heittää pidemmälle. -Pöllö" },
+    { svg: "M10,50 Q50,10 90,50 Q50,90 10,50 M30,40 A5,5 0 1,1 30,41 M70,40 A5,5 0 1,1 70,41", text: "Taidat tarvita silmälasit? -Myyrä" },
+    { svg: "M40,50 Q50,30 60,50 Q70,80 50,90 Q30,80 40,50 M20,20 L40,50 M80,20 L60,50", text: "Lopeta jo, hävettää katsoa. -Hirvi" },
+    { svg: "M30,30 Q50,20 70,30 L80,60 L20,60 Z M40,60 L40,70 M60,60 L60,70", text: "Kaataisit ne puut suosiolla. -Majava" },
+    { svg: "M20,70 Q50,40 80,70 Q50,100 20,70 M30,50 A5,5 0 1,1 30,51 M70,50 A5,5 0 1,1 70,51", text: "Kiekko veteen, perus. -Sammakko" },
     { svg: "M10,80 Q30,40 50,80 T90,80 M20,70 A2,2 0 1,1 20,71 M30,75 L40,75", text: "Sssssurkea esitys. -Käärme" },
-    { svg: "M40,20 L70,50 L40,80 Z M30,50 L40,50 M60,40 A2,2 0 1,1 60,41", text: "Kop kop, oliko taas puu? -Tikka" },
-    { svg: "M30,30 L50,70 L70,30 M30,30 L20,10 L40,30 M70,30 L80,10 L60,30 M40,40 A2,2 0 1,1 40,41 M60,40 A2,2 0 1,1 60,41", text: "Ei ota tuulta alle. -Ilves" },
+    { svg: "M40,20 L70,50 L40,80 Z M30,50 L40,50 M60,40 A2,2 0 1,1 60,41", text: "Toi puu oli tossa jo eilen. -Tikka" },
+    { svg: "M30,30 L50,70 L70,30 M30,30 L20,10 L40,30 M70,30 L80,10 L60,30 M40,40 A2,2 0 1,1 40,41 M60,40 A2,2 0 1,1 60,41", text: "Ei ota tuulta alle, vai eikö taidot riitä? -Ilves" },
     { svg: "M20,50 Q50,10 80,50 Q50,90 20,50 M40,40 L50,50 L60,40 M10,10 L30,40 M90,10 L70,40", text: "Komea uho, paska heitto. -Metso" },
     { svg: "M40,50 A20,20 0 1,1 60,50 A20,20 0 1,1 40,50 M30,30 A10,10 0 1,1 40,40 M70,30 A10,10 0 1,1 60,40", text: "Varo mihin roiskit! -Hiiri" },
-    { svg: "M10,50 Q50,30 90,50 Q50,70 10,50 M30,45 A2,2 0 1,1 30,46 M70,45 A2,2 0 1,1 70,46", text: "Osumatarkkuus nolla. -Kärppä" },
-    { svg: "M30,20 L50,50 L70,20 L80,50 L50,90 L20,50 Z M40,40 A2,2 0 1,1 40,41 M60,40 A2,2 0 1,1 60,41", text: "Tuskallista katsottavaa. -Susi" },
-    { svg: "M20,30 A40,40 0 1,1 80,30 A40,40 0 1,1 20,30 M40,40 L45,45 M60,40 L55,45", text: "Pysyisithän poissa. -Ahma" }
+    { svg: "M10,50 Q50,30 90,50 Q50,70 10,50 M30,45 A2,2 0 1,1 30,46 M70,45 A2,2 0 1,1 70,46", text: "Osumatarkkuus nolla. Vähän niinkun sun elämä. -Kärppä" },
+    { svg: "M30,20 L50,50 L70,20 L80,50 L50,90 L20,50 Z M40,40 A2,2 0 1,1 40,41 M60,40 A2,2 0 1,1 60,41", text: "Mitä sä oikein yrität? Tuskallista. -Susi" },
+    { svg: "M20,30 A40,40 0 1,1 80,30 A40,40 0 1,1 20,30 M40,40 L45,45 M60,40 L55,45", text: "Pysyisithän poissa radalta. -Ahma" }
 ];
 
+//==============================================
+// PWA ASENNUS & OHJEET
+//==============================================
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault(); deferredPrompt = e;
@@ -67,6 +71,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
         el('installPromptModal').style.display = 'flex';
     }
 });
+
 window.triggerNativeInstall = async function() {
     if (deferredPrompt) {
         deferredPrompt.prompt();
@@ -75,6 +80,7 @@ window.triggerNativeInstall = async function() {
         deferredPrompt = null;
     }
 };
+
 window.checkInstallPrompt = function() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
     if (isStandalone || localStorage.getItem('friba_browser_mode')) return;
@@ -83,16 +89,80 @@ window.checkInstallPrompt = function() {
         let instText = os === "iOS" ? "Paina selaimen alalaidasta <b>Jaa-kuvaketta</b> ja valitse <b>'Lisää kotivalikkoon'</b>." : 
                        (os === "Android" ? "Paina selaimen <b>valikkoa</b> ja valitse <b>'Asenna sovellus'</b>." : "Asenna peli selaimesi valikosta.");
         el('installInstructions').innerHTML = instText;
-        el('nativeInstallBtn').style.display = 'none'; el('installPromptModal').style.display = 'flex';
+        el('nativeInstallBtn').style.display = 'none'; 
+        el('installPromptModal').style.display = 'flex';
     }
 };
-window.dismissInstallPrompt = function() { localStorage.setItem('friba_browser_mode', 'true'); if(el('installPromptModal')) el('installPromptModal').style.display = 'none'; };
+
+window.dismissInstallPrompt = function() {
+    localStorage.setItem('friba_browser_mode', 'true');
+    if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
+};
 
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
 //==============================================
-// KAMERA, TAULU & DOODLES
+// VAPAA KAMERA, TAULU & DOODLES (PAN & ZOOM)
 //==============================================
+let boardState = { scale: 1, x: 0, y: 0 };
+let isDraggingBoard = false;
+let lastBoardTouch = null;
+let initialPinchDist = 0;
+
+window.applyBoardTransform = function() {
+    const board = el('corkboard-surface');
+    if(!board) return;
+    board.style.transition = isDraggingBoard ? 'none' : 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    board.style.transform = `translate(${boardState.x}px, ${boardState.y}px) scale(${boardState.scale})`;
+};
+
+const vp = el('corkboard-viewport');
+if(vp) {
+    vp.addEventListener('touchstart', e => {
+        if(!isZoomedOut) return;
+        if(e.target.closest('.hole-cell') || e.target.closest('.doodle-drawing')) return; // Ei blokata klikkauksia elementteihin
+        
+        if(e.touches.length === 1) {
+            isDraggingBoard = true;
+            lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            window.applyBoardTransform();
+        } else if (e.touches.length === 2) {
+            initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            isDraggingBoard = true;
+        }
+    }, {passive: false});
+
+    vp.addEventListener('touchmove', e => {
+        if(!isZoomedOut || !isDraggingBoard) return;
+        e.preventDefault();
+        if(e.touches.length === 1 && lastBoardTouch) {
+            let dx = e.touches[0].clientX - lastBoardTouch.x;
+            let dy = e.touches[0].clientY - lastBoardTouch.y;
+            boardState.x += dx; boardState.y += dy;
+            lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            window.applyBoardTransform();
+        } else if (e.touches.length === 2) {
+            let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            let scaleDiff = dist / initialPinchDist;
+            boardState.scale *= scaleDiff;
+            if(boardState.scale < 0.1) boardState.scale = 0.1;
+            if(boardState.scale > 2) boardState.scale = 2;
+            initialPinchDist = dist;
+            window.applyBoardTransform();
+        }
+    }, {passive: false});
+
+    vp.addEventListener('touchend', e => {
+        if(!isZoomedOut) return;
+        if(e.touches.length < 1) {
+            isDraggingBoard = false;
+            lastBoardTouch = null;
+        } else if (e.touches.length === 1) {
+            lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+    }, {passive: true});
+}
+
 window.toggleZoom = function() {
     if (isZoomedOut) { isZoomedOut = false; window.viewHoleIndex = null; } 
     else if (window.viewHoleIndex !== null && window.viewHoleIndex !== currentHoleIndex) { window.viewHoleIndex = null; } 
@@ -101,7 +171,7 @@ window.toggleZoom = function() {
     let btn = el('boardBtnText');
     if(btn) {
         if (isZoomedOut) btn.innerText = '🔙 PALAA';
-        else if (window.viewHoleIndex !== null && window.viewHoleIndex !== currentHoleIndex) btn.innerText = 'NYKYINEN';
+        else if (window.viewHoleIndex !== null && window.viewHoleIndex !== currentHoleIndex) btn.innerText = '🔙 NYKYINEN VÄYLÄ';
         else btn.innerText = '🔍 KOKO TAULU';
     }
     window.updateCamera();
@@ -111,14 +181,13 @@ window.zoomToHole = function(hIndex) {
     if(isZoomedOut) {
         isZoomedOut = false; window.viewHoleIndex = hIndex;
         let btn = el('boardBtnText');
-        if(btn) btn.innerText = (hIndex === currentHoleIndex) ? '🔍 KOKO TAULU' : 'NYKYINEN';
+        if(btn) btn.innerText = (hIndex === currentHoleIndex) ? '🔍 KOKO TAULU' : '🔙 NYKYINEN VÄYLÄ';
         window.updateCamera();
     }
 };
 
 window.updateCamera = function() {
-    const board = el('corkboard-surface');
-    if (!board || !currentCourse) return;
+    if (!currentCourse) return;
     
     if (isZoomedOut) {
         let maxCol = Math.min(9, currentHoleIndex);
@@ -127,26 +196,25 @@ window.updateCamera = function() {
         let activeHeight = 120 + maxRow * 950 + (maxRow - 1) * 30;
         
         let scaleX = window.innerWidth / activeWidth;
-        let scaleY = (window.innerHeight - 110) / activeHeight; // Jätetään tilaa alavalikolle
+        let scaleY = (window.innerHeight - 150) / activeHeight; // Tilaa alavalikolle
         let scale = Math.min(scaleX, scaleY) * 0.95; 
         if(scale > 1) scale = 1;
         
-        let offsetX = (window.innerWidth - activeWidth * scale) / 2;
-        let offsetY = ((window.innerHeight - 110) - activeHeight * scale) / 2;
-        
-        board.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+        boardState.scale = scale;
+        boardState.x = (window.innerWidth - activeWidth * scale) / 2;
+        boardState.y = ((window.innerHeight - 150) - activeHeight * scale) / 2;
     } else {
+        boardState.scale = 1;
         let targetHole = window.viewHoleIndex || currentHoleIndex;
         let col = (targetHole - 1) % 9;
         let row = Math.floor((targetHole - 1) / 9);
         let cellX = 60 + col * 410; 
         let cellY = 60 + row * 980; 
         
-        let offsetX = (window.innerWidth - 380) / 2 - cellX;
-        let offsetY = 50 - cellY; 
-        
-        board.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(1)`;
+        boardState.x = (window.innerWidth - 380) / 2 - cellX;
+        boardState.y = 50 - cellY; 
     }
+    window.applyBoardTransform();
 };
 
 window.renderDoodles = function() {
@@ -155,26 +223,22 @@ window.renderDoodles = function() {
     container.innerHTML = '';
     
     let holesPlayed = window.gameHistory.length;
+    let maxCol = Math.min(9, currentHoleIndex);
+    let maxRow = Math.ceil(currentHoleIndex / 9);
+    let activeWidth = 120 + maxCol * 380 + (maxCol - 1) * 30;
+    let activeHeight = 120 + maxRow * 950 + (maxRow - 1) * 30;
+
     for(let i=0; i<holesPlayed; i++) {
         let d = doodleData[i % doodleData.length];
+        // Levitetään ympäri koko pelattua taulun aluetta randomisti
+        let offsetX = Math.random() * (activeWidth - 250);
+        let offsetY = Math.random() * (activeHeight - 200);
+        let rot = -25 + Math.random() * 50;
         
-        // Sijoitetaan doodle kyseisen väylän (solun) lähelle
-        let col = i % 9; let row = Math.floor(i / 9);
-        let cellX = 60 + col * 410; let cellY = 60 + row * 980;
-        
-        // Random offset solun sisällä (esim. yläpuolella tai alapuolella)
-        let offsetX = cellX + (Math.random() * 300);
-        let offsetY = cellY + 800 + (Math.random() * 150); // Alaosassa
-        let rot = -15 + Math.random() * 30;
-        
-        // Animoidaan vain juuri pelatun väylän doodle
+        // Vain viimeisin piirtyy animoiden
         let isNew = (i === holesPlayed - 1);
         let drawnClass = isNew ? 'drawn' : '';
-        if(!isNew) { // Jos vanha, se on jo valmiiksi näkyvillä
-            drawnClass = '';
-        }
-        
-        let opacityStyle = isNew ? '' : 'opacity: 0.6; transform: rotate('+rot+'deg) scale(1);';
+        let opacityStyle = isNew ? '' : `opacity: 0.65; transform: rotate(${rot}deg) scale(1);`;
         
         container.innerHTML += `
         <div class="doodle-drawing ${drawnClass}" style="left:${offsetX}px; top:${offsetY}px; --rot:${rot}deg; ${opacityStyle}">
@@ -262,22 +326,29 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
         
     let isHistory = !isActive;
     
+    let renderScoreDots = (strokes, p_par) => {
+        if(!strokes) return '-';
+        let diff = strokes - p_par;
+        if(diff === 0) return `<span style="color:#111;">${strokes}</span>`;
+        if(diff === -1) return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots"><span class="r-dot green"></span></div></div>`;
+        if(diff < -1) {
+            let d = ''; for(let k=0; k<Math.abs(diff); k++) d += `<span class="r-dot blue"></span>`;
+            return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots">${d}</div></div>`;
+        }
+        let d = ''; for(let k=0; k<diff; k++) d += `<span class="r-dot red"></span>`;
+        return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots">${d}</div></div>`;
+    };
+
     sortedPlayers.forEach((p, i) => {
         let strokes = isHistory && hData.holeResults ? hData.holeResults[p.name] : null;
-        let scoreText = strokes || '-';
-        let scoreClass = ''; let scoreColor = '';
-        if (strokes) {
-            let diff = strokes - par;
-            scoreClass = diff < 0 ? 'score-birdie-paper' : (diff > 0 ? 'score-bogey-paper' : '');
-            scoreColor = diff === 0 ? 'color: var(--ink-blue);' : '';
-        }
+        let scoreHTML = renderScoreDots(strokes, par);
 
         html += `
         <div class="player-row-paper">
             <span class="paper-name" style="font-size:1.4rem;">${p.name}</span>
             <div style="display:flex; align-items:center; gap: 10px;">
                 <span style="font-size:1rem; color:var(--warning); font-weight:900;">${p.score || 0} P</span>
-                <div class="score-display-paper ${scoreClass}" style="width:34px !important; height:34px !important; font-size:1.2rem !important; border-width:2px; ${scoreColor} margin-left:auto;">${scoreText}</div>
+                <div class="score-display-paper" style="width:auto !important; min-width:34px; height:34px !important; font-size:1.2rem !important; margin-left:auto; padding:0 5px;">${scoreHTML}</div>
             </div>
         </div>`;
     });
@@ -317,7 +388,20 @@ window.renderReceipt = function() {
         if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'none';
         return;
     }
-    if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'flex';
+    if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'block';
+
+    let renderDots = (strokes, p_par) => {
+        if(!strokes) return '-';
+        let diff = strokes - p_par;
+        if(diff === 0) return `<span style="color:#111;">${strokes}</span>`;
+        if(diff === -1) return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots"><span class="r-dot green"></span></div></div>`;
+        if(diff < -1) {
+            let d = ''; for(let k=0; k<Math.abs(diff); k++) d += `<span class="r-dot blue"></span>`;
+            return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots">${d}</div></div>`;
+        }
+        let d = ''; for(let k=0; k<diff; k++) d += `<span class="r-dot red"></span>`;
+        return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots">${d}</div></div>`;
+    };
 
     let generateHTML = (isMini) => {
         let html = `<div class="r-title">KASSAKUITTI</div>`;
@@ -325,10 +409,11 @@ window.renderReceipt = function() {
         
         for(let i=startIdx; i<window.gameHistory.length; i++) {
             let h = window.gameHistory[i];
-            if(!isMini) html += `<div class="r-hole-title">Väylä ${i+1}</div>`;
+            let par = currentCourse.pars ? (currentCourse.pars[i] || 3) : 3;
+            if(!isMini) html += `<div class="r-hole-title">Väylä ${i+1} <span style="color:#666;">(PAR ${par})</span></div>`;
             if(h.holeResults && !isMini) {
                 for(let pName in h.holeResults) {
-                    html += `<div class="r-row"><span>${pName.substring(0, 12)}</span><span>${h.holeResults[pName]}</span></div>`;
+                    html += `<div class="r-row"><span>${pName.substring(0, 12)}</span><span>${renderDots(h.holeResults[pName], par)}</span></div>`;
                 }
             }
         }
@@ -726,9 +811,13 @@ window.initNativeCarousel = function() {
                 let matchX = transformStr.match(/rotateX\(([-0-9.]+)deg\)/);
                 let matchY = transformStr.match(/rotateY\(([-0-9.]+)deg\)/);
                 if(matchX && matchY) {
-                    activeInner.dataset.rx = matchX[1];
-                    activeInner.dataset.ry = matchY[1];
-                    activeInner.style.transition = 'transform 0.1s ease-out'; // Jätä pyöritykseen
+                    let curRy = parseFloat(matchY[1]);
+                    let snappedRy = Math.round(curRy / 180) * 180; // Magneettinen lukitus etu/takapuolelle
+                    
+                    activeInner.dataset.rx = 0;
+                    activeInner.dataset.ry = snappedRy;
+                    activeInner.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    activeInner.style.transform = `rotateX(0deg) rotateY(${snappedRy}deg)`;
                 }
             }
         }
@@ -964,9 +1053,10 @@ window.cancelCourse = function() {
 };
 
 window.resetGame = function() {
-    if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos.")) {
+    if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos ja peliasetukset palautuvat oletuksiin.")) {
         localStorage.removeItem('friba_browser_mode');
-        set(ref(db, 'gameState'), window.cleanFirebaseData({ settings: window.gameSettings, players: [], activeHole: null, currentHoleIndex: 1, course: null, history: [] }))
+        const defaultSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
+        set(ref(db, 'gameState'), window.cleanFirebaseData({ settings: defaultSettings, players: [], activeHole: null, currentHoleIndex: 1, course: null, history: [] }))
         .then(() => { localStorage.clear(); location.reload(); });
     }
 };
@@ -1079,7 +1169,7 @@ onValue(ref(db, 'gameState'), (snap) => {
             if(lobbyContainer) lobbyContainer.style.display = 'block';
             if(gameSetupArea) gameSetupArea.style.display = 'block';
             if(corkboardViewport) corkboardViewport.style.display = 'none';
-            if(btnSettings) btnSettings.style.display = 'none';
+            if(btnSettings) btnSettings.style.display = 'flex'; // Näytetään aina
             if(pocket) pocket.style.display = 'none';
         } else {
             if(lobbyContainer) lobbyContainer.style.display = 'none';
