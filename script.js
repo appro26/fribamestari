@@ -1,3 +1,7 @@
+// SUOJATTU YHTEYS: Määritellään tyhjät taulukot, jos tasks.js ei jostain syystä latautuisi
+window.allCards = window.allCards || [];
+window.holeRules = window.holeRules || [];
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, onValue, set, push, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
@@ -5,6 +9,7 @@ const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+// YLEISET MUUTTUJAT JA FUNKTIOT ENNEN FIREBASEA
 const el = id => document.getElementById(id);
 
 let myName = localStorage.getItem('friba_name') || null;
@@ -19,9 +24,7 @@ let lastPlayedCardTimestamp = Date.now();
 window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
 window.pendingShopPurchase = null;
 
-//==============================================
 // ASENNA SOVELLUS (PWA)
-//==============================================
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -93,11 +96,9 @@ window.dismissInstallPrompt = function() {
 
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
-//==============================================
-// KORTIN PELAAMINEN (TARGET MODAL / AUTOMATIIKKA)
-//==============================================
+// KORTIN PELAAMINEN
 window.openTargetModal = function(cardId) {
-    const cardDef = window.allCards.find(c => c.id === cardId);
+    const cardDef = (window.allCards || []).find(c => c.id === cardId);
     if (!cardDef) return;
     
     window.pendingCardPlay = { id: cardId, def: cardDef };
@@ -107,7 +108,7 @@ window.openTargetModal = function(cardId) {
         return;
     }
     
-    let opponents = allPlayers.filter(p => p && p.name !== myName);
+    let opponents = (allPlayers || []).filter(p => p && p.name !== myName);
     if (opponents.length === 1) {
         window.executeCardPlay(opponents[0].name);
         return;
@@ -180,7 +181,7 @@ window.executeCardPlay = function(targetName) {
 };
 
 //==============================================
-// KORTTIVIUHKA (FAN CAROUSEL) JA 360 PYÖRITYS
+// LAAJENNETTU 3D-KORTTIVIUHKA (SLAIDAUS SIVULLE JA YLÖS)
 //==============================================
 window.carouselCards = [];
 window.carouselCurrentIndex = 0;
@@ -194,15 +195,14 @@ window.renderCarousel = function(dragX = 0) {
     if(!wrapper) return;
     
     let html = '';
-    
-    let dragOffsetIndex = -(dragX / 150); 
+    let dragOffsetIndex = -(dragX / 160); 
     let exactCurrentIndex = window.carouselCurrentIndex + dragOffsetIndex;
 
     window.carouselCards.forEach((cId, i) => {
         let diff = i - exactCurrentIndex;
-        if(Math.abs(diff) > 2.5) return; 
+        if(Math.abs(diff) > 2.5) return; // Renderöidään 5 korttia
         
-        let cDef = window.allCards.find(c => c.id === cId);
+        let cDef = (window.allCards || []).find(c => c.id === cId);
         if(!cDef) return;
         
         let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
@@ -211,11 +211,12 @@ window.renderCarousel = function(dragX = 0) {
         let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
         let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
         
-        let rotZ = diff * 10; 
-        let transX = diff * 90; 
+        // Leveämpi viuhka
+        let rotZ = diff * 8; 
+        let transX = diff * 160; 
         let transY = Math.abs(diff) * 15; 
-        let scale = Math.max(0.6, 1 - Math.abs(diff)*0.15);
-        let opacity = Math.max(0, 1 - Math.abs(diff)*0.4);
+        let scale = Math.max(0.7, 1 - Math.abs(diff)*0.12);
+        let opacity = Math.max(0, 1 - Math.abs(diff)*0.3);
         let zIndex = 100 - Math.floor(Math.abs(diff)*10);
         
         let transformStr = `translate(calc(-50% + ${transX}px), calc(-50% + ${transY}px)) rotateZ(${rotZ}deg) scale(${scale})`;
@@ -235,7 +236,7 @@ window.renderCarousel = function(dragX = 0) {
                         <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
                             <div class="card-type-tag" style="font-size:1.05rem; margin-bottom:12px;">${tagTxt}</div>
                             <h3 style="font-size:1.85rem; margin-bottom:20px; color:#000; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
-                            <p style="font-size:1.45rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
+                            <p style="font-size:1.35rem; color:#111; font-weight:800; line-height:1.4;">${cDef.d}</p>
                         </div>
                     </div>
                     <div class="card-face card-back ${backClass}">
@@ -284,7 +285,7 @@ window.initCarouselSwipe = function() {
         let diffY = currentY - startY;
         
         if (!swipeDirection) {
-            if (Math.abs(diffX) > Math.abs(diffY) + 5) swipeDirection = 'h'; 
+            if (Math.abs(diffX) > Math.abs(diffY) + 10) swipeDirection = 'h'; 
             else swipeDirection = 'omni'; 
         }
         
@@ -294,8 +295,8 @@ window.initCarouselSwipe = function() {
             const activeCard = el(`card3d-inner-${window.carouselCurrentIndex}`);
             if(activeCard) {
                 activeCard.style.transition = 'none';
-                let newRotX = window.cardLastRotX - (diffY * 0.2); 
-                let newRotY = window.cardLastRotY + (diffX * 0.2); 
+                let newRotX = window.cardLastRotX - (diffY * 0.5); 
+                let newRotY = window.cardLastRotY + (diffX * 0.5); 
                 activeCard.style.transform = `rotateX(${newRotX}deg) rotateY(${newRotY}deg)`;
             }
         }
@@ -314,7 +315,6 @@ window.initCarouselSwipe = function() {
             
             window.carouselCurrentIndex = newIndex;
             window.cardLastRotX = 0; window.cardLastRotY = 0;
-            
             window.renderCarousel(0); 
             
         } else if (swipeDirection === 'omni') {
@@ -322,8 +322,8 @@ window.initCarouselSwipe = function() {
             if(activeCard) {
                 let diffY = currentY - startY;
                 let diffX = currentX - startX;
-                let newRotX = window.cardLastRotX - (diffY * 0.2);
-                let newRotY = window.cardLastRotY + (diffX * 0.2);
+                let newRotX = window.cardLastRotX - (diffY * 0.5);
+                let newRotY = window.cardLastRotY + (diffX * 0.5);
                 
                 window.cardLastRotX = Math.round(newRotX / 180) * 180;
                 window.cardLastRotY = 0; 
@@ -337,12 +337,12 @@ window.initCarouselSwipe = function() {
 
 window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     if (mode === 'hand' || mode === 'sell') {
-        const me = allPlayers.find(p => p && p.name === myName);
+        const me = (allPlayers || []).find(p => p && p.name === myName);
         window.carouselCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     } else if (mode === 'shop') {
         window.carouselCards = activeHole && activeHole.shop ? activeHole.shop.map(c => c.id) : [];
     } else if (mode === 'gm') {
-        window.carouselCards = window.allCards.map(c => c.id);
+        window.carouselCards = (window.allCards || []).map(c => c.id);
     } else {
         window.carouselCards = [cId]; 
     }
@@ -361,7 +361,7 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
 
 window.updateCarouselButtons = function() {
     let cId = window.carouselCards[window.carouselCurrentIndex];
-    let cDef = window.allCards.find(c => c.id === cId);
+    let cDef = (window.allCards || []).find(c => c.id === cId);
     if(!cDef) return;
     
     let btnHtml = '';
@@ -371,13 +371,13 @@ window.updateCarouselButtons = function() {
     if (mode === 'hand') {
         btnHtml = `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(244,63,94,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
         if (cDef.tier === 'normal') {
-            btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:#000;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
+            btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:#fff;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`;
         } else {
             btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`;
         }
     } else if (mode === 'shop') {
         let myScore = 0; let bought = false;
-        const me = allPlayers.find(p => p && p.name === myName);
+        const me = (allPlayers || []).find(p => p && p.name === myName);
         if(me) { myScore = me.score || 0; bought = me.boughtThisHole; }
         let item = activeHole && activeHole.shop ? activeHole.shop.find(s=>s.id===cId) : null;
         let price = item ? item.price : 99;
@@ -499,7 +499,7 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
 
 window.cancelShopPurchase = function() {
     window.pendingShopPurchase = null;
-    const me = allPlayers.find(p => p && p.name === myName);
+    const me = (allPlayers || []).find(p => p && p.name === myName);
     window.renderShop(activeHole ? activeHole.shop : null, me ? me.score : 0, me ? me.boughtThisHole : false);
     window.switchShopTab('buy');
 };
@@ -524,7 +524,7 @@ window.showHandLimitModal = function(cards) {
     el('handLimitCount').innerText = `${cards.length} / ${limit}`;
     let html = '';
     cards.forEach(cId => {
-        const cDef = window.allCards.find(c => c.id === cId);
+        const cDef = (window.allCards || []).find(c => c.id === cId);
         if(!cDef) return;
         let isNormal = cDef.tier === 'normal';
         let btnTxt = isNormal ? '♻️ MYY (+1 P)' : '🗑️ POISTA';
@@ -559,7 +559,7 @@ window.saveGameSettings = function() {
 };
 
 //==============================================
-// HELPERIT
+// HELPERIT JA UI PÄIVITYKSET
 //==============================================
 window.showAppleToast = function(msg, icon = '✨') {
     const toast = el('appleToast');
@@ -664,7 +664,7 @@ window.claimIdentity = function() {
     myName = n; localStorage.setItem('friba_name', n);
     window.updateIdentityUI(); 
     
-    if(!allPlayers.find(x => x && x.name === n)) { 
+    if(!(allPlayers || []).find(x => x && x.name === n)) { 
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); 
         set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
@@ -732,7 +732,7 @@ window.renderActiveHole = function() {
         let myRulesHtml = '';
         
         playedCards.forEach(pc => {
-            let cardDef = window.allCards.find(c => c.n === pc.cardName);
+            let cardDef = (window.allCards || []).find(c => c.n === pc.cardName);
             let cTier = pc.tier || (cardDef ? cardDef.tier : 'normal');
             let cType = pc.type || (cardDef ? cardDef.type : 'sabotage');
             
@@ -797,7 +797,7 @@ window.renderPlayerHand = function(cards) {
     
     let html = '';
     cards.forEach((cId) => {
-        const cDef = window.allCards.find(sc => sc.id === cId);
+        const cDef = (window.allCards || []).find(sc => sc.id === cId);
         if(!cDef) return; 
         let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
         if(cDef.tier === 'premium') typeClass = 'premium-card'; 
@@ -833,8 +833,8 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
         shopArray.forEach(item => {
             if(!item) return; 
             const canAfford = myPoints >= item.price && !boughtThisHole;
-            let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? `OSTA ETU (${item.price} P)` : 'EI VARAA');
-            let btnClass = canAfford && !boughtThisHole ? 'btn-warning' : 'btn-secondary';
+            let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? 'OSTA ETU' : 'EI VARAA');
+            let btnClass = canAfford ? 'btn-warning' : 'btn-secondary';
             let dis = (!canAfford || boughtThisHole) ? 'disabled' : '';
             
             html += `
@@ -842,7 +842,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
                     <div class="plastic-sleeve">
                         <div class="physical-card premium-card" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
                             <span class="card-price-tag">${item.price} P</span>
-                            <div class="card-type-tag">💎 KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p>
+                            <div class="card-type-tag">💎 KAUPPA</div><h3 style="padding-right:35px;">${item.n}</h3><p>${item.d}</p>
                             <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); padding-top:10px;">🔄 3D TARKASTELU</div>
                         </div>
                     </div>
@@ -853,7 +853,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
         if(expandedContainer) expandedContainer.innerHTML = html; 
     }
 
-    let me = allPlayers.find(p => p && p.name === myName);
+    let me = (allPlayers || []).find(p => p && p.name === myName);
     let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     
     let sellHtml = '';
@@ -861,7 +861,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
          sellHtml = '<p style="color:var(--text-muted); font-size:1.1rem; text-align:center; padding:20px; font-weight:bold; width:100%; grid-column: 1 / -1;">Kätesi on tyhjä.</p>';
     } else {
         myCards.forEach(cId => {
-            const cDef = window.allCards.find(sc => sc.id === cId);
+            const cDef = (window.allCards || []).find(sc => sc.id === cId);
             if(!cDef) return; 
             let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
             if(cDef.tier === 'premium') typeClass = 'premium-card'; 
@@ -871,12 +871,11 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let btnTxt = isNormal ? '♻️ MYY (+1 P)' : '🗑️ HÄVITÄ';
             let btnClass = isNormal ? 'btn-success' : 'btn-danger';
             
-            // Random rotatio sekaisuutta varten
             let rot = Math.floor(Math.random() * 8) - 4; 
             
             sellHtml += `
             <div class="shop-item-wrapper messy-card-wrapper" style="transform: rotate(${rot}deg);">
-                <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer; min-height:160px;">
+                <div class="physical-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer;">
                     <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3>
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
@@ -905,7 +904,7 @@ window.renderAdminPlayerList = function() {
         if(p.cards && p.cards.length > 0) {
             cardsHtml = `<div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; width:100%;">`;
             p.cards.forEach((cId, cIdx) => {
-                let cardDef = window.allCards.find(c => c.id === cId);
+                let cardDef = (window.allCards || []).find(c => c.id === cId);
                 if(cardDef) {
                     cardsHtml += `<div style="background:var(--surface-alt); border:2px solid var(--border); padding:4px 8px; border-radius:6px; font-size:0.8rem; display:flex; align-items:center; gap:5px;">
                         ${cardDef.n} <button style="color:var(--danger); font-weight:900; font-size:1.1rem; padding:0 4px; line-height:1;" onclick="window.removeCardFromPlayer(${i}, ${cIdx})">&times;</button>
@@ -953,7 +952,7 @@ window.renderGmCardList = function(filterTxt) {
     let html = '';
     let q = filterTxt.toLowerCase();
     
-    window.allCards.forEach(c => {
+    (window.allCards || []).forEach(c => {
         if (q && !c.n.toLowerCase().includes(q) && !c.d.toLowerCase().includes(q)) return; 
         
         let typeClass = c.type === 'buff' ? 'buff-card' : 'debuff-card';
@@ -981,7 +980,7 @@ window.giveCardToPlayer = function(cardId) {
     if (window.selectedPlayerForCard === null) return; 
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
     let p = nextPlayers[window.selectedPlayerForCard];
-    let cardDef = window.allCards.find(c => c.id === cardId);
+    let cardDef = (window.allCards || []).find(c => c.id === cardId);
     if (p && cardDef) {
         p.cards = p.cards || [];
         p.cards.push(cardId);
@@ -997,7 +996,7 @@ window.removeCardFromPlayer = function(pIdx, cIdx) {
     let p = nextPlayers[pIdx];
     if(p && p.cards) {
         let cId = p.cards[cIdx];
-        let cardDef = window.allCards.find(c => c.id === cId);
+        let cardDef = (window.allCards || []).find(c => c.id === cId);
         p.cards.splice(cIdx, 1);
         set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) poisti kortin ${cardDef ? cardDef.n : ''} pelaajalta ${p.name}.`);
@@ -1006,7 +1005,9 @@ window.removeCardFromPlayer = function(pIdx, cIdx) {
 
 window.gmRollRule = function() {
     if(!activeHole) return; 
-    const randomRule = window.holeRules[Math.floor(Math.random() * window.holeRules.length)];
+    const rules = window.holeRules || [];
+    if(rules.length === 0) return;
+    const randomRule = rules[Math.floor(Math.random() * rules.length)];
     activeHole.rule = randomRule;
     set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(randomRule));
     window.logEvent(`${myName} (GM) arpoi uuden väyläsäännön: ${randomRule.n}`);
@@ -1015,7 +1016,8 @@ window.gmRollRule = function() {
 window.gmSetRule = function() {
     if(!activeHole) return; 
     const sel = el('gmRuleSelect');
-    const ruleDef = window.holeRules[sel.value];
+    const rules = window.holeRules || [];
+    const ruleDef = rules[sel.value];
     if(ruleDef) {
         activeHole.rule = ruleDef;
         set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(ruleDef));
@@ -1023,84 +1025,7 @@ window.gmSetRule = function() {
     }
 };
 
-window.renderEventLog = function(logData) {
-    const container = el('adminEventLog');
-    if(!container) return; 
-    container.innerHTML = "";
-    Object.values(logData || {}).reverse().slice(0, 30).forEach(l => {
-        container.innerHTML += `<div style="padding:8px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:900;">[${l.time}]</span>${l.msg}</div>`;
-    });
-};
-
-window.renderScoreLog = function(logData) {
-    const container = el('adminScoreLog');
-    if(!container) return;  
-    container.innerHTML = "";
-    Object.values(logData || {}).reverse().slice(0, 50).forEach(l => {
-        let color = l.delta >= 0 ? 'var(--info)' : 'var(--danger)';
-        container.innerHTML += `<div style="padding:8px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:900;">[${l.time}]</span><b>${l.playerName}</b>: <span style="color:${color}; font-weight:900;">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`;
-    });
-};
-
-window.triggerPopup = function(title, desc, details) {
-    const overlay = el('lotteryWinner');
-    if(!overlay) return; 
-    el('popupTitle').innerHTML = title;
-    el('popupDesc').innerHTML = desc;
-    
-    const detailsEl = el('popupDetails');
-    if(detailsEl) {
-        detailsEl.innerHTML = details;
-        if(!details || details === '') detailsEl.style.display = 'none'; 
-        else detailsEl.style.display = 'block'; 
-    }
-    overlay.style.display = 'flex';
-};
-
-window.adminAddPlayer = function() {
-    const input = el('adminNewPlayerName');
-    if(!input) return; 
-    let n = input.value.trim();
-    if(!n) return; 
-    
-    if(!allPlayers.find(x => x && x.name === n)) { 
-        let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
-        nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); 
-        set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers)).then(() => { input.value = ''; });
-        window.logEvent(`${myName} (GM) lisäsi pelaajan ${n}.`);
-    }
-};
-
-window.adjustScore = function(idx, amt) { 
-    if(amt === 0) return; 
-    if(allPlayers[idx]) {
-        let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
-        nextPlayers[idx].score = Math.max(0, (parseInt(nextPlayers[idx].score, 10) || 0) + amt);
-        set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
-        window.logEvent(`${myName} (GM) antoi ${amt} P pelaajalle ${nextPlayers[idx].name}.`);
-    }
-};
-
-window.adjustDgScore = function(idx, amt) { 
-    if(amt === 0) return;  
-    if(allPlayers[idx]) {
-        let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
-        nextPlayers[idx].dgScore = (parseInt(nextPlayers[idx].dgScore, 10) || 0) + amt;
-        set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
-        window.logEvent(`${myName} (GM) sääti pelaajan ${nextPlayers[idx].name} heittotulosta (${amt > 0 ? '+'+amt : amt}).`);
-    }
-};
-
-window.removePlayer = function(idx) { 
-    if(confirm("Poistetaanko pelaaja pelistä?")) { 
-        let pName = allPlayers[idx].name;
-        let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
-        nextPlayers.splice(idx, 1); 
-        set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
-        window.logEvent(`${myName} (GM) poisti pelaajan ${pName}.`);
-    } 
-};
-
+// RADAN KESKEYTYS
 window.cancelCourse = function() {
     if (confirm("Haluatko varmasti lopettaa nykyisen radan? Pelaajat säilyttävät rahansa ja korttinsa, mutta palaatte aulaan.")) {
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
@@ -1127,24 +1052,29 @@ window.startMeilahti = function() {
     let nextCourse = { name: "Meilahti", pars: Array(16).fill(3) };
     let nextHoleIndex = 1;
     
-    let premiumPool = window.allCards.filter(c => c.tier === "premium");
+    let premiumPool = (window.allCards || []).filter(c => c.tier === "premium");
     let uniqueShop = []; let used = new Set();
     for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
         if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
         if(uniqueShop.length === 5) break; 
     }
-    const randomRule = window.holeRules[Math.floor(Math.random() * window.holeRules.length)];
+    
+    const rules = window.holeRules || [];
+    const randomRule = rules.length > 0 ? rules[Math.floor(Math.random() * rules.length)] : {type:"rule", n:"Peli Alkaa", d:""};
     let nextActiveHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
     
-    let normalPool = window.allCards.filter(c => c.tier === "normal");
+    let normalPool = (window.allCards || []).filter(c => c.tier === "normal");
     let nextPlayers = [];
     if(allPlayers) {
         nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean).map(p => {
-            let pCards = [
-                normalPool[Math.floor(Math.random() * normalPool.length)].id,
-                normalPool[Math.floor(Math.random() * normalPool.length)].id,
-                normalPool[Math.floor(Math.random() * normalPool.length)].id
-            ];
+            let pCards = [];
+            if(normalPool.length > 0) {
+                pCards = [
+                    normalPool[Math.floor(Math.random() * normalPool.length)].id,
+                    normalPool[Math.floor(Math.random() * normalPool.length)].id,
+                    normalPool[Math.floor(Math.random() * normalPool.length)].id
+                ];
+            }
             return { ...p, score: 3, dgScore: 0, cards: pCards, boughtThisHole: false };
         });
     }
@@ -1180,24 +1110,29 @@ window.saveCourseSetup = function() {
     let nextCourse = { name: name, pars: pars };
     let nextHoleIndex = 1;
     
-    let premiumPool = window.allCards.filter(c => c.tier === "premium");
+    let premiumPool = (window.allCards || []).filter(c => c.tier === "premium");
     let uniqueShop = []; let used = new Set();
     for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
         if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
         if(uniqueShop.length === 5) break; 
     }
-    const randomRule = window.holeRules[Math.floor(Math.random() * window.holeRules.length)];
+    
+    const rules = window.holeRules || [];
+    const randomRule = rules.length > 0 ? rules[Math.floor(Math.random() * rules.length)] : {type:"rule", n:"Peli Alkaa", d:""};
     let nextActiveHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
     
-    let normalPool = window.allCards.filter(c => c.tier === "normal");
+    let normalPool = (window.allCards || []).filter(c => c.tier === "normal");
     let nextPlayers = [];
     if(allPlayers) {
         nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean).map(p => {
-            let pCards = [
-                normalPool[Math.floor(Math.random() * normalPool.length)].id,
-                normalPool[Math.floor(Math.random() * normalPool.length)].id,
-                normalPool[Math.floor(Math.random() * normalPool.length)].id
-            ];
+            let pCards = [];
+            if(normalPool.length > 0) {
+                pCards = [
+                    normalPool[Math.floor(Math.random() * normalPool.length)].id,
+                    normalPool[Math.floor(Math.random() * normalPool.length)].id,
+                    normalPool[Math.floor(Math.random() * normalPool.length)].id
+                ];
+            }
             return { ...p, score: 3, dgScore: 0, cards: pCards, boughtThisHole: false };
         });
     }
@@ -1326,7 +1261,7 @@ window.submitScores = function() {
         if (playerResults[key].strokes === maxStrokes) holeLosers.push(key);
     }
     
-    let normalPool = window.allCards.filter(c => c.tier === "normal");
+    let normalPool = (window.allCards || []).filter(c => c.tier === "normal");
     
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
 
@@ -1362,9 +1297,11 @@ window.submitScores = function() {
         
         let cardsToGive = (holeLosers.includes(p.name) && minStrokes !== maxStrokes) ? 3 : 2;
         
-        for(let i=0; i<cardsToGive; i++) {
-            if (!limitEnabled || p.cards.length < handLimit) {
-                p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
+        if(normalPool.length > 0) {
+            for(let i=0; i<cardsToGive; i++) {
+                if (!limitEnabled || p.cards.length < handLimit) {
+                    p.cards.push(normalPool[Math.floor(Math.random() * normalPool.length)].id);
+                }
             }
         }
         
@@ -1373,12 +1310,15 @@ window.submitScores = function() {
     
     let nextHoleIndex = currentHoleIndex + 1;
     
-    const randomRule = window.holeRules[Math.floor(Math.random() * window.holeRules.length)];
-    let premiumPool = window.allCards.filter(c => c.tier === "premium");
+    const rules = window.holeRules || [];
+    const randomRule = rules.length > 0 ? rules[Math.floor(Math.random() * rules.length)] : {type:"rule", n:"Peli Jatkuu", d:""};
+    let premiumPool = (window.allCards || []).filter(c => c.tier === "premium");
     let uniqueShop = []; let used = new Set();
-    for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
-        if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
-        if(uniqueShop.length === 5) break; 
+    if(premiumPool.length > 0) {
+        for(let c of premiumPool.sort(() => 0.5 - Math.random())) {
+            if(!used.has(c.n)) { uniqueShop.push(c); used.add(c.n); }
+            if(uniqueShop.length === 5) break; 
+        }
     }
     
     let nextActiveHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now() };
@@ -1394,7 +1334,7 @@ window.submitScores = function() {
 };
 
 // =============================================
-// FIREBASE KUUNTELIJA ON TÄÄLLÄ POHJALLA
+// LOPUKSI FIREBASE KUUNTELIJA
 // =============================================
 onValue(ref(db, 'gameState'), (snap) => {
     const data = snap.val();
@@ -1521,12 +1461,11 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.renderScoreLog(data.scoreLog);
 });
 
-// SUORITA LISÄOSAT JOTKA EIVÄT RIIPPU FIREBASESTA
-window.setupSwipeToClose();
-
+// AJA INITOINNIT
 window.populateRuleSelect = function() {
     const sel = el('gmRuleSelect');
-    if(!sel || typeof window.holeRules === 'undefined') return; 
-    sel.innerHTML = window.holeRules.map((r, i) => `<option value="${i}">${r.n}</option>`).join('');
+    const rules = window.holeRules || [];
+    if(!sel || rules.length === 0) return; 
+    sel.innerHTML = rules.map((r, i) => `<option value="${i}">${r.n}</option>`).join('');
 };
 setTimeout(window.populateRuleSelect, 500);
