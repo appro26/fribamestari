@@ -14,7 +14,7 @@ const db = getDatabase(app);
 const el = id => document.getElementById(id);
 
 let myName = localStorage.getItem('friba_name') || null;
-let currentRole = 'player';
+let currentRole = 'player'; // Taustarooli lokitukseen
 let allPlayers = [];
 let activeHole = null;
 let currentCourse = null;
@@ -28,6 +28,18 @@ window.pendingShopPurchase = null;
 
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
 const getRandomColor = () => postItColors[Math.floor(Math.random() * postItColors.length)];
+
+// 7 Eri kynätyyliä väylän vaihtumista varten
+const penColors = [
+    { c1: '#0284c7', c2: '#38bdf8' }, // Sininen
+    { c1: '#dc2626', c2: '#f87171' }, // Punainen
+    { c1: '#16a34a', c2: '#4ade80' }, // Vihreä
+    { c1: '#d97706', c2: '#fbbf24' }, // Oranssi
+    { c1: '#9333ea', c2: '#c084fc' }, // Violetti
+    { c1: '#db2777', c2: '#f472b6' }, // Pinkki
+    { c1: '#475569', c2: '#94a3b8' }, // Tummanharmaa
+];
+const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length)];
 
 //==============================================
 // PWA ASENNUS & OHJEET
@@ -76,106 +88,88 @@ window.initAmbiance = function() {
     const container = el('ambiance-container');
     if(!container) return;
 
-    // Luodaan 50 dynaamista konfiguraatiota
     const events = [];
-    
-    // 10 Läikkää (Stains)
+    // 10 Läikkää
     const sColors = ['rgba(62,39,35,0.7)', 'rgba(0,0,0,0.5)', 'rgba(183,28,28,0.6)', 'rgba(13,71,161,0.4)', 'rgba(27,94,32,0.5)', 'rgba(230,81,0,0.6)', 'rgba(74,20,140,0.5)', 'rgba(62,39,35,0.8)', 'rgba(38,50,56,0.6)', 'rgba(255,255,255,0.4)'];
     for(let i=0; i<10; i++) events.push({ type: 'stain', color: sColors[i], size: 30 + Math.random()*50, isLonkero: i===0 });
     
-    // 10 Mönkijää (Bugs)
+    // 10 Mönkijää
     const bugs = ['🐜', '🕷️', '🐞', '🐛', '🪲', '🐜', '🕷️', '🐞', '🐛', '🪲'];
     for(let i=0; i<10; i++) events.push({ type: 'bug', emoji: bugs[i] });
 
-    // 10 Piirrosta (Doodles - Simple SVG paths)
+    // 10 Piirrosta
     const paths = [
-        'M10,10 Q30,40 50,10 Q70,40 90,10', // Aallot
-        'M20,20 L80,80 M20,80 L80,20', // X
-        'M50,10 L60,40 L90,50 L60,60 L50,90 L40,60 L10,50 L40,40 Z', // Tähti
-        'M10,50 Q50,10 90,50 Q50,90 10,50', // Silmä/lehti
-        'M50,10 A40,40 0 1,1 49.9,10', // Ympyrä
-        'M10,90 L50,10 L90,90 Z', // Kolmio
-        'M30,30 Q50,10 70,30 Q90,70 50,90 Q10,70 30,30', // Sydän
-        'M10,50 L80,50 L60,30 M80,50 L60,70', // Nuoli
-        'M20,80 Q50,20 80,80', // Kaari
-        'M20,20 Q50,50 80,20 Q50,80 20,20' // Silmukka
+        'M10,10 Q30,40 50,10 Q70,40 90,10', 'M20,20 L80,80 M20,80 L80,20', 'M50,10 L60,40 L90,50 L60,60 L50,90 L40,60 L10,50 L40,40 Z',
+        'M10,50 Q50,10 90,50 Q50,90 10,50', 'M50,10 A40,40 0 1,1 49.9,10', 'M10,90 L50,10 L90,90 Z', 
+        'M30,30 Q50,10 70,30 Q90,70 50,90 Q10,70 30,30', 'M10,50 L80,50 L60,30 M80,50 L60,70', 'M20,80 Q50,20 80,80', 'M20,20 Q50,50 80,20 Q50,80 20,20'
     ];
     for(let i=0; i<10; i++) events.push({ type: 'doodle', path: paths[i] });
 
-    // 10 Varjoa (Shadows)
+    // 10 Varjoa
     for(let i=0; i<10; i++) events.push({ type: 'shadow', w: 100 + Math.random()*200, h: 100 + Math.random()*200 });
 
-    // 10 Taulumerkkiä (Marks: teippiä, nuppineuloja, pieniä palamisjälkiä)
+    // 10 Taulumerkkiä
     const marks = ['📌', '📍', '🩹', '🔥', '🕳️', '📌', '📍', '🩹', '🔥', '🕳️'];
     for(let i=0; i<10; i++) events.push({ type: 'mark', content: marks[i] });
 
     function triggerRandom() {
-        if(isZoomedOut || el('shopModal').style.display === 'flex' || el('scoreModal').style.display === 'flex') {
+        if(isZoomedOut || el('shopModal').style.display === 'flex' || el('scoreModal').style.display === 'flex' || el('settingsModal').style.display === 'flex') {
             setTimeout(triggerRandom, 5000); return; 
         }
 
         const ev = events[Math.floor(Math.random() * events.length)];
         const elDiv = document.createElement('div');
-        let x = 10 + Math.random() * 80; 
-        let y = 20 + Math.random() * 60;
+        let x = 10 + Math.random() * 80; let y = 20 + Math.random() * 60;
         
         if (ev.type === 'stain') {
             elDiv.className = 'ambiance-stain';
             elDiv.style.left = x + 'vw'; elDiv.style.top = y + 'vh';
             elDiv.style.width = ev.size + 'px'; elDiv.style.height = ev.size + 'px';
-            elDiv.style.background = ev.color;
-            elDiv.style.animationDuration = (15 + Math.random()*15) + 's';
-            
+            elDiv.style.background = ev.color; elDiv.style.animationDuration = (15 + Math.random()*15) + 's';
             if(ev.isLonkero) {
-                let wrapper = document.createElement('div');
-                wrapper.className = 'ambiance-can-wrapper';
+                let wrapper = document.createElement('div'); wrapper.className = 'ambiance-can-wrapper';
                 wrapper.style.left = (x + 2) + 'vw'; wrapper.style.top = (y - 10) + 'vh';
                 let can = document.createElement('div'); can.className = 'css-lonkero';
-                wrapper.appendChild(can);
-                container.appendChild(wrapper);
+                wrapper.appendChild(can); container.appendChild(wrapper);
                 setTimeout(() => { if(wrapper.parentNode) wrapper.remove(); }, 4000);
             }
-            container.appendChild(elDiv);
-            setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 30000);
+            container.appendChild(elDiv); setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 30000);
         } 
         else if (ev.type === 'bug') {
-            elDiv.className = 'ambiance-bug'; elDiv.innerText = ev.emoji;
-            elDiv.style.left = x + 'vw'; elDiv.style.top = y + 'vh';
-            let rot = Math.random() * 360;
-            let endX = (Math.random() * 200 - 100); let endY = (Math.random() * 200 - 100);
-            elDiv.style.transform = `rotate(${rot}deg)`;
-            container.appendChild(elDiv);
-            elDiv.animate([
+            let wrapper = document.createElement('div');
+            wrapper.className = 'ambiance-bug-wrapper';
+            wrapper.style.left = x + 'vw'; wrapper.style.top = y + 'vh';
+            
+            elDiv.className = 'ambiance-bug-inner'; // Wiggle-animaatio (jalat käy)
+            elDiv.innerText = ev.emoji;
+            wrapper.appendChild(elDiv);
+            
+            let rot = Math.random() * 360; let endX = (Math.random() * 300 - 150); let endY = (Math.random() * 300 - 150);
+            wrapper.style.transform = `rotate(${rot}deg)`;
+            container.appendChild(wrapper);
+            
+            wrapper.animate([
                 { transform: `translate(0,0) rotate(${rot}deg)` },
                 { transform: `translate(${endX}px, ${endY}px) rotate(${rot + (Math.random()*40-20)}deg)` }
             ], { duration: 8000 + Math.random()*5000, easing: 'ease-in-out', fill: 'forwards' });
-            setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 14000);
+            setTimeout(() => { if(wrapper.parentNode) wrapper.remove(); }, 14000);
         }
         else if (ev.type === 'doodle') {
-            elDiv.className = 'ambiance-svg';
-            elDiv.style.left = x + 'vw'; elDiv.style.top = y + 'vh';
+            elDiv.className = 'ambiance-svg'; elDiv.style.left = x + 'vw'; elDiv.style.top = y + 'vh';
             elDiv.innerHTML = `<svg width="100" height="100" viewBox="0 0 100 100"><path d="${ev.path}" fill="none" stroke="rgba(15,27,97,0.6)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-            container.appendChild(elDiv);
-            setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 16000);
+            container.appendChild(elDiv); setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 16000);
         }
         else if (ev.type === 'shadow') {
-            elDiv.className = 'ambiance-shadow';
-            elDiv.style.width = ev.w + 'px'; elDiv.style.height = ev.h + 'px';
+            elDiv.className = 'ambiance-shadow'; elDiv.style.width = ev.w + 'px'; elDiv.style.height = ev.h + 'px';
             elDiv.style.top = y + 'vh'; elDiv.style.left = '-20vw';
             container.appendChild(elDiv);
-            elDiv.animate([
-                { transform: `translateX(0)` },
-                { transform: `translateX(140vw)` }
-            ], { duration: 4000 + Math.random()*4000, easing: 'linear', fill: 'forwards' });
+            elDiv.animate([{ transform: `translateX(0)` }, { transform: `translateX(140vw)` }], { duration: 4000 + Math.random()*4000, easing: 'linear', fill: 'forwards' });
             setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 9000);
         }
         else if (ev.type === 'mark') {
-            elDiv.className = 'ambiance-mark'; elDiv.innerText = ev.content;
-            elDiv.style.left = x + 'vw'; elDiv.style.top = y + 'vh';
-            elDiv.style.fontSize = (0.8 + Math.random()*0.8) + 'rem';
-            elDiv.style.transform = `rotate(${Math.random()*360}deg)`;
-            container.appendChild(elDiv);
-            setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 26000);
+            elDiv.className = 'ambiance-mark'; elDiv.innerText = ev.content; elDiv.style.left = x + 'vw'; elDiv.style.top = y + 'vh';
+            elDiv.style.fontSize = (0.8 + Math.random()*0.8) + 'rem'; elDiv.style.transform = `rotate(${Math.random()*360}deg)`;
+            container.appendChild(elDiv); setTimeout(() => { if(elDiv.parentNode) elDiv.remove(); }, 26000);
         }
 
         setTimeout(triggerRandom, 10000 + Math.random() * 20000); 
@@ -203,20 +197,35 @@ window.updateCamera = function() {
     if (!board || !currentCourse) return;
     
     if (isZoomedOut) {
-        let scale = window.innerWidth / (9 * 410); // 9 sarake x (380+30gap)
+        // Lasketaan pelattujen väylien vaatima tilalaatikko (sis. nykyisen)
+        let maxCol = Math.min(9, currentHoleIndex);
+        let maxRow = Math.ceil(currentHoleIndex / 9);
+        
+        // Paddin + colW + gap + padding
+        let activeWidth = 120 + maxCol * 380 + (maxCol - 1) * 30;
+        let activeHeight = 120 + maxRow * 950 + (maxRow - 1) * 30;
+        
+        let scaleX = window.innerWidth / activeWidth;
+        let scaleY = window.innerHeight / activeHeight;
+        let scale = Math.min(scaleX, scaleY) * 0.95; // 5% marginaali reunoille
         if(scale > 1) scale = 1;
-        board.style.transform = `scale(${scale}) translate(20px, 50px)`;
+        
+        let offsetX = (window.innerWidth - activeWidth * scale) / 2;
+        let offsetY = (window.innerHeight - activeHeight * scale) / 2;
+        
+        board.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     } else {
         let col = (currentHoleIndex - 1) % 9;
         let row = Math.floor((currentHoleIndex - 1) / 9);
-        let cellX = col * 410; // 380 leveys + 30 gap
-        let cellY = row * 980; // 950 korkeus + 30 gap
+        // Solun origo suhteessa taulun vasempaan yläkulmaan (mukaan lukien 60px padding)
+        let cellX = 60 + col * 410; 
+        let cellY = 60 + row * 980; 
         
-        let screenW = window.innerWidth;
-        let offsetX = (screenW - 380) / 2 - cellX;
-        let offsetY = 50 - cellY; 
+        // Keskitetään 380px leveä solu keskelle näyttöä
+        let offsetX = (window.innerWidth - 380) / 2 - cellX;
+        let offsetY = 50 - cellY; // 50px ylämarginaali
         
-        board.style.transform = `scale(1) translate(${offsetX}px, ${offsetY}px)`;
+        board.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(1)`;
     }
 };
 
@@ -232,12 +241,14 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
         <div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>
     </div>`;
 
-    // Pen (Only on active hole)
-    if (isActive) {
+    // Pen (Only on active hole, dynamically colored)
+    if (isActive && hData.penColor) {
         html += `
         <div class="pen-container" onclick="if(window.openScoreModal) { window.openScoreModal(); }">
             <div class="pen-string"></div>
-            <div class="pen-body"><span class="pen-text">MERKKAA</span></div>
+            <div class="pen-body" style="background: linear-gradient(to right, ${hData.penColor.c1}, ${hData.penColor.c2}, ${hData.penColor.c1});">
+                <span class="pen-text">MERKKAA</span>
+            </div>
         </div>`;
     }
 
@@ -256,7 +267,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
     // Played Cards
     let playedCards = Object.values(hData.playedCards || {}).filter(Boolean);
     if(playedCards.length > 0) {
-        html += `<div style="width: 100%; max-width:340px; margin-bottom: 15px;"><h2 style="color:var(--text-main); font-size:0.85rem; margin-bottom:10px;">📌 PELATUT KORTIT</h2><div class="cards-grid-2">`;
+        html += `<div style="width: 100%; max-width:340px; margin-bottom: 15px;"><h2 style="color:var(--text-main); font-size:0.85rem; margin-bottom:10px; background:rgba(255,255,255,0.7); padding:4px 8px; border-radius:4px; display:inline-block;">📌 PELATUT KORTIT</h2><div class="cards-grid-2">`;
         
         playedCards.forEach(pc => {
             if (pc.target === myName || !isActive) {
@@ -266,7 +277,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
                 let rot = Math.floor(Math.random() * 10) - 5; 
                 let pinLeft = 50 + (Math.floor(Math.random() * 20) - 10);
                 
-                let undoBtn = (isActive && currentRole === 'gm') ? `<button class="btn btn-danger" style="padding:6px; font-size:0.7rem; margin-top:5px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">PERU</button>` : ``;
+                let undoBtn = (isActive) ? `<button class="btn btn-danger" style="padding:6px; font-size:0.7rem; margin-top:5px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">PERU</button>` : ``;
                 
                 html += `
                 <div class="pinned-card-container" style="--rot:${rot}deg;">
@@ -275,17 +286,17 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
                         <div class="card-type-tag">${tagTxt}</div>
                         <h3>${pc.cardName}</h3><p>${pc.cardDesc}</p>
                         <div style="background:rgba(0,0,0,0.05); padding:4px; border-radius:4px; font-size:0.7rem; text-align:center; font-weight:bold; margin-top:auto;">
-                            Kohteelle: ${pc.target}<br><span style="font-weight:normal;">(Pelaaja: ${pc.by})</span>
+                            Kohteelle: ${pc.target}<br><span style="font-weight:normal;">(${pc.by})</span>
                         </div>
                         ${undoBtn}
                     </div>
                 </div>`;
             } else {
                 let typeIcon = pc.type === 'buff' ? '🛡️' : '🚫';
-                let gmUndo = currentRole === 'gm' ? ` <button style="color:var(--danger); background:none; border:none; font-weight:900; font-size:0.7rem; padding:2px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">[PERU]</button>` : '';
+                let gmUndo = ` <button style="color:var(--danger); background:none; border:none; font-weight:900; font-size:0.7rem; padding:2px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">[PERU]</button>`;
                 html += `
-                <div style="background:rgba(255,255,255,0.7); padding:8px; border-radius:6px; font-size:0.8rem; box-shadow: 1px 2px 4px rgba(0,0,0,0.2); grid-column: 1 / -1;">
-                    <b>${typeIcon} ${pc.cardName}</b><br><span style="color:#555;">${pc.by} ➡️ <b style="color:var(--danger);">${pc.target}</b></span>${gmUndo}
+                <div style="background:rgba(255,255,255,0.9); padding:8px; border-radius:6px; font-size:0.8rem; box-shadow: 1px 2px 4px rgba(0,0,0,0.2); grid-column: 1 / -1;">
+                    <b>${typeIcon} ${pc.cardName}</b><br><span style="color:#555;">${pc.by} ➡️ <b style="color:var(--danger);">${pc.target}</b></span>${isActive ? gmUndo : ''}
                 </div>`;
             }
         });
@@ -343,6 +354,7 @@ window.renderBoard = function() {
             rule: activeHole.rule,
             playedCards: activeHole.playedCards,
             color: activeHole.color,
+            penColor: activeHole.penColor,
             players: allPlayers
         }, currentHoleIndex, true);
     }
@@ -409,6 +421,16 @@ window.executeCardPlay = function(targetName) {
     update(ref(db), updates);
     window.logEvent(`${myName} pelasi kortin ${card.def.n} kohteelle ${targetName}.`);
     window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, card.def.type === 'buff' ? 'info' : 'debuff');
+};
+
+window.undoCardPlay = function(timestamp) {
+    if(!activeHole || !activeHole.playedCards) return;
+    let nextCards = {};
+    let oldCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
+    oldCards.filter(Boolean).forEach((c, i) => { 
+        if(c.timestamp !== timestamp) nextCards['c_'+i] = c; 
+    });
+    update(ref(db), { 'gameState/activeHole/playedCards': window.cleanFirebaseData(nextCards) });
 };
 
 window.forceDiscard = function(cId, isNormal) {
@@ -621,7 +643,7 @@ window.showHandLimitModal = function(cards) {
 };
 
 //==============================================
-// 3D KORTTIVIUHKA (KARUSELLI)
+// 3D KORTTIVIUHKA (KARUSELLI) - POISTETTU FOIL SAFARI-BUGIN TAKIA
 //==============================================
 window.renderCarousel = function() {
     const container = el('cardCarousel');
@@ -637,7 +659,6 @@ window.renderCarousel = function() {
         let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
         let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
         
-        // POISTETTU foilDiv 3D-karusellista Safarin välkkymisen estämiseksi
         html += `
             <div class="carousel-card-wrapper" id="carousel-wrapper-${i}">
                 <div class="card-3d-inner" id="card3d-inner-${i}">
@@ -904,7 +925,7 @@ window.submitScores = function() {
         }
     }
     
-    let nextActiveHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now(), color: getRandomColor() };
+    let nextActiveHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now(), color: getRandomColor(), penColor: getRandomPen() };
     
     update(ref(db), window.cleanFirebaseData({
         'gameState/players': nextPlayers,
@@ -927,7 +948,7 @@ window.startMeilahti = function() {
     
     const rules = window.holeRules || [];
     const randomRule = rules.length > 0 ? rules[Math.floor(Math.random() * rules.length)] : {type:"rule", n:"Peli Alkaa", d:""};
-    let nextActiveHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now(), color: getRandomColor() };
+    let nextActiveHole = { rule: randomRule, shop: uniqueShop, playedCards: {}, timestamp: Date.now(), color: getRandomColor(), penColor: getRandomPen() };
     
     let normalPool = (window.allCards || []).filter(c => c && c.tier === "normal");
     let nextPlayers = [];
@@ -970,6 +991,7 @@ window.saveGameSettings = function() {
         ptsTask: parseInt(el('gmSetPtsTask').value, 10) || 0, ptsLose: parseInt(el('gmSetPtsLose').value, 10) || 0, ptsPassive: window.gameSettings.ptsPassive || 1
     });
     window.showNotification("Asetukset tallennettu!", "info");
+    el('settingsModal').style.display = 'none';
 };
 
 //==============================================
@@ -987,16 +1009,14 @@ window.cleanFirebaseData = function(obj) {
 };
 window.logEvent = function(msg) { push(ref(db, 'gameState/eventLog'), window.cleanFirebaseData({ time: new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'}), msg: msg })); };
 window.updateIdentityUI = function() { if(el('identityCard')) { el('identityCard').style.display = myName ? 'none' : 'block'; } };
-window.setRole = function(r) { currentRole = r; document.body.className = r + '-mode'; if(el('btnPlayer')) el('btnPlayer').classList.toggle('active', r === 'player'); if(el('btnGM')) el('btnGM').classList.toggle('active', r === 'gm'); window.renderBoard(); };
 window.showNotification = function(message, type = 'info') { const container = el('notificationContainer'); if(!container) return; const toast = document.createElement('div'); toast.className = `notification ${type}`; toast.innerHTML = `<span style="font-size:1.3rem;">${type === 'warning' ? '🛒' : (type === 'debuff' ? '💥' : 'ℹ️')}</span> <span>${message}</span>`; container.appendChild(toast); setTimeout(() => { toast.remove(); }, 2000); };
 window.claimIdentity = function() { let n = el('playerNameInput').value.trim(); if(!n || n.length > 15) return alert("Syötä nimi!"); myName = n; localStorage.setItem('friba_name', n); window.updateIdentityUI(); if(!(allPlayers || []).find(x => x && x.name === n)) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers)); window.logEvent(`${n} liittyi peliin.`); } };
 
-// GM Toiminnot jne. (säilytetty ennallaan lyhennettynä koodikoon pitämiseksi aisoissa)
-window.adminAddPlayer = function() { const input = el('adminNewPlayerName'); if(!input) return; const name = input.value.trim(); if(!name || (allPlayers || []).find(p => p && p.name === name)) return; let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: name, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); input.value = ''; window.logEvent(`${myName} (GM) lisäsi pelaajan: ${name}`); };
+window.adminAddPlayer = function() { const input = el('adminNewPlayerName'); if(!input) return; const name = input.value.trim(); if(!name || (allPlayers || []).find(p => p && p.name === name)) return; let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: name, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); input.value = ''; window.logEvent(`${myName} (Asetukset) lisäsi pelaajan: ${name}`); };
 window.removePlayer = function(index) { if(confirm("Haluatko poistaa?")) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.splice(index, 1); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); } };
 window.adjustScore = function(index, delta) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); if(nextPlayers[index]) { nextPlayers[index].score = (parseInt(nextPlayers[index].score) || 0) + delta; update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); } };
 window.adjustDgScore = function(index, delta) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); if(nextPlayers[index]) { nextPlayers[index].dgScore = (parseInt(nextPlayers[index].dgScore) || 0) + delta; update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); } };
-window.gmRollRule = function() { if(!activeHole || window.holeRules.length === 0) return; const randomRule = window.holeRules[Math.floor(Math.random() * window.holeRules.length)]; set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(randomRule)); };
+window.gmRollRule = function() { if(!activeHole || window.holeRules.length === 0) return; const randomRule = window.holeRules[Math.floor(Math.random() * window.holeRules.length)]; set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(randomRule)); document.getElementById('settingsModal').style.display='none';};
 window.gmSetRule = function() { if(!activeHole) return; const sel = el('gmRuleSelect'); const ruleDef = window.holeRules[sel.value]; if(ruleDef) { set(ref(db, 'gameState/activeHole/rule'), window.cleanFirebaseData(ruleDef)); } };
 
 window.renderAdminPlayerList = function() {
@@ -1004,30 +1024,30 @@ window.renderAdminPlayerList = function() {
     (allPlayers || []).forEach((p, i) => {
         if(!p) return; 
         list.innerHTML += `
-            <div class="player-row glass-card" style="flex-direction:column; align-items:flex-start; gap:10px;">
+            <div class="player-row glass-card" style="flex-direction:column; align-items:flex-start; gap:10px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); padding:15px; border-radius:12px; margin-bottom:15px;">
                 <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-                    <span style="font-weight:900; font-size:1.1rem; color:var(--text-main);">${p.name} (${p.score} P / DG: ${p.dgScore > 0 ? '+' : ''}${p.dgScore || 0})</span>
+                    <span style="font-weight:900; font-size:1.1rem; color:#fff;">${p.name} (${p.score} P / DG: ${p.dgScore > 0 ? '+' : ''}${p.dgScore || 0})</span>
                     <div style="display:flex; gap: 8px;">
                         <button class="btn btn-danger" style="width:auto; padding:10px; font-size:0.85rem;" onclick="window.removePlayer(${i})">POISTA</button>
                     </div>
                 </div>
-                <div class="gm-score-adjust" style="display:flex; gap:10px; margin-top:10px;">
-                    <span style="font-size:0.85rem; color:var(--text-muted); width:50px; font-weight:bold; align-self:center;">Raha</span>
-                    <input type="number" id="gmScoreAdjust_${i}" value="1" style="width:60px; margin:0; padding:10px;">
+                <div class="gm-score-adjust" style="display:flex; gap:10px; margin-top:10px; color:#fff;">
+                    <span style="font-size:0.85rem; width:50px; font-weight:bold; align-self:center;">Raha</span>
+                    <input type="number" id="gmScoreAdjust_${i}" value="1" style="width:60px; margin:0; padding:10px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
                     <button class="btn btn-primary" style="padding:10px;" onclick="if(window.adjustScore) { window.adjustScore(${i}, parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0); }">Lisää</button>
                     <button class="btn btn-danger" style="padding:10px;" onclick="if(window.adjustScore) { window.adjustScore(${i}, -(parseInt(document.getElementById('gmScoreAdjust_${i}').value) || 0)); }">Vähennä</button>
                 </div>
-                <div class="gm-score-adjust" style="display:flex; gap:10px; margin-top:5px;">
-                    <span style="font-size:0.85rem; color:var(--text-muted); width:50px; font-weight:bold; align-self:center;">Tulos</span>
-                    <button class="btn btn-secondary" style="padding:10px;" onclick="if(window.adjustDgScore) { window.adjustDgScore(${i}, 1); }">+1 Heitto</button>
-                    <button class="btn btn-secondary" style="padding:10px;" onclick="if(window.adjustDgScore) { window.adjustDgScore(${i}, -1); }">-1 Heitto</button>
+                <div class="gm-score-adjust" style="display:flex; gap:10px; margin-top:5px; color:#fff;">
+                    <span style="font-size:0.85rem; width:50px; font-weight:bold; align-self:center;">Tulos</span>
+                    <button class="btn btn-secondary" style="padding:10px; background:rgba(255,255,255,0.8); color:#000;" onclick="if(window.adjustDgScore) { window.adjustDgScore(${i}, 1); }">+1 Heitto</button>
+                    <button class="btn btn-secondary" style="padding:10px; background:rgba(255,255,255,0.8); color:#000;" onclick="if(window.adjustDgScore) { window.adjustDgScore(${i}, -1); }">-1 Heitto</button>
                 </div>
             </div>`;
     });
 };
 
-window.renderEventLog = function(logData) { const container = el('adminEventLog'); if(!container) return; container.innerHTML = ""; Object.values(logData || {}).reverse().slice(0, 30).forEach(l => { container.innerHTML += `<div style="padding:8px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:900;">[${l.time}]</span>${l.msg}</div>`; }); };
-window.renderScoreLog = function(logData) { const container = el('adminScoreLog'); if(!container) return;  container.innerHTML = ""; Object.values(logData || {}).reverse().slice(0, 50).forEach(l => { let color = l.delta >= 0 ? 'var(--info)' : 'var(--danger)'; container.innerHTML += `<div style="padding:8px 0; border-bottom:1px solid var(--border);"><span style="color:var(--primary); margin-right:8px; font-weight:900;">[${l.time}]</span><b>${l.playerName}</b>: <span style="color:${color}; font-weight:900;">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`; }); };
+window.renderEventLog = function(logData) { const container = el('adminEventLog'); if(!container) return; container.innerHTML = ""; Object.values(logData || {}).reverse().slice(0, 30).forEach(l => { container.innerHTML += `<div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.2);"><span style="color:var(--primary); margin-right:8px; font-weight:900;">[${l.time}]</span>${l.msg}</div>`; }); };
+window.renderScoreLog = function(logData) { const container = el('adminScoreLog'); if(!container) return;  container.innerHTML = ""; Object.values(logData || {}).reverse().slice(0, 50).forEach(l => { let color = l.delta >= 0 ? 'var(--info)' : 'var(--danger)'; container.innerHTML += `<div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.2);"><span style="color:var(--primary); margin-right:8px; font-weight:900;">[${l.time}]</span><b>${l.playerName}</b>: <span style="color:${color}; font-weight:900;">${l.delta > 0 ? '+' : ''}${l.delta} P</span></div>`; }); };
 
 // =============================================
 // FIREBASE KUUNTELIJA
@@ -1041,6 +1061,8 @@ onValue(ref(db, 'gameState'), (snap) => {
         if(el('lobbyContainer')) el('lobbyContainer').style.display = 'block';
         if(el('corkboard-viewport')) el('corkboard-viewport').style.display = 'none';
         if(el('zoomToggleBtn')) el('zoomToggleBtn').style.display = 'none';
+        if(el('settingsToggleBtn')) el('settingsToggleBtn').style.display = 'none';
+        if(el('pocketContainer')) el('pocketContainer').style.display = 'none';
         return;
     }
 
@@ -1063,6 +1085,8 @@ onValue(ref(db, 'gameState'), (snap) => {
     const corkboardViewport = el('corkboard-viewport');
     const gameSetupArea = el('gameSetupArea');
     const btnZoom = el('zoomToggleBtn');
+    const btnSettings = el('settingsToggleBtn');
+    const pocket = el('pocketContainer');
     
     if (myName) {
         if (!currentCourse) {
@@ -1070,16 +1094,22 @@ onValue(ref(db, 'gameState'), (snap) => {
             if(gameSetupArea) gameSetupArea.style.display = 'block';
             if(corkboardViewport) corkboardViewport.style.display = 'none';
             if(btnZoom) btnZoom.style.display = 'none';
+            if(btnSettings) btnSettings.style.display = 'none';
+            if(pocket) pocket.style.display = 'none';
         } else {
             if(lobbyContainer) lobbyContainer.style.display = 'none';
             if(corkboardViewport) corkboardViewport.style.display = 'block';
             if(btnZoom) btnZoom.style.display = 'block';
+            if(btnSettings) btnSettings.style.display = 'block';
+            if(pocket) pocket.style.display = 'flex';
         }
     } else {
         if(lobbyContainer) lobbyContainer.style.display = 'block';
         if(gameSetupArea) gameSetupArea.style.display = 'none';
         if(corkboardViewport) corkboardViewport.style.display = 'none';
         if(btnZoom) btnZoom.style.display = 'none';
+        if(btnSettings) btnSettings.style.display = 'none';
+        if(pocket) pocket.style.display = 'none';
     }
 
     window.renderBoard();
