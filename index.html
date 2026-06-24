@@ -17,8 +17,8 @@
     <link rel="apple-touch-icon" href="friba.png" />
     
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=132" />
-    <meta id="themeColorMeta" name="theme-color" content="#d8c3a5" />
+    <link rel="stylesheet" href="style.css?v=133" />
+    <meta id="themeColorMeta" name="theme-color" content="#cbd5e1" />
     
     <script>
       window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
@@ -51,7 +51,7 @@
 
     <div class="container">
 
-        <!-- ALKUNÄKYMÄ: TEIPATTU PAPERI -->
+        <!-- ALKUNÄKYMÄ -->
         <div id="identityCard" class="torn-paper" style="text-align: center; margin-top:15px;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
             <div class="tape tape-bl"></div><div class="tape tape-br"></div>
@@ -69,7 +69,7 @@
 
         <div id="mainGameArea" style="display:none; margin-top:15px;">
             
-            <!-- VÄYLÄN TIEDOT TORN PAPER / BANNER -->
+            <!-- VÄYLÄN TIEDOT -->
             <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 25px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
                 <div id="courseInfoBanner" class="course-banner-paper" style="flex: 1; margin: 0;">
                     <div class="tape tape-top-center"></div>
@@ -80,19 +80,17 @@
                 <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; font-size: 0.9rem; line-height:1.2; box-shadow: 2px 4px 8px rgba(0,0,0,0.4); border-radius: 4px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.4rem;">📝 SYÖTÄ<br />TULOS</button>
             </div>
 
-            <!-- TEIPATTU SÄÄNTÖPAPERI -->
+            <!-- VÄYLÄSÄÄNTÖ / TEHTÄVÄ (POST-IT) -->
             <div id="activeHoleContainer"></div>
             
-            <!-- SABOTAASI KORTIT NUPPINEULOILLA -->
-            <div id="myActiveRulesContainer" style="display:none; margin-bottom: 30px;"></div>
-            
-            <div id="activeCardsArea" style="display:none; margin-bottom: 25px;">
-                <h2 style="color: var(--text-main); font-size: 0.8rem; margin-bottom: 15px; display:flex; align-items:center; gap:8px;">📌 KAIKKI PELATUT KORTIT</h2>
+            <!-- SABOTAASI KORTIT -->
+            <div id="activeCardsArea" style="display:none; margin-bottom: 25px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
+                <h2 style="color: var(--text-main); font-size: 0.8rem; margin-bottom: 15px; display:flex; align-items:center; gap:8px;">📌 PELATUT KORTIT</h2>
                 <div id="activeCardsContainer" class="cards-grid-2"></div>
             </div>
             
             <div class="player-only">
-                <!-- LEADERBOARD PAPERI NIDOTTUNA -->
+                <!-- TULOSKORTTI -->
                 <div class="stapled-paper">
                     <div class="staple staple-1"></div>
                     <div class="staple staple-2"></div>
@@ -154,7 +152,17 @@
             </div>
         </div>
 
-        <!-- LOKERIKKO JA KANSIOT -->
+        <div style="margin-top: 20px; padding-top: 20px; display:flex; flex-direction:column; gap:12px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
+            <button class="btn btn-secondary" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px; opacity:0.8;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
+
+            <!-- ROOLIN VALINTA -->
+            <div class="role-switcher">
+                <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player');">PELAAJA</button>
+                <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">GM</button>
+            </div>
+        </div>
+
+        <!-- LOKERIKKO JA KANSIOT (BOTTOM NAV) -->
         <div class="player-only">
             <div class="corkboard-pocket-container">
                 <div class="binder-spine-btn" onclick="if(window.openShop) window.openShop('sell')">
@@ -171,15 +179,6 @@
             </div>
         </div>
 
-        <div style="margin-top: 20px; padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
-            <button class="btn btn-secondary" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px; opacity:0.8;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
-
-            <div class="role-switcher">
-                <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player');">PELAAJA</button>
-                <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">GM</button>
-            </div>
-        </div>
-
     </div>
 
     <!-- Modaalit (klikkaus taustaan sulkee ne) -->
@@ -191,12 +190,12 @@
                 <div class="binder-ring"></div>
             </div>
             
-            <div class="fullscreen-modal-header" style="margin-bottom:15px; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom:15px; position:relative; z-index:20;">
+            <div class="fullscreen-modal-header" style="margin-bottom:15px; border-bottom: 2px dashed rgba(255,255,255,0.2); padding-bottom:15px; position:relative; z-index:20;">
                 <h2 style="display:flex; align-items:center; gap:10px; color:#fff;">🛒 KAUPPA <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px;">0 P</span></h2>
                 <button class="close-modal-btn" aria-label="Sulje" onclick="window.closeShopModal();">&times;</button>
             </div>
             
-            <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.1); padding:4px; border:1px solid rgba(255,255,255,0.2); position:relative; z-index:20;">
+            <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.05); padding:4px; border:1px solid rgba(255,255,255,0.1); position:relative; z-index:20;">
                 <button id="shopTabBuyBtn" class="role-btn active" onclick="if(window.switchShopTab) window.switchShopTab('buy')" style="color:#fff;">OSTA KORTTEJA</button>
                 <button id="shopTabSellBtn" class="role-btn" onclick="if(window.switchShopTab) window.switchShopTab('sell')" style="color:#fff;">OMAT KORTIT</button>
             </div>
@@ -214,8 +213,7 @@
                 <div id="shopSellCardsContainer" class="cards-grid-2"></div>
             </div>
 
-            <!-- Helppo sulkemisnappi myös kansion alalaitaan -->
-            <button class="btn btn-secondary" style="margin-top: 35px; background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onclick="window.closeShopModal()">SULJE KANSIO</button>
+            <button class="btn btn-secondary" style="margin-top: 35px; background: rgba(255,255,255,0.1); color: #fff; border: 1px dashed rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.3);" onclick="window.closeShopModal()">SULJE KANSIO</button>
         </div>
     </div>
 
@@ -245,7 +243,8 @@
                 <p>Par <strong id="scoreModalPar">3</strong></p>
             </div>
             
-            <div id="scoreModalRuleBox" style="display: none; background: #fdfaf6; border: 2px solid var(--ink-blue); padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 1.2rem; line-height: 1.2; position: relative; z-index: 10;"></div>
+            <!-- Tästä tulee nyt Post-it tyylinen dynaamisesti script.js:ssä -->
+            <div id="scoreModalRuleBox" style="display: none;"></div>
 
             <div id="scoreInputsContainer" style="margin-bottom: 20px;"></div>
             
@@ -268,7 +267,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=132"></script>
-    <script type="module" src="script.js?v=132"></script>
+    <script src="tasks.js?v=133"></script>
+    <script type="module" src="script.js?v=133"></script>
 </body>
 </html>
