@@ -170,7 +170,7 @@ window.executeCardPlay = function(targetName) {
 };
 
 //==============================================
-// NATIIVI KORTTIVIUHKA (SMOOTH & LEVEÄ)
+// TÄYDELLISESTI OPTIMOITU KORTTIVIUHKA MATEMATIIKALLA
 //==============================================
 window.carouselCards = [];
 window.carouselCurrentMode = 'hand';
@@ -219,6 +219,9 @@ window.initNativeCarousel = function() {
     const container = el('cardCarousel');
     if(!container) return;
     
+    const cards = Array.from(container.querySelectorAll('.carousel-card-wrapper'));
+    if(cards.length === 0) return;
+
     let isScrolling = false;
     
     container.addEventListener('scroll', () => {
@@ -229,31 +232,35 @@ window.initNativeCarousel = function() {
     }, {passive: true});
 
     function updateCarouselLayout() {
-        const center = container.clientWidth / 2;
-        const cards = container.querySelectorAll('.carousel-card-wrapper');
+        const scrollLeft = container.scrollLeft;
+        const containerWidth = container.clientWidth;
+        const centerOffset = containerWidth / 2;
+        const cardWidth = 280; // Määrätty CSS:ssä
+        const paddingLeft = centerOffset - (cardWidth / 2); // Keskittää ensimmäisen kortin
+        
         let closestIndex = 0;
         let minDiff = 9999;
-        const scrollLeft = container.scrollLeft;
 
-        cards.forEach((card, index) => {
-            const cardCenter = card.offsetLeft - scrollLeft + (card.offsetWidth / 2);
-            const diff = (cardCenter - center) / 140; 
+        // Puhdas matematiikka ilman DOM-lukemista silmukassa (60fps takuu!)
+        for (let index = 0; index < cards.length; index++) {
+            const card = cards[index];
+            const cardCenter = paddingLeft + (index * cardWidth) + (cardWidth / 2) - scrollLeft;
+            const diff = (cardCenter - centerOffset) / 140; // Levittää viuhkaa
             
-            const transX = diff * -70; 
-            const rotZ = diff * 8;
-            const transY = Math.abs(diff) * 20;
-            const scale = Math.max(0.8, 1.15 - Math.abs(diff) * 0.15); 
-            const opacity = 1; 
+            const transX = diff * -70; // Tuo vierekkäisiä kortteja näkyviin sivuille
+            const rotZ = diff * 8;     // Kaarevuus
+            const transY = Math.abs(diff) * 20; // Pudotus
+            const scale = Math.max(0.8, 1.15 - Math.abs(diff) * 0.15); // Keskikortti on massiivinen
             
-            card.style.transform = `translateX(${transX}px) translateY(${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
-            card.style.opacity = opacity;
+            // translate3d ottaa käyttöön rautakiihdytyksen
+            card.style.transform = `translate3d(${transX}px, ${transY}px, 0) rotateZ(${rotZ}deg) scale(${scale})`;
             card.style.zIndex = 100 - Math.floor(Math.abs(diff)*10);
             
             if (Math.abs(diff) < minDiff) {
                 minDiff = Math.abs(diff);
                 closestIndex = index;
             }
-        });
+        }
         
         if (window.carouselCurrentIndex !== closestIndex) {
             window.carouselCurrentIndex = closestIndex;
@@ -263,8 +270,10 @@ window.initNativeCarousel = function() {
         isScrolling = false;
     }
     
+    // Alustus
     setTimeout(updateCarouselLayout, 50);
 
+    // KORTIN OMNI-PYÖRITYS (Ylös/alas pyyhkäisy)
     let startX = 0; let startY = 0;
     let isSpinning = false;
     
@@ -348,7 +357,7 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
         const container = el('cardCarousel');
         const targetCard = el(`carousel-wrapper-${window.carouselCurrentIndex}`);
         if(container && targetCard) {
-            container.scrollLeft = targetCard.offsetLeft - (container.clientWidth / 2) + (targetCard.clientWidth / 2);
+            container.scrollLeft = (window.carouselCurrentIndex * 280); // Manuaalinen vieritys oikeaan korttiin ilman offsetLeftiä
         }
     }, 100);
 };
@@ -502,7 +511,7 @@ window.openShop = function(tab) {
 };
 
 window.closeShopModal = function() {
-    window.pendingShopPurchase = null; // Aina nollataan varmuuden vuoksi kun kansio menee kiinni
+    window.pendingShopPurchase = null; 
     if(el('shopModal')) el('shopModal').style.display = 'none';
     let modalEl = document.querySelector('#shopModal .shop-binder-modal');
     if(modalEl) {
@@ -553,7 +562,7 @@ window.switchShopTab = function(tab) {
     const headerTitle = el('shopModalHeaderTitle');
     
     if (tab === 'buy') {
-        window.pendingShopPurchase = null; // Jos peruutetaan kaupan puolelle
+        window.pendingShopPurchase = null; 
         el('shopBuyArea').style.display = 'block';
         el('shopSellArea').style.display = 'none';
         if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.add('active');
@@ -578,7 +587,6 @@ window.switchShopTab = function(tab) {
         }
     }
     
-    // Uudelleenrenderöidään kauppa, jotta varoituslaatikko osaa piiloutua tarvittaessa
     let me = (allPlayers || []).find(p => p && p.name === myName);
     window.renderShop(activeHole ? activeHole.shop : null, me ? me.score : 0, me ? me.boughtThisHole : false);
 };
@@ -792,7 +800,7 @@ window.renderActiveHole = function() {
                 let typeIcon = cType === 'buff' ? '🛡️' : '🚫';
                 let gmUndo = currentRole === 'gm' ? ` <button style="color:var(--danger); background:none; border:none; font-weight:900; font-size:0.8rem; padding:4px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">[PERU]</button>` : '';
                 otherCardsHtml += `
-                    <div style="background:rgba(255,255,255,0.7); padding:10px 12px; border-radius:8px; margin-bottom:8px; font-size:0.9rem; color:#111; box-shadow:0 2px 4px rgba(0,0,0,0.1); ${cursorStyle}" ${clickAttr}>
+                    <div style="background:rgba(255,255,255,0.7); padding:10px 12px; border-radius:8px; margin-bottom:8px; font-size:0.9rem; color:#111; box-shadow: 2px 4px 6px rgba(0,0,0,0.2); transform: perspective(800px) translateZ(5px); ${cursorStyle}" ${clickAttr}>
                         <b style="font-size:1rem;">${typeIcon} ${pc.cardName}</b><br>
                         <span style="font-size:0.8rem; color:#555;">Pelaaja <b>${pc.by}</b> pelasi kohteelle <b style="text-transform:uppercase; color:var(--danger);">${pc.target}</b></span>${gmUndo}
                     </div>`;
@@ -876,7 +884,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     }
     if (sellContainer) sellContainer.innerHTML = sellHtml;
     
-    // Dynaaminen varoitus "Käsiraja ylitetty" TAI "Käsi täynnä (osto)"
+    // Dynaaminen varoituslaatikko
     let alertEl = el('pendingPurchaseAlert');
     if (alertEl) {
         let limitEnabled = window.gameSettings.handLimitEnabled !== undefined ? window.gameSettings.handLimitEnabled : true;
