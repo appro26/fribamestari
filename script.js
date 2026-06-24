@@ -170,7 +170,7 @@ window.executeCardPlay = function(targetName) {
 };
 
 //==============================================
-// TÄYDELLISESTI OPTIMOITU KORTTIVIUHKA MATEMATIIKALLA
+// TÄYDELLISESTI OPTIMOITU KORTTIVIUHKA (60fps DOM-vapaa)
 //==============================================
 window.carouselCards = [];
 window.carouselCurrentMode = 'hand';
@@ -189,19 +189,24 @@ window.renderCarousel = function() {
         if(!cDef) return;
         
         let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
-        if(cDef.tier === 'premium') typeClass = 'premium-card';
+        let isPremium = false;
+        if(cDef.tier === 'premium') { typeClass = 'premium-card'; isPremium = true; }
+        
         let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
         let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
         let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
+        
+        let foilDiv = isPremium ? `<div class="foil-fx"></div>` : '';
         
         html += `
             <div class="carousel-card-wrapper" id="carousel-wrapper-${i}">
                 <div class="card-3d-inner" id="card3d-inner-${i}">
                     <div class="card-face card-front ${typeClass}">
-                        <div style="text-align:left; display:flex; flex-direction:column; height:100%;">
+                        ${foilDiv}
+                        <div style="text-align:left; display:flex; flex-direction:column; height:100%; position:relative; z-index:20;">
                             <div class="card-type-tag" style="font-size:1.3rem; margin-bottom:12px;">${tagTxt}</div>
-                            <h3 style="font-size:2.4rem; margin-bottom:20px; color:#000; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
-                            <p style="font-size:1.6rem; color:#111; font-weight:800; line-height:1.4; overflow-y:visible; padding-right:5px;">${cDef.d}</p>
+                            <h3 style="font-size:2.4rem; margin-bottom:20px; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
+                            <p style="font-size:1.6rem; font-weight:800; line-height:1.4; overflow-y:visible; padding-right:5px;">${cDef.d}</p>
                         </div>
                     </div>
                     <div class="card-face card-back ${backClass}">
@@ -241,7 +246,7 @@ window.initNativeCarousel = function() {
         let closestIndex = 0;
         let minDiff = 9999;
 
-        // PUHDAS MATEMATIIKKA ILMAN DOM-LUKEMISTA
+        // Puhdas matematiikka ilman DOM-lukemista silmukassa (Takaa 60fps)
         for (let index = 0; index < cards.length; index++) {
             const card = cards[index];
             const cardCenter = paddingLeft + (index * cardWidth) + (cardWidth / 2) - scrollLeft;
@@ -353,8 +358,7 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     setTimeout(() => {
         window.initNativeCarousel();
         const container = el('cardCarousel');
-        const targetCard = el(`carousel-wrapper-${window.carouselCurrentIndex}`);
-        if(container && targetCard) {
+        if(container) {
             container.scrollLeft = (window.carouselCurrentIndex * 280); 
         }
     }, 100);
@@ -749,8 +753,8 @@ window.renderActiveHole = function() {
         container.innerHTML = `
             <div class="spiral-note">
                 <div class="spiral-note-tape"></div>
-                <div style="font-weight:900; font-size:0.8rem; margin-bottom:8px; text-transform:uppercase; color:#666; font-family:'Inter', sans-serif;">${bountyTag}</div>
-                <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; font-family:'Inter', sans-serif; color:#111;">${activeHole.rule.n}</div>
+                <div style="font-weight:900; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; color:#666; font-family:'Inter', sans-serif; letter-spacing:1px;">${bountyTag}</div>
+                <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; font-family:'Inter', sans-serif; color:#111; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">${activeHole.rule.n}</div>
                 <div style="font-size: 1.15rem; line-height: 1.4; font-family:'Inter', sans-serif; font-weight:700; color:#222;">${activeHole.rule.d}</div>
             </div>`; 
     }
@@ -834,10 +838,13 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             
             html += `
                 <div class="shop-item-wrapper">
-                    <div class="physical-card premium-card foil-shine" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
-                        <span class="card-price-tag">${item.price} P</span>
-                        <div class="card-type-tag">💎 KAUPPA</div><h3 style="padding-right:35px;">${item.n}</h3><p>${item.d}</p>
-                        <div style="text-align:center; font-weight:900; font-size:0.75rem; color:#cbd5e1; padding-top:10px; margin-top:auto;">🔄 3D TARKASTELU</div>
+                    <div class="plastic-sleeve">
+                        <div class="physical-card premium-card" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
+                            <div class="foil-fx"></div>
+                            <span class="card-price-tag">${item.price} P</span>
+                            <div class="card-type-tag">💎 KAUPPA</div><h3 style="padding-right:35px;">${item.n}</h3><p>${item.d}</p>
+                            <div style="text-align:center; font-weight:900; font-size:0.75rem; color:#94a3b8; padding-top:10px; margin-top:auto;">🔄 3D TARKASTELU</div>
+                        </div>
                     </div>
                     <button class="shop-item-btn ${btnClass}" ${dis} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
                 </div>`;
@@ -857,7 +864,11 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             const cDef = (window.allCards || []).find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
-            if(cDef.tier === 'premium') typeClass = 'premium-card'; 
+            let foilDiv = '';
+            if(cDef.tier === 'premium') {
+                typeClass = 'premium-card';
+                foilDiv = `<div class="foil-fx"></div>`;
+            }
             let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
             
             let isNormal = cDef.tier === 'normal';
@@ -868,6 +879,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             sellHtml += `
             <div class="shop-item-wrapper messy-card" style="transform: rotate(${rot}deg);">
                 <div class="physical-card worn-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer;">
+                    ${foilDiv}
                     <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p>
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
                 </div>
@@ -1038,8 +1050,8 @@ window.giveCardToPlayer = function(cardId) {
         p.cards.push(cardId);
         set(ref(db, `gameState/players`), window.cleanFirebaseData(nextPlayers));
         window.logEvent(`${myName} (GM) antoi kortin ${cardDef.n} pelaajalle ${p.name}.`);
-        window.showNotification(`Kortti lisätty pelaajalle ${p.name}!`, "info");
-        el('gmGiveCardModal').style.display = 'none';
+        window.showAppleToast(`Kortti ${cardDef.n} annettu!`, '✅');
+        // HUOM! EI suljeta modaalia automaattisesti, vaan annetaan GM:n jakaa useita kortteja
     }
 };
 
@@ -1227,8 +1239,15 @@ window.openScoreModal = function() {
         if(activeHole && activeHole.rule) {
             let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
             let bTxt = activeHole.rule.type === 'bounty' ? `TEHTÄVÄ (+${ptsTask} P)` : 'SÄÄNTÖ';
+            
+            // Käytetään modaalin sisällä uutta spiral-note luokkaa säännölle, mutta nollataan 3D-kallistus
             box.className = 'spiral-note';
-            box.innerHTML = `<div class="spiral-note-tape"></div><strong style="font-size:1.4rem; font-family:'Inter', sans-serif;">${bTxt}: ${activeHole.rule.n}</strong><br><span style="font-size:1.2rem; font-family:'Inter', sans-serif;">${activeHole.rule.d}</span>`;
+            box.style.transform = 'none'; 
+            box.style.margin = '0 auto 20px auto';
+            
+            box.innerHTML = `<div class="spiral-note-tape"></div><div style="font-weight:900; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; color:#666; font-family:'Inter', sans-serif;">${bTxt}</div>
+                             <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; font-family:'Inter', sans-serif; color:#111;">${activeHole.rule.n}</div>
+                             <div style="font-size: 1.15rem; line-height: 1.4; font-family:'Inter', sans-serif; font-weight:700; color:#222;">${activeHole.rule.d}</div>`;
             box.style.display = 'block';
         } else {
             box.style.display = 'none';
