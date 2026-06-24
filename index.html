@@ -17,7 +17,7 @@
     <link rel="apple-touch-icon" href="friba.png" />
     
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=142" />
+    <link rel="stylesheet" href="style.css?v=143" />
     <meta id="themeColorMeta" name="theme-color" content="#cbd5e1" />
     
     <script>
@@ -69,17 +69,24 @@
 
         <div id="mainGameArea" style="display:none; margin-top:15px;">
             
-            <!-- VÄYLÄN TIEDOT (HAKEMISTOKORTTI) -->
-            <div style="display: flex; gap: 10px; align-items: stretch; margin-bottom: 35px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;">
-                <div id="courseInfoBanner" class="index-card" style="flex: 1; margin: 0;">
+            <!-- VÄYLÄN TIEDOT (HAKEMISTOKORTTI) & ROIKKUVA KYNÄ -->
+            <div style="display: flex; align-items: stretch; margin-bottom: 35px; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto; position: relative;">
+                <div id="courseInfoBanner" class="index-card" style="width: 75%; margin: 0 auto; z-index: 10;">
                     <div class="banner-subtitle" id="bannerCourseName">Rata</div>
                     <div class="banner-title">VÄYLÄ <span id="bannerHoleNum">1</span></div>
                     <div style="margin-top: 5px;"><span class="banner-par">PAR <span id="bannerPar">3</span></span></div>
                 </div>
-                <button class="btn btn-primary" onclick="if(window.openScoreModal) { window.openScoreModal(); }" style="width: auto; padding: 0 15px; margin: 0; line-height:1.2; box-shadow: 4px 6px 15px rgba(0,0,0,0.5); border-radius: 6px; background: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.6rem; transform: perspective(800px) rotateX(2deg) translateZ(5px);">📝 SYÖTÄ<br />TULOS</button>
+                
+                <!-- Roikkuva Kynä (Syötä Tulos) -->
+                <div class="pen-container" onclick="if(window.openScoreModal) { window.openScoreModal(); }">
+                    <div class="pen-string"></div>
+                    <div class="pen-body">
+                        <span class="pen-text">MERKKAA</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- VÄYLÄSÄÄNTÖ / TEHTÄVÄ (NEON LEVY) -->
+            <!-- VÄYLÄSÄÄNTÖ / TEHTÄVÄ (POST-IT LAPPU) -->
             <div id="activeHoleContainer"></div>
             
             <!-- SABOTAASI KORTIT -->
@@ -240,10 +247,10 @@
 
     <!-- FOTOREALISTINEN PAPERITULOSKORTTI (MODAALISSA) -->
     <div id="scoreModal" class="winner-overlay" onclick="if(event.target === this) { this.style.display='none'; }">
-        <div class="score-spiral-note" style="margin-top:0; transform:none; max-height: 90vh; overflow-y:auto;">
+        <div class="paper-score-modal" style="max-height: 90vh; overflow-y:auto;">
             <div style="text-align: center; margin-bottom: 15px; position:relative; z-index:30;">
-                <h2 style="font-size: 2.6rem; margin-bottom: 5px; color: var(--ink-blue); font-family: 'Kalam', cursive; text-transform: none; text-decoration: underline;">VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
-                <p style="font-size: 1.6rem; color: var(--ink-blue); font-family: 'Kalam', cursive;">Par <strong id="scoreModalPar">3</strong></p>
+                <h2>VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
+                <p>Par <strong id="scoreModalPar">3</strong></p>
             </div>
             
             <div id="scoreModalRuleBox" style="display: none; z-index: 25;"></div>
@@ -269,7 +276,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=142"></script>
-    <script type="module" src="script.js?v=142"></script>
+    <script src="tasks.js?v=143"></script>
+    <script type="module" src="script.js?v=143"></script>
 </body>
 </html>
