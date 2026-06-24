@@ -16,9 +16,8 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     
-    <!-- Ladataan Kalam fontti käsialaa varten -->
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=110" />
+    <link rel="stylesheet" href="style.css?v=115" />
     <meta id="themeColorMeta" name="theme-color" content="#d1fae5" />
     
     <script>
@@ -175,18 +174,17 @@
         </div>
 
         <div style="margin-top: 20px; padding-top: 20px; display:flex; flex-direction:column; gap:12px;">
-            <button class="btn btn-secondary player-only glass-card" onclick="if(window.toggleView) { window.toggleView(); }" id="viewToggleBtn" style="font-size:0.9rem; margin:0; padding:16px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
+            <button class="btn btn-secondary player-only glass-card" onclick="if(window.toggleView) window.toggleView();" id="viewToggleBtn" style="font-size:0.9rem; margin:0; padding:16px;">LAAJENNETTU NÄKYMÄ (KORTIT ESIIN)</button>
             <button class="btn btn-secondary glass-card" onclick="location.reload()" style="font-size:0.9rem; margin:0; padding:16px;" aria-label="Päivitä sivu">🔄 PÄIVITÄ SIVU</button>
 
             <div class="role-switcher glass-card">
-                <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) { window.setRole('player'); }">PELAAJA</button>
-                <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) { window.setRole('gm'); } }">GM</button>
+                <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player');">PELAAJA</button>
+                <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">GM</button>
             </div>
         </div>
 
     </div>
 
-    <!-- Modaalit -->
     <div id="handModal" class="fullscreen-modal">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
@@ -198,7 +196,6 @@
 
     <div id="shopModal" class="fullscreen-modal" style="padding:0; background:transparent;">
         <div class="shop-binder-modal">
-            <!-- Kansion metallirenkaat -->
             <div class="binder-spine">
                 <div class="binder-ring"></div>
                 <div class="binder-ring"></div>
@@ -242,12 +239,22 @@
 
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:20px; overflow:hidden;">
         <div id="cardCarousel" class="fan-carousel-wrapper"></div>
-        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.85rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">👈 VAIHDA KORTTIA SIVULLE 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
+        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.85rem; font-weight:900; text-transform:uppercase; margin-bottom:10px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">👈 VAIHDA KORTTIA SIVULLE 👉<br>👇 KÄÄNNÄ YMPÄRI 👆</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;"></div>
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px; margin-top:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
-    <!-- FOTOREALISTINEN PAPERITULOSKORTTI -->
+    <div id="courseModal" class="winner-overlay">
+        <div class="card glass-card" style="width: 100%; max-width: 450px;">
+            <h2 style="color:var(--text-main); font-size: 1.4rem;">Luo oma rata</h2>
+            <input type="text" id="setupCourseName" aria-label="Radan nimi" placeholder="Radan nimi..." />
+            <input type="number" id="setupHoleCount" aria-label="Väylien määrä" placeholder="Väylien määrä" oninput="if(window.generateParInputs) { window.generateParInputs(); }" />
+            <div id="parInputsContainer" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+            <button class="btn btn-primary" onclick="if(window.saveCourseSetup) { window.saveCourseSetup(); }">TALLENNA & ALOITA</button>
+            <button class="btn btn-secondary glass-card" style="margin-top: 12px;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
+        </div>
+    </div>
+
     <div id="scoreModal" class="winner-overlay">
         <div class="paper-score-modal">
             <div style="text-align: center; margin-bottom: 15px;">
@@ -287,6 +294,7 @@
         </div>
     </div>
 
-    <script type="module" src="script.js?v=110"></script>
+    <script src="tasks.js?v=115"></script>
+    <script type="module" src="script.js?v=115"></script>
 </body>
 </html>
