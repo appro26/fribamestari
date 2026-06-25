@@ -32,7 +32,6 @@ const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length
 
 const pseudoRandom = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
 
-// Tunnistettavammat eläimet!
 const doodleData = [
     { svg: "M 20 70 C 20 90, 80 90, 80 70 C 90 40, 10 40, 20 70 M 20 60 L 10 50 M 35 45 L 30 30 M 65 45 L 70 30 M 80 60 L 90 50 M 40 60 C 45 65, 55 65, 60 60", text: "Mikä tässä lajissa muka on kivaa? Pelkkää puunhakkuuta. -Siili" },
     { svg: "M 40 80 C 20 80, 20 50, 40 50 C 45 40, 60 40, 65 50 C 80 50, 90 80, 70 90 C 80 60, 95 30, 70 20 C 50 10, 50 40, 60 60 M 45 65 C 50 70, 60 70, 65 65", text: "Taas OB:lle. Ootko harkinnu vaikka sauvakävelyä? -Orava" },
@@ -82,18 +81,19 @@ window.dismissInstallPrompt = function() {
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
 // ==============================================
-// VAPAA KAMERA & TAULU (AINA VAPAA PAN/ZOOM)
+// VAPAA KAMERA LIIKE 60fps & SULAVA ZOOM
 // ==============================================
 let boardState = { scale: 1, x: 0, y: 0 };
 let isDraggingBoard = false;
 let lastBoardTouch = null;
 let initialPinchDist = 0;
+window.boardRAF = null;
 
-window.applyBoardTransform = function() {
+window.applyBoardTransform = function(smooth = false) {
     const board = el('corkboard-surface');
     if(!board) return;
-    board.style.transition = isDraggingBoard ? 'none' : 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
-    board.style.transform = `translate(${boardState.x}px, ${boardState.y}px) scale(${boardState.scale})`;
+    board.style.transition = smooth ? 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
+    board.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
 };
 
 const vp = el('corkboard-viewport');
@@ -102,7 +102,7 @@ if(vp) {
         if(e.touches.length === 1) {
             isDraggingBoard = true;
             lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            window.applyBoardTransform();
+            window.applyBoardTransform(false);
         } else if (e.touches.length === 2) {
             initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             isDraggingBoard = true;
@@ -114,16 +114,13 @@ if(vp) {
         e.preventDefault(); 
         
         if(e.touches.length === 1 && lastBoardTouch) {
-            let dx = e.touches[0].clientX - lastBoardTouch.x;
-            let dy = e.touches[0].clientY - lastBoardTouch.y;
-            boardState.x += dx; boardState.y += dy;
+            boardState.x += e.touches[0].clientX - lastBoardTouch.x;
+            boardState.y += e.touches[0].clientY - lastBoardTouch.y;
             lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            window.applyBoardTransform();
         } else if (e.touches.length === 2) {
             let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             let scaleDiff = dist / initialPinchDist;
             
-            // Kohdennetaan zoomaus nipistyksen keskikohtaan
             let pinchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             let pinchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
 
@@ -133,9 +130,15 @@ if(vp) {
 
             if(boardState.scale < 0.15) boardState.scale = 0.15;
             if(boardState.scale > 2.5) boardState.scale = 2.5;
-            
             initialPinchDist = dist;
-            window.applyBoardTransform();
+        }
+
+        // Käytetään requestAnimationFramea silkkiseen piirtoon
+        if (!window.boardRAF) {
+            window.boardRAF = requestAnimationFrame(() => {
+                window.applyBoardTransform(false);
+                window.boardRAF = null;
+            });
         }
     }, {passive: false});
 
@@ -163,7 +166,7 @@ window.zoomToHole = function(hIndex) {
     boardState.scale = 1;
     boardState.x = (window.innerWidth - 380) / 2 - cellX;
     boardState.y = 50 - cellY; 
-    window.applyBoardTransform();
+    window.applyBoardTransform(true); // Smooth transition päälle!
 };
 
 window.zoomToCurrentHole = function() {
@@ -274,15 +277,24 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     });
     html += `</div>`;
     
-    // Eläinhahmo liimataan väylän näkyvään alalaitaan vähän lappujen alle
+    // Eläinhahmot ripotellaan nurkkiin (tulevat ulos lappujen alta!)
     if (isHistory) {
         let d = doodleData[(hIndex - 1) % doodleData.length];
         let dRot = -15 + (pseudoRandom(hIndex * 3) * 30);
         let isNew = (hIndex === window.gameHistory.length);
         let drawnClass = isNew ? 'drawn' : '';
         let opacityStyle = isNew ? '' : `opacity: 0.8; transform: rotate(${dRot}deg) scale(1);`;
+        
+        let posRand = pseudoRandom(hIndex * 7);
+        let posCss = "";
+        let offset = 40; // Tunkevat ulospäin solun keskustasta
+        if (posRand < 0.25) posCss = `top: -${offset}px; left: -${offset}px;`;
+        else if (posRand < 0.5) posCss = `top: -${offset}px; right: -${offset}px;`;
+        else if (posRand < 0.75) posCss = `bottom: -${offset}px; left: -${offset}px;`;
+        else posCss = `bottom: -${offset}px; right: -${offset}px;`;
+
         html += `
-        <div class="doodle-drawing ${drawnClass}" style="bottom: 20px; right: -20px; --rot:${dRot}deg; ${opacityStyle}">
+        <div class="doodle-drawing ${drawnClass}" style="${posCss} --rot:${dRot}deg; ${opacityStyle}">
             <div class="doodle-bubble">${d.text}</div>
             <svg class="doodle-svg doodle-path" viewBox="0 0 100 100"><path d="${d.svg}"/></svg>
         </div>`;
@@ -301,7 +313,6 @@ window.renderBoard = function() {
         return; 
     }
     
-    // Dynaaminen koon määritys radan pituuden mukaan
     let totalHoles = currentCourse.pars.length;
     let cols = Math.min(9, totalHoles);
     board.style.gridTemplateColumns = `repeat(${cols}, 380px)`;
@@ -338,7 +349,7 @@ window.renderReceipt = function() {
     };
 
     let generateHistoryLines = (isMini) => {
-        let html = `<div class="r-title">KASSAKUITTI</div>`;
+        let html = `<div class="r-title">TULOKSET</div>`;
         let startIdx = isMini ? Math.max(0, window.gameHistory.length - 2) : 0;
         
         for(let i=startIdx; i<window.gameHistory.length; i++) {
@@ -641,7 +652,7 @@ window.showHandLimitModal = function(cards) {
 };
 
 //==============================================
-// YKSINKERTAISTETTU KORTTIVIUHKA (KARUSELLI)
+// SULAVA KARUSELLI ILMAN JARRUJA
 //==============================================
 window.flipCard = function(index) {
     const inner = el(`card3d-inner-${index}`);
@@ -690,11 +701,7 @@ window.initNativeCarousel = function() {
     const cards = Array.from(container.querySelectorAll('.carousel-card-wrapper'));
     if(cards.length === 0) return;
 
-    let isScrolling = false;
-    container.addEventListener('scroll', () => {
-        if (!isScrolling) { window.requestAnimationFrame(updateCarouselLayout); isScrolling = true; }
-    }, {passive: true});
-
+    // Piirretään vapaasti jatkuvana 60fps silmukkana aina kun karusellia rullataan. Ei pätki enää!
     function updateCarouselLayout() {
         const scrollLeft = container.scrollLeft; const containerWidth = container.clientWidth;
         const centerOffset = containerWidth / 2; const cardWidth = 320; 
@@ -715,8 +722,9 @@ window.initNativeCarousel = function() {
             if (Math.abs(diff) < minDiff) { minDiff = Math.abs(diff); closestIndex = index; }
         }
         if (window.carouselCurrentIndex !== closestIndex) { window.carouselCurrentIndex = closestIndex; window.updateCarouselButtons(); }
-        isScrolling = false;
     }
+    
+    container.addEventListener('scroll', () => { requestAnimationFrame(updateCarouselLayout); }, {passive: true});
     setTimeout(updateCarouselLayout, 50);
 };
 
@@ -907,8 +915,7 @@ window.submitScores = function() {
     if(el('scoreModal')) el('scoreModal').style.display = 'none'; 
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
     
-    // Siirtää kameran suoraan uudelle väylälle kun tulokset on annettu
-    setTimeout(() => { window.zoomToHole(nextHoleIndex); }, 400);
+    setTimeout(() => { window.zoomToHole(nextHoleIndex); }, 400); // Sulava liuku uudelle väylälle
 };
 
 window.startMeilahti = function() {
