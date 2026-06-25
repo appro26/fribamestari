@@ -16,7 +16,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=161" />
+    <link rel="stylesheet" href="style.css?v=162" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
@@ -69,7 +69,7 @@
 
     <div id="corkboard-viewport" style="display:none;">
         <div id="corkboard-surface">
-            <!-- Sisältö generoidaan dynaamisesti JS:ssä taustan ehjänä pitämiseksi -->
+            <!-- Sisältö generoidaan dynaamisesti -->
         </div>
     </div>
 
@@ -99,6 +99,7 @@
         <div class="pocket-lip board-lip-btn" id="boardBtnText" onclick="if(window.zoomToCurrentHole) window.zoomToCurrentHole()">📍 NYKYINEN VÄYLÄ</div>
     </div>
 
+    <!-- TÄSSÄ LISÄTYT TALOUSASETUKSET (Myynti, tason 1, tason 2 ym) -->
     <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -113,6 +114,8 @@
                 
                 <h2 style="color:#cbd5e1; margin-top:20px; font-size:1.1rem;">Peliasetukset (GM)</h2>
                 <div class="glass-card" style="padding:20px; border-radius:12px; margin-bottom:25px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
+                    
+                    <!-- Raja ja kauppa -->
                     <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.1rem; color:#fff;">
                         <input type="checkbox" id="gmSetShop" style="width:24px; height:24px; margin:0;"> Kauppa käytössä
                     </label>
@@ -123,7 +126,10 @@
                         <span style="font-weight:800; font-size:1.1rem;">Maksimikortit:</span>
                         <input type="number" id="gmSetLimitCount" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
                     </div>
+                    
                     <div style="border-top:2px solid rgba(255,255,255,0.2); margin:15px 0;"></div>
+                    <h3 style="color:#fff; font-size:1rem; text-transform:uppercase; margin-bottom:10px;">Pelitalous (Pisteet/Raha)</h3>
+                    
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
                         <span style="font-weight:800; font-size:1.1rem;">Pelirahaa voitosta:</span>
                         <input type="number" id="gmSetPtsWin" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
@@ -136,6 +142,31 @@
                         <span style="font-weight:800; font-size:1.1rem;">Miinusta häviöstä:</span>
                         <input type="number" id="gmSetPtsLose" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
                     </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Kortin myyntihinta:</span>
+                        <input type="number" id="gmSetSellReward" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    
+                    <div style="border-top:2px solid rgba(255,255,255,0.2); margin:15px 0;"></div>
+                    <h3 style="color:#fff; font-size:1rem; text-transform:uppercase; margin-bottom:10px;">Korttien käyttö & Palkkiot</h3>
+
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Pieni Sabo (Taso 1) maksaa:</span>
+                        <input type="number" id="gmSetCostMinor" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Iso Sabo (Taso 2) maksaa:</span>
+                        <input type="number" id="gmSetCostMajor" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Helpotuksen peluu maksaa:</span>
+                        <input type="number" id="gmSetCostBuff" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem; color:var(--warning);">Taso 2 'Selätyspalkkio' (Par):</span>
+                        <input type="number" id="gmSetRewardMajor" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+
                     <button class="btn btn-primary" style="padding:16px; margin-top:15px; font-size:1.1rem;" onclick="if(window.saveGameSettings) window.saveGameSettings();">TALLENNA ASETUKSET</button>
                 </div>
 
