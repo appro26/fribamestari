@@ -16,7 +16,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=157" />
+    <link rel="stylesheet" href="style.css?v=158" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
@@ -25,7 +25,7 @@
 </head>
 <body class="player-mode">
 
-    <button id="settingsToggleBtn" onclick="document.getElementById('settingsModal').style.display='flex'" style="position:fixed; top:15px; right:15px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
+    <button id="settingsToggleBtn" onclick="document.getElementById('settingsModal').style.display='block'" style="position:fixed; top:15px; right:15px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
 
     <div id="installPromptModal" class="winner-overlay" style="z-index: 10010; flex-direction:column; justify-content:center; align-items:center;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align: center;">
@@ -68,10 +68,8 @@
     </div>
 
     <div id="corkboard-viewport" style="display:none;">
-        <!-- Koko määritetään dynaamisesti JS:ssä taustan ehjänä pitämiseksi -->
         <div id="corkboard-surface">
-            <!-- Sisältö generoidaan dynaamisesti -->
-        </div>
+            </div>
     </div>
 
     <div class="corkboard-pocket-container" id="pocketContainer" style="display:none;">
@@ -101,74 +99,76 @@
         <div class="pocket-lip board-lip-btn" id="boardBtnText" onclick="if(window.zoomToCurrentHole) window.zoomToCurrentHole()">📍 NYKYINEN VÄYLÄ</div>
     </div>
 
-    <div id="settingsModal" class="fullscreen-modal" style="background:rgba(0,0,0,0.95); padding: 40px 15px 40px 15px; align-items:flex-start; justify-content:flex-start; overflow-y:auto; overscroll-behavior:contain;" onclick="if(event.target === this) { this.style.display='none'; }">
-        <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom: 100px;">
-            
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-                <h1 style="color:#fff; font-size:2rem; font-weight:900;">⚙️ ASETUKSET</h1>
-                <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('settingsModal').style.display='none'">&times;</button>
-            </div>
-
-            <button class="btn btn-secondary" onclick="location.reload()" style="font-size:1.1rem; margin-bottom:25px; padding:18px; box-shadow:0 4px 10px rgba(0,0,0,0.5);">🔄 PÄIVITÄ SIVU (RELOAD)</button>
-            <button class="btn btn-warning" style="margin-bottom: 25px; color:#000; padding:18px; font-size:1.1rem;" onclick="if(window.cancelCourse) { window.cancelCourse(); document.getElementById('settingsModal').style.display='none'; }">🛑 LOPETA NYKYINEN RATA</button>
-            
-            <h2 style="color:#cbd5e1; margin-top:20px; font-size:1.1rem;">Peliasetukset (GM)</h2>
-            <div class="glass-card" style="padding:20px; border-radius:12px; margin-bottom:25px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
-                <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.1rem; color:#fff;">
-                    <input type="checkbox" id="gmSetShop" style="width:24px; height:24px; margin:0;"> Kauppa käytössä
-                </label>
-                <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.1rem; color:#fff;">
-                    <input type="checkbox" id="gmSetLimitCheck" style="width:24px; height:24px; margin:0;"> Käsiraja käytössä
-                </label>
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
-                    <span style="font-weight:800; font-size:1.1rem;">Maksimikortit:</span>
-                    <input type="number" id="gmSetLimitCount" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+    <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
+        <div class="scrollable-modal-content">
+            <div style="width:100%; max-width:500px; margin: 0 auto;">
+                
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                    <h1 style="color:#fff; font-size:2rem; font-weight:900;">⚙️ ASETUKSET</h1>
+                    <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('settingsModal').style.display='none'">&times;</button>
                 </div>
-                <div style="border-top:2px solid rgba(255,255,255,0.2); margin:15px 0;"></div>
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
-                    <span style="font-weight:800; font-size:1.1rem;">Pelirahaa voitosta:</span>
-                    <input type="number" id="gmSetPtsWin" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+
+                <button class="btn btn-secondary" onclick="location.reload()" style="font-size:1.1rem; margin-bottom:25px; padding:18px; box-shadow:0 4px 10px rgba(0,0,0,0.5);">🔄 PÄIVITÄ SIVU (RELOAD)</button>
+                <button class="btn btn-warning" style="margin-bottom: 25px; color:#000; padding:18px; font-size:1.1rem;" onclick="if(window.cancelCourse) { window.cancelCourse(); document.getElementById('settingsModal').style.display='none'; }">🛑 LOPETA NYKYINEN RATA</button>
+                
+                <h2 style="color:#cbd5e1; margin-top:20px; font-size:1.1rem;">Peliasetukset (GM)</h2>
+                <div class="glass-card" style="padding:20px; border-radius:12px; margin-bottom:25px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
+                    <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.1rem; color:#fff;">
+                        <input type="checkbox" id="gmSetShop" style="width:24px; height:24px; margin:0;"> Kauppa käytössä
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.1rem; color:#fff;">
+                        <input type="checkbox" id="gmSetLimitCheck" style="width:24px; height:24px; margin:0;"> Käsiraja käytössä
+                    </label>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Maksimikortit:</span>
+                        <input type="number" id="gmSetLimitCount" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <div style="border-top:2px solid rgba(255,255,255,0.2); margin:15px 0;"></div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Pelirahaa voitosta:</span>
+                        <input type="number" id="gmSetPtsWin" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Rahaa tehtävästä:</span>
+                        <input type="number" id="gmSetPtsTask" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Miinusta häviöstä:</span>
+                        <input type="number" id="gmSetPtsLose" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <button class="btn btn-primary" style="padding:16px; margin-top:15px; font-size:1.1rem;" onclick="if(window.saveGameSettings) window.saveGameSettings();">TALLENNA ASETUKSET</button>
                 </div>
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
-                    <span style="font-weight:800; font-size:1.1rem;">Rahaa tehtävästä:</span>
-                    <input type="number" id="gmSetPtsTask" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+
+                <h2 style="color:#cbd5e1; font-size:1.1rem;">Muokkaa Pelaajia (GM)</h2>
+                <div id="adminPlayerList"></div>
+                <div style="display: flex; gap: 10px; margin-top:15px; margin-bottom:30px;">
+                    <input type="text" id="adminNewPlayerName" placeholder="Pelaajan nimi..." style="margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); font-size:1.1rem;" />
+                    <button class="btn btn-success" style="width: auto; padding: 0 25px; font-size:1.1rem;" onclick="if(window.adminAddPlayer) { window.adminAddPlayer(); }">LISÄÄ</button>
                 </div>
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
-                    <span style="font-weight:800; font-size:1.1rem;">Miinusta häviöstä:</span>
-                    <input type="number" id="gmSetPtsLose" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+
+                <h2 style="color:#cbd5e1; font-size:1.1rem;">Manuaalinen Väyläsääntö (GM)</h2>
+                <div style="display:flex; gap:10px; margin-bottom: 30px;">
+                    <select id="gmRuleSelect" style="margin:0; padding:15px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); flex:1; font-size:1.1rem;"></select>
+                    <button class="btn btn-warning" style="width:auto; padding:0 20px; font-size:1.1rem;" onclick="if(window.gmSetRule) { window.gmSetRule(); document.getElementById('settingsModal').style.display='none';}">ASETA</button>
                 </div>
-                <button class="btn btn-primary" style="padding:16px; margin-top:15px; font-size:1.1rem;" onclick="if(window.saveGameSettings) window.saveGameSettings();">TALLENNA ASETUKSET</button>
+
+                <h2 style="color:#cbd5e1; font-size:1.1rem;">Tapahtumalokit</h2>
+                <div id="adminEventLog" class="log-box" style="margin-bottom:15px;"></div>
+                <div id="adminScoreLog" class="log-box"></div>
+                
+                <button class="btn btn-danger" style="margin-top: 40px; padding:20px; font-size:1.2rem;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI (WIPE)</button>
+                
+                <button class="btn btn-secondary" style="margin-top:40px; border:2px solid #ccc; font-size:1.2rem; padding:20px;" onclick="document.getElementById('settingsModal').style.display='none'">SULJE ASETUKSET</button>
+
             </div>
-
-            <h2 style="color:#cbd5e1; font-size:1.1rem;">Muokkaa Pelaajia (GM)</h2>
-            <div id="adminPlayerList"></div>
-            <div style="display: flex; gap: 10px; margin-top:15px; margin-bottom:30px;">
-                <input type="text" id="adminNewPlayerName" placeholder="Pelaajan nimi..." style="margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); font-size:1.1rem;" />
-                <button class="btn btn-success" style="width: auto; padding: 0 25px; font-size:1.1rem;" onclick="if(window.adminAddPlayer) { window.adminAddPlayer(); }">LISÄÄ</button>
-            </div>
-
-            <h2 style="color:#cbd5e1; font-size:1.1rem;">Manuaalinen Väyläsääntö (GM)</h2>
-            <div style="display:flex; gap:10px; margin-bottom: 30px;">
-                <select id="gmRuleSelect" style="margin:0; padding:15px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); flex:1; font-size:1.1rem;"></select>
-                <button class="btn btn-warning" style="width:auto; padding:0 20px; font-size:1.1rem;" onclick="if(window.gmSetRule) { window.gmSetRule(); document.getElementById('settingsModal').style.display='none';}">ASETA</button>
-            </div>
-
-            <h2 style="color:#cbd5e1; font-size:1.1rem;">Tapahtumalokit</h2>
-            <div id="adminEventLog" class="log-box" style="margin-bottom:15px;"></div>
-            <div id="adminScoreLog" class="log-box"></div>
-            
-            <button class="btn btn-danger" style="margin-top: 40px; padding:20px; font-size:1.2rem;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI (WIPE)</button>
-            
-            <button class="btn btn-secondary" style="margin-top:40px; border:2px solid #ccc; font-size:1.2rem; padding:20px;" onclick="document.getElementById('settingsModal').style.display='none'">SULJE ASETUKSET</button>
-
         </div>
     </div>
 
-    <div id="receiptModal" class="fullscreen-modal" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="receiptModal" class="fullscreen-modal" style="display:none; justify-content:center; align-items:center;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="receipt-paper full-receipt" id="receipt-full-content" style="max-height:85vh; overflow-y:auto; width:90%; max-width:400px; padding:30px 20px;"></div>
     </div>
 
-    <div id="shopModal" class="fullscreen-modal" style="padding:0; background:rgba(0,0,0,0.7);" onclick="if(event.target === this) { window.closeShopModal(); }">
+    <div id="shopModal" class="scrollable-modal" style="padding:0; background:rgba(0,0,0,0.7);" onclick="if(event.target === this) { window.closeShopModal(); }">
         <div class="shop-binder-modal theme-shop">
             <div class="binder-swipe-handle"></div>
             <div style="display: flex; flex: 1; overflow: hidden; position: relative;">
@@ -206,7 +206,7 @@
         </div>
     </div>
 
-    <div id="gmGiveCardModal" class="fullscreen-modal" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="gmGiveCardModal" class="fullscreen-modal" style="display:none; align-items:center; justify-content:center;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="swipe-indicator"></div>
         <div class="fullscreen-modal-header">
             <h2 style="color:#fff;">KORTIN ANTO</h2>
@@ -255,7 +255,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=157"></script>
-    <script type="module" src="script.js?v=157"></script>
+    <script src="tasks.js?v=158"></script>
+    <script type="module" src="script.js?v=158"></script>
 </body>
 </html>
