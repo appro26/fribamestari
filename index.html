@@ -16,7 +16,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=150" />
+    <link rel="stylesheet" href="style.css?v=151" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
@@ -25,10 +25,8 @@
 </head>
 <body class="player-mode">
 
-    <!-- PÄÄNAPIT YLHÄÄLLÄ (Asetukset näkyy AINA) -->
     <button id="settingsToggleBtn" onclick="document.getElementById('settingsModal').style.display='flex'" style="position:fixed; top:15px; right:15px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
 
-    <!-- ASENNUSKEHOTE -->
     <div id="installPromptModal" class="winner-overlay" style="z-index: 10010; flex-direction:column; justify-content:center; align-items:center;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align: center;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
@@ -40,7 +38,6 @@
         </div>
     </div>
 
-    <!-- LIIKAA KORTTEJA -MODAALI -->
     <div id="handLimitModal" class="winner-overlay" style="z-index: 10005;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align:center;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
@@ -53,7 +50,6 @@
 
     <div id="notificationContainer"></div> 
 
-    <!-- AULA NÄKYMÄ -->
     <div class="container" id="lobbyContainer">
         <div id="identityCard" class="torn-paper" style="text-align: center; margin-top:50px;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
@@ -71,25 +67,21 @@
         </div>
     </div>
 
-    <!-- PELIN ILMOITUSTAULU (GRID VIEWPORT) -->
     <div id="corkboard-viewport" style="display:none;">
         <div id="corkboard-surface">
-            <!-- DOODLES KONTTI (Tussipiirrokset taulun pinnalla pohjalla) -->
             <div id="doodles-container"></div>
         </div>
     </div>
 
-    <!-- LOKERIKKO, KANSIOT JA KUITTIKONE (BOTTOM NAV) -->
     <div class="corkboard-pocket-container" id="pocketContainer" style="display:none;">
-        
         <div style="display:flex; justify-content:space-between; align-items:flex-end; width:100%; position:relative; z-index:10; padding: 0 10px;">
-            <!-- 1. Likainen Ruokakaupan Kuitintulostin -->
+            
+            <!-- 1. Kuitin järjestys käännetty: Paperi päällä, kone alla -->
             <div id="receipt-printer-container" onclick="document.getElementById('receiptModal').style.display='flex'">
+                <div class="receipt-paper roll-receipt" id="receipt-mini-content"></div>
                 <div class="printer-machine">
                     <div class="printer-slot"></div>
                 </div>
-                <!-- Kääritään kuitti lyhyeksi -->
-                <div class="receipt-paper roll-receipt" id="receipt-mini-content"></div>
             </div>
 
             <!-- 2. Omat Kortit -->
@@ -105,11 +97,9 @@
             </div>
         </div>
         
-        <!-- TAULU-NAPPI TOIMII NYT KOKO POCKETIN PAAKSUNA ETUHUULENA -->
         <div class="pocket-lip board-lip-btn" id="boardBtnText" onclick="if(window.toggleZoom) window.toggleZoom()">🔍 KOKO TAULU</div>
     </div>
 
-    <!-- KESKITETTY ASETUSMODAALI -->
     <div id="settingsModal" class="fullscreen-modal" style="background:rgba(0,0,0,0.95); padding: 40px 15px 80px 15px; align-items:flex-start; justify-content:center; overflow-y:auto; overscroll-behavior:contain;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div style="width:100%; max-width:500px; margin:0 auto;">
             
@@ -118,7 +108,6 @@
                 <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('settingsModal').style.display='none'">&times;</button>
             </div>
 
-            <!-- ROOLIN VALINTA -->
             <div class="role-switcher" style="margin-bottom: 25px;">
                 <button id="btnPlayer" class="role-btn player active" onclick="if(window.setRole) window.setRole('player');">PELAAJA</button>
                 <button id="btnGM" class="role-btn gm" onclick="if(confirm('Siirrytäänkö GM-tilaan?')) { if(window.setRole) window.setRole('gm'); }">GM</button>
@@ -181,7 +170,6 @@
         </div>
     </div>
 
-    <!-- Modaalit (Kuitit, Kauppa, jne) -->
     <div id="receiptModal" class="fullscreen-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="receipt-paper full-receipt" id="receipt-full-content" style="max-height:85vh; overflow-y:auto; width:90%; max-width:400px; padding:30px 20px;"></div>
     </div>
@@ -234,15 +222,13 @@
         <div id="gmGiveCardList" class="cards-grid-2" style="max-width:400px; width:100%;"></div>
     </div>
 
-    <!-- NATIIVI VIUHKA-KARUSELLI -->
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container"></div>
-        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">👈 VAIHDA KORTTIA 👉<br>👇 VAPAA PYÖRITYS SORMILLA 👆</div>
+        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">👆 KÄÄNNÄ KORTTI KOSKETTAMALLA 👆<br>👈 VAIHDA KORTTIA SELAAMALLA 👉</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px;"></div>
         <button class="btn" style="width:100%; max-width:320px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px; margin-top:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
-    <!-- FOTOREALISTINEN PAPERITULOSKORTTI (MODAALISSA) -->
     <div id="scoreModal" class="winner-overlay" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="paper-score-modal" style="max-height: 90vh; overflow-y:auto;">
             <div class="pin pin-green" style="top: 15px; right: 20px;"></div>
@@ -275,7 +261,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=150"></script>
-    <script type="module" src="script.js?v=150"></script>
+    <script src="tasks.js?v=151"></script>
+    <script type="module" src="script.js?v=151"></script>
 </body>
 </html>
