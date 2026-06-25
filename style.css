@@ -34,7 +34,6 @@ body {
 #corkboard-viewport {
     width: 100vw; height: 100vh; position: fixed;
     top: 0; left: 0; z-index: 5; 
-    /* Vapaa sormella raahaus koko taulun näkymässä */
     touch-action: pan-x pan-y; 
 }
 #corkboard-surface {
@@ -45,7 +44,6 @@ body {
     transform-origin: top left;
     pointer-events: auto; 
 
-    /* Aito puinen kehys kiedottuna ITSE taulun ympärille */
     background-color: #cbd5e1;
     background-image: 
         radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
@@ -64,7 +62,7 @@ body {
     min-width: 100vw; min-height: 100vh; position: relative;
 }
 
-.hole-cell { width: 380px; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; }
+.hole-cell { width: 380px; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; z-index: 10; }
 .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 10; }
 h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; font-weight: 900; }
 
@@ -84,46 +82,47 @@ body.gm-mode .player-only { display: none !important; }
 body.player-mode .gm-only { display: none !important; }
 
 /* ========================================= */
-/* KUITTIKONE (KULAHTANUT VALKOINEN ALHAALLA)*/
+/* KUITTIKONE YLÖSPÄIN PUSKEVA              */
 /* ========================================= */
 #receipt-printer-container { 
     width: 28%; max-width: 120px; cursor: pointer; transition: transform 0.2s; pointer-events: auto; position: relative;
-    margin-right: auto; /* Työntää sen ihan vasempaan reunaan */
+    margin-right: auto;
+    display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
 }
 #receipt-printer-container:active { transform: scale(0.95); }
 
 .printer-machine {
     width: 100%; height: 35px;
-    background: linear-gradient(to bottom, #f0ebd8, #cfcbb8); 
-    border: 1px solid #b0ad9e; border-bottom: 3px solid #918e80;
-    border-radius: 8px 8px 0 0; position: relative; z-index: 100;
-    box-shadow: 2px 4px 8px rgba(0,0,0,0.5), inset 0 2px 3px rgba(255,255,255,0.7);
-    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(to bottom, #cfcbb8, #f0ebd8); 
+    border: 1px solid #b0ad9e; border-top: 3px solid #918e80;
+    border-radius: 0 0 8px 8px; position: relative; z-index: 100;
+    box-shadow: 2px -4px 8px rgba(0,0,0,0.5), inset 0 -2px 3px rgba(255,255,255,0.7);
+    display: flex; align-items: flex-start; justify-content: center;
 }
 .printer-slot {
     width: 85%; height: 6px; background: #111;
     border-radius: 3px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
-    margin-top: 12px;
+    margin-top: 6px;
 }
 .receipt-paper {
-    width: 85%; margin: 0 auto; margin-top: -20px; background: #fff;
-    padding: 25px 5px 15px 5px; box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+    width: 85%; margin: 0 auto; margin-bottom: -15px; background: #fff;
+    padding: 10px 5px 25px 5px; box-shadow: 0 -8px 15px rgba(0,0,0,0.5);
     font-family: 'Courier New', Courier, monospace; font-size: 0.75rem;
-    color: #111; position: relative; background-image: linear-gradient(to bottom, #fff, #f4f4f5);
+    color: #111; position: relative; background-image: linear-gradient(to top, #fff, #f4f4f5);
     z-index: 90; transition: transform 0.3s;
 }
 .receipt-paper.roll-receipt {
-    max-height: 100px; overflow: hidden; /* Lyhyt minikuitti */
+    max-height: 100px; overflow: hidden; 
 }
 .receipt-paper::after {
-    content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 4px;
-    background-image: radial-gradient(circle at 2px 0, transparent 2px, #f4f4f5 3px);
+    content: ''; position: absolute; top: -4px; left: 0; right: 0; height: 4px;
+    background-image: radial-gradient(circle at 2px 4px, transparent 2px, #f4f4f5 3px);
     background-size: 4px 4px; background-repeat: repeat-x;
 }
 .r-title { font-weight: 900; text-align: center; border-bottom: 1px dashed #111; padding-bottom: 5px; margin-bottom: 5px; font-size:0.8rem; }
 .r-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; font-weight:bold; white-space:nowrap; }
 .r-row span { overflow:hidden; text-overflow:ellipsis; }
-.r-tot-sec { border-top: 2px dashed #111; margin-top: 5px; padding-top: 5px; font-weight: 900; font-size: 0.9rem; }
+.r-tot-sec { border-top: 2px dashed #111; margin-top: 5px; padding-top: 5px; font-weight: 900; font-size: 0.9rem; margin-bottom:10px;}
 .r-hole-title { font-weight: 900; margin-top: 8px; font-size: 0.75rem; text-transform: uppercase; }
 
 .full-receipt .r-title { font-size: 1.5rem; margin-bottom: 15px; }
@@ -131,7 +130,6 @@ body.player-mode .gm-only { display: none !important; }
 .full-receipt .r-row { font-size: 1.2rem; margin-bottom: 5px; font-weight:bold; }
 .full-receipt .r-tot-sec { font-size: 1.6rem; margin-top: 20px; padding-top: 15px; }
 
-/* Kuitin värikoodatut tulospallerot */
 .r-score-wrap { display: flex; align-items: center; gap: 4px; }
 .r-dots { display: flex; gap: 2px; }
 .r-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
@@ -142,7 +140,7 @@ body.player-mode .gm-only { display: none !important; }
 /* ========================================= */
 /* KIROILEVAT SIILIT (DOODLES)               */
 /* ========================================= */
-#doodles-container { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index: 2; }
+#doodles-container { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index: 1; }
 .doodle-drawing { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; opacity: 0; transform: rotate(var(--rot)) scale(0.9); }
 .doodle-drawing.drawn { opacity: 0.65; transform: rotate(var(--rot)) scale(1); transition: opacity 2s, transform 2s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .doodle-svg { width: 150px; height: 150px; fill: none; stroke: #1e293b; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
@@ -186,7 +184,6 @@ body.player-mode .gm-only { display: none !important; }
 .index-card {
     background: #fdfaf6; background-image: repeating-linear-gradient(transparent, transparent 23px, #bae6fd 24px);
     border-top: 16px solid #ef4444; border-radius: 4px; position: relative; 
-    transform: perspective(1000px) rotate(-1.5deg) translateZ(8px); 
     display: flex; flex-direction: column; justify-content: center;
     box-shadow: 6px 12px 20px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.05);
 }
@@ -216,7 +213,7 @@ body.player-mode .gm-only { display: none !important; }
 /* ROIKKUVA KYNÄ (KIINNI HAKEMISTOKORTISSA)  */
 /* ========================================= */
 .pen-container {
-    position: absolute; right: -25px; top: -10px; 
+    position: absolute; right: -45px; top: -15px; 
     display: flex; flex-direction: column; align-items: center;
     transform-origin: top center; animation: penSwing 4s ease-in-out infinite;
     cursor: pointer; z-index: 40; pointer-events: auto;
@@ -239,7 +236,6 @@ body.player-mode .gm-only { display: none !important; }
 .post-it-note {
     background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(0,0,0,0.02) 100%);
     box-shadow: 3px 8px 15px rgba(0,0,0,0.2), inset -1px -1px 5px rgba(0,0,0,0.05);
-    transform: perspective(800px) rotate(2deg) translateZ(10px);
     border-radius: 2px 2px 20px 2px / 2px 2px 5px 2px; color: #111; position: relative;
 }
 .post-it-note::before {
@@ -254,7 +250,6 @@ body.player-mode .gm-only { display: none !important; }
     background: #fdfaf6;
     background-image: linear-gradient(90deg, transparent 38px, rgba(244, 63, 94, 0.4) 38px, rgba(244, 63, 94, 0.4) 40px, transparent 40px), repeating-linear-gradient(transparent, transparent 23px, #e2e8f0 24px);
     box-shadow: 6px 15px 25px rgba(0,0,0,0.4);
-    transform: perspective(1000px) rotate(1deg) translateZ(10px);
     color: #111; border-radius: 2px 8px 8px 2px; position: relative;
 }
 .score-spiral-note::before {
@@ -283,7 +278,6 @@ body.player-mode .gm-only { display: none !important; }
 
 .shop-item-wrapper .physical-card { width: 100%; min-height: 250px; }
 
-/* Premium-kortti */
 .premium-card { 
     background: linear-gradient(145deg, #1e293b, #0f172a) !important; 
     border: 2px solid #fbd38d !important; border-top: 8px solid #fbd38d !important;
@@ -293,7 +287,6 @@ body.player-mode .gm-only { display: none !important; }
 .premium-card p { color: #f1f5f9 !important; }
 .premium-card .card-type-tag { color: #fbd38d !important; }
 
-/* Hillitty kiilto kaupassa/ilmoitustaululla (HUOM: Ei käytetä karusellissa!) */
 .foil-fx {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.05) 40%, rgba(255, 215, 0, 0.1) 50%, rgba(255, 255, 255, 0.05) 60%, transparent 70%);
@@ -355,7 +348,7 @@ body.player-mode .gm-only { display: none !important; }
     box-shadow: 0 -8px 20px rgba(0,0,0,0.7); border-top: 2px dashed #1e293b; 
     z-index: 15; display: flex; justify-content: center; align-items: center;
     color: #fff; font-weight: 900; font-size: 1.4rem; letter-spacing: 6px; pointer-events: auto; cursor:pointer;
-    padding-bottom: 10px; /* Helpottaa osumista */
+    padding-bottom: 10px;
 }
 .pocket-lip:active { background: #334155; }
 
@@ -393,10 +386,16 @@ body.player-mode .gm-only { display: none !important; }
 /* ========================================= */
 /* NATIIVI 3D KORTTIVIUHKA (SAUMATON, LEVEÄ) */
 /* ========================================= */
-.native-carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 40px calc(50vw - 140px); gap: 0px; width: 100vw; height: 600px; align-items: center; /* Poistettu smooth-scroll CSS-pohjainen hidaste: */ touch-action: pan-x pan-y; }
+.native-carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 40px calc(50vw - 140px); gap: 0px; width: 100vw; height: 600px; align-items: center; touch-action: pan-x pan-y; }
 .native-carousel-container::-webkit-scrollbar { display: none; }
-.carousel-card-wrapper { flex: 0 0 280px; scroll-snap-align: center; perspective: 1200px; position: relative; height: 392px; will-change: transform; }
-.card-3d-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); } /* Napakka bounce takaisin irrotettaessa */
+.carousel-card-wrapper { flex: 0 0 280px; scroll-snap-align: center; perspective: 1200px; position: relative; height: 392px; will-change: transform; cursor: pointer;}
+
+.card-3d-inner { 
+    position: relative; width: 100%; height: 100%; transform-style: preserve-3d; 
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-3d-inner.flipped { transform: rotateY(180deg); }
+
 .card-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 12px; box-shadow: -10px 20px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; background: #fff; border: 2px solid var(--border); }
 .card-front { padding: 22px 18px; transform: rotateY(0deg) translateZ(1px); } 
 .card-back { transform: rotateY(180deg) translateZ(1px); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 6px solid #fff; }
