@@ -32,7 +32,7 @@ const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length
 
 const pseudoRandom = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
 
-// 80 äärimmäisen tylyä solvausta
+// 80 tylyä solvausta (Fribakohtaisia!)
 const insults = [
     "Mikä tässä lajissa muka on kivaa? Pelkkää puunhakkuuta.", "Taas OB:lle. Ootko harkinnu sauvakävelyä?", 
     "Lajin helppous viehättää, vai mitä?", "Ostin 30 euron kiekon, että voin heittää sen metsään.",
@@ -125,7 +125,7 @@ window.dismissInstallPrompt = function() {
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
 // ==============================================
-// VAPAA KAMERA
+// VAPAA KAMERA LIIKE 60fps & SULAVA ZOOM
 // ==============================================
 let boardState = { scale: 1, x: 0, y: 0 };
 let isDraggingBoard = false;
@@ -137,7 +137,7 @@ window.applyBoardTransform = function(smooth = false) {
     const board = el('corkboard-surface');
     if(!board) return;
     board.style.transition = smooth ? 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
-    board.style.transform = `translate(${boardState.x}px, ${boardState.y}px) scale(${boardState.scale})`;
+    board.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
 };
 
 const vp = el('corkboard-viewport');
@@ -321,7 +321,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     });
     html += `</div>`;
     
-    // Satunnaiset eläinhahmot ympäri väylän solua taustalla
+    // Satunnaiset eläinhahmot ympäri väylän solua
     if (isHistory) {
         let insultIndex = Math.floor(pseudoRandom(hIndex * 8.8) * insults.length);
         let svgIndex = Math.floor(pseudoRandom(hIndex * 9.9) * doodleSVGs.length);
@@ -700,7 +700,7 @@ window.showHandLimitModal = function(cards) {
 };
 
 //==============================================
-// SULAVA KARUSELLI ILMAN JARRUJA
+// Z-KORJATTU 3D-KARUSELLI (Ei enää leikkaudu!)
 //==============================================
 window.flipCard = function(index) {
     const inner = el(`card3d-inner-${index}`);
@@ -760,10 +760,13 @@ window.initNativeCarousel = function() {
             const cardCenter = paddingLeft + (index * cardWidth) + (cardWidth / 2) - scrollLeft;
             const diff = (cardCenter - centerOffset) / 160; 
             
-            const transX = diff * -80; const rotZ = diff * 8; const transY = Math.abs(diff) * 20; 
-            const scale = Math.max(0.8, 1.15 - Math.abs(diff) * 0.15); 
+            const transX = diff * -90; 
+            const transY = Math.abs(diff) * 15; 
+            const transZ = Math.abs(diff) * -150; // Työntää sivukortit kauas syvyyteen! Ei enää leikkaudu!
+            const rotZ = diff * 5; 
+            const scale = Math.max(0.8, 1 - Math.abs(diff) * 0.1); 
             
-            card.style.transform = `translate(${transX}px, ${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
+            card.style.transform = `translate3d(${transX}px, ${transY}px, ${transZ}px) rotateZ(${rotZ}deg) scale(${scale})`;
             card.style.zIndex = 100 - Math.floor(Math.abs(diff)*10);
             
             if (Math.abs(diff) < minDiff) { minDiff = Math.abs(diff); closestIndex = index; }
