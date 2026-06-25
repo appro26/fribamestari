@@ -1,71 +1,101 @@
 window.allCards = [];
 
-const normalBases = [
-    { n: "Kämmenpakko", d: "Heitä seuraava heittosi pakollisella kämmenellä (forehand)." },
-    { n: "Rystypakko", d: "Heitä seuraava heittosi pakollisella rystyllä (backhand)." },
-    { n: "Pystyheitto", d: "Seuraava heitto on suoritettava pystyheitolla (Upsi/Tomahawk)." },
-    { n: "Rolleripakko", d: "Kiekon on osuttava maahan kovaa ja rullattava eteenpäin." },
-    { n: "Putteridraivi", d: "Seuraava avausheitto tiiltä on suoritettava putterilla." },
-    { n: "Midari-only", d: "Et saa käyttää tällä väylällä ollenkaan nopeita draivereita." },
-    { n: "Väärä käsi", d: "Heitä seuraava heitto väärällä/heikommalla kädelläsi." },
-    { n: "Sokkoheitto", d: "Sulje silmät juuri ennen vetoa ja heitä avaus täysin sokkona." },
+// ==========================================
+// TASO 1: PIENET SABOTAASIT (Halpoja pelata, pientä kiusaa)
+// ==========================================
+const minorBases = [
+    { n: "Silmät kiinni", d: "Kohde joutuu laittamaan silmät kiinni juuri ennen heiton irrotusta." },
     { n: "Kurki-Asento", d: "Heiton aikana toinen jalka ei saa koskea maahan." },
-    { n: "Polviltaan", d: "Seuraava heitto on suoritettava vähintään toinen polvi maassa." },
-    { n: "Pyörähdys", d: "Pyörähdä 360 astetta vauhdissa ja heitä heti perään." },
     { n: "Sammakko", d: "Mene syvään kyykkyyn ja suorita heitto siitä asennosta." },
-    { n: "Turbo-Putt", d: "Seuraava putti on suoritettava sormilla kiekon alta työntäen (Turbo)." },
-    { n: "Scooberi", d: "Suorita lähestymisheitto ylösalaisella scuuberi-tyylillä." },
-    { n: "Grenade", d: "Kiekko on pidettävä kädessä ylösalaisin peukalo urassa." },
-    { n: "Paikaltaveto", d: "Seuraavassa heitössä et saa ottaa yhtään vauhtiaskelta." },
-    { n: "Kiekon Pakkovalinta", d: "Valitse bägistäsi 3 kiekkoa, ja kohde joutuu heittämään yhdellä niistä." },
-    { n: "Lainakiekko", d: "Heitä seuraava heitto vastustajan satunnaisesti valitsemalla kiekolla." },
-    { n: "Kiekonvaihtokielto", d: "Pelaa koko väylä alusta loppuun vain yhdellä ja samalla kiekolla." },
-    { n: "Selkäheitto", d: "Heitä putti selkä koria kohti yhdellä kädellä taaksepäin." },
-    { n: "Jäätynyt ranne", d: "Rannetta ei saa kääntää lainkaan seuraavassa heitossa (jäykkä käsi)." },
-    { n: "Laser-linja", d: "Kiekon on pysyttävä koko lennon ajan alle 2 metrin korkeudella." },
-    { n: "Korkea hysse", d: "Heitä seuraava heitto tarkoituksella liian korkeana hyssenä." },
-    { n: "Anhyzer-pakko", d: "Kiekon on lähdettävä kädestä selkeässä ja jyrkässä antsakulmassa." },
-    { n: "Hyzer-flippi", d: "Valitse alivakaa kiekko ja yritä kääntää se väkisin suoraksi." },
-    { n: "Kävelyvauhti", d: "Vauhtia saa ottaa, mutta vain hitaasti kävellen (ei juoksua)." },
+    { n: "Pyörähdys", d: "Pyörähdä 360 astetta vauhdissa ja heitä heti perään." },
     { n: "Vauhtijarru", d: "Pysähdy kokonaan 1 sekunniksi tukijalalle juuri ennen vetoa." },
+    { n: "Häirintä", d: "Saat seisoa 2 metrin päässä kohteesta ja huutaa häirintää heiton aikana." },
+    { n: "Paikaltaveto", d: "Seuraavassa heitössä et saa ottaa yhtään vauhtiaskelta." },
     { n: "Matala asento", d: "Heitä siten, että hartiasi ovat maksimissaan metrin korkeudella maasta." },
-    { n: "Kiekkopoika", d: "Kohde joutuu hakemaan kaikkien muiden avaamat kiekot takaisin väylälle." },
+    { n: "Selin koriin", d: "Putti tai lähestyminen on heitettävä täysin selkä koria kohden." },
+    { n: "Kävelyvauhti", d: "Vauhtia saa ottaa, mutta vain hitaasti kävellen (ei juoksua)." },
+    { n: "Väärä käsi putti", d: "Jos kohde on alle 15m päässä, putti on heitettävä väärällä kädellä." },
+    { n: "10 sekuntia", d: "Kohteella on tasan 10 sekuntia aikaa suorittaa heitto siitä kun saapuu kiekolle." },
+    { n: "Laukku selässä", d: "Bägi on pidettävä selässä koko heittosuorituksen ajan." },
+    { n: "Polviltaan", d: "Seuraava heitto on suoritettava vähintään toinen polvi maassa." },
     { n: "Erikoisgrippi", d: "Heitä seuraava heitto niin, että peukalosi on kiekon pohjapuolella." }
 ];
 
-for(let i = 1; i <= 120; i++) {
-    const base = normalBases[(i - 1) % normalBases.length];
-    window.allCards.push({ id: "n_" + i, n: base.n, d: base.d, tier: "normal", type: "sabotage" });
+for(let i = 1; i <= 60; i++) {
+    const base = minorBases[(i - 1) % minorBases.length];
+    window.allCards.push({ id: "minor_" + i, n: base.n, d: base.d, tier: "minor_sabotage", type: "sabotage" });
 }
 
-const premiumBases = [
-    { n: "Kuningas Mulligan", d: "Voit uusia minkä tahansa epäonnistuneen heiton tällä väylällä." },
-    { n: "Par-Varmistus", d: "Tuloksesi tältä väylältä kirjataan suoraan maksimissaan PAR-tulokseksi." },
-    { n: "Laser-Tähtäin", d: "Voit siirtää kiekkosi paikkaa 5 metriä suoraan lähemmäksi koria." },
-    { n: "Mando-Ohitus", d: "Saat skipata radan virallisen mandon täysin ilman rangaistusheittoa." },
-    { n: "OB-Armahdus", d: "Jos kiekkosi menee OB-alueelle, saat jatkaa pelistä ilman lisälyöntejä." },
-    { n: "Pistevaras", d: "Varasta valitsemaltasi vastustajalta tasan 5 resurssipistettä." },
-    { n: "Tuplapotti", d: "Jos voitat tämän väylän tai suoritat tehtävän, saat tuplamäärän (+10) pisteitä." },
-    { n: "Kiekkolukko", d: "Kiellä yhtä vastustajaa käyttämästä hänen luottodraiveriaan tällä väylällä." },
-    { n: "Ilmainen Droppi", d: "Saat siirtää kiekkosi pahasta puskasta keskelle väylää ilman rangaistusta." },
-    { n: "Keskirauta", d: "Jos osut tällä väylällä mihin tahansa korin metalliin, tuloksesi on Birdie (-1)." },
-    { n: "Varaslähtö", d: "Saat heittää kaksi avausheittoa tiiltä ja jatkaa niistä vapaasti paremmalla." },
-    { n: "Korttivaras", d: "Ryöstä satunnainen kortti valitsemasi vastustajan kädestä omaan käyttöösi." },
-    { n: "Puttiapu", d: "Voit siirtää mitä tahansa alle 15m puttiasi 3 metriä lähemmäs koria." },
-    { n: "Kumous", d: "Pelaa tämä peruuttaaksesi mihin tahansa pelaajaan juuri kohdistetun sabotaasin." },
-    { n: "Vaihtokauppa", d: "Vaihda huono avausheittosi paikkaa vastustajan hyvän avauksen kanssa." }
+// ==========================================
+// TASO 2: ISOT SABOTAASIT (Kalliita pelata, muuttavat fysiikkaa. Antavat vastustajalle pisteitä jos hän onnistuu!)
+// ==========================================
+const majorBases = [
+    { n: "Kämmenpakko", d: "Heitä seuraava heittosi tiiltä pakollisella kämmenellä (forehand)." },
+    { n: "Rystypakko", d: "Heitä seuraava heittosi tiiltä pakollisella rystyllä (backhand)." },
+    { n: "Pystyheitto", d: "Seuraava heitto on suoritettava pystyheitolla (Upsi/Tomahawk/Thumber)." },
+    { n: "Rolleripakko", d: "Kiekon on osuttava maahan kovaa ja rullattava eteenpäin vähintään 10m." },
+    { n: "Putteridraivi", d: "Avausheitto tiiltä on suoritettava putterilla." },
+    { n: "Väärä käsi avaus", d: "Avausheitto on heitettävä täysin väärällä/heikommalla kädellä." },
+    { n: "Kiekon Pakkovalinta", d: "Valitse kohteen bägistä 3 kiekkoa, joista hänen on pakko valita avauskiekko." },
+    { n: "Lainakiekko", d: "Anna kohteelle oma kiekkosi. Hänen on pakko heittää avaus sillä." },
+    { n: "Laser-linja", d: "Kiekon on pysyttävä koko lennon ajan alle 2 metrin korkeudella maasta." },
+    { n: "Korkea Hysse", d: "Heitä seuraava heitto jyrkkänä ja korkeana hyzerinä." },
+    { n: "Antsapoliisi", d: "Kiekon on lähdettävä kädestä selkeässä ja jyrkässä anhyzer-kulmassa." },
+    { n: "Scooberi", d: "Suorita lähestymisheitto ylösalaisella scuuberi-tyylillä." },
+    { n: "Turbo-Putt", d: "Seuraava putti on suoritettava sormilla kiekon alta työntäen (Turbo)." },
+    { n: "Grenade", d: "Kiekko on pidettävä kädessä ylösalaisin peukalo urassa ja heitettävä rystyllä." },
+    { n: "Vain yksi kiekko", d: "Pelaa tämä väylä alusta loppuun vain yhdellä kiekolla." }
 ];
 
-for(let i = 1; i <= 30; i++) {
-    const base = premiumBases[(i - 1) % premiumBases.length];
-    window.allCards.push({ id: "p_" + i, n: `💎 ${base.n}`, d: base.d, tier: "premium", type: "buff", price: Math.floor(Math.random() * 6) + 7 }); 
+for(let i = 1; i <= 60; i++) {
+    const base = majorBases[(i - 1) % majorBases.length];
+    window.allCards.push({ id: "major_" + i, n: base.n, d: base.d, tier: "major_sabotage", type: "sabotage" });
 }
 
+// ==========================================
+// TASO 1: PERUS HELPOTUKSET (Buffit)
+// ==========================================
+const buffBases = [
+    { n: "Mulligan", d: "Voit uusia oman epäonnistuneen heittosi." },
+    { n: "Siirto +3m", d: "Voit siirtää kiekkoasi 3 metriä mihin tahansa suuntaan (ei lähemmäs koria)." },
+    { n: "Kumous", d: "Peruuta sinuun juuri kohdistettu 1-tason (pieni) sabotaasi." },
+    { n: "Puskasta pois", d: "Saat siirtää kiekkosi vapaasti pelattavalle väylälle samalle etäisyydelle korista." },
+    { n: "Varaslähtö", d: "Saat heittää 2 avausheittoa tiiltä ja jatkaa niistä vapaasti paremmalla." },
+    { n: "Mando-ohitus", d: "Jos väylällä on mando, saat jättää sen huomioimatta ilman rangaistusta." }
+];
+
+for(let i = 1; i <= 40; i++) {
+    const base = buffBases[(i - 1) % buffBases.length];
+    window.allCards.push({ id: "buff_" + i, n: base.n, d: base.d, tier: "buff", type: "buff" });
+}
+
+// ==========================================
+// TASO 3: KAUPAN MONSTERIKORTIT (Maksaa paljon rahaa ostaa. Oston jälkeen peluu on ilmaista 0 P!)
+// ==========================================
+const monsterBases = [
+    { n: "Varas", d: "Ryöstä 6 P (tai kaikki jos alle) haluamaltasi vastustajalta tilillesi.", type: "sabotage", price: 15 },
+    { n: "Täystuho", d: "Määrää yksi 2-tason iso sabotaasi itse keksimilläsi säännöillä kohteelle.", type: "sabotage", price: 20 },
+    { n: "OB-Magneetti", d: "Valitse kohde. Jos hän menee OB:lle, hän saa +2 rangaistusheittoa normaalin +1 sijaan.", type: "sabotage", price: 18 },
+    { n: "Pisteiden Tuplaus", d: "Jos voitat tämän väylän yksin, saat tuplamäärän (x2) pelirahaa.", type: "buff", price: 12 },
+    { n: "Kiekkolukko", d: "Kiellä kohdetta käyttämästä hänen luottodraiveriaan koko kierroksen loppuun asti.", type: "sabotage", price: 25 },
+    { n: "Laser-Tähtäin", d: "Voit siirtää mitä tahansa alle 20m puttiasi 5 metriä lähemmäs koria.", type: "buff", price: 15 },
+    { n: "Vaihtokauppa", d: "Vaihda huono avausheittosi paikkaa kohteen hyvän avauksen kanssa.", type: "sabotage", price: 25 },
+    { n: "Jumal-Kumous", d: "Pelaa tämä peruuttaaksesi MIKÄ TAHANSA sabotaasi (myös monsteri).", type: "buff", price: 18 },
+    { n: "Par-Varmistus", d: "Heitä normaalisti. Jos saat tulokseksi enemmän kuin PAR, tuloksesi korjataan tasan PAR:iksi.", type: "buff", price: 22 }
+];
+
+monsterBases.forEach((base, i) => {
+    window.allCards.push({ id: "monster_" + i, n: `👹 ${base.n}`, d: base.d, tier: "monster", type: base.type, price: base.price }); 
+});
+
+// ==========================================
+// VÄYLÄSÄÄNNÖT
+// ==========================================
 window.holeRules = [
     { type: "bounty", n: "CTP-Kisa", d: "Tiiltä lähimmäksi korijalkaa osunut avaus voittaa väylätehtävän." },
     { type: "bounty", n: "Pitkä Putti", d: "Väylän pisimmän onnistuneen putin tekijä voittaa väylätehtävän." },
     { type: "rule", n: "Putteri-Ruletti", d: "Koko väylä pelataan pelkillä puttereilla. Draiverit on täysin kielletty kaikilta." },
-    { type: "bounty", n: "Pelastaja", d: "Ensimmäinen pelaaja, joka osuu puuhun tai menee OB:lle, mutta pelastaa silti Par-tuloksen, voittaa tehtävän." },
+    { type: "bounty", n: "Pelastaja", d: "Ensimmäinen pelaaja, joka menee ryteikköön tai OB:lle, mutta pelastaa silti Par-tuloksen, voittaa tehtävän." },
     { type: "rule", n: "Seisova Avaus", d: "Kukaan ei saa ottaa yhtään vauhtiaskelta avausheitossaan tiiltä." },
     { type: "rule", n: "Kämmenväylä", d: "Kaikki yli 10 metrin lähestymiset ja avaukset on pakko heittää kämmeneltä (forehand)." }
 ];
