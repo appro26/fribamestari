@@ -16,7 +16,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=158" />
+    <link rel="stylesheet" href="style.css?v=159" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
@@ -25,7 +25,7 @@
 </head>
 <body class="player-mode">
 
-    <button id="settingsToggleBtn" onclick="document.getElementById('settingsModal').style.display='block'" style="position:fixed; top:15px; right:15px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
+    <button id="settingsToggleBtn" onclick="document.getElementById('settingsModal').style.display='flex'" style="position:fixed; top:15px; right:15px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
 
     <div id="installPromptModal" class="winner-overlay" style="z-index: 10010; flex-direction:column; justify-content:center; align-items:center;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align: center;">
@@ -69,7 +69,8 @@
 
     <div id="corkboard-viewport" style="display:none;">
         <div id="corkboard-surface">
-            </div>
+            <!-- Sisältö generoidaan dynaamisesti JS:ssä taustan ehjänä pitämiseksi -->
+        </div>
     </div>
 
     <div class="corkboard-pocket-container" id="pocketContainer" style="display:none;">
@@ -157,9 +158,6 @@
                 <div id="adminScoreLog" class="log-box"></div>
                 
                 <button class="btn btn-danger" style="margin-top: 40px; padding:20px; font-size:1.2rem;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI (WIPE)</button>
-                
-                <button class="btn btn-secondary" style="margin-top:40px; border:2px solid #ccc; font-size:1.2rem; padding:20px;" onclick="document.getElementById('settingsModal').style.display='none'">SULJE ASETUKSET</button>
-
             </div>
         </div>
     </div>
@@ -171,6 +169,12 @@
     <div id="shopModal" class="scrollable-modal" style="padding:0; background:rgba(0,0,0,0.7);" onclick="if(event.target === this) { window.closeShopModal(); }">
         <div class="shop-binder-modal theme-shop">
             <div class="binder-swipe-handle"></div>
+            
+            <div class="shop-tabs">
+                <button id="shopTabSellBtn" class="shop-tab-btn" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('sell')">OMAT KORTIT</button>
+                <button id="shopTabBuyBtn" class="shop-tab-btn active" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('buy')">OSTA KORTTEJA</button>
+            </div>
+
             <div style="display: flex; flex: 1; overflow: hidden; position: relative;">
                 <div class="binder-spine">
                     <div class="binder-ring" style="margin-top: 30px;"></div>
@@ -184,11 +188,6 @@
                             <span id="shopModalHeaderTitle" style="line-height: 1.4; padding-top: 5px;">🛒 KAUPPA</span>
                             <span id="shopModalWallet" style="color:#000; background:var(--warning); padding:4px 10px; border-radius:8px; font-size:1.1rem; margin-left:10px; box-shadow:0 2px 5px rgba(0,0,0,0.5);">0 P</span>
                         </h2>
-                    </div>
-                    
-                    <div class="role-switcher" style="margin-bottom:20px; box-shadow:none; background:rgba(255,255,255,0.05); padding:4px; border:1px solid rgba(255,255,255,0.1); position:relative; z-index:20; display:flex;">
-                        <button id="shopTabSellBtn" class="role-btn" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('sell')" style="color:#fff;">OMAT KORTIT</button>
-                        <button id="shopTabBuyBtn" class="role-btn active" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('buy')" style="color:#fff;">OSTA KORTTEJA</button>
                     </div>
                     
                     <div id="shopBuyArea" style="position:relative; z-index:20;">
@@ -255,7 +254,7 @@
         </div>
     </div>
 
-    <script src="tasks.js?v=158"></script>
-    <script type="module" src="script.js?v=158"></script>
+    <script src="tasks.js?v=159"></script>
+    <script type="module" src="script.js?v=159"></script>
 </body>
 </html>
