@@ -125,7 +125,7 @@ window.dismissInstallPrompt = function() {
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
 // ==============================================
-// VAPAA KAMERA LIIKE 60fps & SULAVA ZOOM
+// VAPAA KAMERA
 // ==============================================
 let boardState = { scale: 1, x: 0, y: 0 };
 let isDraggingBoard = false;
@@ -137,7 +137,7 @@ window.applyBoardTransform = function(smooth = false) {
     const board = el('corkboard-surface');
     if(!board) return;
     board.style.transition = smooth ? 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
-    board.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
+    board.style.transform = `translate(${boardState.x}px, ${boardState.y}px) scale(${boardState.scale})`;
 };
 
 const vp = el('corkboard-viewport');
@@ -321,7 +321,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     });
     html += `</div>`;
     
-    // Satunnaiset eläinhahmot ympäri väylän solua
     if (isHistory) {
         let insultIndex = Math.floor(pseudoRandom(hIndex * 8.8) * insults.length);
         let svgIndex = Math.floor(pseudoRandom(hIndex * 9.9) * doodleSVGs.length);
@@ -358,11 +357,21 @@ window.renderBoard = function() {
     
     if (!currentCourse) { 
         board.innerHTML = '';
+        board.style.width = '100vw';
+        board.style.height = '100vh';
         return; 
     }
     
+    // Pakotetaan tarkat pikselimitat taululle, jotta se ei koskaan hajoa.
     let totalHoles = currentCourse.pars.length;
     let cols = Math.min(9, totalHoles);
+    let rows = Math.ceil(totalHoles / cols);
+    
+    let exactWidth = 200 + (cols * 380) + ((cols - 1) * 30);
+    let exactHeight = 200 + (rows * 950) + ((rows - 1) * 30);
+    
+    board.style.width = `${exactWidth}px`;
+    board.style.height = `${exactHeight}px`;
     board.style.gridTemplateColumns = `repeat(${cols}, 380px)`;
 
     let html = ``; 
@@ -413,7 +422,7 @@ window.renderReceipt = function() {
     };
 
     let generateTotals = (isMini) => {
-        let html = `<div style="text-align:center; margin-bottom:5px;">KOKONAISTULOS</div>`;
+        let html = `<div style="text-align:center; margin-bottom:5px; letter-spacing:1px;">YHTEENSÄ</div>`;
         let sorted = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore||0) - (b.dgScore||0));
         sorted.forEach(p => {
             let dgStr = p.dgScore > 0 ? `+${p.dgScore}` : (p.dgScore === 0 ? 'E' : p.dgScore);
@@ -700,7 +709,7 @@ window.showHandLimitModal = function(cards) {
 };
 
 //==============================================
-// Z-KORJATTU 3D-KARUSELLI (Ei enää leikkaudu!)
+// TURVALLINEN KARUSELLI (Ei enää leikkaudu!)
 //==============================================
 window.flipCard = function(index) {
     const inner = el(`card3d-inner-${index}`);
@@ -760,13 +769,13 @@ window.initNativeCarousel = function() {
             const cardCenter = paddingLeft + (index * cardWidth) + (cardWidth / 2) - scrollLeft;
             const diff = (cardCenter - centerOffset) / 160; 
             
-            const transX = diff * -90; 
-            const transY = Math.abs(diff) * 15; 
-            const transZ = Math.abs(diff) * -150; // Työntää sivukortit kauas syvyyteen! Ei enää leikkaudu!
+            // Ei käytetä enää iOS:n sekoittavaa translateZ -arvoa wrapperissa
+            const transX = diff * -40; 
+            const transY = Math.abs(diff) * 20; 
             const rotZ = diff * 5; 
-            const scale = Math.max(0.8, 1 - Math.abs(diff) * 0.1); 
+            const scale = Math.max(0.85, 1 - Math.abs(diff) * 0.15); // Maksimiskaala on tasan 1.0!
             
-            card.style.transform = `translate3d(${transX}px, ${transY}px, ${transZ}px) rotateZ(${rotZ}deg) scale(${scale})`;
+            card.style.transform = `translate(${transX}px, ${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
             card.style.zIndex = 100 - Math.floor(Math.abs(diff)*10);
             
             if (Math.abs(diff) < minDiff) { minDiff = Math.abs(diff); closestIndex = index; }
