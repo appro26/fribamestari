@@ -32,13 +32,98 @@ const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length
 
 const pseudoRandom = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
 
-const doodleData = [
-    { svg: "M 20 70 C 20 90, 80 90, 80 70 C 90 40, 10 40, 20 70 M 20 60 L 10 50 M 35 45 L 30 30 M 65 45 L 70 30 M 80 60 L 90 50 M 40 60 C 45 65, 55 65, 60 60", text: "Mikä tässä lajissa muka on kivaa? Pelkkää puunhakkuuta. -Siili" },
-    { svg: "M 40 80 C 20 80, 20 50, 40 50 C 45 40, 60 40, 65 50 C 80 50, 90 80, 70 90 C 80 60, 95 30, 70 20 C 50 10, 50 40, 60 60 M 45 65 C 50 70, 60 70, 65 65", text: "Taas OB:lle. Ootko harkinnu vaikka sauvakävelyä? -Orava" },
-    { svg: "M 50 80 L 20 40 L 40 40 L 50 20 L 60 40 L 80 40 Z M 35 50 L 45 60 L 55 50", text: "Lajin helppous viehättää, vai mitä? -Kettu" },
-    { svg: "M 20 50 C 20 10, 80 10, 80 50 C 80 90, 20 90, 20 50 M 20 30 C 10 20, 20 10, 30 20 M 80 30 C 90 20, 80 10, 70 20 M 40 60 C 50 70, 60 70, 60 60", text: "Ostin 30 euron kiekon, että voin heittää sen metsään. -Karhu" },
-    { svg: "M 40 50 C 20 50, 20 90, 40 90 C 60 90, 60 50, 40 50 M 30 50 C 20 10, 40 10, 40 50 M 50 50 C 40 10, 60 10, 50 50 M 35 70 C 40 75, 45 75, 50 70", text: "Frisbeegolf on kivaa, sanoivat. Rentouttavaa, sanoivat. -Pupu" },
-    { svg: "M 20 80 C 20 40, 80 40, 80 80 Z M 35 60 C 40 65, 45 65, 50 60 M 30 50 C 35 50, 35 45, 30 45 M 70 50 C 65 50, 65 45, 70 45", text: "Pariin? Älä naurata. Heitot osuu omiin jalkoihin. -Myyrä" }
+// 80 äärimmäisen tylyä solvausta
+const insults = [
+    "Mikä tässä lajissa muka on kivaa? Pelkkää puunhakkuuta.",
+    "Taas OB:lle. Ootko harkinnu vaikka sauvakävelyä?",
+    "Lajin helppous viehättää, vai mitä?",
+    "Ostin 30 euron kiekon, että voin heittää sen metsään.",
+    "Frisbeegolf on kivaa, sanoivat. Rentouttavaa, sanoivat.",
+    "Pariin? Älä naurata. Heitot osuu omiin jalkoihin.",
+    "Ootko varma ettei sun laji ois virkkaus?",
+    "Puut tykkää susta, harmi ettei kori.",
+    "Toi heitto oli niin huono, että kiekko häpesi.",
+    "Lopeta jo, tää on noloa meille kaikille.",
+    "Edes myötätuuli ei pelasta tota räpellystä.",
+    "Jos heittäisit silmät kiinni, menisi varmaan paremmin.",
+    "Sun putti on yhtä epävarma kuin Suomen kesä.",
+    "Caddiekin lähti kotiin häpeästä.",
+    "Osuithan sä johonkin... nimittäin omaan egoosi.",
+    "Miten voi heittää taaksepäin ohi korista?",
+    "Pelaatko sä tahallasi näin huonosti?",
+    "Toi oli hieno heitto... siis jos maali ois toi koivu.",
+    "Sulla on enemmän puuosumia kuin metsurilla.",
+    "Eikö tän pitänyt olla rento sunnuntailaji?",
+    "Se tunne kun rolleri pysähtyy ekaan käpyyn.",
+    "Älä syytä tuulta, syytä peiliä.",
+    "Uusi kiekko ei korjaa tuota tekniikkaa.",
+    "Bägi maksoi 200€, taidot 0€.",
+    "Haluatko GPS-paikantimen tuolle avaukselle?",
+    "Miten voi kolmesta metristä laittaa alarautaan?",
+    "Tällä vauhdilla ollaan perillä ensi jouluna.",
+    "Fore, rysty, upsi... mikään ei toimi.",
+    "Puiden halailu on erikseen, tää on frisbeegolfia.",
+    "Sun draivi on lyhyempi kuin mun putti.",
+    "Hieno hyzer-flippi! Ai se oli vahinko? Niinpä tietysti.",
+    "Jos laji turhauttaa, voithan aina alkaa kerätä postimerkkejä.",
+    "Kato! Se lensi melkein kymmenen metriä!",
+    "Taidat olla radan paras puiden karsija.",
+    "Etsiikö sun kiekko sieniä tuolta ryteiköstä?",
+    "Älä turhaan kato tuloskorttia, se masentaa vaan lisää.",
+    "Onneksi tyylipisteitä ei lasketa.",
+    "Sulla on lajin kalleimmat varusteet ja halvimmat heitot.",
+    "Olisiko aika siirtyä e-urheiluun?",
+    "Kiva nähdä, että joku muukin heittää ihan päin honkia.",
+    "Ei se kori sieltä metsästä löydy.",
+    "Pääsitkö edes tiiltä pois tällä kertaa?",
+    "Tuo heitto rikkoi fysiikan lakeja... huonolla tavalla.",
+    "En tiennytkään, että frisbeegolf on piiloleikkiä kiekon kanssa.",
+    "Puttaaminen on taitolaji. Sä et todistetusti osaa sitä.",
+    "Harmi ettei tyhmyydestä jaeta miinuspisteitä.",
+    "Tänään on selvästi sun 'palauttava' kierros.",
+    "Älä viitsi itkeä, tää on vaan muovia ja metallia.",
+    "Sulla on draivia, mutta ei suuntaa.",
+    "Hyvä yritys! (Ei oikeasti ollut).",
+    "Joko mennään kotiin? Mulla on nälkä.",
+    "Edes ammattilainen ei selittäisi tuota heittoa parhain päin.",
+    "Näytät ihan siltä, että tietäisit mitä teet. Harmi ettei se näy tuloksessa.",
+    "Kiekko pelkää sua. Siksi se karkaa pusikkoon.",
+    "Kokeileppa heittää ilman tuota irvistystä.",
+    "Hieno lay-up. Myönnä vaan että se lipsahti.",
+    "Sä olet syy miksi kiekoissa pitäisi olla palautusoikeus.",
+    "Voimaa on kuin pienessä pitäjässä, mutta älyä ei nimeksikään.",
+    "Tää ei ole pituusheittoa, vaan tarkkuuslaji.",
+    "Kävitkö sä edes lämmittelemässä?",
+    "Taisi mennä vähän grippilokiksi.",
+    "Kori on tuolla päin! Mihin sä oikein tähtäät?",
+    "Edes taikasauva ei pelastaisi tuota tekniikkaa.",
+    "Ootko sä heittänyt koskaan aiemmin?",
+    "Laita silmät kii, ehkä se auttaa.",
+    "Toivottavasti kukaan ei kuvannut tuota.",
+    "Ei edes tuurilla osuisi noin huonosti.",
+    "Sun rysty on heikompi kuin mun isoäidin.",
+    "Ota vähän rennommin, eihän tää oo vakavaa... paitsi sulle.",
+    "Frisbeegolf - laji missä sä olet todistetusti huono.",
+    "Onko sulla kädessä joku asennusvirhe?",
+    "Edes koira ei hakisi tuota kiekkoa.",
+    "Menikö kiekko taas mustikkaan?",
+    "Sulla on selvästi lahjoja... johonkin aivan muuhun.",
+    "Toi heitto oli suorastaan traaginen.",
+    "Vielä ehtii vaihtaa harrastusta.",
+    "Puut ovat ystäviä, mutta sun ei tarvitse osua jokaiseen.",
+    "Näyttää siltä, että sä yrität liikaa. Ja epäonnistut silti.",
+    "Onneks sulla on edes hienot vaatteet.",
+    "Jos tuloskorttiin vois piirtää itkevän hymiön, tekisin sen nyt."
+];
+
+// Tunnistettavat 6 eläinhahmoa (SVG polut)
+const doodleSVGs = [
+    "M 20 70 C 20 90, 80 90, 80 70 C 90 40, 10 40, 20 70 M 20 60 L 10 50 M 35 45 L 30 30 M 65 45 L 70 30 M 80 60 L 90 50 M 40 60 C 45 65, 55 65, 60 60", // Siili
+    "M 40 80 C 20 80, 20 50, 40 50 C 45 40, 60 40, 65 50 C 80 50, 90 80, 70 90 C 80 60, 95 30, 70 20 C 50 10, 50 40, 60 60 M 45 65 C 50 70, 60 70, 65 65", // Orava
+    "M 50 80 L 20 40 L 40 40 L 50 20 L 60 40 L 80 40 Z M 35 50 L 45 60 L 55 50", // Kettu
+    "M 20 50 C 20 10, 80 10, 80 50 C 80 90, 20 90, 20 50 M 20 30 C 10 20, 20 10, 30 20 M 80 30 C 90 20, 80 10, 70 20 M 40 60 C 50 70, 60 70, 60 60", // Karhu
+    "M 40 50 C 20 50, 20 90, 40 90 C 60 90, 60 50, 40 50 M 30 50 C 20 10, 40 10, 40 50 M 50 50 C 40 10, 60 10, 50 50 M 35 70 C 40 75, 45 75, 50 70", // Pupu
+    "M 20 80 C 20 40, 80 40, 80 80 Z M 35 60 C 40 65, 45 65, 50 60 M 30 50 C 35 50, 35 45, 30 45 M 70 50 C 65 50, 65 45, 70 45" // Myyrä
 ];
 
 let deferredPrompt;
@@ -133,7 +218,6 @@ if(vp) {
             initialPinchDist = dist;
         }
 
-        // Käytetään requestAnimationFramea silkkiseen piirtoon
         if (!window.boardRAF) {
             window.boardRAF = requestAnimationFrame(() => {
                 window.applyBoardTransform(false);
@@ -160,13 +244,15 @@ window.zoomToHole = function(hIndex) {
     
     let col = (hIndex - 1) % cols;
     let row = Math.floor((hIndex - 1) / cols);
-    let cellX = 60 + col * 410; 
-    let cellY = 60 + row * 980; 
+    
+    // 100px padding + 380px cell + 30px gap
+    let cellX = 100 + col * 410; 
+    let cellY = 100 + row * 980; 
     
     boardState.scale = 1;
     boardState.x = (window.innerWidth - 380) / 2 - cellX;
     boardState.y = 50 - cellY; 
-    window.applyBoardTransform(true); // Smooth transition päälle!
+    window.applyBoardTransform(true); // Smooth siirtymä päälle
 };
 
 window.zoomToCurrentHole = function() {
@@ -277,9 +363,13 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     });
     html += `</div>`;
     
-    // Eläinhahmot ripotellaan nurkkiin (tulevat ulos lappujen alta!)
+    // Satunnaiset eläinhahmot ympäri väylän solua
     if (isHistory) {
-        let d = doodleData[(hIndex - 1) % doodleData.length];
+        let insultIndex = Math.floor(pseudoRandom(hIndex * 8.8) * insults.length);
+        let svgIndex = Math.floor(pseudoRandom(hIndex * 9.9) * doodleSVGs.length);
+        
+        let dText = insults[insultIndex];
+        let dSvg = doodleSVGs[svgIndex];
         let dRot = -15 + (pseudoRandom(hIndex * 3) * 30);
         let isNew = (hIndex === window.gameHistory.length);
         let drawnClass = isNew ? 'drawn' : '';
@@ -287,7 +377,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         
         let posRand = pseudoRandom(hIndex * 7);
         let posCss = "";
-        let offset = 40; // Tunkevat ulospäin solun keskustasta
+        let offset = 40; 
         if (posRand < 0.25) posCss = `top: -${offset}px; left: -${offset}px;`;
         else if (posRand < 0.5) posCss = `top: -${offset}px; right: -${offset}px;`;
         else if (posRand < 0.75) posCss = `bottom: -${offset}px; left: -${offset}px;`;
@@ -295,8 +385,8 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
 
         html += `
         <div class="doodle-drawing ${drawnClass}" style="${posCss} --rot:${dRot}deg; ${opacityStyle}">
-            <div class="doodle-bubble">${d.text}</div>
-            <svg class="doodle-svg doodle-path" viewBox="0 0 100 100"><path d="${d.svg}"/></svg>
+            <div class="doodle-bubble">${dText}</div>
+            <svg class="doodle-svg doodle-path" viewBox="0 0 100 100"><path d="${dSvg}"/></svg>
         </div>`;
     }
 
@@ -316,7 +406,6 @@ window.renderBoard = function() {
     let totalHoles = currentCourse.pars.length;
     let cols = Math.min(9, totalHoles);
     board.style.gridTemplateColumns = `repeat(${cols}, 380px)`;
-    board.style.gridAutoRows = '950px';
 
     let html = ``; 
     window.gameHistory.forEach((h, index) => {
@@ -349,7 +438,7 @@ window.renderReceipt = function() {
     };
 
     let generateHistoryLines = (isMini) => {
-        let html = `<div class="r-title">TULOKSET</div>`;
+        let html = ``;
         let startIdx = isMini ? Math.max(0, window.gameHistory.length - 2) : 0;
         
         for(let i=startIdx; i<window.gameHistory.length; i++) {
@@ -375,10 +464,11 @@ window.renderReceipt = function() {
         return html;
     };
 
-    if(el('receipt-mini-content')) el('receipt-mini-content').innerHTML = generateHistoryLines(true);
     if(el('receipt-mini-totals')) el('receipt-mini-totals').innerHTML = generateTotals(true);
-    
-    if(el('receipt-full-content')) el('receipt-full-content').innerHTML = generateHistoryLines(false) + `<div class="r-tot-sec">${generateTotals(false)}</div>`;
+    if(el('receipt-full-content')) {
+        let fullTitle = `<div class="r-title" style="font-size:1.5rem; margin-bottom:15px;">TULOKSET</div>`;
+        el('receipt-full-content').innerHTML = fullTitle + generateHistoryLines(false) + `<div class="r-tot-sec">${generateTotals(false)}</div>`;
+    }
 };
 
 //==============================================
@@ -701,7 +791,6 @@ window.initNativeCarousel = function() {
     const cards = Array.from(container.querySelectorAll('.carousel-card-wrapper'));
     if(cards.length === 0) return;
 
-    // Piirretään vapaasti jatkuvana 60fps silmukkana aina kun karusellia rullataan. Ei pätki enää!
     function updateCarouselLayout() {
         const scrollLeft = container.scrollLeft; const containerWidth = container.clientWidth;
         const centerOffset = containerWidth / 2; const cardWidth = 320; 
@@ -915,7 +1004,8 @@ window.submitScores = function() {
     if(el('scoreModal')) el('scoreModal').style.display = 'none'; 
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
     
-    setTimeout(() => { window.zoomToHole(nextHoleIndex); }, 400); // Sulava liuku uudelle väylälle
+    // Siirrytään smoothisti ilman välähdyksiä
+    setTimeout(() => { window.zoomToHole(nextHoleIndex); }, 400); 
 };
 
 window.startMeilahti = function() {
