@@ -11,7 +11,7 @@ const db = getDatabase(app);
 const el = id => document.getElementById(id);
 
 let myName = localStorage.getItem('friba_name') || null;
-let currentRole = 'player'; // <-- TÄMÄ OLI AIEMMIN KADONNUT! Roolimuuttuja palautettu.
+let currentRole = 'player';
 let allPlayers = [];
 let activeHole = null;
 let currentCourse = null;
@@ -138,12 +138,37 @@ let isRendering = false;
 window.applyBoardTransform = function() {
     if(!boardEl) boardEl = el('corkboard-surface');
     if(boardEl) {
+        // Laitteistokiihdytys päälle, tekee liikkeestä voinpehmeää
+        if(boardEl.style.willChange !== 'transform') boardEl.style.willChange = 'transform';
+        
+        const vpWidth = window.innerWidth;
+        const vpHeight = window.innerHeight;
+        
+        // Luetaan taulun oikea koko (tai käytetään reilua oletusta)
+        const bWidth = parseFloat(boardEl.style.width) || 3000;
+        const bHeight = parseFloat(boardEl.style.height) || 3000;
+        
+        // Määritetään turvamarginaalit, ettei taulua voi raahata kokonaan ulos ruudusta
+        const marginX = vpWidth * 0.5;
+        const marginY = vpHeight * 0.5;
+        
+        const minX = vpWidth - (bWidth * boardState.scale) - marginX;
+        const maxX = marginX;
+        const minY = vpHeight - (bHeight * boardState.scale) - marginY;
+        const maxY = marginY;
+
+        // Rajojen pakotus (taulu ei karkaa)
+        if (boardState.x > maxX) boardState.x = maxX;
+        if (boardState.x < minX) boardState.x = minX;
+        if (boardState.y > maxY) boardState.y = maxY;
+        if (boardState.y < minY) boardState.y = minY;
+
         boardEl.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
     }
     isRendering = false;
 };
 
-window.animateCameraTo = function(tX, tY, tScale, duration=400) {
+window.animateCameraTo = function(tX, tY, tScale, duration=350) {
     if (camAnim) cancelAnimationFrame(camAnim);
     let sX = boardState.x; let sY = boardState.y; let sScale = boardState.scale;
     let startT = performance.now();
@@ -155,8 +180,7 @@ window.animateCameraTo = function(tX, tY, tScale, duration=400) {
         boardState.x = sX + (tX - sX) * ease;
         boardState.y = sY + (tY - sY) * ease;
         boardState.scale = sScale + (tScale - sScale) * ease;
-        if(!boardEl) boardEl = el('corkboard-surface');
-        if(boardEl) boardEl.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
+        window.applyBoardTransform();
         
         if (p < 1) camAnim = requestAnimationFrame(step);
         else camAnim = null;
@@ -171,7 +195,6 @@ if(vp) {
         if(e.touches.length === 1) {
             isDraggingBoard = true;
             lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            window.applyBoardTransform();
         } else if (e.touches.length === 2) {
             initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             isDraggingBoard = true;
@@ -183,19 +206,25 @@ if(vp) {
         e.preventDefault(); 
         
         if(e.touches.length === 1 && lastBoardTouch) {
-            boardState.x += e.touches[0].clientX - lastBoardTouch.x;
-            boardState.y += e.touches[0].clientY - lastBoardTouch.y;
+            // Suhteutetaan raahausnopeus zoomiin, jotta sormen liike vastaa aina taulun liikettä
+            let panSpeed = 1 / Math.max(0.5, boardState.scale);
+            boardState.x += (e.touches[0].clientX - lastBoardTouch.x) * panSpeed;
+            boardState.y += (e.touches[0].clientY - lastBoardTouch.y) * panSpeed;
             lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         } else if (e.touches.length === 2) {
             let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             let scaleDiff = dist / initialPinchDist;
             let pinchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             let pinchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            
             boardState.x -= (pinchX - boardState.x) * (scaleDiff - 1);
             boardState.y -= (pinchY - boardState.y) * (scaleDiff - 1);
             boardState.scale *= scaleDiff;
-            if(boardState.scale < 0.15) boardState.scale = 0.15;
-            if(boardState.scale > 2.5) boardState.scale = 2.5;
+            
+            // Tiukemmat zoom-rajat: ei enää liian kauas!
+            if(boardState.scale < 0.35) boardState.scale = 0.35;
+            if(boardState.scale > 1.8) boardState.scale = 1.8;
+            
             initialPinchDist = dist;
         }
 
@@ -209,6 +238,11 @@ if(vp) {
         if(e.touches.length < 1) {
             isDraggingBoard = false;
             lastBoardTouch = null;
+            // Varmistetaan rajat kun sormi nousee ruudulta
+            if (!isRendering) {
+                isRendering = true;
+                requestAnimationFrame(window.applyBoardTransform);
+            }
         } else if (e.touches.length === 1) {
             lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }
@@ -470,11 +504,11 @@ window.renderReceipt = function() {
     };
 
     let generateTotals = (isMini) => {
-        let html = ``; // YHTEENSÄ teksti poistettu tarpeettomana
+        let html = ``; 
         let sorted = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore||0) - (b.dgScore||0));
         sorted.forEach(p => {
             let dgStr = p.dgScore > 0 ? `+${p.dgScore}` : (p.dgScore === 0 ? 'E' : p.dgScore);
-            let fSize = isMini ? '1.3rem' : '1.8rem'; // Tulokset isommalla!
+            let fSize = isMini ? '1.3rem' : '1.8rem'; 
             html += `<div class="r-row" style="font-size:${fSize}; margin-bottom: 2px;"><span>${p.name.substring(0, isMini?6:12)}</span><span>${dgStr}</span></div>`;
         });
         return html;
@@ -568,7 +602,7 @@ window.forceDiscard = function(cId, isNormal) {
             if (sIdx !== -1) nextShop.splice(sIdx, 1);
             update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers), 'gameState/activeHole/shop': window.cleanFirebaseData(nextShop) });
             window.pendingShopPurchase = null; 
-            window.switchShopTab('sell'); // Siirtyy aina omiin kortteihin oston jälkeen
+            window.switchShopTab('sell');
             window.showNotification(`🛒 Ostit edun!`, 'warning');
             return;
         } else { window.pendingShopPurchase = null; }
@@ -599,7 +633,6 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
         me.cards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : []; me.cards.push(idStr);
         update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers), 'gameState/activeHole/shop': window.cleanFirebaseData(nextShop) });
         
-        // Vaihtaa tabin omiin kortteihin kun osto on suoritettu!
         window.switchShopTab('sell');
         window.logEvent(`${myName} osti edun: ${nameStr}.`); 
         window.showNotification(`🛒 Ostit edun: ${nameStr}`, 'warning');
@@ -1002,7 +1035,6 @@ window.submitScores = function() {
     if(el('scoreModal')) el('scoreModal').style.display = 'none'; 
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
     
-    // Siirrytään smoothisti
     setTimeout(() => { window.zoomToHole(nextHoleIndex); }, 400); 
 };
 
