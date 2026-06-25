@@ -1,6 +1,3 @@
-//==============================================
-// SUOJATTU ALUSTUS: Varmistetaan että tiedot löytyy aina
-//==============================================
 window.allCards = window.allCards || [];
 window.holeRules = window.holeRules || [];
 
@@ -21,7 +18,9 @@ let currentCourse = null;
 let currentHoleIndex = 1;
 let lastPlayedCardTimestamp = Date.now();
 window.gameHistory = []; 
-let isZoomedOut = false;
+
+// Vapaa kamera -tila on korvannut rajoitetun zoomauksen
+let isFreeCam = false;
 window.viewHoleIndex = null; 
 
 window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
@@ -30,38 +29,26 @@ window.pendingShopPurchase = null;
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
 const getRandomColor = () => postItColors[Math.floor(Math.random() * postItColors.length)];
 
-// 7 Eri kynätyyliä
 const penColors = [
     { c1: '#0284c7', c2: '#38bdf8' }, { c1: '#dc2626', c2: '#f87171' }, { c1: '#16a34a', c2: '#4ade80' },
     { c1: '#d97706', c2: '#fbbf24' }, { c1: '#9333ea', c2: '#c084fc' }, { c1: '#db2777', c2: '#f472b6' }, { c1: '#475569', c2: '#94a3b8' }
 ];
 const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length)];
 
-// Kiroileva Siili -Doodles Pelaajan Solvauksilla
+// Aito pseudo-random taulun lappujen pysyvään asetteluun
+const pseudoRandom = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
+
+// Kiroilevat vihaiset eläimet lajispesifeillä herjoilla
 const doodleData = [
-    { svg: "M40,20 Q50,10 60,20 Q70,40 50,60 Q30,40 40,20 Z M45,30 L45,35 M55,30 L55,35 M50,45 L50,50", text: "Käsi irti kiekosta, et sä osaa! -Siili" },
-    { svg: "M30,30 Q50,10 70,30 Q80,50 50,70 Q20,50 30,30 M40,40 L45,40 M60,40 L55,40", text: "Ostit kalleimman kiekon metsään heitettäväksi. -Orava" },
-    { svg: "M20,20 L50,80 L80,20 Q50,10 20,20 M40,40 A5,5 0 1,1 40,41 M60,40 A5,5 0 1,1 60,41", text: "Pariin? Älä naurata. -Kettu" },
-    { svg: "M10,50 A40,40 0 1,1 90,50 A40,40 0 1,1 10,50 M30,40 A5,5 0 1,1 30,41 M70,40 A5,5 0 1,1 70,41 M40,60 Q50,70 60,60", text: "Voisitko heittää edes kerran suoraan? -Karhu" },
-    { svg: "M50,40 A30,30 0 1,1 50,90 A30,30 0 1,1 50,40 M30,40 L20,10 L40,30 M70,40 L80,10 L60,30", text: "Otitko sokean opaskoiran caddieksi? -Pupu" },
-    { svg: "M20,50 A30,30 0 1,1 80,50 A30,30 0 1,1 20,50 M35,45 A10,10 0 1,1 35,46 M65,45 A10,10 0 1,1 65,46 M50,60 L45,70 L55,70 Z", text: "Mummokin heittää pidemmälle. -Pöllö" },
-    { svg: "M10,50 Q50,10 90,50 Q50,90 10,50 M30,40 A5,5 0 1,1 30,41 M70,40 A5,5 0 1,1 70,41", text: "Taidat tarvita silmälasit? -Myyrä" },
-    { svg: "M40,50 Q50,30 60,50 Q70,80 50,90 Q30,80 40,50 M20,20 L40,50 M80,20 L60,50", text: "Lopeta jo, hävettää katsoa. -Hirvi" },
-    { svg: "M30,30 Q50,20 70,30 L80,60 L20,60 Z M40,60 L40,70 M60,60 L60,70", text: "Kaataisit ne puut suosiolla. -Majava" },
-    { svg: "M20,70 Q50,40 80,70 Q50,100 20,70 M30,50 A5,5 0 1,1 30,51 M70,50 A5,5 0 1,1 70,51", text: "Kiekko veteen, perus. -Sammakko" },
-    { svg: "M10,80 Q30,40 50,80 T90,80 M20,70 A2,2 0 1,1 20,71 M30,75 L40,75", text: "Sssssurkea esitys. -Käärme" },
-    { svg: "M40,20 L70,50 L40,80 Z M30,50 L40,50 M60,40 A2,2 0 1,1 60,41", text: "Toi puu oli tossa jo eilen. -Tikka" },
-    { svg: "M30,30 L50,70 L70,30 M30,30 L20,10 L40,30 M70,30 L80,10 L60,30 M40,40 A2,2 0 1,1 40,41 M60,40 A2,2 0 1,1 60,41", text: "Ei ota tuulta alle, vai eikö taidot riitä? -Ilves" },
-    { svg: "M20,50 Q50,10 80,50 Q50,90 20,50 M40,40 L50,50 L60,40 M10,10 L30,40 M90,10 L70,40", text: "Komea uho, paska heitto. -Metso" },
-    { svg: "M40,50 A20,20 0 1,1 60,50 A20,20 0 1,1 40,50 M30,30 A10,10 0 1,1 40,40 M70,30 A10,10 0 1,1 60,40", text: "Varo mihin roiskit! -Hiiri" },
-    { svg: "M10,50 Q50,30 90,50 Q50,70 10,50 M30,45 A2,2 0 1,1 30,46 M70,45 A2,2 0 1,1 70,46", text: "Osumatarkkuus nolla. Vähän niinkun sun elämä. -Kärppä" },
-    { svg: "M30,20 L50,50 L70,20 L80,50 L50,90 L20,50 Z M40,40 A2,2 0 1,1 40,41 M60,40 A2,2 0 1,1 60,41", text: "Mitä sä oikein yrität? Tuskallista. -Susi" },
-    { svg: "M20,30 A40,40 0 1,1 80,30 A40,40 0 1,1 20,30 M40,40 L45,45 M60,40 L55,45", text: "Pysyisithän poissa radalta. -Ahma" }
+    { svg: "M30,80 Q50,20 70,80 Z M40,50 L45,55 L55,45 M35,40 L40,35 M60,40 L65,35 M45,70 L55,70", text: "Mikä tässä lajissa muka on kivaa? Pelkkää puunhakkuuta. -Siili" },
+    { svg: "M20,60 Q50,10 80,60 Q50,110 20,60 M30,45 L40,50 M70,45 L60,50 M45,65 Q50,75 55,65", text: "Taas OB:lle. Ootko harkinnu vaikka sauvakävelyä? -Orava" },
+    { svg: "M10,80 Q50,30 90,80 M20,60 L35,65 M80,60 L65,65 M40,75 A10,10 0 0,0 60,75", text: "Lajin helppous viehättää, vai mitä? -Kettu" },
+    { svg: "M30,30 A40,40 0 1,1 70,70 A40,40 0 1,1 30,30 M45,45 L50,50 M65,45 L60,50 M45,65 L55,65 M20,20 L35,35 M80,20 L65,35", text: "Ostin 30 euron kiekon, että voin heittää sen suoraan metsään. -Karhu" },
+    { svg: "M20,50 L20,10 L40,40 M80,50 L80,10 L60,40 M30,60 L40,65 M70,60 L60,65 M45,75 A5,5 0 0,0 55,75", text: "Frisbeegolf on kivaa, sanoivat. Rentouttavaa, sanoivat. -Pupu" },
+    { svg: "M30,80 L50,40 L70,80 Z M40,60 L45,65 L50,60 M35,50 L40,45 M65,50 L60,45", text: "Pariin? Älä naurata. Puolet sun heitoista osuu omiin jalkoihin. -Myyrä" },
+    { svg: "M10,50 Q50,10 90,50 Q50,90 10,50 M30,40 L40,45 M70,40 L60,45 M45,60 L55,60", text: "Se oli kyllä hieno heitto... siis jos olisit tähdännyt tuohon koivuun. -Tikka" }
 ];
 
-//==============================================
-// PWA ASENNUS & OHJEET
-//==============================================
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault(); deferredPrompt = e;
@@ -101,9 +88,9 @@ window.dismissInstallPrompt = function() {
 
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
-//==============================================
-// VAPAA KAMERA, TAULU & DOODLES (PAN & ZOOM)
-//==============================================
+// ==============================================
+// VAPAA KAMERA & TAULU
+// ==============================================
 let boardState = { scale: 1, x: 0, y: 0 };
 let isDraggingBoard = false;
 let lastBoardTouch = null;
@@ -119,9 +106,11 @@ window.applyBoardTransform = function() {
 const vp = el('corkboard-viewport');
 if(vp) {
     vp.addEventListener('touchstart', e => {
-        if(!isZoomedOut) return;
-        if(e.target.closest('.hole-cell') || e.target.closest('.doodle-drawing')) return; // Ei blokata klikkauksia elementteihin
+        if(e.target.closest('.hole-cell') || e.target.closest('.doodle-drawing')) return; 
         
+        isFreeCam = true;
+        if(el('boardBtnText')) el('boardBtnText').innerText = '📍 PALAA VÄYLÄLLE';
+
         if(e.touches.length === 1) {
             isDraggingBoard = true;
             lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -133,7 +122,7 @@ if(vp) {
     }, {passive: false});
 
     vp.addEventListener('touchmove', e => {
-        if(!isZoomedOut || !isDraggingBoard) return;
+        if(!isDraggingBoard) return;
         e.preventDefault();
         if(e.touches.length === 1 && lastBoardTouch) {
             let dx = e.touches[0].clientX - lastBoardTouch.x;
@@ -153,7 +142,6 @@ if(vp) {
     }, {passive: false});
 
     vp.addEventListener('touchend', e => {
-        if(!isZoomedOut) return;
         if(e.touches.length < 1) {
             isDraggingBoard = false;
             lastBoardTouch = null;
@@ -164,56 +152,51 @@ if(vp) {
 }
 
 window.toggleZoom = function() {
-    if (isZoomedOut) { isZoomedOut = false; window.viewHoleIndex = null; } 
-    else if (window.viewHoleIndex !== null && window.viewHoleIndex !== currentHoleIndex) { window.viewHoleIndex = null; } 
-    else { isZoomedOut = true; }
-    
-    let btn = el('boardBtnText');
-    if(btn) {
-        if (isZoomedOut) btn.innerText = '🔙 PALAA';
-        else if (window.viewHoleIndex !== null && window.viewHoleIndex !== currentHoleIndex) btn.innerText = '🔙 NYKYINEN VÄYLÄ';
-        else btn.innerText = '🔍 KOKO TAULU';
-    }
-    window.updateCamera();
-};
-
-window.zoomToHole = function(hIndex) {
-    if(isZoomedOut) {
-        isZoomedOut = false; window.viewHoleIndex = hIndex;
-        let btn = el('boardBtnText');
-        if(btn) btn.innerText = (hIndex === currentHoleIndex) ? '🔍 KOKO TAULU' : '🔙 NYKYINEN VÄYLÄ';
+    if (isFreeCam) {
+        isFreeCam = false;
+        window.viewHoleIndex = currentHoleIndex;
+        if(el('boardBtnText')) el('boardBtnText').innerText = '🔍 KOKO TAULU';
         window.updateCamera();
-    }
-};
-
-window.updateCamera = function() {
-    if (!currentCourse) return;
-    
-    if (isZoomedOut) {
+    } else {
+        isFreeCam = true;
+        if(el('boardBtnText')) el('boardBtnText').innerText = '📍 PALAA VÄYLÄLLE';
+        
         let maxCol = Math.min(9, currentHoleIndex);
         let maxRow = Math.ceil(currentHoleIndex / 9);
-        let activeWidth = 120 + maxCol * 380 + (maxCol - 1) * 30; // 120 = padding * 2
+        let activeWidth = 120 + maxCol * 380 + (maxCol - 1) * 30; 
         let activeHeight = 120 + maxRow * 950 + (maxRow - 1) * 30;
         
         let scaleX = window.innerWidth / activeWidth;
-        let scaleY = (window.innerHeight - 150) / activeHeight; // Tilaa alavalikolle
+        let scaleY = (window.innerHeight - 150) / activeHeight; 
         let scale = Math.min(scaleX, scaleY) * 0.95; 
         if(scale > 1) scale = 1;
         
         boardState.scale = scale;
         boardState.x = (window.innerWidth - activeWidth * scale) / 2;
         boardState.y = ((window.innerHeight - 150) - activeHeight * scale) / 2;
-    } else {
-        boardState.scale = 1;
-        let targetHole = window.viewHoleIndex || currentHoleIndex;
-        let col = (targetHole - 1) % 9;
-        let row = Math.floor((targetHole - 1) / 9);
-        let cellX = 60 + col * 410; 
-        let cellY = 60 + row * 980; 
-        
-        boardState.x = (window.innerWidth - 380) / 2 - cellX;
-        boardState.y = 50 - cellY; 
+        window.applyBoardTransform();
     }
+};
+
+window.zoomToHole = function(hIndex) {
+    isFreeCam = false;
+    window.viewHoleIndex = hIndex;
+    let btn = el('boardBtnText');
+    if(btn) btn.innerText = (hIndex === currentHoleIndex) ? '🔍 KOKO TAULU' : '📍 PALAA VÄYLÄLLE';
+    window.updateCamera();
+};
+
+window.updateCamera = function() {
+    if (!currentCourse || isFreeCam) return;
+    boardState.scale = 1;
+    let targetHole = window.viewHoleIndex || currentHoleIndex;
+    let col = (targetHole - 1) % 9;
+    let row = Math.floor((targetHole - 1) / 9);
+    let cellX = 60 + col * 410; 
+    let cellY = 60 + row * 980; 
+    
+    boardState.x = (window.innerWidth - 380) / 2 - cellX;
+    boardState.y = 50 - cellY; 
     window.applyBoardTransform();
 };
 
@@ -230,12 +213,15 @@ window.renderDoodles = function() {
 
     for(let i=0; i<holesPlayed; i++) {
         let d = doodleData[i % doodleData.length];
-        // Levitetään ympäri koko pelattua taulun aluetta randomisti
-        let offsetX = Math.random() * (activeWidth - 250);
-        let offsetY = Math.random() * (activeHeight - 200);
-        let rot = -25 + Math.random() * 50;
+        // Levitetään ympäri koko pelattua taulun aluetta randomisti pseudo-seedeillä
+        let rX = pseudoRandom(i * 1.5);
+        let rY = pseudoRandom(i * 2.5);
+        let rRot = pseudoRandom(i * 3.5);
+
+        let offsetX = rX * (activeWidth - 250);
+        let offsetY = rY * (activeHeight - 200);
+        let rot = -25 + (rRot * 50);
         
-        // Vain viimeisin piirtyy animoiden
         let isNew = (i === holesPlayed - 1);
         let drawnClass = isNew ? 'drawn' : '';
         let opacityStyle = isNew ? '' : `opacity: 0.65; transform: rotate(${rot}deg) scale(1);`;
@@ -249,11 +235,16 @@ window.renderDoodles = function() {
 };
 
 window.getHoleCellHTML = function(hData, hIndex, isActive) {
-    let clickAttr = `onclick="if(window.zoomToHole) window.zoomToHole(${hIndex})" style="cursor:${isZoomedOut ? 'pointer' : 'default'};"`;
+    let clickAttr = `onclick="if(window.zoomToHole) window.zoomToHole(${hIndex})" style="cursor:${isFreeCam ? 'pointer' : 'default'};"`;
     let html = `<div class="hole-cell" ${clickAttr}>`;
     let par = currentCourse.pars ? (currentCourse.pars[hIndex - 1] || 3) : 3;
     
-    html += `<div class="index-card">`;
+    // Satunnaiset vinksahtamiset taulun elementteihin siemenluvulla!
+    let rot1 = (pseudoRandom(hIndex * 1.1) * 6 - 3).toFixed(1);
+    let rot2 = (pseudoRandom(hIndex * 2.2) * 6 - 3).toFixed(1);
+    let rot3 = (pseudoRandom(hIndex * 3.3) * 6 - 3).toFixed(1);
+
+    html += `<div class="index-card" style="transform: perspective(1000px) rotate(${rot1}deg) translateZ(8px);">`;
     html += `<div class="banner-subtitle">${currentCourse.name}</div><div class="banner-title">VÄYLÄ <span>${hIndex}</span></div><div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>`;
     
     if (isActive && hData.penColor) {
@@ -271,7 +262,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
         let bTxt = hData.rule.type === 'bounty' ? `🏆 TEHTÄVÄ` : '🎲 VÄYLÄSÄÄNTÖ';
         let bgCol = hData.color || '#fef08a';
         html += `
-        <div class="post-it-note" style="background:${bgCol};">
+        <div class="post-it-note" style="background:${bgCol}; transform: perspective(800px) rotate(${rot2}deg) translateZ(10px);">
             <div style="font-weight:900; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; color:#666;">📌 ${bTxt}</div>
             <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; color:#111;">${hData.rule.n}</div>
             <div style="font-size: 1.15rem; line-height: 1.4; font-weight:700; color:#222;">${hData.rule.d}</div>
@@ -281,18 +272,20 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
     let playedCards = Object.values(hData.playedCards || {}).filter(Boolean);
     if(playedCards.length > 0) {
         html += `<div style="width: 100%; max-width:340px; margin-bottom: 15px;"><h2 style="color:var(--text-main); font-size:0.85rem; margin-bottom:10px; background:rgba(255,255,255,0.7); padding:4px 8px; border-radius:4px; display:inline-block;">📌 PELATUT KORTIT</h2><div class="cards-grid-2">`;
-        playedCards.forEach(pc => {
+        playedCards.forEach((pc, idx) => {
             if (pc.target === myName || !isActive) {
                 let typeClass = pc.type === 'buff' ? 'buff-card' : 'debuff-card';
                 if(pc.tier === 'premium') typeClass = 'premium-card';
                 let tagTxt = pc.tier === 'premium' ? '💎 PREMIUM' : (pc.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
-                let rot = Math.floor(Math.random() * 10) - 5; 
-                let pinLeft = 50 + (Math.floor(Math.random() * 20) - 10);
+                
+                // Myös korteille omat kulmat
+                let cRot = (pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
+                let pinLeft = 50 + (Math.floor(pseudoRandom((hIndex + idx) * 5.5) * 20) - 10);
                 
                 let undoBtn = (isActive) ? `<button class="btn btn-danger" style="padding:6px; font-size:0.7rem; margin-top:5px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">PERU</button>` : ``;
                 
                 html += `
-                <div class="pinned-card-container" style="--rot:${rot}deg;">
+                <div class="pinned-card-container" style="--rot:${cRot}deg;">
                     <div class="pushpin" style="left: ${pinLeft}%;"></div>
                     <div class="physical-card ${typeClass}">
                         <div class="card-type-tag">${tagTxt}</div>
@@ -319,7 +312,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
     let sortedPlayers = [...playersToRender].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
     
     html += `
-    <div class="score-spiral-note">
+    <div class="score-spiral-note" style="transform: perspective(1000px) rotate(${rot3}deg) translateZ(10px);">
         <div class="pin pin-blue" style="top: 15px; right: 20px;"></div>
         <div class="pin pin-red" style="bottom: 25px; right: 15px;"></div>
         <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:1.6rem; text-decoration:underline;">🏆 Tulos</h2>`;
@@ -388,7 +381,7 @@ window.renderReceipt = function() {
         if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'none';
         return;
     }
-    if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'block';
+    if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'flex';
 
     let renderDots = (strokes, p_par) => {
         if(!strokes) return '-';
@@ -642,7 +635,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     if(myCards.length === 0) {
          sellHtml = '<p style="color:var(--text-muted); font-size:1.1rem; text-align:center; padding:20px; font-weight:bold; width:100%;">Kätesi on tyhjä.</p>';
     } else {
-        myCards.forEach(cId => {
+        myCards.forEach((cId, i) => {
             const cDef = (window.allCards || []).find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let typeClass = cDef.type === 'buff' ? 'buff-card' : 'debuff-card';
@@ -650,7 +643,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
             let isNormal = cDef.tier === 'normal';
             let sellBtnIcon = isNormal ? '♻️' : '🗑️';
-            let rot = Math.random() * 8 - 4; 
+            let rot = (pseudoRandom(i * 9.9) * 8 - 4).toFixed(1); 
             
             sellHtml += `
             <div class="shop-item-wrapper messy-card" style="transform: rotate(${rot}deg);">
@@ -703,8 +696,15 @@ window.showHandLimitModal = function(cards) {
 };
 
 //==============================================
-// 3D KORTTIVIUHKA (KARUSELLI) OMNI-PYÖRITYS
+// YKSINKERTAISTETTU KORTTIVIUHKA (KARUSELLI)
 //==============================================
+window.flipCard = function(index) {
+    const inner = el(`card3d-inner-${index}`);
+    if (!inner) return;
+    if(inner.classList.contains('flipped')) inner.classList.remove('flipped');
+    else inner.classList.add('flipped');
+};
+
 window.renderCarousel = function() {
     const container = el('cardCarousel');
     if(!container) return;
@@ -720,8 +720,8 @@ window.renderCarousel = function() {
         let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
         
         html += `
-            <div class="carousel-card-wrapper" id="carousel-wrapper-${i}">
-                <div class="card-3d-inner" id="card3d-inner-${i}" data-rx="0" data-ry="0">
+            <div class="carousel-card-wrapper" id="carousel-wrapper-${i}" onclick="window.flipCard(${i})">
+                <div class="card-3d-inner" id="card3d-inner-${i}">
                     <div class="card-face card-front ${typeClass}">
                         <div style="text-align:left; display:flex; flex-direction:column; height:100%; position:relative; z-index:20;">
                             <div class="card-type-tag" style="font-size:1.3rem; margin-bottom:12px;">${tagTxt}</div>
@@ -773,56 +773,6 @@ window.initNativeCarousel = function() {
         isScrolling = false;
     }
     setTimeout(updateCarouselLayout, 50);
-
-    let startX = 0; let startY = 0; let isSpinning = false;
-    container.addEventListener('touchstart', e => {
-        if(e.touches.length > 1) return;
-        let touchCard = e.target.closest('.card-3d-inner');
-        if (touchCard && touchCard.id === `card3d-inner-${window.carouselCurrentIndex}`) {
-            startX = e.touches[0].clientX; startY = e.touches[0].clientY; 
-            isSpinning = true;
-            touchCard.style.transition = 'none';
-        } else {
-            isSpinning = false;
-        }
-    }, {passive: false});
-
-    container.addEventListener('touchmove', e => {
-        if (isSpinning) {
-            e.preventDefault(); 
-            let dx = e.touches[0].clientX - startX; 
-            let dy = e.touches[0].clientY - startY;
-            const activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
-            if(activeInner) {
-                let baseRx = parseFloat(activeInner.dataset.rx || 0);
-                let baseRy = parseFloat(activeInner.dataset.ry || 0);
-                let newRotX = baseRx - (dy * 0.5); 
-                let newRotY = baseRy + (dx * 0.5); 
-                activeInner.style.transform = `rotateX(${newRotX}deg) rotateY(${newRotY}deg)`;
-            }
-        }
-    }, {passive: false});
-
-    container.addEventListener('touchend', e => {
-        if (isSpinning) {
-            const activeInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
-            if(activeInner) {
-                let transformStr = activeInner.style.transform;
-                let matchX = transformStr.match(/rotateX\(([-0-9.]+)deg\)/);
-                let matchY = transformStr.match(/rotateY\(([-0-9.]+)deg\)/);
-                if(matchX && matchY) {
-                    let curRy = parseFloat(matchY[1]);
-                    let snappedRy = Math.round(curRy / 180) * 180; // Magneettinen lukitus etu/takapuolelle
-                    
-                    activeInner.dataset.rx = 0;
-                    activeInner.dataset.ry = snappedRy;
-                    activeInner.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                    activeInner.style.transform = `rotateX(0deg) rotateY(${snappedRy}deg)`;
-                }
-            }
-        }
-        isSpinning = false;
-    }, {passive: true});
 };
 
 window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
@@ -974,7 +924,6 @@ window.submitScores = function() {
         p.cards = p.cards.filter(Boolean);
     });
     
-    // Tallenna tarkat heittomäärät historiaan
     let holeStrokes = {};
     for (let key in playerResults) { holeStrokes[key] = playerResults[key].strokes; }
 
@@ -1146,9 +1095,13 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.gameSettings = data.settings || { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
     window.gameHistory = data.history ? (Array.isArray(data.history) ? data.history : Object.values(data.history)) : [];
 
+    // TÄYDENNETÄÄN ASETUKSET LUKEMISEN JÄLKEEN KÄYTTÖLIITTYMÄÄN
     if (el('gmSetShop')) el('gmSetShop').checked = window.gameSettings.shopEnabled;
     if (el('gmSetLimitCheck')) el('gmSetLimitCheck').checked = window.gameSettings.handLimitEnabled;
     if (el('gmSetLimitCount')) el('gmSetLimitCount').value = window.gameSettings.handLimit;
+    if (el('gmSetPtsWin')) el('gmSetPtsWin').value = window.gameSettings.ptsWin;
+    if (el('gmSetPtsTask')) el('gmSetPtsTask').value = window.gameSettings.ptsTask;
+    if (el('gmSetPtsLose')) el('gmSetPtsLose').value = window.gameSettings.ptsLose;
 
     allPlayers = data.players ? (Array.isArray(data.players) ? data.players : Object.values(data.players)) : [];
     activeHole = data.activeHole || null;
@@ -1169,7 +1122,7 @@ onValue(ref(db, 'gameState'), (snap) => {
             if(lobbyContainer) lobbyContainer.style.display = 'block';
             if(gameSetupArea) gameSetupArea.style.display = 'block';
             if(corkboardViewport) corkboardViewport.style.display = 'none';
-            if(btnSettings) btnSettings.style.display = 'flex'; // Näytetään aina
+            if(btnSettings) btnSettings.style.display = 'flex'; 
             if(pocket) pocket.style.display = 'none';
         } else {
             if(lobbyContainer) lobbyContainer.style.display = 'none';
