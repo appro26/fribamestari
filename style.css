@@ -38,8 +38,7 @@ body {
 }
 #corkboard-surface {
     display: grid;
-    grid-template-columns: repeat(9, 380px);
-    grid-auto-rows: 950px;
+    /* Rivien ja sarakkeiden määrä asetetaan dynaamisesti scriptissä */
     gap: 30px; padding: 60px;
     transform-origin: top left;
     pointer-events: auto; 
@@ -78,74 +77,77 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .cards-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 10px; box-sizing: border-box; overflow: visible; width: 100%;}
-body.gm-mode .player-only { display: none !important; }
-body.player-mode .gm-only { display: none !important; }
 
 /* ========================================= */
-/* KUITTIKONE YLÖSPÄIN PUSKEVA              */
+/* KUITTIKONE KULMASSA & KUITTI RULLALLA     */
 /* ========================================= */
 #receipt-printer-container { 
-    width: 28%; max-width: 120px; cursor: pointer; transition: transform 0.2s; pointer-events: auto; position: relative;
-    margin-right: auto;
+    width: 28%; max-width: 130px; cursor: pointer; pointer-events: auto; position: relative;
+    margin-right: auto; margin-left: 5px;
     display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
+    transform: rotate(5deg) translateY(5px); transform-origin: bottom left;
+    transition: transform 0.2s;
 }
-#receipt-printer-container:active { transform: scale(0.95); }
+#receipt-printer-container:active { transform: scale(0.95) rotate(5deg) translateY(5px); }
 
 .printer-machine {
-    width: 100%; height: 35px;
-    background: linear-gradient(to bottom, #cfcbb8, #f0ebd8); 
+    width: 100%; height: 40px;
+    background: linear-gradient(to bottom, #cfcbb8, #e8e4d1); 
     border: 1px solid #b0ad9e; border-top: 3px solid #918e80;
-    border-radius: 0 0 8px 8px; position: relative; z-index: 100;
-    box-shadow: 2px -4px 8px rgba(0,0,0,0.5), inset 0 -2px 3px rgba(255,255,255,0.7);
+    border-radius: 0 0 10px 10px; position: relative; z-index: 100;
+    box-shadow: 4px -6px 10px rgba(0,0,0,0.4), inset 0 -3px 5px rgba(255,255,255,0.5);
     display: flex; align-items: flex-start; justify-content: center;
 }
 .printer-slot {
-    width: 85%; height: 6px; background: #111;
-    border-radius: 3px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
-    margin-top: 6px;
+    width: 85%; height: 8px; background: #111;
+    border-radius: 4px; box-shadow: inset 0 3px 6px rgba(0,0,0,0.8);
+    margin-top: 8px;
 }
 .receipt-paper {
     width: 85%; margin: 0 auto; margin-bottom: -15px; background: #fff;
-    padding: 10px 5px 25px 5px; box-shadow: 0 -8px 15px rgba(0,0,0,0.5);
+    box-shadow: 0 -8px 15px rgba(0,0,0,0.5); border-radius: 5px 5px 0 0;
     font-family: 'Courier New', Courier, monospace; font-size: 0.75rem;
     color: #111; position: relative; background-image: linear-gradient(to top, #fff, #f4f4f5);
     z-index: 90; transition: transform 0.3s;
+    display: flex; flex-direction: column;
 }
-.receipt-paper.roll-receipt {
-    max-height: 100px; overflow: hidden; 
+.receipt-roll-curve {
+    height: 15px; background: linear-gradient(to bottom, #d4d4d8, #fff);
+    border-radius: 50% / 100% 100% 0 0; 
+    margin: -10px -5px 5px -5px; flex-shrink: 0;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 2px 3px rgba(0,0,0,0.05);
 }
-.receipt-paper::after {
-    content: ''; position: absolute; top: -4px; left: 0; right: 0; height: 4px;
-    background-image: radial-gradient(circle at 2px 4px, transparent 2px, #f4f4f5 3px);
-    background-size: 4px 4px; background-repeat: repeat-x;
-}
+
 .r-title { font-weight: 900; text-align: center; border-bottom: 1px dashed #111; padding-bottom: 5px; margin-bottom: 5px; font-size:0.8rem; }
-.r-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; font-weight:bold; white-space:nowrap; }
+.r-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight:bold; white-space:nowrap; gap:5px;}
 .r-row span { overflow:hidden; text-overflow:ellipsis; }
-.r-tot-sec { border-top: 2px dashed #111; margin-top: 5px; padding-top: 5px; font-weight: 900; font-size: 0.9rem; margin-bottom:10px;}
-.r-hole-title { font-weight: 900; margin-top: 8px; font-size: 0.75rem; text-transform: uppercase; }
+.r-tot-sec { border-top: 2px dashed #111; font-weight: 900; font-size: 0.9rem; margin-top: auto; background:#fff;}
+.r-hole-title { font-weight: 900; margin-top: 8px; margin-bottom: 4px; font-size: 0.75rem; text-transform: uppercase; }
 
 .full-receipt .r-title { font-size: 1.5rem; margin-bottom: 15px; }
 .full-receipt .r-hole-title { font-size: 1.1rem; margin-top: 15px; }
-.full-receipt .r-row { font-size: 1.2rem; margin-bottom: 5px; font-weight:bold; }
+.full-receipt .r-row { font-size: 1.2rem; margin-bottom: 10px; font-weight:bold; }
 .full-receipt .r-tot-sec { font-size: 1.6rem; margin-top: 20px; padding-top: 15px; }
 
-.r-score-wrap { display: flex; align-items: center; gap: 4px; }
-.r-dots { display: flex; gap: 2px; }
-.r-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
-.r-dot.blue { background-color: #3b82f6; }
-.r-dot.green { background-color: #22c55e; }
-.r-dot.red { background-color: #ef4444; }
+/* Tulosympyrät pallojen sijaan */
+.receipt-circle {
+    display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center;
+    border-radius: 50%; font-weight: 900; font-size: 0.8rem; flex-shrink: 0;
+}
+.full-receipt .receipt-circle { width: 30px; height: 30px; font-size: 1.2rem; }
+.receipt-circle.green { background-color: #22c55e; color: #fff; }
+.receipt-circle.blue { background-color: #3b82f6; color: #fff; }
+.receipt-circle.red { background-color: #ef4444; color: #fff; }
+.receipt-circle.even { color: #111; }
 
 /* ========================================= */
-/* KIROILEVAT SIILIT (DOODLES)               */
+/* KIROILEVAT ELÄIMET (DOODLES)              */
 /* ========================================= */
-#doodles-container { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index: 1; }
-.doodle-drawing { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; opacity: 0; transform: rotate(var(--rot)) scale(0.9); }
+.doodle-drawing { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; opacity: 0; transform: rotate(var(--rot)) scale(0.9); z-index: 0; }
 .doodle-drawing.drawn { opacity: 0.65; transform: rotate(var(--rot)) scale(1); transition: opacity 2s, transform 2s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.doodle-svg { width: 150px; height: 150px; fill: none; stroke: #1e293b; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
-.doodle-bubble { font-family: 'Kalam', cursive; font-size: 1.4rem; font-weight: 900; color: #1e293b; background: rgba(255,255,255,0.8); padding: 5px 15px; border-radius: 20px; border: 2px solid #1e293b; margin-top: -15px; z-index: 2; text-align: center; max-width: 250px; line-height: 1.1; }
-.drawn .doodle-path { stroke-dasharray: 600; stroke-dashoffset: 600; animation: trace 3s ease-out forwards; }
+.doodle-svg { width: 160px; height: 160px; fill: none; stroke: #1e293b; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; margin-bottom: -20px; }
+.doodle-bubble { font-family: 'Kalam', cursive; font-size: 1.4rem; font-weight: 900; color: #1e293b; background: rgba(255,255,255,0.85); padding: 8px 18px; border-radius: 20px; border: 2px solid #1e293b; z-index: 2; text-align: center; max-width: 250px; line-height: 1.1; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); }
+.drawn .doodle-path { stroke-dasharray: 800; stroke-dashoffset: 800; animation: trace 3s ease-out forwards; }
 @keyframes trace { to { stroke-dashoffset: 0; } }
 
 /* ========================================= */
@@ -386,9 +388,9 @@ body.player-mode .gm-only { display: none !important; }
 /* ========================================= */
 /* NATIIVI 3D KORTTIVIUHKA (SAUMATON, LEVEÄ) */
 /* ========================================= */
-.native-carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 40px calc(50vw - 140px); gap: 0px; width: 100vw; height: 600px; align-items: center; touch-action: pan-x pan-y; }
+.native-carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 40px calc(50vw - 160px); gap: 0px; width: 100vw; height: 800px; align-items: center; touch-action: pan-x pan-y; }
 .native-carousel-container::-webkit-scrollbar { display: none; }
-.carousel-card-wrapper { flex: 0 0 280px; scroll-snap-align: center; perspective: 1200px; position: relative; height: 392px; will-change: transform; cursor: pointer;}
+.carousel-card-wrapper { flex: 0 0 320px; scroll-snap-align: center; perspective: 1200px; position: relative; height: 460px; will-change: transform; cursor: pointer;}
 
 .card-3d-inner { 
     position: relative; width: 100%; height: 100%; transform-style: preserve-3d; 
@@ -397,7 +399,7 @@ body.player-mode .gm-only { display: none !important; }
 .card-3d-inner.flipped { transform: rotateY(180deg); }
 
 .card-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 12px; box-shadow: -10px 20px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; background: #fff; border: 2px solid var(--border); }
-.card-front { padding: 22px 18px; transform: rotateY(0deg) translateZ(1px); } 
+.card-front { padding: 26px 20px; transform: rotateY(0deg) translateZ(1px); } 
 .card-back { transform: rotateY(180deg) translateZ(1px); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 6px solid #fff; }
 .card-back-sabotage { background: linear-gradient(135deg, #9f1239, #e11d48); border-radius: 10px; }
 .card-back-buff { background: linear-gradient(135deg, #1e3a8a, #2563eb); border-radius: 10px; }
@@ -442,10 +444,6 @@ body.player-mode .gm-only { display: none !important; }
 
 input[type="text"], input[type="number"], select { width: 100%; padding: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.8); border: 2px solid var(--border); color: var(--text-main); border-radius: 12px; font-size: 1.1rem; font-weight:800; }
 .log-box { height:150px; overflow-y:auto; padding:12px; border-radius:12px; border:2px solid var(--border); font-size:0.95rem; font-weight:700; background: rgba(0,0,0,0.5); color: #fff; }
-
-.role-switcher { display: flex; gap: 10px; width: 100%; margin-bottom: 0; }
-.role-btn { flex: 1; padding: 14px; color: #fff; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 12px; font-weight: 900; font-size: 1.1rem; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 10px rgba(0,0,0,0.5);}
-.role-btn.active { background: var(--primary); color: #fff; border-color: var(--primary-dark); }
 
 #notificationContainer { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 10000; pointer-events: none; width: 100%; max-width: 450px; display:flex; flex-direction:column; gap:8px; align-items:center;}
 .notification, .apple-toast { background: rgba(255, 255, 255, 0.9); color: #111; padding: 10px 18px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); font-weight: 800; font-size: 0.95rem; text-align: center; border: 1px solid rgba(0,0,0,0.1); pointer-events: none; display: flex; align-items: center; justify-content: center; gap: 10px; width: 92%; line-height: 1.3; }
