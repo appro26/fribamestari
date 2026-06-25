@@ -32,7 +32,7 @@ const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length
 
 const pseudoRandom = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
 
-// 80 tylyä solvausta (Fribakohtaisia!)
+// 80 tylyä solvausta
 const insults = [
     "Mikä tässä lajissa muka on kivaa? Pelkkää puunhakkuuta.", "Taas OB:lle. Ootko harkinnu sauvakävelyä?", 
     "Lajin helppous viehättää, vai mitä?", "Ostin 30 euron kiekon, että voin heittää sen metsään.",
@@ -125,28 +125,50 @@ window.dismissInstallPrompt = function() {
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
 // ==============================================
-// VAPAA KAMERA
+// VAPAA KAMERA & SULAVA JS-LIIKU
 // ==============================================
 let boardState = { scale: 1, x: 0, y: 0 };
 let isDraggingBoard = false;
 let lastBoardTouch = null;
 let initialPinchDist = 0;
-window.boardRAF = null;
+let camAnim = null; // Globaali referenssi animaatiolle
 
-window.applyBoardTransform = function(smooth = false) {
+// Välitön siirto sormella raahatessa
+window.applyBoardTransform = function() {
     const board = el('corkboard-surface');
-    if(!board) return;
-    board.style.transition = smooth ? 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
-    board.style.transform = `translate(${boardState.x}px, ${boardState.y}px) scale(${boardState.scale})`;
+    if(board) board.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
+};
+
+// Pehmeä liuku (esim. Nykyinen väylä -nappi)
+window.animateCameraTo = function(tX, tY, tScale, duration=400) {
+    if (camAnim) cancelAnimationFrame(camAnim);
+    let sX = boardState.x; let sY = boardState.y; let sScale = boardState.scale;
+    let startT = performance.now();
+    const board = el('corkboard-surface');
+    
+    function step(time) {
+        let p = (time - startT) / duration;
+        if (p >= 1) p = 1;
+        let ease = 1 - Math.pow(1 - p, 3); // easeOutCubic
+        boardState.x = sX + (tX - sX) * ease;
+        boardState.y = sY + (tY - sY) * ease;
+        boardState.scale = sScale + (tScale - sScale) * ease;
+        if(board) board.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
+        
+        if (p < 1) camAnim = requestAnimationFrame(step);
+        else camAnim = null;
+    }
+    camAnim = requestAnimationFrame(step);
 };
 
 const vp = el('corkboard-viewport');
 if(vp) {
     vp.addEventListener('touchstart', e => {
+        if(camAnim) { cancelAnimationFrame(camAnim); camAnim = null; }
         if(e.touches.length === 1) {
             isDraggingBoard = true;
             lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            window.applyBoardTransform(false);
+            window.applyBoardTransform();
         } else if (e.touches.length === 2) {
             initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             isDraggingBoard = true;
@@ -164,25 +186,16 @@ if(vp) {
         } else if (e.touches.length === 2) {
             let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             let scaleDiff = dist / initialPinchDist;
-            
             let pinchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             let pinchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-
             boardState.x -= (pinchX - boardState.x) * (scaleDiff - 1);
             boardState.y -= (pinchY - boardState.y) * (scaleDiff - 1);
             boardState.scale *= scaleDiff;
-
             if(boardState.scale < 0.15) boardState.scale = 0.15;
             if(boardState.scale > 2.5) boardState.scale = 2.5;
             initialPinchDist = dist;
         }
-
-        if (!window.boardRAF) {
-            window.boardRAF = requestAnimationFrame(() => {
-                window.applyBoardTransform(false);
-                window.boardRAF = null;
-            });
-        }
+        window.applyBoardTransform();
     }, {passive: false});
 
     vp.addEventListener('touchend', e => {
@@ -197,20 +210,19 @@ if(vp) {
 
 window.zoomToHole = function(hIndex) {
     if(!currentCourse || !currentCourse.pars) return;
-    
     let totalHoles = currentCourse.pars.length;
     let cols = Math.min(9, totalHoles);
-    
     let col = (hIndex - 1) % cols;
     let row = Math.floor((hIndex - 1) / cols);
     
+    // Tarkka solun keskitys laudan skaalaus (transform-origin 0 0) huomioiden
     let cellX = 100 + col * 410; 
     let cellY = 100 + row * 980; 
+    let targetX = (window.innerWidth - 380) / 2 - cellX;
+    let targetY = 50 - cellY; 
     
-    boardState.scale = 1;
-    boardState.x = (window.innerWidth - 380) / 2 - cellX;
-    boardState.y = 50 - cellY; 
-    window.applyBoardTransform(true);
+    // Käytetään JS-pohjaista smoothia liukua!
+    window.animateCameraTo(targetX, targetY, 1, 400);
 };
 
 window.zoomToCurrentHole = function() {
@@ -222,11 +234,12 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     let html = `<div class="hole-cell" ${clickAttr}>`;
     let par = currentCourse.pars ? (currentCourse.pars[hIndex - 1] || 3) : 3;
     
+    // Huom! Kaikista taulun elementeistä on poistettu perspective ja translateZ
     let rot1 = (pseudoRandom(hIndex * 1.1) * 6 - 3).toFixed(1);
     let rot2 = (pseudoRandom(hIndex * 2.2) * 6 - 3).toFixed(1);
     let rot3 = (pseudoRandom(hIndex * 3.3) * 6 - 3).toFixed(1);
 
-    html += `<div class="index-card" style="transform: perspective(1000px) rotate(${rot1}deg) translateZ(8px);">`;
+    html += `<div class="index-card" style="transform: rotate(${rot1}deg);">`;
     html += `<div class="banner-subtitle">${currentCourse.name}</div><div class="banner-title">VÄYLÄ <span>${hIndex}</span></div><div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>`;
     
     if (isActive && hData.penColor) {
@@ -244,7 +257,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         let bTxt = hData.rule.type === 'bounty' ? `🏆 TEHTÄVÄ` : '🎲 VÄYLÄSÄÄNTÖ';
         let bgCol = hData.color || '#fef08a';
         html += `
-        <div class="post-it-note" style="background:${bgCol}; transform: perspective(800px) rotate(${rot2}deg) translateZ(10px);">
+        <div class="post-it-note" style="background:${bgCol}; transform: rotate(${rot2}deg);">
             <div style="font-weight:900; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; color:#666;">📌 ${bTxt}</div>
             <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; color:#111;">${hData.rule.n}</div>
             <div style="font-size: 1.15rem; line-height: 1.4; font-weight:700; color:#222;">${hData.rule.d}</div>
@@ -293,7 +306,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     let sortedPlayers = [...playersToRender].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
     
     html += `
-    <div class="score-spiral-note" style="transform: perspective(1000px) rotate(${rot3}deg) translateZ(10px);">
+    <div class="score-spiral-note" style="transform: rotate(${rot3}deg);">
         <div class="pin pin-blue" style="top: 15px; right: 20px;"></div>
         <div class="pin pin-red" style="bottom: 25px; right: 15px;"></div>
         <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:1.6rem; text-decoration:underline;">🏆 Tulos</h2>`;
@@ -568,7 +581,7 @@ window.cancelShopPurchase = function() {
 };
 
 window.openShop = function(tab) {
-    if(el('shopModal')) el('shopModal').style.display = 'flex';
+    if(el('shopModal')) el('shopModal').style.display = 'block';
     let modalEl = document.querySelector('#shopModal .shop-binder-modal');
     if(modalEl) modalEl.classList.add('binder-modal-anim');
     if(window.switchShopTab) window.switchShopTab(tab);
@@ -709,7 +722,7 @@ window.showHandLimitModal = function(cards) {
 };
 
 //==============================================
-// TURVALLINEN KARUSELLI (Ei enää leikkaudu!)
+// TURVALLINEN KARUSELLI Z-PÄIVITYKSELLÄ
 //==============================================
 window.flipCard = function(index) {
     const inner = el(`card3d-inner-${index}`);
@@ -769,13 +782,13 @@ window.initNativeCarousel = function() {
             const cardCenter = paddingLeft + (index * cardWidth) + (cardWidth / 2) - scrollLeft;
             const diff = (cardCenter - centerOffset) / 160; 
             
-            // Ei käytetä enää iOS:n sekoittavaa translateZ -arvoa wrapperissa
             const transX = diff * -40; 
             const transY = Math.abs(diff) * 20; 
+            const transZ = Math.abs(diff) * -150; // Tekee syvyysakselin joka estää kortteja menemästä toistensa läpi
             const rotZ = diff * 5; 
-            const scale = Math.max(0.85, 1 - Math.abs(diff) * 0.15); // Maksimiskaala on tasan 1.0!
+            const scale = Math.max(0.85, 1 - Math.abs(diff) * 0.15); 
             
-            card.style.transform = `translate(${transX}px, ${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
+            card.style.transform = `translate3d(${transX}px, ${transY}px, ${transZ}px) rotateZ(${rotZ}deg) scale(${scale})`;
             card.style.zIndex = 100 - Math.floor(Math.abs(diff)*10);
             
             if (Math.abs(diff) < minDiff) { minDiff = Math.abs(diff); closestIndex = index; }
