@@ -131,20 +131,21 @@ let boardState = { scale: 1, x: 0, y: 0 };
 let isDraggingBoard = false;
 let lastBoardTouch = null;
 let initialPinchDist = 0;
-let camAnim = null; // Globaali referenssi animaatiolle
+let camAnim = null; 
 
-// Välitön siirto sormella raahatessa
+// Välitön siirto sormella raahatessa. Ei transitioneja ollenkaan.
 window.applyBoardTransform = function() {
     const board = el('corkboard-surface');
-    if(board) board.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
+    if(board) {
+        board.style.transform = `translate(${boardState.x}px, ${boardState.y}px) scale(${boardState.scale})`;
+    }
 };
 
-// Pehmeä liuku (esim. Nykyinen väylä -nappi)
+// Pehmeä liuku puhtaasti JS-pyörityksenä (Ei 3D/CSS välähdyksiä)
 window.animateCameraTo = function(tX, tY, tScale, duration=400) {
     if (camAnim) cancelAnimationFrame(camAnim);
     let sX = boardState.x; let sY = boardState.y; let sScale = boardState.scale;
     let startT = performance.now();
-    const board = el('corkboard-surface');
     
     function step(time) {
         let p = (time - startT) / duration;
@@ -153,7 +154,7 @@ window.animateCameraTo = function(tX, tY, tScale, duration=400) {
         boardState.x = sX + (tX - sX) * ease;
         boardState.y = sY + (tY - sY) * ease;
         boardState.scale = sScale + (tScale - sScale) * ease;
-        if(board) board.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
+        window.applyBoardTransform();
         
         if (p < 1) camAnim = requestAnimationFrame(step);
         else camAnim = null;
@@ -175,6 +176,7 @@ if(vp) {
         }
     }, {passive: false});
 
+    // Touchmovessa siirretään suoraan koordinaatteja synkronisesti
     vp.addEventListener('touchmove', e => {
         if(!isDraggingBoard) return;
         e.preventDefault(); 
@@ -215,13 +217,12 @@ window.zoomToHole = function(hIndex) {
     let col = (hIndex - 1) % cols;
     let row = Math.floor((hIndex - 1) / cols);
     
-    // Tarkka solun keskitys laudan skaalaus (transform-origin 0 0) huomioiden
-    let cellX = 100 + col * 410; 
-    let cellY = 100 + row * 980; 
+    // Uudet tarkat mitat CSS:n kanssa (120 padding, 380 width, 80 col-gap, 950 height, 60 row-gap)
+    let cellX = 120 + col * 460; 
+    let cellY = 120 + row * 1010; 
     let targetX = (window.innerWidth - 380) / 2 - cellX;
     let targetY = 50 - cellY; 
     
-    // Käytetään JS-pohjaista smoothia liukua!
     window.animateCameraTo(targetX, targetY, 1, 400);
 };
 
@@ -234,7 +235,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     let html = `<div class="hole-cell" ${clickAttr}>`;
     let par = currentCourse.pars ? (currentCourse.pars[hIndex - 1] || 3) : 3;
     
-    // Huom! Kaikista taulun elementeistä on poistettu perspective ja translateZ
+    // Kaikki laudan elementit pidetään tasaisina 2D transformaatioina!
     let rot1 = (pseudoRandom(hIndex * 1.1) * 6 - 3).toFixed(1);
     let rot2 = (pseudoRandom(hIndex * 2.2) * 6 - 3).toFixed(1);
     let rot3 = (pseudoRandom(hIndex * 3.3) * 6 - 3).toFixed(1);
@@ -266,7 +267,12 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
 
     let playedCards = Object.values(hData.playedCards || {}).filter(Boolean);
     if(playedCards.length > 0) {
-        html += `<div style="width: 100%; max-width:340px; margin-bottom: 15px;"><h2 style="color:var(--text-main); font-size:0.85rem; margin-bottom:10px; background:rgba(255,255,255,0.7); padding:4px 8px; border-radius:4px; display:inline-block;">📌 PELATUT KORTIT</h2><div class="cards-grid-2">`;
+        // Tässä teipattu otsikkolappu
+        html += `<div style="width: 100%; max-width:340px; margin-bottom: 15px; position:relative;">
+                    <div class="tape tape-top" style="--rot:-2deg;"></div>
+                    <h2 style="color:var(--text-main); font-size:0.95rem; margin-bottom:10px; background:var(--paper-bg); padding:8px 12px; box-shadow: 2px 4px 8px rgba(0,0,0,0.2); border-radius:2px; display:inline-block; font-family:'Kalam', cursive;">PELITAPAHTUMAT</h2>
+                    <div class="cards-grid-2">`;
+        
         playedCards.forEach((pc, idx) => {
             if (pc.target === myName || !isActive) {
                 let typeClass = pc.type === 'buff' ? 'buff-card' : 'debuff-card';
@@ -274,13 +280,13 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                 let tagTxt = pc.tier === 'premium' ? '💎 PREMIUM' : (pc.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
                 
                 let cRot = (pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
-                let pinLeft = 50 + (Math.floor(pseudoRandom((hIndex + idx) * 5.5) * 20) - 10);
+                let tRot = (pseudoRandom((hIndex + idx) * 5.5) * 6 - 3).toFixed(1); 
                 
                 let undoBtn = (isActive) ? `<button class="btn btn-danger" style="padding:6px; font-size:0.7rem; margin-top:5px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">PERU</button>` : ``;
                 
                 html += `
                 <div class="pinned-card-container" style="transform: rotate(${cRot}deg);">
-                    <div class="pushpin" style="left: ${pinLeft}%;"></div>
+                    <div class="tape tape-top" style="--rot:${tRot}deg;"></div>
                     <div class="physical-card ${typeClass}">
                         <div class="card-type-tag">${tagTxt}</div>
                         <h3>${pc.cardName}</h3><p>${pc.cardDesc}</p>
@@ -345,9 +351,10 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         let drawnClass = isNew ? 'drawn' : '';
         let opacityStyle = isNew ? '' : `opacity: 0.8; transform: rotate(${dRot}deg) scale(1);`;
         
+        // Pusketaan neulojen ohi ulos väylästä taustalle
         let posRand = pseudoRandom(hIndex * 7);
         let posCss = "";
-        let offset = 40; 
+        let offset = 80; 
         if (posRand < 0.25) posCss = `top: -${offset}px; left: -${offset}px;`;
         else if (posRand < 0.5) posCss = `top: -${offset}px; right: -${offset}px;`;
         else if (posRand < 0.75) posCss = `bottom: -${offset}px; left: -${offset}px;`;
@@ -375,13 +382,13 @@ window.renderBoard = function() {
         return; 
     }
     
-    // Pakotetaan tarkat pikselimitat taululle, jotta se ei koskaan hajoa.
+    // Tarkka ulkoinen leveys ja korkeus estämään selaimen paniikki
     let totalHoles = currentCourse.pars.length;
     let cols = Math.min(9, totalHoles);
     let rows = Math.ceil(totalHoles / cols);
     
-    let exactWidth = 200 + (cols * 380) + ((cols - 1) * 30);
-    let exactHeight = 200 + (rows * 950) + ((rows - 1) * 30);
+    let exactWidth = 240 + (cols * 380) + ((cols - 1) * 80);
+    let exactHeight = 240 + (rows * 950) + ((rows - 1) * 60);
     
     board.style.width = `${exactWidth}px`;
     board.style.height = `${exactHeight}px`;
@@ -559,7 +566,6 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
         window.pendingShopPurchase = { id: idStr, name: nameStr, price: priceVal };
         window.switchShopTab('sell');
         window.renderShop(activeHole.shop, me.score, me.boughtThisHole); 
-        document.querySelector('.shop-binder-modal').classList.add('binder-modal-anim');
         return;
     }
 
@@ -582,31 +588,16 @@ window.cancelShopPurchase = function() {
 
 window.openShop = function(tab) {
     if(el('shopModal')) el('shopModal').style.display = 'block';
-    let modalEl = document.querySelector('#shopModal .shop-binder-modal');
-    if(modalEl) modalEl.classList.add('binder-modal-anim');
     if(window.switchShopTab) window.switchShopTab(tab);
 };
 
 window.closeShopModal = function() {
     window.pendingShopPurchase = null; 
     if(el('shopModal')) el('shopModal').style.display = 'none';
-    let modalEl = document.querySelector('#shopModal .shop-binder-modal');
-    if(modalEl) { modalEl.classList.remove('binder-modal-anim'); modalEl.style.transform = ''; }
 };
-
-let shopStartY = 0; let shopCurrentY = 0;
-let binderContent = document.querySelector('.binder-content');
-let binderModal = document.querySelector('.shop-binder-modal');
-
-if(binderContent && binderModal) {
-    binderContent.addEventListener('touchstart', e => { if(binderContent.scrollTop <= 5) { shopStartY = e.touches[0].clientY; shopCurrentY = shopStartY; } else { shopStartY = 0; } }, {passive: true});
-    binderContent.addEventListener('touchmove', e => { if(shopStartY === 0) return; shopCurrentY = e.touches[0].clientY; let dy = shopCurrentY - shopStartY; if(dy > 0) { binderModal.style.transform = `translateY(${dy}px)`; if (e.cancelable) e.preventDefault(); } }, {passive: false});
-    binderContent.addEventListener('touchend', e => { if(shopStartY === 0) return; let dy = shopCurrentY - shopStartY; if(dy > 150 && shopCurrentY !== shopStartY) { window.closeShopModal(); } else { binderModal.style.transform = ''; } shopStartY = 0; }, {passive: true});
-}
 
 window.switchShopTab = function(tab) {
     const modalEl = document.querySelector('#shopModal .shop-binder-modal');
-    const headerTitle = el('shopModalHeaderTitle');
     
     if (tab === 'buy') {
         window.pendingShopPurchase = null; 
@@ -614,13 +605,11 @@ window.switchShopTab = function(tab) {
         if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.add('active');
         if(el('shopTabSellBtn')) el('shopTabSellBtn').classList.remove('active');
         if(modalEl) { modalEl.classList.remove('theme-own'); modalEl.classList.add('theme-shop'); }
-        if(headerTitle) headerTitle.innerText = '🛒 KAUPPA';
     } else {
         el('shopBuyArea').style.display = 'none'; el('shopSellArea').style.display = 'block';
         if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.remove('active');
         if(el('shopTabSellBtn')) el('shopTabSellBtn').classList.add('active');
         if(modalEl) { modalEl.classList.remove('theme-shop'); modalEl.classList.add('theme-own'); }
-        if(headerTitle) { let pName = myName ? myName.toUpperCase() : 'PELAAJA'; headerTitle.innerText = `🗂️ ${pName} - KORTIT`; }
     }
     let me = (allPlayers || []).find(p => p && p.name === myName);
     window.renderShop(activeHole ? activeHole.shop : null, me ? me.score : 0, me ? me.boughtThisHole : false);
@@ -669,10 +658,9 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
             let isNormal = cDef.tier === 'normal';
             let sellBtnIcon = isNormal ? '♻️' : '🗑️';
-            let rot = (pseudoRandom(i * 9.9) * 8 - 4).toFixed(1); 
             
             sellHtml += `
-            <div class="shop-item-wrapper messy-card" style="transform: rotate(${rot}deg);">
+            <div class="shop-item-wrapper">
                 <div class="physical-card worn-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer;">
                     <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p>
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 TARKASTELU</div>
@@ -1062,7 +1050,7 @@ window.cleanFirebaseData = function(obj) {
 };
 window.logEvent = function(msg) { push(ref(db, 'gameState/eventLog'), window.cleanFirebaseData({ time: new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'}), msg: msg })); };
 window.updateIdentityUI = function() { if(el('identityCard')) { el('identityCard').style.display = myName ? 'none' : 'block'; } };
-window.showNotification = function(message, type = 'info') { const container = el('notificationContainer'); if(!container) return; const toast = document.createElement('div'); toast.className = `notification ${type}`; toast.innerHTML = `<span style="font-size:1.3rem;">${type === 'warning' ? '🛒' : (type === 'debuff' ? '💥' : 'ℹ️')}</span> <span>${message}</span>`; container.appendChild(toast); setTimeout(() => { toast.remove(); }, 2000); };
+window.showNotification = function(message, type = 'info') { const container = el('notificationContainer'); if(!container) return; const toast = document.createElement('div'); toast.className = `notification ${type}`; toast.innerHTML = `<span style="font-size:1.3rem;">${type === 'warning' ? '🛒' : (type === 'debuff' ? '💥' : 'ℹ️')}</span> <span>${message}</span>`; container.appendChild(toast); setTimeout(() => { toast.remove(); }, 3500); };
 window.claimIdentity = function() { let n = el('playerNameInput').value.trim(); if(!n || n.length > 15) return alert("Syötä nimi!"); myName = n; localStorage.setItem('friba_name', n); window.updateIdentityUI(); if(!(allPlayers || []).find(x => x && x.name === n)) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers)); window.logEvent(`${n} liittyi peliin.`); } };
 
 window.adminAddPlayer = function() { const input = el('adminNewPlayerName'); if(!input) return; const name = input.value.trim(); if(!name || (allPlayers || []).find(p => p && p.name === name)) return; let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: name, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); input.value = ''; window.logEvent(`${myName} (Asetukset) lisäsi pelaajan: ${name}`); };
@@ -1173,8 +1161,15 @@ onValue(ref(db, 'gameState'), (snap) => {
             if (typeof window.myLastHoleIndex === 'undefined') { window.myLastHoleIndex = currentHoleIndex; window.myLastScore = currentPoints; } 
             else if (window.myLastHoleIndex !== currentHoleIndex) {
                 let diff = currentPoints - window.myLastScore;
-                if (diff > 0) window.showAppleToast(`+${diff} P! (${currentPoints} P)`, '💰');
-                else if (diff < 0) window.showAppleToast(`${diff} P! (${currentPoints} P)`, '📉');
+                let diffStr = diff > 0 ? "+" + diff : diff;
+                
+                // Uusi hieno pisteilmoitus!
+                if (diff !== 0) {
+                    window.showNotification(`Väylä ${window.myLastHoleIndex} pelattu! Pisteet: ${diffStr} P (Yht: ${currentPoints} P)`, diff > 0 ? 'info' : 'debuff');
+                } else {
+                    window.showNotification(`Väylä ${window.myLastHoleIndex} pelattu! Pisteet: 0 P (Yht: ${currentPoints} P)`, 'info');
+                }
+                
                 window.myLastHoleIndex = currentHoleIndex; window.myLastScore = currentPoints;
             } else { window.myLastScore = currentPoints; }
 
