@@ -80,10 +80,10 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .cards-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 10px; box-sizing: border-box; overflow: visible; width: 100%;}
 
 /* ========================================= */
-/* KUITTIKONE JA LOPPUTULOKSET               */
+/* KUITTIKONE (SUORA JA LEVEÄ)               */
 /* ========================================= */
 #receipt-printer-container { 
-    width: 34%; max-width: 160px; cursor: pointer; pointer-events: auto; position: relative;
+    width: 38%; max-width: 170px; cursor: pointer; pointer-events: auto; position: relative;
     margin-right: auto; margin-left: 5px;
     display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
     transform: rotate(5deg) translateY(5px); transform-origin: bottom left;
@@ -109,7 +109,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     font-family: 'Courier New', Courier, monospace; font-size: 0.75rem;
     color: #111; position: relative; background-image: linear-gradient(to top, #fff, #f4f4f5);
     z-index: 90;
-    display: flex; flex-direction: column; padding-top: 10px;
+    display: flex; flex-direction: column; padding-top: 15px; padding-bottom: 5px;
 }
 .receipt-paper.roll-receipt {
     max-height: none; 
@@ -127,14 +127,14 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 
 .full-receipt .r-title { font-size: 1.5rem; margin-bottom: 15px; }
 .full-receipt .r-hole-title { font-size: 1.1rem; margin-top: 15px; }
-.full-receipt .r-row { font-size: 1.2rem; margin-bottom: 10px; font-weight:bold; }
+.full-receipt .r-row { font-size: 1.4rem; margin-bottom: 10px; font-weight:bold; }
 .full-receipt .r-tot-sec { font-size: 1.6rem; margin-top: 20px; padding-top: 15px; border-top: 2px dashed #111; }
 
 .receipt-circle {
     display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center;
     border-radius: 50%; font-weight: 900; font-size: 0.8rem; flex-shrink: 0;
 }
-.full-receipt .receipt-circle { width: 30px; height: 30px; font-size: 1.2rem; }
+.full-receipt .receipt-circle { width: 34px; height: 34px; font-size: 1.3rem; }
 .receipt-circle.green { background-color: #22c55e; color: #fff; }
 .receipt-circle.blue { background-color: #3b82f6; color: #fff; }
 .receipt-circle.red { background-color: #ef4444; color: #fff; }
@@ -280,6 +280,12 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 
 .physical-card h3 { font-size: 0.95rem; font-weight: 900; color: #000; line-height: 1.15; margin-bottom: 6px; text-transform: uppercase; word-break: break-word; hyphens: auto; flex-shrink: 0;}
 .physical-card p { font-size: 0.8rem; color: #111; font-weight: 700; line-height: 1.35; margin-bottom: 4px; flex: 1; padding-right: 4px; overflow-y: auto; }
+
+/* Erikoisluokkien värit */
+.minor_sabotage .card-type-tag { color: #f97316 !important; }
+.minor_sabotage { border-top: 8px solid #f97316 !important; }
+.major_sabotage .card-type-tag { color: #991b1b !important; }
+.major_sabotage { border-top: 8px solid #991b1b !important; }
 
 /* Kaupan ja selauksen tiukat mitat, jotta koko on aina 100% sama! */
 .shop-item-wrapper .physical-card { width: 100%; height: 240px !important; min-height: 240px; padding: 12px; }
