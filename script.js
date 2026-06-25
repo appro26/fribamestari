@@ -11,17 +11,12 @@ const db = getDatabase(app);
 const el = id => document.getElementById(id);
 
 let myName = localStorage.getItem('friba_name') || null;
-let currentRole = 'player';
 let allPlayers = [];
 let activeHole = null;
 let currentCourse = null;
 let currentHoleIndex = 1;
 let lastPlayedCardTimestamp = Date.now();
 window.gameHistory = []; 
-
-// Vapaa kamera -tila on korvannut rajoitetun zoomauksen
-let isFreeCam = false;
-window.viewHoleIndex = null; 
 
 window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
 window.pendingShopPurchase = null;
@@ -35,18 +30,16 @@ const penColors = [
 ];
 const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length)];
 
-// Aito pseudo-random taulun lappujen pysyvään asetteluun
 const pseudoRandom = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
 
-// Kiroilevat vihaiset eläimet lajispesifeillä herjoilla
+// Tunnistettavammat eläimet!
 const doodleData = [
-    { svg: "M30,80 Q50,20 70,80 Z M40,50 L45,55 L55,45 M35,40 L40,35 M60,40 L65,35 M45,70 L55,70", text: "Mikä tässä lajissa muka on kivaa? Pelkkää puunhakkuuta. -Siili" },
-    { svg: "M20,60 Q50,10 80,60 Q50,110 20,60 M30,45 L40,50 M70,45 L60,50 M45,65 Q50,75 55,65", text: "Taas OB:lle. Ootko harkinnu vaikka sauvakävelyä? -Orava" },
-    { svg: "M10,80 Q50,30 90,80 M20,60 L35,65 M80,60 L65,65 M40,75 A10,10 0 0,0 60,75", text: "Lajin helppous viehättää, vai mitä? -Kettu" },
-    { svg: "M30,30 A40,40 0 1,1 70,70 A40,40 0 1,1 30,30 M45,45 L50,50 M65,45 L60,50 M45,65 L55,65 M20,20 L35,35 M80,20 L65,35", text: "Ostin 30 euron kiekon, että voin heittää sen suoraan metsään. -Karhu" },
-    { svg: "M20,50 L20,10 L40,40 M80,50 L80,10 L60,40 M30,60 L40,65 M70,60 L60,65 M45,75 A5,5 0 0,0 55,75", text: "Frisbeegolf on kivaa, sanoivat. Rentouttavaa, sanoivat. -Pupu" },
-    { svg: "M30,80 L50,40 L70,80 Z M40,60 L45,65 L50,60 M35,50 L40,45 M65,50 L60,45", text: "Pariin? Älä naurata. Puolet sun heitoista osuu omiin jalkoihin. -Myyrä" },
-    { svg: "M10,50 Q50,10 90,50 Q50,90 10,50 M30,40 L40,45 M70,40 L60,45 M45,60 L55,60", text: "Se oli kyllä hieno heitto... siis jos olisit tähdännyt tuohon koivuun. -Tikka" }
+    { svg: "M 20 70 C 20 90, 80 90, 80 70 C 90 40, 10 40, 20 70 M 20 60 L 10 50 M 35 45 L 30 30 M 65 45 L 70 30 M 80 60 L 90 50 M 40 60 C 45 65, 55 65, 60 60", text: "Mikä tässä lajissa muka on kivaa? Pelkkää puunhakkuuta. -Siili" },
+    { svg: "M 40 80 C 20 80, 20 50, 40 50 C 45 40, 60 40, 65 50 C 80 50, 90 80, 70 90 C 80 60, 95 30, 70 20 C 50 10, 50 40, 60 60 M 45 65 C 50 70, 60 70, 65 65", text: "Taas OB:lle. Ootko harkinnu vaikka sauvakävelyä? -Orava" },
+    { svg: "M 50 80 L 20 40 L 40 40 L 50 20 L 60 40 L 80 40 Z M 35 50 L 45 60 L 55 50", text: "Lajin helppous viehättää, vai mitä? -Kettu" },
+    { svg: "M 20 50 C 20 10, 80 10, 80 50 C 80 90, 20 90, 20 50 M 20 30 C 10 20, 20 10, 30 20 M 80 30 C 90 20, 80 10, 70 20 M 40 60 C 50 70, 60 70, 60 60", text: "Ostin 30 euron kiekon, että voin heittää sen metsään. -Karhu" },
+    { svg: "M 40 50 C 20 50, 20 90, 40 90 C 60 90, 60 50, 40 50 M 30 50 C 20 10, 40 10, 40 50 M 50 50 C 40 10, 60 10, 50 50 M 35 70 C 40 75, 45 75, 50 70", text: "Frisbeegolf on kivaa, sanoivat. Rentouttavaa, sanoivat. -Pupu" },
+    { svg: "M 20 80 C 20 40, 80 40, 80 80 Z M 35 60 C 40 65, 45 65, 50 60 M 30 50 C 35 50, 35 45, 30 45 M 70 50 C 65 50, 65 45, 70 45", text: "Pariin? Älä naurata. Heitot osuu omiin jalkoihin. -Myyrä" }
 ];
 
 let deferredPrompt;
@@ -89,7 +82,7 @@ window.dismissInstallPrompt = function() {
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
 // ==============================================
-// VAPAA KAMERA & TAULU
+// VAPAA KAMERA & TAULU (AINA VAPAA PAN/ZOOM)
 // ==============================================
 let boardState = { scale: 1, x: 0, y: 0 };
 let isDraggingBoard = false;
@@ -99,18 +92,13 @@ let initialPinchDist = 0;
 window.applyBoardTransform = function() {
     const board = el('corkboard-surface');
     if(!board) return;
-    board.style.transition = isDraggingBoard ? 'none' : 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    board.style.transition = isDraggingBoard ? 'none' : 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
     board.style.transform = `translate(${boardState.x}px, ${boardState.y}px) scale(${boardState.scale})`;
 };
 
 const vp = el('corkboard-viewport');
 if(vp) {
     vp.addEventListener('touchstart', e => {
-        if(e.target.closest('.hole-cell') || e.target.closest('.doodle-drawing')) return; 
-        
-        isFreeCam = true;
-        if(el('boardBtnText')) el('boardBtnText').innerText = '📍 PALAA VÄYLÄLLE';
-
         if(e.touches.length === 1) {
             isDraggingBoard = true;
             lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -123,7 +111,8 @@ if(vp) {
 
     vp.addEventListener('touchmove', e => {
         if(!isDraggingBoard) return;
-        e.preventDefault();
+        e.preventDefault(); 
+        
         if(e.touches.length === 1 && lastBoardTouch) {
             let dx = e.touches[0].clientX - lastBoardTouch.x;
             let dy = e.touches[0].clientY - lastBoardTouch.y;
@@ -133,9 +122,18 @@ if(vp) {
         } else if (e.touches.length === 2) {
             let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             let scaleDiff = dist / initialPinchDist;
+            
+            // Kohdennetaan zoomaus nipistyksen keskikohtaan
+            let pinchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            let pinchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+            boardState.x -= (pinchX - boardState.x) * (scaleDiff - 1);
+            boardState.y -= (pinchY - boardState.y) * (scaleDiff - 1);
             boardState.scale *= scaleDiff;
-            if(boardState.scale < 0.1) boardState.scale = 0.1;
-            if(boardState.scale > 2) boardState.scale = 2;
+
+            if(boardState.scale < 0.15) boardState.scale = 0.15;
+            if(boardState.scale > 2.5) boardState.scale = 2.5;
+            
             initialPinchDist = dist;
             window.applyBoardTransform();
         }
@@ -151,95 +149,32 @@ if(vp) {
     }, {passive: true});
 }
 
-window.toggleZoom = function() {
-    if (isFreeCam) {
-        isFreeCam = false;
-        window.viewHoleIndex = currentHoleIndex;
-        if(el('boardBtnText')) el('boardBtnText').innerText = '🔍 KOKO TAULU';
-        window.updateCamera();
-    } else {
-        isFreeCam = true;
-        if(el('boardBtnText')) el('boardBtnText').innerText = '📍 PALAA VÄYLÄLLE';
-        
-        let maxCol = Math.min(9, currentHoleIndex);
-        let maxRow = Math.ceil(currentHoleIndex / 9);
-        let activeWidth = 120 + maxCol * 380 + (maxCol - 1) * 30; 
-        let activeHeight = 120 + maxRow * 950 + (maxRow - 1) * 30;
-        
-        let scaleX = window.innerWidth / activeWidth;
-        let scaleY = (window.innerHeight - 150) / activeHeight; 
-        let scale = Math.min(scaleX, scaleY) * 0.95; 
-        if(scale > 1) scale = 1;
-        
-        boardState.scale = scale;
-        boardState.x = (window.innerWidth - activeWidth * scale) / 2;
-        boardState.y = ((window.innerHeight - 150) - activeHeight * scale) / 2;
-        window.applyBoardTransform();
-    }
-};
-
 window.zoomToHole = function(hIndex) {
-    isFreeCam = false;
-    window.viewHoleIndex = hIndex;
-    let btn = el('boardBtnText');
-    if(btn) btn.innerText = (hIndex === currentHoleIndex) ? '🔍 KOKO TAULU' : '📍 PALAA VÄYLÄLLE';
-    window.updateCamera();
-};
-
-window.updateCamera = function() {
-    if (!currentCourse || isFreeCam) return;
-    boardState.scale = 1;
-    let targetHole = window.viewHoleIndex || currentHoleIndex;
-    let col = (targetHole - 1) % 9;
-    let row = Math.floor((targetHole - 1) / 9);
+    if(!currentCourse || !currentCourse.pars) return;
+    
+    let totalHoles = currentCourse.pars.length;
+    let cols = Math.min(9, totalHoles);
+    
+    let col = (hIndex - 1) % cols;
+    let row = Math.floor((hIndex - 1) / cols);
     let cellX = 60 + col * 410; 
     let cellY = 60 + row * 980; 
     
+    boardState.scale = 1;
     boardState.x = (window.innerWidth - 380) / 2 - cellX;
     boardState.y = 50 - cellY; 
     window.applyBoardTransform();
 };
 
-window.renderDoodles = function() {
-    const container = el('doodles-container');
-    if(!container) return;
-    container.innerHTML = '';
-    
-    let holesPlayed = window.gameHistory.length;
-    let maxCol = Math.min(9, currentHoleIndex);
-    let maxRow = Math.ceil(currentHoleIndex / 9);
-    let activeWidth = 120 + maxCol * 380 + (maxCol - 1) * 30;
-    let activeHeight = 120 + maxRow * 950 + (maxRow - 1) * 30;
-
-    for(let i=0; i<holesPlayed; i++) {
-        let d = doodleData[i % doodleData.length];
-        // Levitetään ympäri koko pelattua taulun aluetta randomisti pseudo-seedeillä
-        let rX = pseudoRandom(i * 1.5);
-        let rY = pseudoRandom(i * 2.5);
-        let rRot = pseudoRandom(i * 3.5);
-
-        let offsetX = rX * (activeWidth - 250);
-        let offsetY = rY * (activeHeight - 200);
-        let rot = -25 + (rRot * 50);
-        
-        let isNew = (i === holesPlayed - 1);
-        let drawnClass = isNew ? 'drawn' : '';
-        let opacityStyle = isNew ? '' : `opacity: 0.65; transform: rotate(${rot}deg) scale(1);`;
-        
-        container.innerHTML += `
-        <div class="doodle-drawing ${drawnClass}" style="left:${offsetX}px; top:${offsetY}px; --rot:${rot}deg; ${opacityStyle}">
-            <svg class="doodle-svg doodle-path" viewBox="0 0 100 100"><path d="${d.svg}"/></svg>
-            <div class="doodle-bubble">${d.text}</div>
-        </div>`;
-    }
+window.zoomToCurrentHole = function() {
+    window.zoomToHole(currentHoleIndex);
 };
 
-window.getHoleCellHTML = function(hData, hIndex, isActive) {
-    let clickAttr = `onclick="if(window.zoomToHole) window.zoomToHole(${hIndex})" style="cursor:${isFreeCam ? 'pointer' : 'default'};"`;
+window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
+    let clickAttr = `onclick="window.zoomToHole(${hIndex})" style="cursor:pointer;"`;
     let html = `<div class="hole-cell" ${clickAttr}>`;
     let par = currentCourse.pars ? (currentCourse.pars[hIndex - 1] || 3) : 3;
     
-    // Satunnaiset vinksahtamiset taulun elementteihin siemenluvulla!
     let rot1 = (pseudoRandom(hIndex * 1.1) * 6 - 3).toFixed(1);
     let rot2 = (pseudoRandom(hIndex * 2.2) * 6 - 3).toFixed(1);
     let rot3 = (pseudoRandom(hIndex * 3.3) * 6 - 3).toFixed(1);
@@ -278,7 +213,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
                 if(pc.tier === 'premium') typeClass = 'premium-card';
                 let tagTxt = pc.tier === 'premium' ? '💎 PREMIUM' : (pc.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
                 
-                // Myös korteille omat kulmat
                 let cRot = (pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
                 let pinLeft = 50 + (Math.floor(pseudoRandom((hIndex + idx) * 5.5) * 20) - 10);
                 
@@ -316,20 +250,13 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
         <div class="pin pin-blue" style="top: 15px; right: 20px;"></div>
         <div class="pin pin-red" style="bottom: 25px; right: 15px;"></div>
         <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:1.6rem; text-decoration:underline;">🏆 Tulos</h2>`;
-        
-    let isHistory = !isActive;
     
     let renderScoreDots = (strokes, p_par) => {
         if(!strokes) return '-';
         let diff = strokes - p_par;
-        if(diff === 0) return `<span style="color:#111;">${strokes}</span>`;
-        if(diff === -1) return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots"><span class="r-dot green"></span></div></div>`;
-        if(diff < -1) {
-            let d = ''; for(let k=0; k<Math.abs(diff); k++) d += `<span class="r-dot blue"></span>`;
-            return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots">${d}</div></div>`;
-        }
-        let d = ''; for(let k=0; k<diff; k++) d += `<span class="r-dot red"></span>`;
-        return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots">${d}</div></div>`;
+        let cClass = diff === 0 ? 'even' : (diff < 0 ? 'green' : 'red');
+        if (diff < -1) cClass = 'blue'; 
+        return `<span class="receipt-circle ${cClass}">${strokes}</span>`;
     };
 
     sortedPlayers.forEach((p, i) => {
@@ -345,8 +272,23 @@ window.getHoleCellHTML = function(hData, hIndex, isActive) {
             </div>
         </div>`;
     });
-    html += `</div></div>`;
+    html += `</div>`;
     
+    // Eläinhahmo liimataan väylän näkyvään alalaitaan vähän lappujen alle
+    if (isHistory) {
+        let d = doodleData[(hIndex - 1) % doodleData.length];
+        let dRot = -15 + (pseudoRandom(hIndex * 3) * 30);
+        let isNew = (hIndex === window.gameHistory.length);
+        let drawnClass = isNew ? 'drawn' : '';
+        let opacityStyle = isNew ? '' : `opacity: 0.8; transform: rotate(${dRot}deg) scale(1);`;
+        html += `
+        <div class="doodle-drawing ${drawnClass}" style="bottom: 20px; right: -20px; --rot:${dRot}deg; ${opacityStyle}">
+            <div class="doodle-bubble">${d.text}</div>
+            <svg class="doodle-svg doodle-path" viewBox="0 0 100 100"><path d="${d.svg}"/></svg>
+        </div>`;
+    }
+
+    html += `</div>`;
     return html;
 };
 
@@ -355,25 +297,29 @@ window.renderBoard = function() {
     if (!board) return;
     
     if (!currentCourse) { 
-        Array.from(board.children).forEach(c => { if(c.id !== 'doodles-container') c.remove(); });
+        board.innerHTML = '';
         return; 
     }
     
-    let html = `<div id="doodles-container"></div>`; 
+    // Dynaaminen koon määritys radan pituuden mukaan
+    let totalHoles = currentCourse.pars.length;
+    let cols = Math.min(9, totalHoles);
+    board.style.gridTemplateColumns = `repeat(${cols}, 380px)`;
+    board.style.gridAutoRows = '950px';
+
+    let html = ``; 
     window.gameHistory.forEach((h, index) => {
-        html += window.getHoleCellHTML(h, index + 1, false);
+        html += window.getHoleCellHTML(h, index + 1, false, true);
     });
     
     if (activeHole) {
         html += window.getHoleCellHTML({
             rule: activeHole.rule, playedCards: activeHole.playedCards,
             color: activeHole.color, penColor: activeHole.penColor, players: allPlayers
-        }, currentHoleIndex, true);
+        }, currentHoleIndex, true, false);
     }
     
     board.innerHTML = html;
-    window.renderDoodles();
-    window.updateCamera();
 };
 
 window.renderReceipt = function() {
@@ -383,20 +329,15 @@ window.renderReceipt = function() {
     }
     if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'flex';
 
-    let renderDots = (strokes, p_par) => {
+    let renderScoreDots = (strokes, p_par) => {
         if(!strokes) return '-';
         let diff = strokes - p_par;
-        if(diff === 0) return `<span style="color:#111;">${strokes}</span>`;
-        if(diff === -1) return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots"><span class="r-dot green"></span></div></div>`;
-        if(diff < -1) {
-            let d = ''; for(let k=0; k<Math.abs(diff); k++) d += `<span class="r-dot blue"></span>`;
-            return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots">${d}</div></div>`;
-        }
-        let d = ''; for(let k=0; k<diff; k++) d += `<span class="r-dot red"></span>`;
-        return `<div class="r-score-wrap"><span>${strokes}</span> <div class="r-dots">${d}</div></div>`;
+        let cClass = diff === 0 ? 'even' : (diff < 0 ? 'green' : 'red');
+        if (diff < -1) cClass = 'blue'; 
+        return `<span class="receipt-circle ${cClass}">${strokes}</span>`;
     };
 
-    let generateHTML = (isMini) => {
+    let generateHistoryLines = (isMini) => {
         let html = `<div class="r-title">KASSAKUITTI</div>`;
         let startIdx = isMini ? Math.max(0, window.gameHistory.length - 2) : 0;
         
@@ -406,23 +347,27 @@ window.renderReceipt = function() {
             if(!isMini) html += `<div class="r-hole-title">Väylä ${i+1} <span style="color:#666;">(PAR ${par})</span></div>`;
             if(h.holeResults && !isMini) {
                 for(let pName in h.holeResults) {
-                    html += `<div class="r-row"><span>${pName.substring(0, 12)}</span><span>${renderDots(h.holeResults[pName], par)}</span></div>`;
+                    html += `<div class="r-row"><span>${pName.substring(0, 12)}</span>${renderScoreDots(h.holeResults[pName], par)}</div>`;
                 }
             }
         }
-        
-        html += `<div class="r-tot-sec"><div style="text-align:center; margin-bottom:5px;">KOKONAISTULOS</div>`;
+        return html;
+    };
+
+    let generateTotals = (isMini) => {
+        let html = `<div style="text-align:center; margin-bottom:5px;">KOKONAISTULOS</div>`;
         let sorted = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore||0) - (b.dgScore||0));
         sorted.forEach(p => {
             let dgStr = p.dgScore > 0 ? `+${p.dgScore}` : (p.dgScore === 0 ? 'E' : p.dgScore);
             html += `<div class="r-row"><span>${p.name.substring(0, isMini?6:12)}</span><span>${dgStr}</span></div>`;
         });
-        html += `</div>`;
         return html;
     };
 
-    if(el('receipt-mini-content')) el('receipt-mini-content').innerHTML = generateHTML(true);
-    if(el('receipt-full-content')) el('receipt-full-content').innerHTML = generateHTML(false);
+    if(el('receipt-mini-content')) el('receipt-mini-content').innerHTML = generateHistoryLines(true);
+    if(el('receipt-mini-totals')) el('receipt-mini-totals').innerHTML = generateTotals(true);
+    
+    if(el('receipt-full-content')) el('receipt-full-content').innerHTML = generateHistoryLines(false) + `<div class="r-tot-sec">${generateTotals(false)}</div>`;
 };
 
 //==============================================
@@ -620,7 +565,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
                     <div class="physical-card premium-card" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
                         <span class="card-price-tag">${item.price} P</span>
                         <div class="card-type-tag">💎 KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p>
-                        <div style="text-align:center; font-weight:900; font-size:0.75rem; color:#94a3b8; padding-top:10px; margin-top:auto;">🔄 3D TARKASTELU</div>
+                        <div style="text-align:center; font-weight:900; font-size:0.75rem; color:#94a3b8; padding-top:10px; margin-top:auto;">🔄 TARKASTELU</div>
                     </div>
                     <button class="shop-item-btn ${btnClass}" ${dis} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
                 </div>`;
@@ -649,7 +594,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             <div class="shop-item-wrapper messy-card" style="transform: rotate(${rot}deg);">
                 <div class="physical-card worn-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer;">
                     <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p>
-                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 3D TARKASTELU</div>
+                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 TARKASTELU</div>
                 </div>
                 <div style="display:flex; gap:5px;">
                     <button class="shop-item-btn btn-success" style="flex:1;" onclick="window.openTargetModal('${cId}')">PELAA</button>
@@ -752,16 +697,16 @@ window.initNativeCarousel = function() {
 
     function updateCarouselLayout() {
         const scrollLeft = container.scrollLeft; const containerWidth = container.clientWidth;
-        const centerOffset = containerWidth / 2; const cardWidth = 280; 
+        const centerOffset = containerWidth / 2; const cardWidth = 320; 
         const paddingLeft = centerOffset - (cardWidth / 2); 
         let closestIndex = 0; let minDiff = 9999;
 
         for (let index = 0; index < cards.length; index++) {
             const card = cards[index];
             const cardCenter = paddingLeft + (index * cardWidth) + (cardWidth / 2) - scrollLeft;
-            const diff = (cardCenter - centerOffset) / 140; 
+            const diff = (cardCenter - centerOffset) / 160; 
             
-            const transX = diff * -70; const rotZ = diff * 8; const transY = Math.abs(diff) * 20; 
+            const transX = diff * -80; const rotZ = diff * 8; const transY = Math.abs(diff) * 20; 
             const scale = Math.max(0.8, 1.15 - Math.abs(diff) * 0.15); 
             
             card.style.transform = `translate3d(${transX}px, ${transY}px, 0) rotateZ(${rotZ}deg) scale(${scale})`;
@@ -793,7 +738,7 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     setTimeout(() => {
         window.initNativeCarousel();
         const container = el('cardCarousel');
-        if(container) container.scrollLeft = (window.carouselCurrentIndex * 280); 
+        if(container) container.scrollLeft = (window.carouselCurrentIndex * 320); 
     }, 100);
 };
 
@@ -961,6 +906,9 @@ window.submitScores = function() {
 
     if(el('scoreModal')) el('scoreModal').style.display = 'none'; 
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
+    
+    // Siirtää kameran suoraan uudelle väylälle kun tulokset on annettu
+    setTimeout(() => { window.zoomToHole(nextHoleIndex); }, 400);
 };
 
 window.startMeilahti = function() {
@@ -1037,7 +985,6 @@ window.logEvent = function(msg) { push(ref(db, 'gameState/eventLog'), window.cle
 window.updateIdentityUI = function() { if(el('identityCard')) { el('identityCard').style.display = myName ? 'none' : 'block'; } };
 window.showNotification = function(message, type = 'info') { const container = el('notificationContainer'); if(!container) return; const toast = document.createElement('div'); toast.className = `notification ${type}`; toast.innerHTML = `<span style="font-size:1.3rem;">${type === 'warning' ? '🛒' : (type === 'debuff' ? '💥' : 'ℹ️')}</span> <span>${message}</span>`; container.appendChild(toast); setTimeout(() => { toast.remove(); }, 2000); };
 window.claimIdentity = function() { let n = el('playerNameInput').value.trim(); if(!n || n.length > 15) return alert("Syötä nimi!"); myName = n; localStorage.setItem('friba_name', n); window.updateIdentityUI(); if(!(allPlayers || []).find(x => x && x.name === n)) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers)); window.logEvent(`${n} liittyi peliin.`); } };
-window.setRole = function(r) { currentRole = r; document.body.className = r + '-mode'; if(el('btnPlayer')) el('btnPlayer').classList.toggle('active', r === 'player'); if(el('btnGM')) el('btnGM').classList.toggle('active', r === 'gm'); window.renderBoard(); };
 
 window.adminAddPlayer = function() { const input = el('adminNewPlayerName'); if(!input) return; const name = input.value.trim(); if(!name || (allPlayers || []).find(p => p && p.name === name)) return; let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: name, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); input.value = ''; window.logEvent(`${myName} (Asetukset) lisäsi pelaajan: ${name}`); };
 window.removePlayer = function(index) { if(confirm("Haluatko poistaa?")) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.splice(index, 1); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); } };
@@ -1095,7 +1042,6 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.gameSettings = data.settings || { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
     window.gameHistory = data.history ? (Array.isArray(data.history) ? data.history : Object.values(data.history)) : [];
 
-    // TÄYDENNETÄÄN ASETUKSET LUKEMISEN JÄLKEEN KÄYTTÖLIITTYMÄÄN
     if (el('gmSetShop')) el('gmSetShop').checked = window.gameSettings.shopEnabled;
     if (el('gmSetLimitCheck')) el('gmSetLimitCheck').checked = window.gameSettings.handLimitEnabled;
     if (el('gmSetLimitCount')) el('gmSetLimitCount').value = window.gameSettings.handLimit;
