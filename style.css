@@ -37,10 +37,16 @@ body {
     touch-action: pan-x pan-y; 
 }
 
-/* Laitteistokiihdytys sulavaa liikkumista varten */
+/* Laitteistokiihdytys ja ehdoton koon varmistus */
 #corkboard-surface {
-    display: grid;
-    gap: 30px; padding: 60px;
+    display: inline-grid;
+    gap: 30px; 
+    padding: 100px;
+    box-sizing: border-box;
+    width: auto;
+    height: auto;
+    min-width: 100vw;
+    min-height: 100vh;
     transform-origin: top left;
     pointer-events: auto; 
     will-change: transform;
@@ -56,17 +62,18 @@ body {
     background-size: 8px 8px, 4px 4px, 4px 4px;
     background-position: 0 0, 0 0, 2px 2px;
     
-    border: 25px solid #5c4033;
+    border: 35px solid #5c4033;
     border-top-color: #7b4e35; border-left-color: #7b4e35;
     border-bottom-color: #3e2723; border-right-color: #3e2723;
     border-radius: 12px;
     box-shadow: inset 0 15px 30px rgba(0,0,0,0.7), inset 0 0 15px rgba(0,0,0,0.9), 10px 20px 40px rgba(0,0,0,0.8); 
-    
-    width: max-content; height: max-content;
-    min-width: 100vw; min-height: 100vh; position: relative;
+    position: relative;
 }
 
+/* Varmistetaan että sisältö nousee eläinten yli */
 .hole-cell { width: 380px; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; z-index: 10; }
+.index-card, .post-it-note, .pinned-card-container, .score-spiral-note { z-index: 5; position: relative; }
+
 .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 10; }
 h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; font-weight: 900; }
 
@@ -114,10 +121,10 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     font-family: 'Courier New', Courier, monospace; font-size: 0.75rem;
     color: #111; position: relative; background-image: linear-gradient(to top, #fff, #f4f4f5);
     z-index: 90; transition: transform 0.3s;
-    display: flex; flex-direction: column; padding-top: 10px;
+    display: flex; flex-direction: column; padding-top: 15px;
 }
 .receipt-paper.roll-receipt {
-    max-height: 100px; overflow: hidden; 
+    max-height: none; /* Ei enää leikkaannu */
 }
 .receipt-paper::after {
     content: ''; position: absolute; top: -4px; left: 0; right: 0; height: 4px;
@@ -127,13 +134,13 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .r-title { font-weight: 900; text-align: center; border-bottom: 1px dashed #111; padding-bottom: 5px; margin-bottom: 5px; font-size:0.8rem; }
 .r-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight:bold; white-space:nowrap; gap:5px;}
 .r-row span { overflow:hidden; text-overflow:ellipsis; }
-.r-tot-sec { border-top: 2px dashed #111; font-weight: 900; font-size: 0.9rem; margin-top: auto; background:#fff;}
+.r-tot-sec { font-weight: 900; font-size: 0.9rem; margin-top: auto; background:#fff;}
 .r-hole-title { font-weight: 900; margin-top: 8px; margin-bottom: 4px; font-size: 0.75rem; text-transform: uppercase; }
 
 .full-receipt .r-title { font-size: 1.5rem; margin-bottom: 15px; }
 .full-receipt .r-hole-title { font-size: 1.1rem; margin-top: 15px; }
 .full-receipt .r-row { font-size: 1.2rem; margin-bottom: 10px; font-weight:bold; }
-.full-receipt .r-tot-sec { font-size: 1.6rem; margin-top: 20px; padding-top: 15px; }
+.full-receipt .r-tot-sec { font-size: 1.6rem; margin-top: 20px; padding-top: 15px; border-top: 2px dashed #111; }
 
 .receipt-circle {
     display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center;
@@ -146,9 +153,9 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .receipt-circle.even { color: #111; }
 
 /* ========================================= */
-/* KIROILEVAT ELÄIMET (DOODLES)              */
+/* KIROILEVAT ELÄIMET (DOODLES) - PYSYVÄT ALLA */
 /* ========================================= */
-.doodle-drawing { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; opacity: 0; transform: rotate(var(--rot)) scale(0.9); z-index: 0; }
+.doodle-drawing { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; opacity: 0; transform: rotate(var(--rot)) scale(0.9); z-index: -1; }
 .doodle-drawing.drawn { opacity: 0.8; transform: rotate(var(--rot)) scale(1); transition: opacity 2s, transform 2s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .doodle-svg { width: 160px; height: 160px; fill: none; stroke: #1e293b; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; margin-bottom: -20px; }
 .doodle-bubble { font-family: 'Kalam', cursive; font-size: 1.4rem; font-weight: 900; color: #1e293b; background: rgba(255,255,255,0.85); padding: 8px 18px; border-radius: 20px; border: 2px solid #1e293b; z-index: 2; text-align: center; max-width: 250px; line-height: 1.1; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); }
@@ -158,7 +165,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 /* ========================================= */
 /* AITOA KOKOA OLEVAT ELEMENTIT TAULULLA     */
 /* ========================================= */
-.hole-cell .index-card { width: 220px; padding: 10px 15px; margin-bottom: 15px; margin-left: 0; align-self: flex-start; position: relative; }
+.hole-cell .index-card { width: 220px; padding: 10px 15px; margin-bottom: 15px; margin-left: 0; align-self: flex-start; }
 .index-card .banner-title { font-size: 1.8rem; margin-bottom: 2px; }
 .index-card .banner-par { font-size: 1.1rem; }
 .index-card .banner-subtitle { font-size: 0.7rem; }
