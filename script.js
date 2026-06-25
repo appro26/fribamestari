@@ -11,6 +11,7 @@ const db = getDatabase(app);
 const el = id => document.getElementById(id);
 
 let myName = localStorage.getItem('friba_name') || null;
+let currentRole = 'player'; // <-- TÄMÄ OLI AIEMMIN KADONNUT! Roolimuuttuja palautettu.
 let allPlayers = [];
 let activeHole = null;
 let currentCourse = null;
@@ -132,12 +133,14 @@ let lastBoardTouch = null;
 let initialPinchDist = 0;
 let camAnim = null; 
 let boardEl = null;
+let isRendering = false;
 
 window.applyBoardTransform = function() {
     if(!boardEl) boardEl = el('corkboard-surface');
     if(boardEl) {
-        boardEl.style.transform = `translate(${boardState.x}px, ${boardState.y}px) scale(${boardState.scale})`;
+        boardEl.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
     }
+    isRendering = false;
 };
 
 window.animateCameraTo = function(tX, tY, tScale, duration=400) {
@@ -152,7 +155,8 @@ window.animateCameraTo = function(tX, tY, tScale, duration=400) {
         boardState.x = sX + (tX - sX) * ease;
         boardState.y = sY + (tY - sY) * ease;
         boardState.scale = sScale + (tScale - sScale) * ease;
-        window.applyBoardTransform();
+        if(!boardEl) boardEl = el('corkboard-surface');
+        if(boardEl) boardEl.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
         
         if (p < 1) camAnim = requestAnimationFrame(step);
         else camAnim = null;
@@ -194,7 +198,11 @@ if(vp) {
             if(boardState.scale > 2.5) boardState.scale = 2.5;
             initialPinchDist = dist;
         }
-        window.applyBoardTransform();
+
+        if (!isRendering) {
+            isRendering = true;
+            requestAnimationFrame(window.applyBoardTransform);
+        }
     }, {passive: false});
 
     vp.addEventListener('touchend', e => {
@@ -214,7 +222,6 @@ window.zoomToHole = function(hIndex) {
     let col = (hIndex - 1) % cols;
     let row = Math.floor((hIndex - 1) / cols);
     
-    // Tarkka laskenta CSS gap-arvojen pohjalta (380w, 80 gap-x, 950h, 60 gap-y)
     let cellX = 120 + col * 460; 
     let cellY = 120 + row * 1010; 
     let targetX = (window.innerWidth - 380) / 2 - cellX;
@@ -271,29 +278,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
             else otherCards.push(pc);
         });
 
-        // MUILLE KOHDISTETUT TAPAHTUMAT (Lapulla, ei kortteina!)
-        if (otherCards.length > 0) {
-            let pRot = (pseudoRandom(hIndex * 1.5) * 4 - 2).toFixed(1);
-            html += `<div style="width: 100%; max-width:340px; margin-bottom: 15px; position:relative; background:var(--paper-bg); padding:15px; box-shadow: 2px 4px 15px rgba(0,0,0,0.3); border-radius:2px; transform: rotate(${pRot}deg);">
-                        <div class="tape tape-top" style="--rot:-2deg;"></div>
-                        <h2 style="color:var(--text-main); font-size:1.1rem; margin-bottom:12px; border-bottom:2px dashed #ccc; padding-bottom:5px; font-family:'Kalam', cursive; text-align:center;">PELITAPAHTUMAT</h2>
-                        <div style="display:flex; flex-direction:column; gap:8px;">`;
-            
-            otherCards.forEach((pc) => {
-                let typeIcon = pc.type === 'buff' ? '🛡️' : '🚫';
-                let typeColor = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
-                let gmUndo = (isActive && currentRole === 'gm') ? ` <button style="color:var(--danger); background:none; border:none; font-weight:900; font-size:0.7rem; padding:2px; margin-left:5px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">[PERU]</button>` : ``;
-                
-                html += `
-                <div style="background:rgba(0,0,0,0.05); padding:8px; border-radius:4px; font-size:0.85rem; border-left: 4px solid ${typeColor};">
-                    <b style="font-size:0.95rem;">${typeIcon} ${pc.cardName}</b><br>
-                    <span style="color:#555;">Käyttäjä: <b>${pc.by}</b> ➡️ Kohde: <b style="color:${typeColor};">${pc.target}</b></span>${gmUndo}
-                </div>`;
-            });
-            html += `</div></div>`;
-        }
-
-        // MINUUN KOHDISTUVAT KORTIT (Fyysisinä kortteina)
+        // 1. MINUUN KOHDISTUVAT KORTIT (Fyysisinä kortteina YLIMPÄNÄ)
         if (myCards.length > 0) {
             html += `<div style="width: 100%; max-width:340px; margin-bottom: 15px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px;">`;
             myCards.forEach((pc, idx) => {
@@ -304,8 +289,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                 let cRot = (pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
                 let pinLeft = 50 + (Math.floor(pseudoRandom((hIndex + idx) * 5.5) * 20) - 10);
                 
-                let undoBtn = (isActive) ? `<button class="btn btn-danger" style="padding:6px; font-size:0.7rem; margin-top:5px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">PERU</button>` : ``;
-                
                 html += `
                 <div class="pinned-card-container" style="transform: rotate(${cRot}deg);">
                     <div class="pushpin" style="left: ${pinLeft}%;"></div>
@@ -315,11 +298,31 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                         <div style="background:rgba(0,0,0,0.05); padding:4px; border-radius:4px; font-size:0.75rem; text-align:center; font-weight:bold; margin-top:auto;">
                             Kohteelle: Sinuun!<br><span style="font-weight:normal;">(${pc.by})</span>
                         </div>
-                        ${undoBtn}
                     </div>
                 </div>`;
             });
             html += `</div>`;
+        }
+
+        // 2. MUIDEN PELITAPAHTUMAT (Lapulla omien korttien ALLA)
+        if (otherCards.length > 0) {
+            let pRot = (pseudoRandom(hIndex * 1.5) * 4 - 2).toFixed(1);
+            html += `<div style="width: 100%; max-width:300px; margin-top: 15px; margin-bottom: 15px; position:relative; background:var(--paper-bg); padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); border-radius:2px; transform: rotate(${pRot}deg);">
+                        <div class="tape tape-top" style="--rot:-2deg;"></div>
+                        <h2 style="color:var(--text-main); font-size:0.95rem; margin-bottom:10px; border-bottom:2px dashed #ccc; padding-bottom:5px; font-family:'Kalam', cursive; text-align:center;">PELITAPAHTUMAT</h2>
+                        <div style="display:flex; flex-direction:column; gap:6px;">`;
+            
+            otherCards.forEach((pc) => {
+                let typeIcon = pc.type === 'buff' ? '🛡️' : '🚫';
+                let typeColor = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
+                
+                html += `
+                <div style="background:rgba(0,0,0,0.05); padding:6px; border-radius:4px; font-size:0.75rem; border-left: 4px solid ${typeColor};">
+                    <b style="font-size:0.85rem;">${typeIcon} ${pc.cardName}</b><br>
+                    <span style="color:#555;">Käyttäjä: <b>${pc.by}</b> ➡️ Kohde: <b style="color:${typeColor};">${pc.target}</b></span>
+                </div>`;
+            });
+            html += `</div></div>`;
         }
     }
 
@@ -355,7 +358,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     });
     html += `</div>`;
     
-    // Solvaukset työnnetty vielä kauemmas reunoille väylien tyhjään väliin!
     if (isHistory) {
         let insultIndex = Math.floor(pseudoRandom(hIndex * 8.8) * insults.length);
         let svgIndex = Math.floor(pseudoRandom(hIndex * 9.9) * doodleSVGs.length);
@@ -410,7 +412,6 @@ window.renderBoard = function() {
         html += window.getHoleCellHTML(h, index + 1, false, true);
     });
     
-    // Voittajan juliste jos kaikki pelattu!
     if (currentHoleIndex > totalHoles) {
         let sortedPlayers = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
         let winner = sortedPlayers[0] || {name: "Tuntematon", dgScore: 0, score: 0};
@@ -469,11 +470,12 @@ window.renderReceipt = function() {
     };
 
     let generateTotals = (isMini) => {
-        let html = `<div style="text-align:center; margin-bottom:5px; letter-spacing:1px;">YHTEENSÄ</div>`;
+        let html = ``; // YHTEENSÄ teksti poistettu tarpeettomana
         let sorted = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore||0) - (b.dgScore||0));
         sorted.forEach(p => {
             let dgStr = p.dgScore > 0 ? `+${p.dgScore}` : (p.dgScore === 0 ? 'E' : p.dgScore);
-            html += `<div class="r-row"><span>${p.name.substring(0, isMini?6:12)}</span><span>${dgStr}</span></div>`;
+            let fSize = isMini ? '1.3rem' : '1.8rem'; // Tulokset isommalla!
+            html += `<div class="r-row" style="font-size:${fSize}; margin-bottom: 2px;"><span>${p.name.substring(0, isMini?6:12)}</span><span>${dgStr}</span></div>`;
         });
         return html;
     };
@@ -481,7 +483,7 @@ window.renderReceipt = function() {
     if(el('receipt-mini-totals')) el('receipt-mini-totals').innerHTML = generateTotals(true);
     if(el('receipt-full-content')) {
         let fullTitle = `<div class="r-title" style="font-size:1.5rem; margin-bottom:15px;">TULOKSET</div>`;
-        el('receipt-full-content').innerHTML = fullTitle + generateHistoryLines(false) + `<div class="r-tot-sec">${generateTotals(false)}</div>`;
+        el('receipt-full-content').innerHTML = fullTitle + generateHistoryLines(false) + `<div class="r-tot-sec" style="margin-top:10px; border-top: 2px dashed #111; padding-top:10px;">${generateTotals(false)}</div>`;
     }
 };
 
@@ -540,14 +542,6 @@ window.executeCardPlay = function(targetName) {
     update(ref(db), updates);
     window.logEvent(`${myName} pelasi kortin ${card.def.n} kohteelle ${targetName}.`);
     window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, card.def.type === 'buff' ? 'info' : 'debuff');
-};
-
-window.undoCardPlay = function(timestamp) {
-    if(!activeHole || !activeHole.playedCards) return;
-    let nextCards = {};
-    let oldCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
-    oldCards.filter(Boolean).forEach((c, i) => { if(c.timestamp !== timestamp) nextCards['c_'+i] = c; });
-    update(ref(db), { 'gameState/activeHole/playedCards': window.cleanFirebaseData(nextCards) });
 };
 
 window.forceDiscard = function(cId, isNormal) {
@@ -1008,6 +1002,7 @@ window.submitScores = function() {
     if(el('scoreModal')) el('scoreModal').style.display = 'none'; 
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
     
+    // Siirrytään smoothisti
     setTimeout(() => { window.zoomToHole(nextHoleIndex); }, 400); 
 };
 
@@ -1196,7 +1191,6 @@ onValue(ref(db, 'gameState'), (snap) => {
                 let diff = currentPoints - window.myLastScore;
                 let diffStr = diff > 0 ? "+" + diff : diff;
                 
-                // Tyylikäs pisteilmoitus
                 if (currentCourse && currentHoleIndex > currentCourse.pars.length) {
                      window.showNotification(`Kaikki väylät pelattu! Katso voittaja taululta.`, 'warning');
                 } else if (diff !== 0) {
