@@ -37,22 +37,18 @@ body {
     touch-action: pan-x pan-y; 
 }
 
-/* Laitteistokiihdytys ja ehdoton koon varmistus */
+/* POISTETTU 3D-KIIHDYTYKSET MOBIILIN RIKKOUTUMISEN ESTÄMISEKSI */
 #corkboard-surface {
     display: inline-grid;
     gap: 30px; 
     padding: 100px;
     box-sizing: border-box;
-    width: auto;
-    height: auto;
+    width: max-content;
+    height: max-content;
     min-width: 100vw;
     min-height: 100vh;
     transform-origin: top left;
     pointer-events: auto; 
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform-style: preserve-3d;
 
     background-color: #cbd5e1;
     background-image: 
@@ -70,7 +66,6 @@ body {
     position: relative;
 }
 
-/* Varmistetaan että sisältö nousee eläinten yli */
 .hole-cell { width: 380px; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; z-index: 10; }
 .index-card, .post-it-note, .pinned-card-container, .score-spiral-note { z-index: 5; position: relative; }
 
@@ -124,7 +119,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     display: flex; flex-direction: column; padding-top: 15px;
 }
 .receipt-paper.roll-receipt {
-    max-height: none; /* Ei enää leikkaannu */
+    max-height: none; 
 }
 .receipt-paper::after {
     content: ''; position: absolute; top: -4px; left: 0; right: 0; height: 4px;
@@ -153,7 +148,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .receipt-circle.even { color: #111; }
 
 /* ========================================= */
-/* KIROILEVAT ELÄIMET (DOODLES) - PYSYVÄT ALLA */
+/* KIROILEVAT ELÄIMET (DOODLES)              */
 /* ========================================= */
 .doodle-drawing { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; opacity: 0; transform: rotate(var(--rot)) scale(0.9); z-index: -1; }
 .doodle-drawing.drawn { opacity: 0.8; transform: rotate(var(--rot)) scale(1); transition: opacity 2s, transform 2s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -324,10 +319,10 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     pointer-events: none; z-index: 10; border-radius: inherit; overflow: hidden;
 }
 
-.pinned-card-container { position: relative; transition: transform 0.2s; transform-style: preserve-3d; transform: perspective(1000px) rotate(var(--rot)) translateZ(20px); }
-.pinned-card-container:active { transform: scale(0.95) translateZ(0) !important; } 
+.pinned-card-container { position: relative; transition: transform 0.2s; }
+.pinned-card-container:active { transform: scale(0.95) !important; } 
 .pinned-card-container .physical-card { box-shadow: 15px 25px 40px rgba(0,0,0,0.6), inset -1px 2px 4px rgba(255,255,255,0.9); cursor: pointer; }
-.pushpin { position: absolute; top: -6px; left: 50%; transform: translateX(-50%) translateZ(10px); width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b); box-shadow: 6px 12px 15px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,255,255,0.5); z-index: 10; pointer-events: none; }
+.pushpin { position: absolute; top: -6px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b); box-shadow: 6px 12px 15px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,255,255,0.5); z-index: 10; pointer-events: none; }
 
 /* ========================================= */
 /* LOKERIKKO & KANSIOT (BOTTOM NAV)          */
@@ -376,7 +371,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     position: absolute; top: 5%; left: 0; right: 0; bottom: 5%; width: 95%; max-width: 500px; margin: 0 auto;
     border-radius: 5px 15px 15px 5px; display: flex; flex-direction: column; overflow: hidden; 
     border-left: none; box-sizing: border-box; padding-top: 15px;
-    transition: background 0.4s, border 0.4s, box-shadow 0.4s; will-change: transform;
+    transition: background 0.4s, border 0.4s, box-shadow 0.4s;
 }
 .binder-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 25px 20px 55px; position: relative; }
 .binder-swipe-handle { width: 60px; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 4px rgba(0,0,0,0.5); flex-shrink: 0; }
@@ -401,37 +396,33 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .binder-modal-anim { animation: openBinder 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
 
 /* ========================================= */
-/* NATIIVI 3D KORTTIVIUHKA (SAUMATON, LEVEÄ) */
+/* NATIIVI 3D KORTTIVIUHKA (POISTETTU RIKKOVAT KIIHDYTYKSET) */
 /* ========================================= */
 .native-carousel-container { 
     display: flex; overflow-x: auto; scroll-snap-type: x mandatory; 
     padding: 40px calc(50vw - 160px); gap: 0px; width: 100vw; height: 800px; 
     align-items: center; touch-action: pan-x pan-y; 
     -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
-    will-change: transform;
 }
 .native-carousel-container::-webkit-scrollbar { display: none; }
-.carousel-card-wrapper { flex: 0 0 320px; scroll-snap-align: center; perspective: 1200px; position: relative; height: 460px; will-change: transform; cursor: pointer;}
+.carousel-card-wrapper { flex: 0 0 320px; scroll-snap-align: center; position: relative; height: 460px; cursor: pointer;}
 
 .card-3d-inner { 
     position: relative; width: 100%; height: 100%; transform-style: preserve-3d; 
     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
 }
 .card-3d-inner.flipped { transform: rotateY(180deg); }
 
 .card-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 12px; box-shadow: -10px 20px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; background: #fff; border: 2px solid var(--border); }
-.card-front { padding: 26px 20px; transform: rotateY(0deg) translateZ(1px); } 
-.card-back { transform: rotateY(180deg) translateZ(1px); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 6px solid #fff; }
+.card-front { padding: 26px 20px; transform: rotateY(0deg); } 
+.card-back { transform: rotateY(180deg); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 6px solid #fff; }
 .card-back-sabotage { background: linear-gradient(135deg, #9f1239, #e11d48); border-radius: 10px; }
 .card-back-buff { background: linear-gradient(135deg, #1e3a8a, #2563eb); border-radius: 10px; }
 .card-back-premium { background: linear-gradient(135deg, #b45309, #f59e0b); border-radius: 10px; }
 .card-back-icon { font-size: 6rem; opacity: 0.4; }
 
 /* MODAALIT */
-.fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items:center; justify-content:center; z-index: 10000; padding: 15px; overflow-y: hidden; overscroll-behavior-y: none; }
+.fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items:flex-start; justify-content:flex-start; z-index: 10000; padding: 15px; overflow-y: hidden; overscroll-behavior-y: none; }
 .close-modal-btn { background: var(--danger); border: none; border-radius: 50%; width:44px; height:44px; color: #fff; font-size: 1.8rem; font-weight:bold; cursor: pointer; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4); z-index:100; flex-shrink:0;}
 .winner-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: none; align-items: center; justify-content: center; z-index: 10500; padding: 16px; overflow-y:auto; overscroll-behavior: none; overflow-x: hidden; } 
 
