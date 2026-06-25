@@ -9,93 +9,242 @@ const minorBases = [
     { n: "Sammakko", d: "Mene syvään kyykkyyn ja suorita heitto siitä asennosta." },
     { n: "Pyörähdys", d: "Pyörähdä 360 astetta vauhdissa ja heitä heti perään." },
     { n: "Vauhtijarru", d: "Pysähdy kokonaan 1 sekunniksi tukijalalle juuri ennen vetoa." },
-    { n: "Häirintä", d: "Saat seisoa 2 metrin päässä kohteesta ja huutaa häirintää heiton aikana." },
+    { n: "Häirintä", d: "Saat seisoa 2 metrin päässä kohteesta ja pitää meteliä heiton aikana." },
     { n: "Paikaltaveto", d: "Seuraavassa heitössä et saa ottaa yhtään vauhtiaskelta." },
     { n: "Matala asento", d: "Heitä siten, että hartiasi ovat maksimissaan metrin korkeudella maasta." },
-    { n: "Selin koriin", d: "Putti tai lähestyminen on heitettävä täysin selkä koria kohden." },
+    { n: "Selin koriin", d: "Heitto on irrotettava täysin selkä koria kohden." },
     { n: "Kävelyvauhti", d: "Vauhtia saa ottaa, mutta vain hitaasti kävellen (ei juoksua)." },
-    { n: "Väärä käsi putti", d: "Jos kohde on alle 15m päässä, putti on heitettävä väärällä kädellä." },
-    { n: "10 sekuntia", d: "Kohteella on tasan 10 sekuntia aikaa suorittaa heitto siitä kun saapuu kiekolle." },
+    { n: "Pakkohymy", d: "Kohteen on hymyiltävä leveästi ja hampaat irvessä koko suorituksen ajan." },
+    { n: "Pikaveto", d: "Kohteella on tasan 5 sekuntia aikaa heittää siitä, kun hän saapuu kiekolleen." },
     { n: "Laukku selässä", d: "Bägi on pidettävä selässä koko heittosuorituksen ajan." },
     { n: "Polviltaan", d: "Seuraava heitto on suoritettava vähintään toinen polvi maassa." },
-    { n: "Erikoisgrippi", d: "Heitä seuraava heitto niin, että peukalosi on kiekon pohjapuolella." }
+    { n: "Erikoisgrippi", d: "Heitä seuraava heitto niin, että peukalosi on kiekon pohjapuolella." },
+    { n: "Tuijotus", d: "Saat mennä seisomaan aivan kohteen näkökenttään ja tuijottaa häntä silmiin." },
+    { n: "Ei saattoa", d: "Käden on pysähdyttävä kuin seinään heti, kun kiekko irtoaa sormista." },
+    { n: "Keskisormi", d: "Keskisormen on oltava täysin suorana irti kiekosta koko heiton ajan." },
+    { n: "Tasajalkaloikka", d: "Ota vauhtia vain tasajalkaloikilla." },
+    { n: "Hyppyputti", d: "Seuraava heitto (vaikka alle 10m) on pakko suorittaa hyppyputtina." },
+    { n: "Kuiskailu", d: "Kohde saa puhua vain kuiskaten koko loppuväylän ajan." },
+    { n: "Tuulen haistelu", d: "Kohteen on nostettava sormi pystyyn ja 'haisteltava tuulta' 10 sekuntia ennen heittoa." },
+    { n: "Pääkallistus", d: "Pää on pidettävä kallistettuna täysin oikealle olkapäälle koko suorituksen ajan." },
+    { n: "Kädet ristiin", d: "Ota kiekosta kiinni siten, että kätesi ovat ristissä ennen vetoa." },
+    { n: "Lauluhetki", d: "Kohteen on laulettava ääneen jokin lastenlaulu heittonsa aikana." },
+    { n: "Varoitus", d: "Huuda 'FORE!' mahdollisimman lujaa juuri ennen irrotusta (vaikka väylä olisi tyhjä)." },
+    { n: "Kivikasvo", d: "Ei minkäänlaista ilmettä tai reaktiota heiton jälkeen. Täysi pokeri." },
+    { n: "Jäätyminen", d: "Kohteen on jähmetyttävä täysin paikalleen saattoasentoon 5 sekunniksi heiton jälkeen." },
+    { n: "Heikko grip", d: "Kiekosta saa pitää kiinni vain peukalolla ja etusormella." },
+    { n: "Hengityskielto", d: "Vedä keuhkot täyteen ilmaa ja pidätä hengitystä koko vauhdinoton ja heiton ajan." },
+    { n: "Taikasauva", d: "Osoita koria kiekolla kuin taikasauvalla ennen asettumista heittoon." },
+    { n: "Kantapäät irti", d: "Koko heittosuoritus on tehtävä pelkillä päkiöillä seisten." },
+    { n: "Pudotus", d: "Kohde joutuu tiputtamaan kiekkonsa maahan ja nostamaan sen juuri ennen heittoa." },
+    { n: "Väärä jalka", d: "Tukijalkana on käytettävä väärää jalkaa (oikeakätisellä oikea jalka edessä)." },
+    { n: "Ei sormea", d: "Etusormi ei saa koskea kiekon rimiin (reunaan) lainkaan." },
+    { n: "Pyyntö", d: "Kohteen on kysyttävä sinulta kohteliaasti lupa heittää ennen suoritusta." },
+    { n: "Käänteinen vauhti", d: "Ota vauhtiaskeleet takaperin kävellen." },
+    { n: "Kurotus", d: "Heitä mahdollisimman epämukavasta asennosta kurottaen sivuun." },
+    { n: "Täysi hiljaisuus", d: "Et saa puhua sanaakaan väylän loppuun asti. Jokaisesta sanasta +1 rangaistus." },
+    { n: "Bägi etupuolella", d: "Bägi on pidettävä roikkumassa vatsan puolella heiton ajan." },
+    { n: "Haaraseisonta", d: "Jalat on pidettävä leveässä haara-asennossa, ei vauhtiaskeleita." },
+    { n: "Kiekon pyöritys", d: "Pyöritä kiekkoa sormenpäällä vähintään kerran ennen heittoa." },
+    { n: "Rysty-grippi kämmenellä", d: "Heitä fore, mutta pidä kiinni rystygripillä (Power Grip)." },
+    { n: "Huuto", d: "Karjaise apinan lailla juuri kiekon irrotessa kädestä." },
+    { n: "Kipeä selkä", d: "Heitä kuin olisit 90-vuotias ja selkä olisi jumissa." },
+    { n: "Silmät ristiin", d: "Laita silmät kieroon juuri ennen kuin tähtäät." },
+    { n: "Kiitos puille", d: "Jos osut puuhun, sinun on käytävä halaamassa sitä ja kiitettävä." },
+    { n: "Varjotikari", d: "Tee 'ninjaliike' vapaalla kädellä samalla kun heität." },
+    { n: "Maakosketus", d: "Vapaan käden on koskettava maata heiton saaton aikana." },
+    { n: "Golf-asento", d: "Heitä lähestyminen kuten löisit pallogolfia." }
 ];
-
-for(let i = 1; i <= 60; i++) {
-    const base = minorBases[(i - 1) % minorBases.length];
-    window.allCards.push({ id: "minor_" + i, n: base.n, d: base.d, tier: "minor_sabotage", type: "sabotage" });
-}
+minorBases.forEach((base, i) => window.allCards.push({ id: "minor_" + i, n: base.n, d: base.d, tier: "normal", type: "sabotage" }));
 
 // ==========================================
-// TASO 2: ISOT SABOTAASIT (Kalliita pelata, muuttavat fysiikkaa. Antavat vastustajalle pisteitä jos hän onnistuu!)
+// TASO 2: ISOT SABOTAASIT (Muuttavat fysiikkaa tai heittovalintaa)
 // ==========================================
 const majorBases = [
-    { n: "Kämmenpakko", d: "Heitä seuraava heittosi tiiltä pakollisella kämmenellä (forehand)." },
-    { n: "Rystypakko", d: "Heitä seuraava heittosi tiiltä pakollisella rystyllä (backhand)." },
+    { n: "Kämmenpakko", d: "Heitä seuraava heittosi pakollisella kämmenellä (forehand)." },
+    { n: "Rystypakko", d: "Heitä seuraava heittosi pakollisella rystyllä (backhand)." },
     { n: "Pystyheitto", d: "Seuraava heitto on suoritettava pystyheitolla (Upsi/Tomahawk/Thumber)." },
     { n: "Rolleripakko", d: "Kiekon on osuttava maahan kovaa ja rullattava eteenpäin vähintään 10m." },
-    { n: "Putteridraivi", d: "Avausheitto tiiltä on suoritettava putterilla." },
-    { n: "Väärä käsi avaus", d: "Avausheitto on heitettävä täysin väärällä/heikommalla kädellä." },
-    { n: "Kiekon Pakkovalinta", d: "Valitse kohteen bägistä 3 kiekkoa, joista hänen on pakko valita avauskiekko." },
-    { n: "Lainakiekko", d: "Anna kohteelle oma kiekkosi. Hänen on pakko heittää avaus sillä." },
+    { n: "Putteridraivi", d: "Seuraava avaus tai pitkä heitto on pakko suorittaa putterilla." },
+    { n: "Väärä käsi", d: "Seuraava heitto on heitettävä täysin väärällä/heikommalla kädellä." },
+    { n: "Kiekon Pakkovalinta", d: "Valitse kohteen bägistä 3 kiekkoa, joista hänen on pakko valita heittokiekko." },
+    { n: "Lainakiekko", d: "Anna kohteelle oma kiekkosi. Hänen on pakko heittää seuraava heittonsa sillä." },
     { n: "Laser-linja", d: "Kiekon on pysyttävä koko lennon ajan alle 2 metrin korkeudella maasta." },
-    { n: "Korkea Hysse", d: "Heitä seuraava heitto jyrkkänä ja korkeana hyzerinä." },
+    { n: "Korkea Hysse", d: "Heitä seuraava heitto jyrkkänä ja poikkeuksellisen korkeana hyzerinä." },
     { n: "Antsapoliisi", d: "Kiekon on lähdettävä kädestä selkeässä ja jyrkässä anhyzer-kulmassa." },
     { n: "Scooberi", d: "Suorita lähestymisheitto ylösalaisella scuuberi-tyylillä." },
-    { n: "Turbo-Putt", d: "Seuraava putti on suoritettava sormilla kiekon alta työntäen (Turbo)." },
-    { n: "Grenade", d: "Kiekko on pidettävä kädessä ylösalaisin peukalo urassa ja heitettävä rystyllä." },
-    { n: "Vain yksi kiekko", d: "Pelaa tämä väylä alusta loppuun vain yhdellä kiekolla." }
+    { n: "Turbo-Putt", d: "Seuraava heitto tai putti on suoritettava sormilla kiekon alta työntäen (Turbo)." },
+    { n: "Grenade", d: "Kiekko on pidettävä kädessä ylösalaisin peukalo urassa ja heitettävä rystyllä pystysuoraan ylös." },
+    { n: "Vain yksi kiekko", d: "Kohde joutuu pelaamaan tämän väylän loppuun pelkästään yhdellä valitsemallasi kiekolla." },
+    { n: "Sokkoavaus", d: "Avausheitto tiiltä silmät sidottuina (tai tiukasti kiinni). Turvamies ohjeistaa suunnan!" },
+    { n: "Kämmen-Roller", d: "Heitto on suoritettava fore-rollerina." },
+    { n: "Midari-Putti", d: "Kaikki putit tällä väylällä on pakko suorittaa midrange-kiekolla." },
+    { n: "Ei draivereita", d: "Kohde ei saa käyttää väylällä nopeampia kiekkoja kuin nopeusluokka 5." },
+    { n: "Rangaistus+1", d: "Kohde saa automaattisesti yhden (1) rangaistusheiton lisäyksen tulokseensa tälle väylälle." },
+    { n: "Draiveriputti", d: "Seuraava putti on suoritettava nopeimmalla pituusdraiverilla mitä bägistä löytyy." },
+    { n: "Istualtaan", d: "Seuraava heitto on pakko heittää maassa istuen (pylly maassa)." },
+    { n: "Peilikuva", d: "Kohteen on matkittava edellisen pelaajan heittotyyliä (kämmen/rysty) tismalleen." },
+    { n: "Pakkolayup", d: "Kohde ei saa yrittää koriauraa seuraavalla heitollaan, vaan kiekon on tultava alas väh. 5m päähän korista." },
+    { n: "Mini-kiekko", d: "Jos kohteella on markkeri, hänen on suoritettava seuraava heitto sillä." },
+    { n: "Pizza-grippi", d: "Kiekosta pidetään kiinni molemmin käsin kiinni reunoista (kuin pitsalaatikosta) ja heitetään alakautta." },
+    { n: "Spontaani", d: "Kohteen on heitettävä 3 sekunnin kuluessa siitä, kun vuoro siirtyy hänelle." },
+    { n: "Pakkohysse", d: "Jos kiekko kääntää yli (turn), heitto katsotaan epäonnistuneeksi (+1 rangaistus)." },
+    { n: "Polvistumisputti", d: "Kaikki putit tällä väylällä heitetään molemmat polvet maassa." },
+    { n: "Maksimiteho", d: "Seuraava heitto on heitettävä aivan 100% täysillä, vaikka kori olisi 20m päässä." },
+    { n: "Täyskäsi", d: "Kohde joutuu pitämään toisessa kädessä kolmea kiekkoa heittonsa ajan." },
+    { n: "Suora selkä", d: "Selkä on pidettävä täysin suorana koko heiton ajan. Ei saa nojata eteen tai taakse." },
+    { n: "Hyssekulmassa putti", d: "Putti on heitettävä voimakkaassa hyzer-kulmassa koria kohti." },
+    { n: "Kiekkotorni", d: "Aseta kiekon päälle toinen kiekko. Heitä alimmaista niin että ylin vain putoaa maahan." },
+    { n: "Silmät kiinni putti", d: "Kaikki alle 10 metrin putit on vedettävä silmät visusti kiinni." },
+    { n: "Lepokäsi taskuun", d: "Vapaa käsi on pidettävä tiukasti housuntaskussa koko heiton ajan." },
+    { n: "Kenkä pois", d: "Kohteen on otettava heittokäden puoleinen kenkä pois jalasta heiton ajaksi." },
+    { n: "Bägi eteen", d: "Aseta kohteen bägi tasan 1.5 metrin päähän eteen. Heiton on mentävä sen yli tai ohi osumatta." },
+    { n: "Vaakamando", d: "Heiton on pakko lentää jonkin puun oksan ali. Jos oksaa ei ole, alin mahdollinen linja." },
+    { n: "Pitkä odotus", d: "Kun asento on valmis, kohteen on odotettava täysin liikkumatta 10 sekuntia ennen vetoa." },
+    { n: "Painava kiekko", d: "Kohteen on valittava bägistään painavin kiekkonsa seuraavaan heittoon." },
+    { n: "Kevyt kiekko", d: "Kohteen on valittava bägistään kevyin tai alivakain kiekkonsa ja heitettävä sillä." },
+    { n: "Ei saksia", d: "Ristiaskeleet (x-step) ovat kiellettyjä." },
+    { n: "Vastakierre", d: "Kiekon on lähdettävä kädestä siten, että se pyörii ns. väärään suuntaan (esim. rysty ilman rannetta)." },
+    { n: "Käännöspakko", d: "Heiton on pakko kaartaa alkuperäisestä heittosuunnasta selkeästi sivuun (turn/fade)." },
+    { n: "Aliheitto", d: "Heitto on suoritettava ns. roikkuvana alakauttaheilautuksena." },
+    { n: "Pitkä saatto", d: "Heittokäden on osoitettava koria kohti vähintään 3 sekuntia kiekon irtoamisen jälkeen." },
+    { n: "Pakkopudotus", d: "Jos väylällä on OB, pelaajan on pakko tähdätä vaarallisesti sen lähettyville." },
+    { n: "Rysty-Roller", d: "Heiton on pakko olla rysty-roller." },
+    { n: "Silmät sidottu putti", d: "Paita käärittynä silmien eteen suoritettu putti." }
 ];
-
-for(let i = 1; i <= 60; i++) {
-    const base = majorBases[(i - 1) % majorBases.length];
-    window.allCards.push({ id: "major_" + i, n: base.n, d: base.d, tier: "major_sabotage", type: "sabotage" });
-}
+majorBases.forEach((base, i) => window.allCards.push({ id: "major_" + i, n: base.n, d: base.d, tier: "normal", type: "sabotage" }));
 
 // ==========================================
 // TASO 1: PERUS HELPOTUKSET (Buffit)
 // ==========================================
 const buffBases = [
     { n: "Mulligan", d: "Voit uusia oman epäonnistuneen heittosi." },
+    { n: "Mulligan (Putti)", d: "Voit uusia epäonnistuneen putin (alle 10m)." },
+    { n: "Mulligan (Avaus)", d: "Voit uusia epäonnistuneen avausheiton tiiltä." },
+    { n: "Siirto +1m", d: "Voit siirtää kiekkoasi metrin mihin tahansa suuntaan (myös lähemmäs koria)." },
     { n: "Siirto +3m", d: "Voit siirtää kiekkoasi 3 metriä mihin tahansa suuntaan (ei lähemmäs koria)." },
+    { n: "Siirto +5m", d: "Voit siirtää kiekkoasi 5 metriä mihin tahansa suuntaan (ei lähemmäs koria)." },
     { n: "Kumous", d: "Peruuta sinuun juuri kohdistettu 1-tason (pieni) sabotaasi." },
+    { n: "Vahva Kumous", d: "Peruuta sinuun kohdistettu 2-tason (iso) sabotaasi." },
+    { n: "Peilaus", d: "Jos joku pelaa sinuun sabotaasin, voit kääntää sen välittömästi takaisin häneen itseensä." },
     { n: "Puskasta pois", d: "Saat siirtää kiekkosi vapaasti pelattavalle väylälle samalle etäisyydelle korista." },
     { n: "Varaslähtö", d: "Saat heittää 2 avausheittoa tiiltä ja jatkaa niistä vapaasti paremmalla." },
-    { n: "Mando-ohitus", d: "Jos väylällä on mando, saat jättää sen huomioimatta ilman rangaistusta." }
+    { n: "Mando-ohitus", d: "Jos väylällä on mando, saat jättää sen huomioimatta ilman rangaistusta." },
+    { n: "OB-pelastus", d: "Jos heitit Out of Bounds (OB), saat jatkaa heittopaikalta ilman rangaistusheittoa." },
+    { n: "Oksan poisto", d: "Kuvitteellinen oksasaha: Saat jättää huomioimatta yhden edessä olevan oksan tai pensaan (siirrä kiekkoa hieman sivuun)." },
+    { n: "Turvamies", d: "Suojaa sinut kaikilta sabotaaseilta koko tämän väylän ajan. Pelattava ennen avausheittoa." },
+    { n: "Lähinnä koria", d: "Jos olet lähimpänä koria avauksen jälkeen, saat +1 pelirahaa kassaan." },
+    { n: "Kauimpana korista", d: "Jos olet kauimpana korista avauksen jälkeen, saat yhden ilmaisen mulliganin tälle väylälle." },
+    { n: "Kiekon etsintä", d: "Jos jonkun kiekko hukkuu, sinun ei tarvitse osallistua sen etsimiseen." },
+    { n: "Helppo Putti", d: "Voit siirtää kiekkosi C1 (10m) rajalta suoraan 3 metrin päähän korista (+1 heitto lisätään tulokseen silti)." },
+    { n: "Tuulen tyven", d: "Kuvitteellinen myötätuuli: Saat vähentää 1 heiton lopputuloksestasi tällä väylällä, jos onnistut saamaan Par-tuloksen tai paremman." },
+    { n: "Yhden säännön kumo", d: "Jos väylällä on väyläsääntö (esim. 'Kaikki heittävät putterilla'), sinun ei tarvitse noudattaa sitä." },
+    { n: "Varakiekko", d: "Jos heität kiekkosi veteen tai katoaa, et saa rangaistusheittoa." },
+    { n: "Täydellinen asento", d: "Saat ottaa makuuasennon (tai minkä tahansa) ilman jalkavirhettä markkerin takaa." },
+    { n: "Tuplapisteet", d: "Jos voitat väylätehtävän (bounty), saat siitä tuplamäärän rahaa." },
+    { n: "Kassakone", d: "Pelaa tämä kortti: Saat välittömästi +2 P pelirahaa." },
+    { n: "Korttivarkaus", d: "Vedä satunnainen kortti valitsemasi vastustajan kädestä omaan käteesi." },
+    { n: "Pankkiiri", d: "Saat ottaa pankista yhden 1-tason (pienen) sabotaasin itsellesi ilmaiseksi." },
+    { n: "Tiipaikan vaihto", d: "Saat heittää avauksesi mistä tahansa kohtaa tiipadiltä tai sen sivusta (max 2m säteellä)." },
+    { n: "Uusi nosto", d: "Hylkää kaikki kädessäsi olevat kortit ja nosta pakasta 3 uutta." },
+    { n: "Taikamarkkeri", d: "Saat asettaa markkerisi kiekon ETEEN (15cm lähemmäs koria)." },
+    { n: "Kilpi", d: "Aktivoituu heti kun se pelataan. Seuraava sinuun kohdistuva sabotaasi mitätöityy automaattisesti." },
+    { n: "Pitkä heitto", d: "Jos heität yli 100m, saat nostaa palkinnoksi uuden kortin." },
+    { n: "Kiekon lainaus", d: "Voit ottaa yhden vastustajan kiekon omaan käyttöösi tälle väylälle." },
+    { n: "Ketjuralli", d: "Jos putti osuu ketjuihin mutta sylkee ulos, se lasketaan menneeksi." },
+    { n: "Paluukortti", d: "Hae poistopakasta/käytetyistä yksi haluamasi normaali-tason kortti takaisin käteesi." },
+    { n: "Caddien tuki", d: "Määrää yksi pelaaja toimimaan sinun 'caddienä'. Hänen on kannettava bägiäsi seuraavalle väylälle." },
+    { n: "Riskitön", d: "Jos heität seuraavan heittosi vesiesteeseen tai saavuttamattomiin, saat heittää sen rangaistuksetta uudelleen tiiltä/edellisestä paikasta." },
+    { n: "Kymppimetrinen", d: "Saat mitata 10m ringin askelilla sen sijaan, että joku muu arvioisi sen." },
+    { n: "Ei sääntöjä", d: "Voit astua markkerin yli heti irrotuksen jälkeen, vaikka olisit alle 10m sisällä." },
+    { n: "Parantaja", d: "Poista valitsemaltasi pelaajalta yksi rangaistusheitto tuloskortista (voi käyttää myös itseensä)." },
+    { n: "Valinnanvapaus", d: "Määrää toinen pelaaja ottamaan vastaan hänelle pelattu sabotaasi, ja tee itse se mikä hänelle oli määrätty (vaihdatte sabotaaseja)." },
+    { n: "Puttiapu", d: "Saat heittää 2 kiekkoa putissa, ja valita kumpaa käytät tuloksena." },
+    { n: "Ilmainen myynti", d: "Saat välittömästi +3 P, mutta sinun on poistettava tämä kortti pelistä." },
+    { n: "Katsomon tuki", d: "Muut pelaajat joutuvat taputtamaan sinulle suorituksen jälkeen, riippumatta siitä miten se meni." },
+    { n: "Korttisade", d: "Jokainen pelaaja joutuu antamaan sinulle yhden kortin (pelaajat valitsevat itse minkä antavat)." },
+    { n: "Askel-etumatka", d: "Saat ottaa yhden normaalin pituisen askeleen lähemmäs koria ennen avausheittoa." },
+    { n: "Suunta on oikea", d: "Jos heitto lähtee täysin väärään suuntaan (yli 45 astetta tavoitteesta), saat uusia sen." },
+    { n: "Ketjuklinikka", d: "Jos osut rautoihin (ala/ylä) mutta ei ketjuihin, saat uusia putin." },
+    { n: "Kiekkotietäjä", d: "Kysy neuvoa keltä tahansa vastustajalta. Hänen on pakko antaa paras mahdollinen vinkkinsä kiekon ja linjan valintaan." },
+    { n: "Helpotettu väylä", d: "Jos väylällä on OB, koko väylä pelataan ilman OB-sääntöjä (kiekko pelataan sieltä minne jää, ei rangaistusta)." }
 ];
-
-for(let i = 1; i <= 40; i++) {
-    const base = buffBases[(i - 1) % buffBases.length];
-    window.allCards.push({ id: "buff_" + i, n: base.n, d: base.d, tier: "buff", type: "buff" });
-}
+buffBases.forEach((base, i) => window.allCards.push({ id: "buff_" + i, n: base.n, d: base.d, tier: "normal", type: "buff" }));
 
 // ==========================================
-// TASO 3: KAUPAN MONSTERIKORTIT (Maksaa paljon rahaa ostaa. Oston jälkeen peluu on ilmaista 0 P!)
+// TASO 3: KAUPAN MONSTERIKORTIT (Premium)
 // ==========================================
 const monsterBases = [
-    { n: "Varas", d: "Ryöstä 6 P (tai kaikki jos alle) haluamaltasi vastustajalta tilillesi.", type: "sabotage", price: 15 },
+    { n: "Varas", d: "Ryöstä 6 P haluamaltasi vastustajalta tilillesi.", type: "sabotage", price: 15 },
     { n: "Täystuho", d: "Määrää yksi 2-tason iso sabotaasi itse keksimilläsi säännöillä kohteelle.", type: "sabotage", price: 20 },
-    { n: "OB-Magneetti", d: "Valitse kohde. Jos hän menee OB:lle, hän saa +2 rangaistusheittoa normaalin +1 sijaan.", type: "sabotage", price: 18 },
-    { n: "Pisteiden Tuplaus", d: "Jos voitat tämän väylän yksin, saat tuplamäärän (x2) pelirahaa.", type: "buff", price: 12 },
+    { n: "OB-Magneetti", d: "Valitse kohde. Jos hän menee OB:lle tällä väylällä, hän saa +2 rangaistusheittoa normaalin +1 sijaan.", type: "sabotage", price: 18 },
+    { n: "Pisteiden Tuplaus", d: "Jos voitat tämän väylän yksin, saat tuplamäärän rahaa.", type: "buff", price: 12 },
     { n: "Kiekkolukko", d: "Kiellä kohdetta käyttämästä hänen luottodraiveriaan koko kierroksen loppuun asti.", type: "sabotage", price: 25 },
     { n: "Laser-Tähtäin", d: "Voit siirtää mitä tahansa alle 20m puttiasi 5 metriä lähemmäs koria.", type: "buff", price: 15 },
     { n: "Vaihtokauppa", d: "Vaihda huono avausheittosi paikkaa kohteen hyvän avauksen kanssa.", type: "sabotage", price: 25 },
     { n: "Jumal-Kumous", d: "Pelaa tämä peruuttaaksesi MIKÄ TAHANSA sabotaasi (myös monsteri).", type: "buff", price: 18 },
-    { n: "Par-Varmistus", d: "Heitä normaalisti. Jos saat tulokseksi enemmän kuin PAR, tuloksesi korjataan tasan PAR:iksi.", type: "buff", price: 22 }
+    { n: "Par-Varmistus", d: "Heitä normaalisti. Jos saat tulokseksi enemmän kuin PAR, tuloksesi korjataan tasan PAR:iksi.", type: "buff", price: 22 },
+    { n: "Kierroksen Jäädytys", d: "Kohde ei saa pelata yhtäkään buffia tai sabotaasia seuraavien 3 väylän aikana.", type: "sabotage", price: 20 },
+    { n: "Ukkosmyrsky", d: "KAIKKI vastustajat heittävät avauksensa väärällä kädellä.", type: "sabotage", price: 30 },
+    { n: "Haamukiekko", d: "Koko loppukierroksen ajan, kerran väylässä saat peruuttaa yhden heittosi ilmaiseksi.", type: "buff", price: 35 },
+    { n: "Verotus", d: "Ota 2 P jokaiselta vastustajalta.", type: "sabotage", price: 18 },
+    { n: "Magneettikori", d: "Seuraava putti alle 15m lasketaan aina sisään menneeksi, osuipahan se tai ei.", type: "buff", price: 20 },
+    { n: "Amnesia", d: "Kohde menettää koko käden sisältönsä (Kaikki kortit poistetaan).", type: "sabotage", price: 28 }
 ];
-
-monsterBases.forEach((base, i) => {
-    window.allCards.push({ id: "monster_" + i, n: `👹 ${base.n}`, d: base.d, tier: "monster", type: base.type, price: base.price }); 
-});
+monsterBases.forEach((base, i) => window.allCards.push({ id: "monster_" + i, n: `${base.n}`, d: base.d, tier: "premium", type: base.type, price: base.price }));
 
 // ==========================================
-// VÄYLÄSÄÄNNÖT
+// VÄYLÄSÄÄNNÖT (Koko porukan tehtävät & säännöt)
 // ==========================================
 window.holeRules = [
     { type: "bounty", n: "CTP-Kisa", d: "Tiiltä lähimmäksi korijalkaa osunut avaus voittaa väylätehtävän." },
     { type: "bounty", n: "Pitkä Putti", d: "Väylän pisimmän onnistuneen putin tekijä voittaa väylätehtävän." },
-    { type: "rule", n: "Putteri-Ruletti", d: "Koko väylä pelataan pelkillä puttereilla. Draiverit on täysin kielletty kaikilta." },
+    { type: "rule", n: "Putteri-Ruletti", d: "Koko väylä pelataan pelkillä puttereilla. Muut kiekot kielletty." },
     { type: "bounty", n: "Pelastaja", d: "Ensimmäinen pelaaja, joka menee ryteikköön tai OB:lle, mutta pelastaa silti Par-tuloksen, voittaa tehtävän." },
     { type: "rule", n: "Seisova Avaus", d: "Kukaan ei saa ottaa yhtään vauhtiaskelta avausheitossaan tiiltä." },
-    { type: "rule", n: "Kämmenväylä", d: "Kaikki yli 10 metrin lähestymiset ja avaukset on pakko heittää kämmeneltä (forehand)." }
+    { type: "rule", n: "Kämmenväylä", d: "Kaikki yli 10 metrin lähestymiset ja avaukset on pakko heittää kämmeneltä (forehand)." },
+    { type: "rule", n: "Hiljaisuus", d: "Koko väylä pelataan täydessä hiljaisuudessa. Jokaisesta sanasta +1 rangaistusheitto." },
+    { type: "rule", n: "Speed Golf", d: "Tätä väylää ei mietitä. Jokaisella on 5 sekuntia aikaa heittää omalla vuorollaan." },
+    { type: "bounty", n: "Puu-Kuningas", d: "Se pelaaja, joka osuu eniten puihin tällä väylällä mutta EI saa eniten heittoja, voittaa tehtävän." },
+    { type: "rule", n: "Upsi-Avaus", d: "Kaikkien pelaajien on pakko avata tiiltä pystyheitolla (Upsi tai Thumber)." },
+    { type: "bounty", n: "Ensimmäinen rauta", d: "Ensimmäinen pelaaja joka puttaa alarautaan tai ylärautaan (ei sisään), voittaa tehtävän." },
+    { type: "rule", n: "Rystyn kielto", d: "Rystyheitot ovat täysin kiellettyjä tällä väylällä." },
+    { type: "bounty", n: "Parkkeeraus", d: "Se pelaaja, jonka lähestymisheitto (tai avaus) jää alle 2 metrin päähän korista, voittaa tehtävän." },
+    { type: "rule", n: "Väärä käsi avaus", d: "Kaikkien on suoritettava avausheitto heikommalla kädellään." },
+    { type: "rule", n: "Kääntöjärjestys", d: "Heittojärjestys on täysin päinvastainen. Huonoiten edellisellä väylällä pelannut avaa ensin." },
+    { type: "bounty", n: "Ei sirkkeliä", d: "Pelaaja, joka selviää koko väylän osumatta kertaakaan puuhun, voittaa tehtävän." },
+    { type: "rule", n: "Bägi selässä", d: "Kaikki pelaavat koko väylän bägi tai reppu tiukasti selässä." },
+    { type: "rule", n: "Yhden kiekon taktiikka", d: "Jokaisen on valittava vain YKSI kiekko, jolla pelataan väylä alusta loppuun." },
+    { type: "bounty", n: "Bullseye Putti", d: "Ensimmäinen, joka upottaa putin yli 10 metrin (C1) rajalta, voittaa tehtävän." },
+    { type: "rule", n: "Rolleriavaus", d: "Kaikkien on pakko yrittää roller-avausta tiiltä." },
+    { type: "bounty", n: "Nosto", d: "Se pelaaja, jolla on lyhyin putti ('nosto') jäljellä heittojen jälkeen, voittaa tehtävän." },
+    { type: "rule", n: "Vasen laita", d: "Kaikki avaukset on pyrittävä heittämään väylän vasenta laitaa pitkin (hyzer-reitti)." },
+    { type: "rule", n: "Kehu kaveria", d: "Jokaisen on kehuttava vilpittömästi jotain toista pelaajaa oman heittonsa jälkeen." },
+    { type: "bounty", n: "OB-Sukellus", d: "Ensimmäinen joka heittää kiekkonsa OB:lle (tai pahimpaan metsään), 'voittaa' lohdutustehtävän rahoituksen." },
+    { type: "rule", n: "Ei hyppyputteja", d: "Kaikki hyppy- tai steppiputit on kielletty tällä väylällä, vaikka oltaisiin ringin ulkopuolella." },
+    { type: "rule", n: "Kiekkoswap", d: "Jokainen ojentaa koko bäginsä seuraavalle pelaajalle oikealle tällä väylällä." },
+    { type: "bounty", n: "Birdie-jahti", d: "Kaikki ketkä tekevät tällä väylällä Birdien (alle parin), voittavat tehtävän." },
+    { type: "rule", n: "Kyykkyputti", d: "Kaikki C1 (10m) sisällä olevat putit on heitettävä syvästä kyykystä." },
+    { type: "rule", n: "Huutokisat", d: "Aina kun kiekko irtoaa, heittäjän on pakko huutaa jotain kovaan ääneen." },
+    { type: "bounty", n: "Midarikuningas", d: "Pelaaja, joka pääsee Mid-range -kiekolla lähimmäksi koria avauksellaan, voittaa tehtävän." },
+    { type: "rule", n: "Ajanotto", d: "Koko ryhmän on pelattava tämä väylä alusta loppuun alle 3 minuutissa. Jos ei ehdi, kaikki saavat +1 tulokseen." },
+    { type: "rule", n: "Aina markkeri", d: "Joka ikinen heitto (myös tap-in) on merkattava markkerilla ennen heittoa." },
+    { type: "bounty", n: "Bogey-Vapaa", d: "Kaikki jotka pelaavat väylän ilman Bogeya (yli par), jakavat tehtävän voiton." },
+    { type: "rule", n: "Midari-Only", d: "Väylä on pakko pelata vain ja ainoastaan midareilla." },
+    { type: "rule", n: "Silmät kiinni putti", d: "Kaikki alle 5 metrin putit on vedettävä silmät visusti kiinni." },
+    { type: "bounty", n: "Nopein heittäjä", d: "Se pelaaja, joka pelaa oman vuoronsa poikkeuksetta nopeimmin (ilman viivyttelyä), voittaa tehtävän." },
+    { type: "rule", n: "Pakkohysse", d: "Jokaisen heiton on pakko kaartaa alkuperäiseen kaarresuuntaansa. Jos kääntää yli, huuto: 'Väärä!'." },
+    { type: "bounty", n: "Kiekon etsijä", d: "Se, joka ensimmäisenä löytää toisen pelaajan kadonneen kiekon, voittaa tehtävän." },
+    { type: "rule", n: "Haaraseisonta", d: "Kaikki avausheitot on heitettävä paikaltaan haaraseisonnasta." },
+    { type: "rule", n: "Tuplaputit", d: "Jos missaat ensimmäisen putin (alle 10m), joudut hakemaan kiekon ja yrittämään samasta paikasta kunnes menee. Jokainen yritys maksaa +1 heiton." },
+    { type: "bounty", n: "Sweet Spot", d: "Kuka pääsee avauksella parhaaseen 'sweet spottiin' (pelattavimpaan paikkaan), voittaa tehtävän." },
+    { type: "rule", n: "Golf-taputukset", d: "Muiden pelaajien on annettava hienostuneet ja hiljaiset sormenpää-taputukset jokaisen hyvän heiton jälkeen." },
+    { type: "rule", n: "Väärä liikerata", d: "Kaikki vauhdinotto tapahtuu peruuttaen tiille päin." },
+    { type: "bounty", n: "Kierrekone", d: "Kenellä kiekko skippaa/pomppaa pisimmälle maahanosumisen jälkeen, voittaa tehtävän." },
+    { type: "rule", n: "Vain sivuittain", d: "Vauhtiaskeleet saa ottaa vain suoraan sivuttain (ristiaskel ilman eteenpäinmenoa)." },
+    { type: "rule", n: "Ketjuviha", d: "Kiekko on pakko upottaa suoraan koriaan pehmeästi. Jos heität niin kovaa, että rämähtää ikävästi, +1 rangaistus." },
+    { type: "bounty", n: "Korijalan halaaja", d: "Kenen kiekko nojaa lähimpänä tolppaan, voittaa tehtävän." },
+    { type: "rule", n: "Fore-putti", d: "Kaikki putit on suoritettava forella (kämmenheitto)." },
+    { type: "bounty", n: "Riskinottaja", d: "Se, joka yrittää rohkeinta ja vaikeinta linjaa (onnistui tai ei), voittaa tehtävän (ryhmä äänestää)." },
+    { type: "rule", n: "Normaali Väylä", d: "Tällä väylällä ei ole erikoissääntöjä. Pelkkää puhdasta frisbeegolfia." }
 ];
