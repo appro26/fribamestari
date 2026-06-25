@@ -1,3 +1,4 @@
+
 :root {
     --primary: #10b981;
     --primary-dark: #059669;
@@ -37,13 +38,13 @@ body {
     touch-action: pan-x pan-y; 
 }
 
-/* TAULU ILMAN GPU-BUGIA. Kokojohdettu täysin JS:stä! */
+/* GPU YSTÄVÄLLINEN TAULU (Ei 3D-bugeja) */
 #corkboard-surface {
     display: grid;
     gap: 30px; 
     padding: 100px;
     box-sizing: border-box;
-    transform-origin: top left;
+    transform-origin: 0 0;
     pointer-events: auto; 
 
     background-color: #cbd5e1;
@@ -60,6 +61,7 @@ body {
 }
 
 .hole-cell { width: 380px; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; z-index: 10; }
+/* Varmistetaan, että kortit pysyvät piirrosten päällä! */
 .index-card, .post-it-note, .pinned-card-container, .score-spiral-note { z-index: 5; position: relative; }
 
 .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 10; }
@@ -79,10 +81,10 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .cards-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 10px; box-sizing: border-box; overflow: visible; width: 100%;}
 
 /* ========================================= */
-/* KUITTIKONE (LEVEÄMPI JA SUORA)            */
+/* KUITTIKONE (SUORA JA LEVEÄ)               */
 /* ========================================= */
 #receipt-printer-container { 
-    width: 32%; max-width: 155px; cursor: pointer; pointer-events: auto; position: relative;
+    width: 34%; max-width: 160px; cursor: pointer; pointer-events: auto; position: relative;
     margin-right: auto; margin-left: 5px;
     display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
     transform: rotate(5deg) translateY(5px); transform-origin: bottom left;
@@ -119,7 +121,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     background-image: radial-gradient(circle at 2px 4px, transparent 2px, #f4f4f5 3px);
     background-size: 4px 4px; background-repeat: repeat-x;
 }
-.r-title { font-weight: 900; text-align: center; border-bottom: 1px dashed #111; padding-bottom: 5px; margin-bottom: 5px; font-size:0.8rem; }
+.r-title { font-weight: 900; text-align: center; border-bottom: 1px dashed #111; padding-bottom: 5px; margin-bottom: 5px; font-size:0.8rem; letter-spacing: 1px;}
 .r-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight:bold; white-space:nowrap; gap:5px;}
 .r-row span { overflow:hidden; text-overflow:ellipsis; }
 .r-tot-sec { font-weight: 900; font-size: 0.9rem; margin-top: auto; background:#fff;}
@@ -141,7 +143,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .receipt-circle.even { color: #111; }
 
 /* ========================================= */
-/* KIROILEVAT ELÄIMET (DOODLES) - AINA ALLA   */
+/* KIROILEVAT ELÄIMET (AINA POHJIMMAISENA!)  */
 /* ========================================= */
 .doodle-drawing { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; opacity: 0; transform: rotate(var(--rot)) scale(0.9); z-index: -1; }
 .doodle-drawing.drawn { opacity: 0.8; transform: rotate(var(--rot)) scale(1); transition: opacity 2s, transform 2s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -151,7 +153,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 @keyframes trace { to { stroke-dashoffset: 0; } }
 
 /* ========================================= */
-/* AITOA KOKOA OLEVAT ELEMENTIT TAULULLA     */
+/* 2D-ELEMENTIT TAULULLA (EI 3D-KIIHDYTYSTÄ) */
 /* ========================================= */
 .hole-cell .index-card { width: 220px; padding: 10px 15px; margin-bottom: 15px; margin-left: 0; align-self: flex-start; }
 .index-card .banner-title { font-size: 1.8rem; margin-bottom: 2px; }
@@ -173,7 +175,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     background: var(--paper-bg); padding: 24px; margin-bottom: 25px; position: relative;
     width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;
     box-shadow: 5px 15px 30px rgba(0,0,0,0.4), inset 0px 0px 20px rgba(255,255,255,0.7); 
-    transform: perspective(800px) rotateX(2deg) translateZ(5px); 
     clip-path: polygon(0% 2%, 5% 0%, 10% 3%, 15% 0%, 20% 2%, 25% 0%, 30% 3%, 35% 0%, 40% 2%, 45% 0%, 50% 3%, 55% 0%, 60% 2%, 65% 0%, 70% 3%, 75% 0%, 80% 2%, 85% 0%, 90% 3%, 95% 0%, 100% 2%, 100% 98%, 95% 100%, 90% 97%, 85% 100%, 80% 98%, 75% 100%, 70% 97%, 65% 100%, 60% 98%, 55% 100%, 50% 97%, 45% 100%, 40% 98%, 35% 100%, 30% 97%, 25% 100%, 20% 98%, 15% 100%, 10% 97%, 5% 100%, 0% 98%);
 }
 .tape { position: absolute; width: 50px; height: 18px; background: rgba(255,255,255,0.7); box-shadow: 0 2px 5px rgba(0,0,0,0.3); z-index: 5; }
@@ -358,10 +359,23 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .pocket-lip:active { background: #334155; }
 
 /* ========================================= */
+/* SKROLLATTAVAT MODAALIT (ASETUKSET YMS)    */
+/* ========================================= */
+.scrollable-modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.95); display: none; z-index: 10000; 
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.scrollable-modal-content {
+    padding: 40px 15px 100px 15px;
+    min-height: 100%; display: flex; flex-direction: column;
+}
+
+/* ========================================= */
 /* KANSIO-UI (FLEX)                          */
 /* ========================================= */
 .shop-binder-modal {
-    position: absolute; top: 5%; left: 0; right: 0; bottom: 5%; width: 95%; max-width: 500px; margin: 0 auto;
+    position: relative; width: 95%; max-width: 500px; margin: 5% auto;
     border-radius: 5px 15px 15px 5px; display: flex; flex-direction: column; overflow: hidden; 
     border-left: none; box-sizing: border-box; padding-top: 15px;
     transition: background 0.4s, border 0.4s, box-shadow 0.4s;
@@ -389,7 +403,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .binder-modal-anim { animation: openBinder 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
 
 /* ========================================= */
-/* NATIIVI 3D KORTTIVIUHKA (SAUMATON, LEVEÄ) */
+/* NATIIVI 3D KORTTIVIUHKA (Z-KORJATTU)      */
 /* ========================================= */
 .native-carousel-container { 
     display: flex; overflow-x: auto; scroll-snap-type: x mandatory; 
@@ -399,7 +413,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 }
 .native-carousel-container::-webkit-scrollbar { display: none; }
 
-/* Ei preserve-3d:tä täällä, jotta sivukortit eivät riko z-indexiä */
 .carousel-card-wrapper { flex: 0 0 320px; scroll-snap-align: center; position: relative; height: 460px; cursor: pointer; perspective: 1200px; }
 
 .card-3d-inner { 
