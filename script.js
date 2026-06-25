@@ -34,96 +34,55 @@ const pseudoRandom = (seed) => { let x = Math.sin(seed) * 10000; return x - Math
 
 // 80 äärimmäisen tylyä solvausta
 const insults = [
-    "Mikä tässä lajissa muka on kivaa? Pelkkää puunhakkuuta.",
-    "Taas OB:lle. Ootko harkinnu vaikka sauvakävelyä?",
-    "Lajin helppous viehättää, vai mitä?",
-    "Ostin 30 euron kiekon, että voin heittää sen metsään.",
-    "Frisbeegolf on kivaa, sanoivat. Rentouttavaa, sanoivat.",
-    "Pariin? Älä naurata. Heitot osuu omiin jalkoihin.",
-    "Ootko varma ettei sun laji ois virkkaus?",
-    "Puut tykkää susta, harmi ettei kori.",
-    "Toi heitto oli niin huono, että kiekko häpesi.",
-    "Lopeta jo, tää on noloa meille kaikille.",
-    "Edes myötätuuli ei pelasta tota räpellystä.",
-    "Jos heittäisit silmät kiinni, menisi varmaan paremmin.",
-    "Sun putti on yhtä epävarma kuin Suomen kesä.",
-    "Caddiekin lähti kotiin häpeästä.",
-    "Osuithan sä johonkin... nimittäin omaan egoosi.",
-    "Miten voi heittää taaksepäin ohi korista?",
-    "Pelaatko sä tahallasi näin huonosti?",
-    "Toi oli hieno heitto... siis jos maali ois toi koivu.",
-    "Sulla on enemmän puuosumia kuin metsurilla.",
-    "Eikö tän pitänyt olla rento sunnuntailaji?",
-    "Se tunne kun rolleri pysähtyy ekaan käpyyn.",
-    "Älä syytä tuulta, syytä peiliä.",
-    "Uusi kiekko ei korjaa tuota tekniikkaa.",
-    "Bägi maksoi 200€, taidot 0€.",
-    "Haluatko GPS-paikantimen tuolle avaukselle?",
-    "Miten voi kolmesta metristä laittaa alarautaan?",
-    "Tällä vauhdilla ollaan perillä ensi jouluna.",
-    "Fore, rysty, upsi... mikään ei toimi.",
-    "Puiden halailu on erikseen, tää on frisbeegolfia.",
-    "Sun draivi on lyhyempi kuin mun putti.",
-    "Hieno hyzer-flippi! Ai se oli vahinko? Niinpä tietysti.",
-    "Jos laji turhauttaa, voithan aina alkaa kerätä postimerkkejä.",
-    "Kato! Se lensi melkein kymmenen metriä!",
-    "Taidat olla radan paras puiden karsija.",
-    "Etsiikö sun kiekko sieniä tuolta ryteiköstä?",
-    "Älä turhaan kato tuloskorttia, se masentaa vaan lisää.",
-    "Onneksi tyylipisteitä ei lasketa.",
-    "Sulla on lajin kalleimmat varusteet ja halvimmat heitot.",
-    "Olisiko aika siirtyä e-urheiluun?",
-    "Kiva nähdä, että joku muukin heittää ihan päin honkia.",
-    "Ei se kori sieltä metsästä löydy.",
-    "Pääsitkö edes tiiltä pois tällä kertaa?",
-    "Tuo heitto rikkoi fysiikan lakeja... huonolla tavalla.",
-    "En tiennytkään, että frisbeegolf on piiloleikkiä kiekon kanssa.",
-    "Puttaaminen on taitolaji. Sä et todistetusti osaa sitä.",
-    "Harmi ettei tyhmyydestä jaeta miinuspisteitä.",
-    "Tänään on selvästi sun 'palauttava' kierros.",
-    "Älä viitsi itkeä, tää on vaan muovia ja metallia.",
-    "Sulla on draivia, mutta ei suuntaa.",
-    "Hyvä yritys! (Ei oikeasti ollut).",
-    "Joko mennään kotiin? Mulla on nälkä.",
-    "Edes ammattilainen ei selittäisi tuota heittoa parhain päin.",
-    "Näytät ihan siltä, että tietäisit mitä teet. Harmi ettei se näy tuloksessa.",
-    "Kiekko pelkää sua. Siksi se karkaa pusikkoon.",
-    "Kokeileppa heittää ilman tuota irvistystä.",
-    "Hieno lay-up. Myönnä vaan että se lipsahti.",
-    "Sä olet syy miksi kiekoissa pitäisi olla palautusoikeus.",
-    "Voimaa on kuin pienessä pitäjässä, mutta älyä ei nimeksikään.",
-    "Tää ei ole pituusheittoa, vaan tarkkuuslaji.",
-    "Kävitkö sä edes lämmittelemässä?",
-    "Taisi mennä vähän grippilokiksi.",
-    "Kori on tuolla päin! Mihin sä oikein tähtäät?",
-    "Edes taikasauva ei pelastaisi tuota tekniikkaa.",
-    "Ootko sä heittänyt koskaan aiemmin?",
-    "Laita silmät kii, ehkä se auttaa.",
-    "Toivottavasti kukaan ei kuvannut tuota.",
-    "Ei edes tuurilla osuisi noin huonosti.",
-    "Sun rysty on heikompi kuin mun isoäidin.",
-    "Ota vähän rennommin, eihän tää oo vakavaa... paitsi sulle.",
-    "Frisbeegolf - laji missä sä olet todistetusti huono.",
-    "Onko sulla kädessä joku asennusvirhe?",
-    "Edes koira ei hakisi tuota kiekkoa.",
-    "Menikö kiekko taas mustikkaan?",
-    "Sulla on selvästi lahjoja... johonkin aivan muuhun.",
-    "Toi heitto oli suorastaan traaginen.",
-    "Vielä ehtii vaihtaa harrastusta.",
-    "Puut ovat ystäviä, mutta sun ei tarvitse osua jokaiseen.",
-    "Näyttää siltä, että sä yrität liikaa. Ja epäonnistut silti.",
-    "Onneks sulla on edes hienot vaatteet.",
-    "Jos tuloskorttiin vois piirtää itkevän hymiön, tekisin sen nyt."
+    "Mikä tässä lajissa muka on kivaa? Pelkkää puunhakkuuta.", "Taas OB:lle. Ootko harkinnu sauvakävelyä?", 
+    "Lajin helppous viehättää, vai mitä?", "Ostin 30 euron kiekon, että voin heittää sen metsään.",
+    "Frisbeegolf on kivaa, sanoivat. Rentouttavaa, sanoivat.", "Pariin? Älä naurata. Heitot osuu omiin jalkoihin.",
+    "Ootko varma ettei sun laji ois virkkaus?", "Puut tykkää susta, harmi ettei kori.",
+    "Toi heitto oli niin huono, että kiekko häpesi.", "Lopeta jo, tää on noloa meille kaikille.",
+    "Edes myötätuuli ei pelasta tota räpellystä.", "Jos heittäisit silmät kiinni, menisi varmaan paremmin.",
+    "Sun putti on yhtä epävarma kuin Suomen kesä.", "Caddiekin lähti kotiin häpeästä.",
+    "Osuithan sä johonkin... nimittäin omaan egoosi.", "Miten voi heittää taaksepäin ohi korista?",
+    "Pelaatko sä tahallasi näin huonosti?", "Toi oli hieno heitto... siis jos maali ois toi koivu.",
+    "Sulla on enemmän puuosumia kuin metsurilla.", "Eikö tän pitänyt olla rento sunnuntailaji?",
+    "Se tunne kun rolleri pysähtyy ekaan käpyyn.", "Älä syytä tuulta, syytä peiliä.",
+    "Uusi kiekko ei korjaa tuota tekniikkaa.", "Bägi maksoi 200€, taidot 0€.",
+    "Haluatko GPS-paikantimen tuolle avaukselle?", "Miten voi kolmesta metristä laittaa alarautaan?",
+    "Tällä vauhdilla ollaan perillä ensi jouluna.", "Fore, rysty, upsi... mikään ei toimi.",
+    "Puiden halailu on erikseen, tää on frisbeegolfia.", "Sun draivi on lyhyempi kuin mun putti.",
+    "Hieno hyzer-flippi! Ai se oli vahinko?", "Voit aina alkaa kerätä postimerkkejä.",
+    "Kato! Se lensi melkein kymmenen metriä!", "Taidat olla radan paras puiden karsija.",
+    "Etsiikö sun kiekko sieniä tuolta ryteiköstä?", "Tuloskortin katsominen masentaa aina.",
+    "Onneksi tyylipisteitä ei lasketa.", "Lajin kalleimmat varusteet, halvimmat heitot.",
+    "Olisiko aika siirtyä e-urheiluun?", "Kiva nähdä, että joku muukin heittää ihan päin honkia.",
+    "Ei se kori sieltä metsästä löydy.", "Pääsitkö edes tiiltä pois tällä kertaa?",
+    "Tuo heitto rikkoi fysiikan lakeja... huonolla tavalla.", "Frisbeegolf ei ole piiloleikkiä kiekon kanssa.",
+    "Puttaaminen on taitolaji. Sä et todistetusti osaa.", "Harmi ettei tyhmyydestä jaeta miinuspisteitä.",
+    "Tänään on selvästi sun 'palauttava' kierros.", "Älä viitsi itkeä, tää on vaan muovia.",
+    "Sulla on draivia, mutta ei suuntaa.", "Hyvä yritys! (Ei oikeasti ollut).",
+    "Joko mennään kotiin? Mulla on nälkä.", "Edes ammattilainen ei selittäisi tuota.",
+    "Näytät ihan siltä, että tietäisit mitä teet.", "Kiekko pelkää sua. Siksi se karkaa pusikkoon.",
+    "Kokeileppa heittää ilman tuota irvistystä.", "Hieno lay-up. Myönnä vaan että lipsahti.",
+    "Sä olet syy miksi kiekoissa pitäisi olla palautusoikeus.", "Voimaa on, mutta älyä ei nimeksikään.",
+    "Tää ei ole pituusheittoa, vaan tarkkuuslaji.", "Kävitkö sä edes lämmittelemässä?",
+    "Taisi mennä vähän grippilokiksi.", "Kori on tuolla päin! Mihin sä oikein tähtäät?",
+    "Edes taikasauva ei pelastaisi tuota tekniikkaa.", "Ootko sä heittänyt koskaan aiemmin?",
+    "Laita silmät kii, ehkä se auttaa.", "Toivottavasti kukaan ei kuvannut tuota.",
+    "Ei edes tuurilla osuisi noin huonosti.", "Sun rysty on heikompi kuin mun isoäidin.",
+    "Ota rennosti, eihän tää oo vakavaa... paitsi sulle.", "Frisbeegolf - laji missä olet surkea.",
+    "Onko sulla kädessä joku asennusvirhe?", "Edes koira ei hakisi tuota kiekkoa.",
+    "Menikö kiekko taas mustikkaan?", "Sulla on lahjoja... johonkin aivan muuhun.",
+    "Toi heitto oli suorastaan traaginen.", "Vielä ehtii vaihtaa harrastusta.",
+    "Puut ovat ystäviä, älä osu jokaiseen.", "Näyttää siltä, että yrität liikaa. Ja epäonnistut.",
+    "Onneks sulla on edes hienot vaatteet.", "Jos voisin piirtää tuloskorttiin itkevän hymiön..."
 ];
 
-// Tunnistettavat 6 eläinhahmoa (SVG polut)
 const doodleSVGs = [
-    "M 20 70 C 20 90, 80 90, 80 70 C 90 40, 10 40, 20 70 M 20 60 L 10 50 M 35 45 L 30 30 M 65 45 L 70 30 M 80 60 L 90 50 M 40 60 C 45 65, 55 65, 60 60", // Siili
-    "M 40 80 C 20 80, 20 50, 40 50 C 45 40, 60 40, 65 50 C 80 50, 90 80, 70 90 C 80 60, 95 30, 70 20 C 50 10, 50 40, 60 60 M 45 65 C 50 70, 60 70, 65 65", // Orava
-    "M 50 80 L 20 40 L 40 40 L 50 20 L 60 40 L 80 40 Z M 35 50 L 45 60 L 55 50", // Kettu
-    "M 20 50 C 20 10, 80 10, 80 50 C 80 90, 20 90, 20 50 M 20 30 C 10 20, 20 10, 30 20 M 80 30 C 90 20, 80 10, 70 20 M 40 60 C 50 70, 60 70, 60 60", // Karhu
-    "M 40 50 C 20 50, 20 90, 40 90 C 60 90, 60 50, 40 50 M 30 50 C 20 10, 40 10, 40 50 M 50 50 C 40 10, 60 10, 50 50 M 35 70 C 40 75, 45 75, 50 70", // Pupu
-    "M 20 80 C 20 40, 80 40, 80 80 Z M 35 60 C 40 65, 45 65, 50 60 M 30 50 C 35 50, 35 45, 30 45 M 70 50 C 65 50, 65 45, 70 45" // Myyrä
+    "M 20 70 C 20 90, 80 90, 80 70 C 90 40, 10 40, 20 70 M 20 60 L 10 50 M 35 45 L 30 30 M 65 45 L 70 30 M 80 60 L 90 50 M 40 60 C 45 65, 55 65, 60 60", 
+    "M 40 80 C 20 80, 20 50, 40 50 C 45 40, 60 40, 65 50 C 80 50, 90 80, 70 90 C 80 60, 95 30, 70 20 C 50 10, 50 40, 60 60 M 45 65 C 50 70, 60 70, 65 65", 
+    "M 50 80 L 20 40 L 40 40 L 50 20 L 60 40 L 80 40 Z M 35 50 L 45 60 L 55 50", 
+    "M 20 50 C 20 10, 80 10, 80 50 C 80 90, 20 90, 20 50 M 20 30 C 10 20, 20 10, 30 20 M 80 30 C 90 20, 80 10, 70 20 M 40 60 C 50 70, 60 70, 60 60", 
+    "M 40 50 C 20 50, 20 90, 40 90 C 60 90, 60 50, 40 50 M 30 50 C 20 10, 40 10, 40 50 M 50 50 C 40 10, 60 10, 50 50 M 35 70 C 40 75, 45 75, 50 70", 
+    "M 20 80 C 20 40, 80 40, 80 80 Z M 35 60 C 40 65, 45 65, 50 60 M 30 50 C 35 50, 35 45, 30 45 M 70 50 C 65 50, 65 45, 70 45" 
 ];
 
 let deferredPrompt;
@@ -166,7 +125,7 @@ window.dismissInstallPrompt = function() {
 window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
 // ==============================================
-// VAPAA KAMERA LIIKE 60fps & SULAVA ZOOM
+// VAPAA KAMERA
 // ==============================================
 let boardState = { scale: 1, x: 0, y: 0 };
 let isDraggingBoard = false;
@@ -178,7 +137,7 @@ window.applyBoardTransform = function(smooth = false) {
     const board = el('corkboard-surface');
     if(!board) return;
     board.style.transition = smooth ? 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)' : 'none';
-    board.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
+    board.style.transform = `translate(${boardState.x}px, ${boardState.y}px) scale(${boardState.scale})`;
 };
 
 const vp = el('corkboard-viewport');
@@ -245,14 +204,13 @@ window.zoomToHole = function(hIndex) {
     let col = (hIndex - 1) % cols;
     let row = Math.floor((hIndex - 1) / cols);
     
-    // 100px padding + 380px cell + 30px gap
     let cellX = 100 + col * 410; 
     let cellY = 100 + row * 980; 
     
     boardState.scale = 1;
     boardState.x = (window.innerWidth - 380) / 2 - cellX;
     boardState.y = 50 - cellY; 
-    window.applyBoardTransform(true); // Smooth siirtymä päälle
+    window.applyBoardTransform(true);
 };
 
 window.zoomToCurrentHole = function() {
@@ -308,7 +266,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                 let undoBtn = (isActive) ? `<button class="btn btn-danger" style="padding:6px; font-size:0.7rem; margin-top:5px;" onclick="event.stopPropagation(); window.undoCardPlay(${pc.timestamp})">PERU</button>` : ``;
                 
                 html += `
-                <div class="pinned-card-container" style="--rot:${cRot}deg;">
+                <div class="pinned-card-container" style="transform: rotate(${cRot}deg);">
                     <div class="pushpin" style="left: ${pinLeft}%;"></div>
                     <div class="physical-card ${typeClass}">
                         <div class="card-type-tag">${tagTxt}</div>
@@ -363,7 +321,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     });
     html += `</div>`;
     
-    // Satunnaiset eläinhahmot ympäri väylän solua
+    // Satunnaiset eläinhahmot ympäri väylän solua taustalla
     if (isHistory) {
         let insultIndex = Math.floor(pseudoRandom(hIndex * 8.8) * insults.length);
         let svgIndex = Math.floor(pseudoRandom(hIndex * 9.9) * doodleSVGs.length);
@@ -805,7 +763,7 @@ window.initNativeCarousel = function() {
             const transX = diff * -80; const rotZ = diff * 8; const transY = Math.abs(diff) * 20; 
             const scale = Math.max(0.8, 1.15 - Math.abs(diff) * 0.15); 
             
-            card.style.transform = `translate3d(${transX}px, ${transY}px, 0) rotateZ(${rotZ}deg) scale(${scale})`;
+            card.style.transform = `translate(${transX}px, ${transY}px) rotateZ(${rotZ}deg) scale(${scale})`;
             card.style.zIndex = 100 - Math.floor(Math.abs(diff)*10);
             
             if (Math.abs(diff) < minDiff) { minDiff = Math.abs(diff); closestIndex = index; }
@@ -1004,7 +962,6 @@ window.submitScores = function() {
     if(el('scoreModal')) el('scoreModal').style.display = 'none'; 
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
     
-    // Siirrytään smoothisti ilman välähdyksiä
     setTimeout(() => { window.zoomToHole(nextHoleIndex); }, 400); 
 };
 
