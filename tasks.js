@@ -1,6 +1,175 @@
 window.allCards = [];
 
 // ==========================================
+// ELÄINTEN GRAFIIKAT JA 150+ KIROILEVAA SOLVAUSTA
+// ==========================================
+const doodleSVGs = [
+    // 1. Kiroileva Siili (Piikikäs selkä, pieni kuono)
+    "M 30 70 Q 20 70 20 60 Q 30 20 60 20 Q 80 20 80 50 Q 80 70 70 70 Z M 25 50 L 15 40 M 35 35 L 25 20 M 50 25 L 50 10 M 65 30 L 75 15 M 75 45 L 90 40 M 30 60 L 35 60", 
+    // 2. Vihainen Kissa (Terävät korvat, viikset, vihaiset silmät)
+    "M 30 70 L 30 40 L 20 20 L 40 30 L 60 30 L 80 20 L 70 40 L 70 70 Z M 20 50 L 10 45 M 20 55 L 10 55 M 80 50 L 90 45 M 80 55 L 90 55 M 40 45 L 45 45 M 60 45 L 55 45",
+    // 3. Äkäinen Karhu (Pyöreät korvat, leveä pää)
+    "M 25 70 C 10 70 10 30 35 30 C 35 20 45 20 50 30 C 55 20 65 20 65 30 C 90 30 90 70 75 70 Z M 40 45 L 45 45 M 60 45 L 55 45 M 50 55 C 45 60 55 60 50 55",
+    // 4. Vittuuntunut Lintu (Nokka, siivet)
+    "M 50 70 C 20 70 30 40 50 30 C 70 40 80 70 50 70 M 50 30 L 45 20 L 50 25 L 55 20 Z M 20 50 L 30 45 M 80 50 L 70 45 M 40 40 L 45 40 M 60 40 L 55 40 M 50 50 L 45 60 L 55 60 Z",
+    // 5. Kyllästynyt Koira (Luppakorvat, iso kuono)
+    "M 35 70 C 20 70 30 30 50 30 C 70 30 80 70 65 70 Z M 35 30 C 25 30 20 50 25 60 M 65 30 C 75 30 80 50 75 60 M 40 45 L 45 45 M 60 45 L 55 45 M 50 60 C 45 65 55 65 50 60",
+    // 6. Tuhma Porsas (Kärsä, saparohäntä)
+    "M 30 65 C 20 65 20 35 50 35 C 80 35 80 65 70 65 Z M 40 50 C 40 45 60 45 60 50 C 60 55 40 55 40 50 M 45 50 L 47 50 M 55 50 L 53 50 M 80 45 C 85 40 90 50 85 55 M 35 35 L 30 25 L 40 35 M 65 35 L 70 25 L 60 35"
+];
+
+const insults = [
+    "V*ttu mikä heitto, ootko sä koskaan edes pitänyt kiekkoa kädessä?",
+    "P*rkele, mummonikin puttaa paremmin, ja se on ollut kuolleena 10 vuotta.",
+    "S**tanan sirkkeli, puut tykkää susta enemmän ku sun omat vanhemmat.",
+    "Ei h*lvetti, jopa Jeesus itkee ton sun tekniikan takia.",
+    "P*ska veto. Sun draivi on lyhyempi ku mun kärsivällisyys.",
+    "V*tun hieno lay-up! Ai se olikin sun maksimidraivi?",
+    "Mene s**tana takas rangelle, tää on noloa meille kaikille.",
+    "P*rkeleen rystykääntö, kiekko lensi enemmän taakse ku eteen.",
+    "Miten sä v*ttu onnistut missaamaan 2 metristä?",
+    "H*lvetin hieno puuosuma! Tähtäsitkö sä siihen vai ootko vaan p*ska?",
+    "V*tun noloa. Caddiekin lähti äsken kotiin häpeästä.",
+    "S**tanan kalliit kiekot, mut taidot on 0 euroa.",
+    "P*rkele, sun rystyheitto näyttää siltä ku yrittäisit heittää pesukonetta.",
+    "V*tun grippilokki! Ota se käsi irti siitä muovista ajoissa.",
+    "P*ska putti, p*ska mies. Yksinkertaista.",
+    "H*lvetti soikoon, sun kiekko etsii enemmän sieniä ku metsästäjät.",
+    "V*ttu sulaa aivot ku joutuu kattoon tota sun räpellystä.",
+    "S**tana mikä uikku, ootko harkinnu vaikka pitsinnypläystä?",
+    "P*rkeleen amatööri, sun bägi painaa enemmän ku sun ÄO.",
+    "V*tun hieno rolleri! Harmi vaan että se pysähty ekaan käpyyn.",
+    "P*ska heitto! Edes myötätuuli ei halua auttaa sua.",
+    "H*lvetin puunhakkaaja. Montako kuutiota teit polttopuuta tolla draivilla?",
+    "V*ttu sä olet hidas! Heitä nyt s**tana!",
+    "P*rkele, heitä silmät kii ens kerralla, ei se ainakaan huonommin voi mennä.",
+    "V*tun kiva kattoa ku yrität. Et siis onnistu, mut yrität.",
+    "S**tanan vässykkä, ota se putteri ja laita se sisään!",
+    "P*ska formi! Sun x-step näyttää humalaisen ripaskalta.",
+    "H*lvetti, mä voisin heittää vasemmalla kädellä paremmin ku sä.",
+    "V*ttu mikä antsa, se käänsi suoraan naapurin takapihalle.",
+    "P*rkeleen luuseri, älä syytä tuulta, syytä peiliä.",
+    "S**tana, edes ammattilainen ei keksis tekosyytä tolle heitolle.",
+    "V*tun hienot vaatteet, harmi ettei ne korjaa sun tekniikkaa.",
+    "P*ska laji sulle. Oikeesti, lopeta ajoissa.",
+    "H*lvetin tunari, sun kiekko lens melkein 10 metriä!",
+    "V*ttu säästetään kaikkien aikaa ja merkkaa suoraan tuplabogey.",
+    "P*rkeleen noloa. En halua edes seisoa sun lähellä tiillä.",
+    "S**tana sun upsit tulee aina suoraan omaan päähän.",
+    "V*tun turisti, lopeta se ranteella vemputtaminen.",
+    "P*skat taidot. Ostit sitte Paul McBethin kiekon luullen et se auttaa?",
+    "H*lvetti sä oot surkee. Voisitko mennä pelaan pallo-golfia?",
+    "V*ttu sä heität kovaa! Harmi ettei se osu ikinä väylälle.",
+    "P*rkeleen sokea kana, kori on tuolla päin!",
+    "S**tanan räpyläkäsi, ote lipsuu pahemmin ku Suomen talous.",
+    "V*tun väsyny suoritus. Ootko ollu ryyppäämässä vai ootko aina tollanen?",
+    "P*ska heitto! Anna ku mä näytän miten tää laji toimii.",
+    "H*lvetin puolisokea, etkö nää missä se kori oikein on?",
+    "V*ttu sä oot huono! Miten ees fysiikka sallii tommosen heiton?",
+    "P*rkele sun kämmen näyttää siltä ku oisit heittämässä kiveä mereen.",
+    "S**tanan säälittävä yritys. Käy hakeen kiekkos ja häpee.",
+    "V*tun itkijä, lopeta se valittaminen ja opettele heittään.",
+    "P*ska putti! Laita se markkeri perseesees jos et muuta osaa.",
+    "H*lvetti sentään, pitäiskö mun soittaa sulle opaskoira?",
+    "V*ttu mikä hysse! Se meni niin korkeelle et lintu sai sydärin.",
+    "P*rkeleen ränniheittäjä, ootko koskaan osunu ykkösväliin?",
+    "S**tanan alarauta, aina sä kolistelet noita peltejä.",
+    "V*tun hyvä lay-up 2 metristä. Ootko ylpeä?",
+    "P*ska draivi, p*skemmat housut. Mee kotiin.",
+    "H*lvetin surkimus, jopa mä häpeän sun puolesta.",
+    "V*ttu sä et osaa! Lopeta se muovin paiskonta.",
+    "P*rkele onks sulla kädessä joku asennusvirhe?",
+    "S**tanan tyhmä veto. Miks helvetissä valitsit ton linjan?",
+    "V*tun puusilmä, se kiekko löytyy varmaan toiselta mantereelta.",
+    "P*skamainen keli, p*ska heittäjä. Täydellinen kombo.",
+    "H*lvetti sä roiskit tota kiekkoa ku hullu koira.",
+    "V*ttu sä oot naurettava. C1-putit ohi vasemmalta ja oikeelta.",
+    "P*rkeleen sirkuspelle, heitä välillä normaalisti!",
+    "S**tanan metkuttaja, koita edes pysyä pois OB:lta kerran.",
+    "V*tun räkänen heitto, ei edes pyörinyt.",
+    "P*ska peli, mut hei, oothan sä aina ollut tollanen.",
+    "H*lvetin tunari, sun kiekko pelkää sua. Siks se karkaa puskaan.",
+    "V*ttu mua itkettää sun puolesta.",
+    "P*rkele miten sä voit olla noin p*ska joka kerta?",
+    "S**tanan alisuorittaja, sä oot tän lajin häpeäpilkku.",
+    "V*tun kädetön apina, ote irti kiekosta ajoissa!",
+    "P*ska suoritus. Oisit ees jättäny draiverit kotiin.",
+    "H*lvetin hyvä yritys. Ei ollu lähelläkään.",
+    "V*ttu sun saatto on niin lyhyt et näyttää ku saisit sähköiskun.",
+    "P*rkele mee plokkaan marjoja tonne metsään, kun kerran siellä oot.",
+    "S**tanan harrastelija, kato YouTubesta vähän mallia.",
+    "V*tun läpsyttelijä, heitä sitä kiekkoa äläkä silitä sitä.",
+    "P*ska formi! Näyttää ku sorsalla ois ripuli.",
+    "H*lvetti mä en kestä enää kattoo tota.",
+    "V*ttu sun fore näyttää siltä et sulta lähtee käsi irti.",
+    "P*rkele mikä roikku, ootko heittämässä vappupalloa?",
+    "S**tanan narukäsi, eikö irtoa enempää tehoa?",
+    "V*tun noloo. Sä oot syy miks lajia ei arvosteta.",
+    "P*ska linja. Miten sä edes keksit heittää tosta?",
+    "H*lvetin metsäpeikko, taasko sä olet siellä tiheikössä?",
+    "V*ttu oot varmaan ylpeä tosta heitosta, vaikka se meni päin v*ttua.",
+    "P*rkeleen sunnuntaipelaaja, sun peli on yhtä kärsimystä.",
+    "S**tana ootko sä sokea vai vaan äärimmäisen tyhmä?",
+    "V*tun hyvä! Eikun siis s**tanan p*ska.",
+    "P*skaa! Silkkaa p*skaa koko sun kierros.",
+    "H*lvetti sentään, en tiennyt et ihminen voi olla noin koordinaatiokyvytön.",
+    "V*ttu sä oot pehmeä. Anna vähän runtua siihen heittoon!",
+    "P*rkele sun tekniikalla ei pitäis antaa poistua kotoa.",
+    "S**tanan epäonnistuja, laita kiekot myyntiin Toriin heti.",
+    "V*tun hyvä pomppu! Harmi et se pomppas suoraan OB:lle.",
+    "P*ska peli. Jos oisit koira, sut vietäis piikille tosta suorituksesta.",
+    "H*lvetin vässykkä, puttaa se sisään äläkä pelkää!",
+    "V*ttu sääli on sairautta, mut mä oikeesti säälin sua just nyt.",
+    "P*rkele sä olet toivoton tapaus.",
+    "S**tana laita se PDGA-numero piiloon tolla pelillä.",
+    "V*tun lapanen, mihin sä sen oikein heitit?",
+    "P*ska mies, p*skempi fore.",
+    "H*lvetti mikä laiskanlinna, eikö yhtään kiinnosta yrittää?",
+    "V*ttu mun aivot sulaa sun heittojen takia.",
+    "P*rkeleen pullasorsa, lopeta se leipominen ja heitä!",
+    "S**tanan säheltäjä, kiekko ei oo mikään frisbee-lelu rannalla.",
+    "V*tun hieno tuplabogey! Sä oot tän radan kingi.",
+    "P*ska veto! Pitäiskö sun kokeilla jotain helpompaa, niiku nukkumista?",
+    "H*lvetti sä näytät ihan v*tun naurettavalta tiillä.",
+    "V*ttu sä et osaa ees teipata sormia oikein.",
+    "P*rkele mä häpeän olla samassa poolissa sun kanssa.",
+    "S**tanan vinkuja, turpa kii ja heitä paremmin.",
+    "V*tun idiootti, kiekossa on liidosta kyse, ei kaivamisesta.",
+    "P*ska kiekko vai p*ska heittäjä? Mä tiedän vastauksen.",
+    "H*lvetin raivostuttavaa kattoa sun putteja.",
+    "V*ttu sun grip-lock on legendaarinen, päin v*ttua joka kerta.",
+    "P*rkele sun svingi on niiku ruosteinen portti.",
+    "S**tanan pösilö, taasko kiekko meni veteen?",
+    "V*tun itkupilli, eihän se oo ku muovia metsässä.",
+    "P*ska peli, ootko aatellu et frisbeegolf ei vaan oo sua varten?",
+    "H*lvetti mä heittäisin sut perässä sinne järveen.",
+    "V*ttu sä oot sysip*ska. Ei voi muuta sanoa.",
+    "P*rkeleen velttoilija, missä sun asenne on?",
+    "S**tana sun avaukset on lyhyempiä ku mun putit.",
+    "V*tun munapää, älä ota tuurista kunniaa itelles.",
+    "P*skan marjat, et sä tota yrittänyt hakea.",
+    "H*lvetin aivokuollut linjavalinta.",
+    "V*ttu sä teet mut fyysisesti sairaaks tolla formilla.",
+    "P*rkele laita silmät auki kun heität!",
+    "S**tanan sähläri, ei tää oo rakettitiedettä.",
+    "V*tun p*ska. Anna kiekot mulle ja painu v*ttuun täältä.",
+    "P*ska sää, p*ska rata, mut sä oot p*skin kaikista.",
+    "H*lvetti ootko sä liimannu sen kiekon kiinni käteens?",
+    "V*ttu mikä nyssykkä. Edes vauva ei heitä noin hiljaa.",
+    "P*rkeleen surkimus, toi oli säälittävin heitto mitä oon ikinä nähny.",
+    "S**tanan noloa. Älä kerro kellekään et tunnet mut.",
+    "V*tun idiootti, luitko sä tuulen ihan tarkotuksella väärin?",
+    "P*ska peli. Jos tyhmyydestä sais miinuksia, oisit radan ennätysmies.",
+    "H*lvetti sä tuhoat mun elämänhalun tolla pelillä.",
+    "V*ttu ota ittees niskasta kii ja lopeta toi s**tanan sähläys!",
+    "P*rkele sä olet friban musta aukko, imeet kaiken ilon lajista.",
+    "S**tana mun isoäiti on rollaattorissa ja voittais sut yhdellä kädellä.",
+    "V*tun p*ska, sun draivi muistuttaa mua oksennuksesta: molemmat tulee yllättäen ja menee päin h*lvettiä.",
+    "P*ska putti. Ja p*skat on sun housuissakin.",
+    "H*lvetti sun rysty on v*tun surullinen näky."
+];
+
+// ==========================================
 // TASO 1: PIENET SABOTAASIT (Halpoja pelata, pientä kiusaa, Max 2 per väylä)
 // ==========================================
 const minorBases = [
@@ -59,7 +228,7 @@ minorBases.forEach((base, i) => window.allCards.push({ id: "minor_" + i, n: base
 
 // ==========================================
 // TASO 2: ISOT SABOTAASIT (Muuttavat fysiikkaa, Max 1 per väylä)
-// diff 1 = Helppo, diff 2 = Vaikea, diff 3 = Erittäin vaikea
+// diff 1 = Helppo (3 P), diff 2 = Vaikea (5 P), diff 3 = Erittäin vaikea (8 P)
 // ==========================================
 const majorBases = [
     { n: "Kämmenpakko", d: "Heitä seuraava heittosi pakollisella kämmenellä (forehand).", diff: 1 },
@@ -119,6 +288,7 @@ majorBases.forEach((base, i) => {
 
 // ==========================================
 // TASO 1: PERUS HELPOTUKSET (Buffit, Ei pelirajoitusta)
+// mech-tägeillä automatisoidaan piste-efektejä (double_win = x2 voitto, etc)
 // ==========================================
 const buffBases = [
     { n: "Mulligan", d: "Voit uusia oman epäonnistuneen heittosi." },
@@ -144,8 +314,9 @@ const buffBases = [
     { n: "Yhden säännön kumo", d: "Jos väylällä on väyläsääntö, sinun ei tarvitse noudattaa sitä." },
     { n: "Varakiekko", d: "Jos heität kiekkosi veteen tai katoaa, et saa rangaistusheittoa." },
     { n: "Täydellinen asento", d: "Saat ottaa makuuasennon (tai minkä tahansa) ilman jalkavirhettä markkerin takaa." },
-    { n: "Kassakone", d: "Pelaa tämä kortti: Saat välittömästi +2 P pelirahaa pankista." },
-    { n: "Korttituho", d: "Tuhoa yksi satunnainen kortti valitsemasi vastustajan kädestä." },
+    { n: "Tuplavoitto", d: "Jos voitat tämän väylän (yksin tai jaettuna), saat x2 väylävoiton pisteet!", mech: "double_win" },
+    { n: "Tuplatehtävä", d: "Jos voitat väylätehtävän, saat siitä tuplamäärän (x2) rahaa automaattisesti.", mech: "double_task" },
+    { n: "Korttituho", d: "Tuhoa yksi satunnainen kortti valitsemasi vastustajan kädestä (Ei vie varoja)." },
     { n: "Pankkiiri", d: "Saat ottaa pankista yhden satunnaisen 1-tason (pienen) sabotaasin itsellesi ilmaiseksi." },
     { n: "Tiipaikan vaihto", d: "Saat heittää avauksesi mistä tahansa kohtaa tiipadiltä tai sen sivusta (max 2m säteellä)." },
     { n: "Uusi nosto", d: "Hylkää kaikki kädessäsi olevat kortit ja nosta pakasta 3 uutta." },
@@ -162,7 +333,6 @@ const buffBases = [
     { n: "Parantaja", d: "Poista valitsemaltasi pelaajalta yksi rangaistusheitto tuloskortista (voi käyttää myös itseensä)." },
     { n: "Valinnanvapaus", d: "Määrää toinen pelaaja ottamaan vastaan hänelle pelattu sabotaasi, ja tee itse se mikä hänelle oli määrätty (vaihdatte sabotaaseja)." },
     { n: "Puttiapu", d: "Saat heittää 2 kiekkoa putissa, ja valita kumpaa käytät tuloksena." },
-    { n: "Ilmainen myynti", d: "Saat välittömästi +3 P pankista, mutta sinun on poistettava tämä kortti pelistä." },
     { n: "Katsomon tuki", d: "Muiden pelaajien on taputettava sinulle suorituksen jälkeen, riippumatta siitä miten se meni." },
     { n: "Korttisade", d: "Nosta 2 uutta korttia pakasta." },
     { n: "Askel-etumatka", d: "Saat ottaa yhden normaalin pituisen askeleen lähemmäs koria ennen avausheittoa." },
@@ -171,30 +341,32 @@ const buffBases = [
     { n: "Kiekkotietäjä", d: "Kysy neuvoa keltä tahansa vastustajalta. Hänen on pakko antaa paras mahdollinen vinkkinsä kiekon ja linjan valintaan." },
     { n: "Helpotettu väylä", d: "Jos väylällä on OB, koko väylä pelataan ilman OB-sääntöjä (kiekko pelataan sieltä minne jää, ei rangaistusta)." }
 ];
-buffBases.forEach((base, i) => window.allCards.push({ id: "buff_" + i, n: base.n, d: base.d, tier: "normal", type: "buff" }));
+buffBases.forEach((base, i) => window.allCards.push({ id: "buff_" + i, n: base.n, d: base.d, tier: "normal", type: "buff", mech: base.mech || null }));
 
 // ==========================================
 // TASO 3: KAUPAN MONSTERIKORTIT (Premium)
-// Huom: Täältä on poistettu toisten rahojen ryöstäminen, ettei tule lumipalloefektiä.
+// Huom: Rich get richer -ilmiö poistettu. Ei voi varastaa saldoa suoraan. 
+// aoe: true tagilla kortti valitsee automaattisesti kaikki vastustajat
 // ==========================================
 const monsterBases = [
-    { n: "Veromätky", d: "Pakota valitsemasi vastustaja maksamaan 6 P pankille (rahat poistuvat pelistä).", type: "major_sabotage", price: 15 },
+    { n: "Köyhyyskirous", d: "Kohde ei saa ollenkaan passiivista tuloa tältä väylältä.", type: "major_sabotage", price: 12, mech: "deny_passive" },
+    { n: "Veromätky", d: "KAIKKI vastustajat menettävät passiivisen tulonsa tältä väylältä.", type: "major_sabotage", price: 20, aoe: true, mech: "deny_passive" },
+    { n: "Palkkion eväys", d: "Kohde ei saa väylävoiton pisteitä, vaikka hän voittaisi tämän väylän.", type: "major_sabotage", price: 15, mech: "deny_win" },
     { n: "Täystuho", d: "Määrää yksi Iso Sabotaasi (Taso 2) täysin itse keksimilläsi säännöillä kohteelle.", type: "major_sabotage", price: 20 },
     { n: "OB-Magneetti", d: "Valitse kohde. Jos hän menee OB:lle tällä väylällä, hän saa +2 rangaistusheittoa normaalin +1 sijaan.", type: "major_sabotage", price: 18 },
-    { n: "Pankin Tuki", d: "Saat pankista välittömästi +8 P pelirahaa myöhempää käyttöä varten.", type: "buff", price: 12 },
+    { n: "Pankin Tuki", d: "Saat pankista välittömästi uuden rahoituksen (+8 P).", type: "buff", price: 12 }, // HUOM! Tämä on buffi joka antaa 8P ja maksaa 12P, vähän kuin säästöpossu.
     { n: "Kiekkolukko", d: "Kiellä kohdetta käyttämästä hänen luottodraiveriaan koko loppukierroksen ajan.", type: "major_sabotage", price: 25 },
     { n: "Laser-Tähtäin", d: "Voit siirtää mitä tahansa alle 20m puttiasi 5 metriä lähemmäs koria.", type: "buff", price: 15 },
     { n: "Vaihtokauppa", d: "Vaihda huono avausheittosi paikkaa kohteen hyvän avauksen kanssa.", type: "major_sabotage", price: 25 },
     { n: "Jumal-Kumous", d: "Pelaa tämä peruuttaaksesi MIKÄ TAHANSA sabotaasi (myös monsteri).", type: "buff", price: 18 },
-    { n: "Par-Varmistus", d: "Heitä normaalisti. Jos saat tulokseksi enemmän kuin PAR, tuloksesi korjataan tasan PAR:iksi.", type: "buff", price: 22 },
-    { n: "Kierroksen Jäädytys", d: "Kohde ei saa pelata yhtäkään buffia tai sabotaasia seuraavien 3 väylän aikana.", type: "major_sabotage", price: 20 },
-    { n: "Ukkosmyrsky", d: "KAIKKI vastustajat heittävät avauksensa väärällä kädellä tällä väylällä.", type: "major_sabotage", price: 30 },
+    { n: "Par-Varmistus", d: "Heitä normaalisti. Tuloskorttiisi merkitään automaattisesti enintään PAR (Vaikka heittäisit 10).", type: "buff", price: 22, mech: "force_par" },
+    { n: "Korttijäädytys", d: "Kohde ei saa pelata yhtäkään korttia kädestään seuraavien 3 väylän aikana.", type: "major_sabotage", price: 20 },
+    { n: "Ukkosmyrsky", d: "KAIKKI vastustajat heittävät avauksensa väärällä kädellä tällä väylällä.", type: "major_sabotage", price: 30, aoe: true },
     { n: "Haamukiekko", d: "Koko loppukierroksen ajan, kerran väylässä saat peruuttaa yhden heittosi ilmaiseksi.", type: "buff", price: 35 },
-    { n: "Sakko", d: "Kaikki vastustajat menettävät 2 P pankille.", type: "major_sabotage", price: 18 },
-    { n: "Magneettikori", d: "Seuraava putti alle 15m lasketaan aina sisään menneeksi, osuipahan se tai ei.", type: "buff", price: 20 },
-    { n: "Amnesia", d: "Kohde joutuu poistamaan kaikki kädessään olevat kortit.", type: "major_sabotage", price: 28 }
+    { n: "Korttikato", d: "Kohde ei saa nostaa uusia kortteja tämän väylän tulosten jaon yhteydessä, vaikka hän häviäisi.", type: "major_sabotage", price: 18, mech: "deny_draw" },
+    { n: "Magneettikori", d: "Seuraava putti alle 15m lasketaan aina sisään menneeksi, osuipahan se tai ei.", type: "buff", price: 20 }
 ];
-monsterBases.forEach((base, i) => window.allCards.push({ id: "monster_" + i, n: `${base.n}`, d: base.d, tier: "premium", type: base.type, price: base.price }));
+monsterBases.forEach((base, i) => window.allCards.push({ id: "monster_" + i, n: `${base.n}`, d: base.d, tier: "premium", type: base.type, price: base.price, aoe: base.aoe || false, mech: base.mech || null }));
 
 // ==========================================
 // VÄYLÄSÄÄNNÖT (Koko porukan tehtävät & säännöt)
