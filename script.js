@@ -51,13 +51,48 @@ const doodleSVGs = [
     "M 50 80 L 20 40 L 40 40 L 50 20 L 60 40 L 80 40 Z M 35 50 L 45 60 L 55 50"
 ];
 
+// ==============================================
+// NATIIVIN TAKAISIN-NAPIN HALLINTA (ROUTER)
+// ==============================================
+window.addEventListener('load', () => { 
+    history.pushState({ fribaApp: true }, ''); 
+    setTimeout(window.checkInstallPrompt, 1500); 
+});
+
+window.addEventListener('popstate', (e) => {
+    const modals = [
+        'cardDetailModal', 'targetModal', 'scoreModal', 'gmGiveCardModal',
+        'receiptModal', 'zoomModal', 'handLimitModal', 'shopModal', 'settingsModal', 'courseModal'
+    ];
+    let closedAny = false;
+    for (let i = 0; i < modals.length; i++) {
+        let m = el(modals[i]);
+        if (m && m.style.display !== 'none' && m.style.display !== '') {
+            m.style.display = 'none';
+            closedAny = true;
+            if (modals[i] === 'shopModal') window.pendingShopPurchase = null;
+            break; 
+        }
+    }
+    if (closedAny) {
+        history.pushState({ fribaApp: true }, ''); 
+    }
+});
+
+window.showModalSafe = function(id, displayType = 'flex') {
+    if(el(id)) {
+        el(id).style.display = displayType;
+        history.pushState({ fribaApp: true }, '');
+    }
+};
+
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault(); deferredPrompt = e;
     if (!localStorage.getItem('friba_browser_mode') && el('installPromptModal')) {
         el('installInstructions').innerHTML = "Tämä peli toimii parhaiten puhelimen omana sovelluksena. Asenna se nyt yhdellä painalluksella!";
         el('nativeInstallBtn').style.display = 'block';
-        el('installPromptModal').style.display = 'flex';
+        window.showModalSafe('installPromptModal');
     }
 });
 
@@ -79,7 +114,7 @@ window.checkInstallPrompt = function() {
                        (os === "Android" ? "Paina selaimen <b>valikkoa</b> ja valitse <b>'Asenna sovellus'</b>." : "Asenna peli selaimesi valikosta.");
         el('installInstructions').innerHTML = instText;
         el('nativeInstallBtn').style.display = 'none'; 
-        el('installPromptModal').style.display = 'flex';
+        window.showModalSafe('installPromptModal');
     }
 };
 
@@ -87,8 +122,6 @@ window.dismissInstallPrompt = function() {
     localStorage.setItem('friba_browser_mode', 'true');
     if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
 };
-
-window.addEventListener('load', () => { setTimeout(window.checkInstallPrompt, 1500); });
 
 // ==============================================
 // VAPAA KAMERA & SULAVA JS-LIIKU
@@ -207,18 +240,44 @@ window.zoomToCurrentHole = function() { window.zoomToHole(currentHoleIndex); };
 
 window.showZoomModal = function(html) {
     html = html.replace(/transform:\s*rotate\([^)]+\);?/g, 'transform: none;');
+    let scaleVal = Math.min(1.4, window.innerWidth / 340);
     el('zoomModalContent').innerHTML = html;
-    el('zoomModal').style.display = 'flex';
+    el('zoomModalContent').style.transform = `scale(${scaleVal})`;
+    window.showModalSafe('zoomModal');
 };
+
+// ==============================================
+// SWIPE TO CLOSE KANSIOT JA MODAALIT
+// ==============================================
+let swipeTouchY = 0;
+let swipeContentEl = null;
+window.addEventListener('touchstart', e => {
+    if (e.target.closest('.scrollable-modal') || e.target.closest('.shop-binder-modal')) {
+        swipeTouchY = e.touches[0].clientY;
+        swipeContentEl = e.target.closest('.binder-content') || e.target.closest('.scrollable-modal-content') || e.target.closest('.scrollable-modal');
+    }
+}, {passive:true});
+
+window.addEventListener('touchend', e => {
+    if (swipeTouchY > 0) {
+        let endY = e.changedTouches[0].clientY;
+        let isAtTop = swipeContentEl ? swipeContentEl.scrollTop <= 5 : true;
+        if (endY - swipeTouchY > 100 && isAtTop) {
+            if(el('shopModal') && el('shopModal').style.display !== 'none') { window.closeShopModal(); }
+            else if(el('settingsModal') && el('settingsModal').style.display !== 'none') { el('settingsModal').style.display='none'; }
+        }
+        swipeTouchY = 0;
+    }
+}, {passive:true});
 
 // ==============================================
 // KORTTIEN LAJITTELU JA HINTALOGIIKKA
 // ==============================================
 window.getCardPlayCost = function(cId) {
-    if (cId.startsWith('minor_')) return window.gameSettings.costMinor || 2;
-    if (cId.startsWith('major_')) return window.gameSettings.costMajor || 5;
-    if (cId.startsWith('buff_')) return window.gameSettings.costBuff || 3;
-    return 0; // Monsterit on ilmaisia pelata (mutta kalliita ostaa)
+    if (cId.startsWith('minor_')) return window.gameSettings.costMinor !== undefined ? window.gameSettings.costMinor : 2;
+    if (cId.startsWith('major_')) return window.gameSettings.costMajor !== undefined ? window.gameSettings.costMajor : 5;
+    if (cId.startsWith('buff_')) return window.gameSettings.costBuff !== undefined ? window.gameSettings.costBuff : 3;
+    return 0; 
 };
 
 window.getCardSortWeight = function(cId) {
@@ -230,8 +289,21 @@ window.getCardSortWeight = function(cId) {
 };
 
 // ==============================================
-// TAULUN PIIRTÄMINEN
+// TAULUN PIIRTÄMINEN JA TAPAHTUMAT
 // ==============================================
+window.showEventCard = function(cId, target, by) {
+    window.carouselCards = [cId];
+    window.carouselCurrentMode = 'event';
+    window.carouselCurrentIndex = 0;
+    window.renderCarousel();
+    
+    let targetStr = target ? `<div style="background:var(--danger); color:#fff; padding:15px; border-radius:8px; font-weight:900; font-size:1.2rem; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.4); margin-bottom:10px;">SUORITTAJA:<br><span style="font-size:1.8rem; font-family:'Kalam', cursive;">${target}</span><div style="font-size:0.85rem; margin-top:5px; opacity:0.9;">(Määrääjä: ${by})</div></div>` : '';
+    
+    el('cardDetailActionArea').innerHTML = targetStr;
+    window.showModalSafe('cardDetailModal');
+    setTimeout(() => { window.initNativeCarousel(); }, 100);
+};
+
 window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     let clickAttr = `onclick="window.zoomToHole(${hIndex})" style="cursor:pointer;"`;
     let html = `<div class="hole-cell" ${clickAttr}>`;
@@ -241,14 +313,13 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     let rot2 = (pseudoRandom(hIndex * 2.2) * 6 - 3).toFixed(1);
     let rot3 = (pseudoRandom(hIndex * 3.3) * 6 - 3).toFixed(1);
 
-    // Kynän takia z-index on korkea vain aktiivisella väylällä
     let activeStyle = isActive ? `z-index: 25;` : `z-index: 5;`;
     html += `<div class="index-card" style="transform: rotate(${rot1}deg); position: relative; ${activeStyle}">`;
     html += `<div class="banner-subtitle">${currentCourse.name}</div><div class="banner-title">VÄYLÄ <span>${hIndex}</span></div><div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>`;
     
     if (isActive && hData.penColor) {
         html += `
-        <div class="pen-container" onclick="event.stopPropagation(); if(window.openScoreModal) { window.openScoreModal(); }">
+        <div class="pen-container" onclick="event.stopPropagation(); window.showModalSafe('scoreModal');">
             <div class="pen-string"></div>
             <div class="pen-body" style="background: linear-gradient(to right, ${hData.penColor.c1}, ${hData.penColor.c2}, ${hData.penColor.c1});">
                 <span class="pen-text">MERKKAA</span>
@@ -286,8 +357,11 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                 let cRot = (pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
                 let pinLeft = 50 + (Math.floor(pseudoRandom((hIndex + idx) * 5.5) * 20) - 10);
                 
+                let encodedBy = pc.by.replace(/"/g, '&quot;');
+                let encodedTarget = pc.target.replace(/"/g, '&quot;');
+                
                 html += `
-                <div class="pinned-card-container" style="transform: rotate(${cRot}deg);" onclick="event.stopPropagation(); window.showZoomModal(this.outerHTML)">
+                <div class="pinned-card-container" style="transform: rotate(${cRot}deg);" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div class="pushpin" style="left: ${pinLeft}%;"></div>
                     <div class="physical-card ${typeClass}">
                         ${costHtml}
@@ -304,15 +378,18 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
 
         if (otherCards.length > 0) {
             let pRot = (pseudoRandom(hIndex * 1.5) * 4 - 2).toFixed(1);
-            html += `<div style="width: 100%; max-width:300px; margin-top: 15px; margin-bottom: 15px; position:relative; background:var(--paper-bg); padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); border-radius:2px; transform: rotate(${pRot}deg); cursor:zoom-in;" onclick="event.stopPropagation(); window.showZoomModal(this.outerHTML)">
+            html += `<div style="width: 100%; max-width:300px; margin-top: 15px; margin-bottom: 15px; position:relative; background:var(--paper-bg); padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); border-radius:2px; transform: rotate(${pRot}deg);">
                         <div class="tape tape-top" style="--rot:-2deg;"></div>
                         <h2 style="color:var(--text-main); font-size:0.95rem; margin-bottom:10px; border-bottom:2px dashed #ccc; padding-bottom:5px; font-family:'Kalam', cursive; text-align:center;">PELITAPAHTUMAT</h2>
                         <div style="display:flex; flex-direction:column; gap:6px;">`;
             otherCards.forEach((pc) => {
                 let typeIcon = pc.type === 'buff' ? '🛡️' : '🚫';
                 let typeColor = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
+                let encodedBy = pc.by.replace(/"/g, '&quot;');
+                let encodedTarget = pc.target.replace(/"/g, '&quot;');
+                
                 html += `
-                <div style="background:rgba(0,0,0,0.05); padding:6px; border-radius:4px; font-size:0.75rem; border-left: 4px solid ${typeColor};">
+                <div style="background:rgba(0,0,0,0.05); padding:6px; border-radius:4px; font-size:0.75rem; border-left: 4px solid ${typeColor}; cursor:pointer;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <b style="font-size:0.85rem;">${typeIcon} ${pc.cardName}</b><br>
                     <span style="color:#555;">Käyttäjä: <b>${pc.by}</b> ➡️ Kohde: <b style="color:${typeColor};">${pc.target}</b></span>
                 </div>`;
@@ -436,7 +513,7 @@ window.openTargetModal = function(cardId) {
         let encodedName = p.name.replace(/"/g, '&quot;');
         list.innerHTML += `<button class="btn btn-secondary target-btn glass-card" data-name="${encodedName}" style="border:3px solid var(--border); color:var(--text-main); width:100%; padding:20px; border-radius:12px; margin-bottom:12px; font-weight:900; font-size:1.3rem; text-align:left;" onclick="window.executeCardPlay(this.getAttribute('data-name'))">${p.name}</button>`;
     });
-    if(el('targetModal')) el('targetModal').style.display = 'flex'; 
+    window.showModalSafe('targetModal');
 };
 
 window.executeCardPlay = function(targetName) {
@@ -548,7 +625,7 @@ window.cancelShopPurchase = function() {
 };
 
 window.openShop = function(tab) {
-    if(el('shopModal')) el('shopModal').style.display = 'block';
+    window.showModalSafe('shopModal', 'block');
     if(window.switchShopTab) window.switchShopTab(tab);
 };
 
@@ -587,7 +664,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             if(!item) return; 
             const canAfford = myPoints >= item.price && !boughtThisHole;
             let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? 'OSTA ETU' : 'EI VARAA');
-            let btnClass = canAfford ? 'btn-warning' : 'btn-secondary';
+            let btnClass = canAfford && !boughtThisHole ? 'btn-warning' : 'btn-secondary';
             let dis = (!canAfford || boughtThisHole) ? 'disabled' : '';
             
             html += `
@@ -607,7 +684,6 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     let me = (allPlayers || []).find(p => p && p.name === myName);
     let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     
-    // Automaattinen lajittelu kategorioittain
     myCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
 
     let sellHtml = '';
@@ -624,6 +700,10 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let sellBtnIcon = isNormal ? '♻️' : '🗑️';
             
             let playCost = window.getCardPlayCost(cId);
+            let canAffordPlay = myPoints >= playCost;
+            let playBtnClass = canAffordPlay ? 'btn-success' : 'btn-secondary';
+            let playDisabled = canAffordPlay ? '' : 'disabled';
+            
             let costHtml = playCost > 0 ? `<div style="background:var(--warning); color:#000; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:4px; margin-bottom:4px; width:fit-content;">HINTA: ${playCost} P</div>` : `<div style="background:#22c55e; color:#fff; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:4px; margin-bottom:4px; width:fit-content;">ILMAINEN PELATA</div>`;
             
             sellHtml += `
@@ -634,7 +714,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 TARKASTELU</div>
                 </div>
                 <div style="display:flex; gap:5px;">
-                    <button class="shop-item-btn btn-success" style="flex:1;" onclick="window.openTargetModal('${cId}')">PELAA</button>
+                    <button class="shop-item-btn ${playBtnClass}" style="flex:1;" ${playDisabled} onclick="window.openTargetModal('${cId}')">PELAA</button>
                     <button class="shop-item-btn btn-danger" style="width:50px; font-size:1.2rem;" onclick="window.forceDiscard('${cId}', ${isNormal})">${sellBtnIcon}</button>
                 </div>
             </div>`;
@@ -677,7 +757,7 @@ window.showHandLimitModal = function(cards) {
         html += `<div style="background:#fff; border-radius:12px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; color:#000;"><div style="text-align:left;"><div style="font-size:0.75rem; font-weight:900; color:var(--text-muted);">${isNormal ? 'NORMAALI' : '💎 PREMIUM'}</div><div style="font-size:1.1rem; font-weight:900; color:#000;">${cDef.n}</div></div><button class="btn ${btnClass}" style="width:auto; padding:10px 15px; font-size:0.85rem; margin:0;" onclick="window.forceDiscard('${cId}', ${isNormal})">${btnTxt}</button></div>`;
     });
     el('handLimitCards').innerHTML = html;
-    el('handLimitModal').style.display = 'flex';
+    window.showModalSafe('handLimitModal');
 };
 
 //==============================================
@@ -703,25 +783,37 @@ window.flipCard = function(index) {
         inner.classList.remove('flipped');
     }
     
-    // Odotetaan CSS-animaation valmistumista, sitten siirretään kortti pakassa vasemmalle
     setTimeout(() => {
         let currentMode = window.carouselCurrentMode;
         if (currentMode === 'hand' || currentMode === 'sell') {
+            
+            let nextCardId = null;
+            let nextIndex = index + 1 < window.carouselCards.length ? index + 1 : -1;
+            if(nextIndex !== -1 && !window.flippedCards.has(window.carouselCards[nextIndex])) {
+                nextCardId = window.carouselCards[nextIndex];
+            }
+
             window.carouselCards.sort((a,b) => {
                 let fA = window.flippedCards.has(a) ? 1 : 0;
                 let fB = window.flippedCards.has(b) ? 1 : 0;
-                if (fA !== fB) return fB - fA; // Väärinpäin olevat eka (1 vs 0)
+                if (fA !== fB) return fB - fA; 
                 return window.getCardSortWeight(a) - window.getCardSortWeight(b);
             });
             
-            window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
+            if(nextCardId) {
+                window.carouselCurrentIndex = window.carouselCards.indexOf(nextCardId);
+            } else {
+                window.carouselCurrentIndex = 0;
+            }
+            
             window.renderCarousel();
             window.initNativeCarousel();
             const container = el('cardCarousel');
             if(container) container.scrollLeft = (window.carouselCurrentIndex * 320);
             
-            if (isFlippingDown) {
-                let newInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
+            let movedFlippedIndex = window.carouselCards.indexOf(cId);
+            if (isFlippingDown && movedFlippedIndex !== -1) {
+                let newInner = el(`card3d-inner-${movedFlippedIndex}`);
                 if (newInner) {
                     newInner.style.transition = 'none'; 
                     newInner.classList.add('flipped');
@@ -822,7 +914,8 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
     if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
     
-    window.renderCarousel(); el('cardDetailModal').style.display = 'flex';
+    window.renderCarousel(); 
+    window.showModalSafe('cardDetailModal');
     
     setTimeout(() => {
         window.initNativeCarousel();
@@ -840,7 +933,15 @@ window.updateCarouselButtons = function() {
     
     let btnHtml = ''; let mode = window.carouselCurrentMode;
     if (mode === 'hand' || mode === 'sell') {
-        btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(16,185,129,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
+        let playCost = window.getCardPlayCost(cId);
+        let myScore = 0;
+        const me = (allPlayers || []).find(p => p && p.name === myName);
+        if(me) myScore = me.score || 0;
+        let canAffordPlay = myScore >= playCost;
+        let playBtnClass = canAffordPlay ? 'btn-success' : 'btn-secondary';
+        let playDisabled = canAffordPlay ? '' : 'disabled';
+        
+        btnHtml = `<button class="btn ${playBtnClass}" ${playDisabled} style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(16,185,129,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
         if (cDef.tier === 'normal') { btnHtml += `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; margin-top:5px; background:var(--danger); color:#fff; box-shadow:0 4px 15px rgba(220,38,38,0.5);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`; } 
         else { btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`; }
     } else if (mode === 'shop') {
@@ -856,6 +957,10 @@ window.updateCarouselButtons = function() {
         btnHtml = `<button class="btn ${btnClass}" ${dis} style="font-size:1.1rem; padding:18px; color:#000; box-shadow:0 10px 25px rgba(245,158,11,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cId}', '${cDef.n}', ${price})">${btnText}</button>`;
     } else if (mode === 'gm') {
         btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.giveCardToPlayer('${cId}')">ANNA TÄMÄ</button>`;
+    } else if (mode === 'event') {
+        // Event view already handles custom area in showEventCard, this keeps it alive during scroll
+        let target = window.carouselArgs[0]; let by = window.carouselArgs[1];
+        btnHtml = `<div style="background:var(--danger); color:#fff; padding:15px; border-radius:8px; font-weight:900; font-size:1.2rem; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.4); margin-bottom:10px;">SUORITTAJA:<br><span style="font-size:1.8rem; font-family:'Kalam', cursive;">${target}</span><div style="font-size:0.85rem; margin-top:5px; opacity:0.9;">(Määrääjä: ${by})</div></div>`;
     }
     el('cardDetailActionArea').innerHTML = btnHtml;
 };
@@ -908,7 +1013,7 @@ window.openScoreModal = function() {
     });
     container.innerHTML = html;
     if(el('taskWinnerContainer')) el('taskWinnerContainer').innerHTML = taskCheckboxes; 
-    if(el('scoreModal')) el('scoreModal').style.display = 'flex'; 
+    window.showModalSafe('scoreModal');
 };
 
 window.submitScores = function() {
@@ -939,7 +1044,6 @@ window.submitScores = function() {
     let limitEnabled = window.gameSettings.handLimitEnabled !== undefined ? window.gameSettings.handLimitEnabled : true;
     let limit = window.gameSettings.handLimit !== undefined ? window.gameSettings.handLimit : 5;
 
-    // Tarkistetaan ketkä olivat ison sabotaasin kohteina
     let majorTargets = [];
     if (activeHole && activeHole.playedCards) {
         Object.values(activeHole.playedCards).forEach(pc => {
@@ -959,7 +1063,6 @@ window.submitScores = function() {
         if (res.taskWon) { currentPoints += ptsTask; }
         if (holeLosers.includes(p.name) && minStrokes !== maxStrokes) { currentPoints -= Math.abs(ptsLose); currentPoints = Math.max(0, currentPoints); }
         
-        // Selätyspalkkio (Iso sabotaasi ja Par tai alle)
         if (majorTargets.includes(p.name) && res.strokes <= par) {
             currentPoints += rewardMajor;
             window.logEvent(`${p.name} selätti ison sabotaasin ja ansaitsi +${rewardMajor} P!`);
