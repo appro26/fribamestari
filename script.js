@@ -222,6 +222,7 @@ if(vp) {
     }, {passive: true});
 }
 
+// Kameran keskityskoordinaatteja säädetty niin, että asettuu enemmän vasemmalle ja ylemmäs
 window.zoomToHole = function(hIndex) {
     if(!currentCourse || !currentCourse.pars) return;
     let totalHoles = currentCourse.pars.length;
@@ -231,8 +232,10 @@ window.zoomToHole = function(hIndex) {
     
     let cellX = 120 + col * 460; 
     let cellY = 120 + row * 1010; 
-    let targetX = (window.innerWidth - 380) / 2 - cellX;
-    let targetY = 50 - cellY; 
+    
+    let targetX = (window.innerWidth - 440) / 2 - cellX; 
+    let targetY = -30 - cellY; 
+    
     window.animateCameraTo(targetX, targetY, 1, 400);
 };
 
@@ -240,7 +243,8 @@ window.zoomToCurrentHole = function() { window.zoomToHole(currentHoleIndex); };
 
 window.showZoomModal = function(html) {
     html = html.replace(/transform:\s*rotate\([^)]+\);?/g, 'transform: none;');
-    let scaleVal = Math.min(1.4, window.innerWidth / 340);
+    // Luvut on säädetty niin, että elementit mahtuvat aina nätisti näyttöön.
+    let scaleVal = Math.min(1.15, (window.innerWidth * 0.9) / 320);
     el('zoomModalContent').innerHTML = html;
     el('zoomModalContent').style.transform = `scale(${scaleVal})`;
     window.showModalSafe('zoomModal');
@@ -317,9 +321,10 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     html += `<div class="index-card" style="transform: rotate(${rot1}deg); position: relative; ${activeStyle}">`;
     html += `<div class="banner-subtitle">${currentCourse.name}</div><div class="banner-title">VÄYLÄ <span>${hIndex}</span></div><div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>`;
     
+    // Tässä kutsutaan ohjatusti ikkunan avaavaa funktiota, ei safeModalia suoraan!
     if (isActive && hData.penColor) {
         html += `
-        <div class="pen-container" onclick="event.stopPropagation(); window.showModalSafe('scoreModal');">
+        <div class="pen-container" onclick="event.stopPropagation(); window.openScoreModal();">
             <div class="pen-string"></div>
             <div class="pen-body" style="background: linear-gradient(to right, ${hData.penColor.c1}, ${hData.penColor.c2}, ${hData.penColor.c1});">
                 <span class="pen-text">MERKKAA</span>
@@ -787,10 +792,27 @@ window.flipCard = function(index) {
         let currentMode = window.carouselCurrentMode;
         if (currentMode === 'hand' || currentMode === 'sell') {
             
-            let nextCardId = null;
-            let nextIndex = index + 1 < window.carouselCards.length ? index + 1 : -1;
-            if(nextIndex !== -1 && !window.flippedCards.has(window.carouselCards[nextIndex])) {
-                nextCardId = window.carouselCards[nextIndex];
+            let targetCardIdToFocus = null;
+
+            if (isFlippingDown) {
+                // Etsi seuraava avoin kortti oikealta
+                for (let i = index + 1; i < window.carouselCards.length; i++) {
+                    if (!window.flippedCards.has(window.carouselCards[i])) {
+                        targetCardIdToFocus = window.carouselCards[i];
+                        break;
+                    }
+                }
+                // Jos ei ollut, katsotaan vasemmalle
+                if (!targetCardIdToFocus) {
+                    for (let i = index - 1; i >= 0; i--) {
+                         if (!window.flippedCards.has(window.carouselCards[i])) {
+                            targetCardIdToFocus = window.carouselCards[i];
+                            break;
+                         }
+                    }
+                }
+            } else {
+                targetCardIdToFocus = cId;
             }
 
             window.carouselCards.sort((a,b) => {
@@ -800,8 +822,8 @@ window.flipCard = function(index) {
                 return window.getCardSortWeight(a) - window.getCardSortWeight(b);
             });
             
-            if(nextCardId) {
-                window.carouselCurrentIndex = window.carouselCards.indexOf(nextCardId);
+            if(targetCardIdToFocus) {
+                window.carouselCurrentIndex = window.carouselCards.indexOf(targetCardIdToFocus);
             } else {
                 window.carouselCurrentIndex = 0;
             }
@@ -958,7 +980,6 @@ window.updateCarouselButtons = function() {
     } else if (mode === 'gm') {
         btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.giveCardToPlayer('${cId}')">ANNA TÄMÄ</button>`;
     } else if (mode === 'event') {
-        // Event view already handles custom area in showEventCard, this keeps it alive during scroll
         let target = window.carouselArgs[0]; let by = window.carouselArgs[1];
         btnHtml = `<div style="background:var(--danger); color:#fff; padding:15px; border-radius:8px; font-weight:900; font-size:1.2rem; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.4); margin-bottom:10px;">SUORITTAJA:<br><span style="font-size:1.8rem; font-family:'Kalam', cursive;">${target}</span><div style="font-size:0.85rem; margin-top:5px; opacity:0.9;">(Määrääjä: ${by})</div></div>`;
     }
