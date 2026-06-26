@@ -277,19 +277,35 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
     z-index: 9000; pointer-events: none;
 }
-#ownCardsButtonElement { background: linear-gradient(to right, #451a03, #78350f, #92400e); border-color: #381302; }
-#shopButtonElement { background: linear-gradient(to right, #111, #333, #111); border-color: #000; }
+
+/* KANSIOIDEN UUSI REALISTISEMPI ILME */
+#ownCardsButtonElement { 
+    background: linear-gradient(135deg, #4a2810 0%, #3e1f0a 40%, #2c1607 100%); 
+    border-color: #241105; 
+    box-shadow: inset 3px 0 10px rgba(255,255,255,0.1), inset -3px 0 15px rgba(0,0,0,0.8), -5px -10px 20px rgba(0,0,0,0.5);
+}
+#shopButtonElement { 
+    background: linear-gradient(135deg, #1f2229 0%, #14161a 40%, #0a0b0d 100%); 
+    border-color: #050607; 
+    box-shadow: inset 3px 0 10px rgba(255,255,255,0.05), inset -3px 0 15px rgba(0,0,0,0.8), -5px -10px 20px rgba(0,0,0,0.5);
+}
 
 .binder-spine-btn {
     width: 32%; max-width: 120px; height: 95px; 
     border-radius: 12px 12px 0 0; position: relative; 
     cursor: pointer; pointer-events: auto;
-    box-shadow: -5px -10px 20px rgba(0,0,0,0.5), inset 2px 2px 10px rgba(255,255,255,0.2);
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
     padding-top: 15px; border: 2px solid; border-bottom: none;
+    overflow: hidden;
 }
 .binder-spine-btn:active { transform: translateY(-5px); }
-.binder-spine-text { color: #fcd34d; font-family: 'Kalam', cursive; font-size: 0.95rem; font-weight: bold; letter-spacing: 1px; text-shadow: 2px 2px 4px #000; }
+.binder-spine-text { color: rgba(255,255,255,0.8); font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 900; letter-spacing: 3px; text-shadow: inset 1px 1px 2px rgba(0,0,0,0.8); z-index: 2;}
+
+.binder-stitching {
+    position: absolute; top: 5px; bottom: 0; left: 5px; right: 5px;
+    border: 1px dashed rgba(255,255,255,0.2); border-bottom: none; border-radius: 8px 8px 0 0;
+    pointer-events: none; z-index: 1;
+}
 
 .binder-badge { 
     position: absolute; top: -10px; right: -10px; 
@@ -297,6 +313,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     background: #111; color: #fff; display: flex; align-items: center; justify-content: center;
     font-size: 1rem; font-weight: 900; border: 3px solid #cbd5e1;
     box-shadow: 0 5px 12px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.3); 
+    z-index: 5;
 }
 .binder-badge.money-badge { width: 50px; height: 50px; right: -15px; top: -15px; font-size: 1.1rem; background: var(--warning); color: #000; }
 
@@ -358,7 +375,8 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 
 .card-3d-inner { 
     position: relative; width: 100%; height: 100%; transform-style: preserve-3d; 
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    /* ANIMAATIOTA NOPEUTETTU TÄSSÄ (0.6s -> 0.3s) */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .card-3d-inner.flipped { transform: rotateY(180deg); }
 
@@ -411,15 +429,15 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 @keyframes slideDown { 0% { transform: translateY(-100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
 
-/* TÄMÄ ON ZOOMAUSMODAALIN KORJATTU ASETTELU */
 #zoomModalContent {
-    pointer-events: none;
+    pointer-events: auto; /* Mahdollistaa elementtien klikkaamisen zoom-ikkunassa */
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
 }
 #zoomModalContent .post-it-note,
-#zoomModalContent .pinned-card-container {
+#zoomModalContent .pinned-card-container,
+#zoomModalContent > div { /* Varmistetaan että myös pelitapahtuma-laput on nätisti */
     margin: 0 !important;
 }
