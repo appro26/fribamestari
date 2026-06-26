@@ -16,7 +16,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=166" />
+    <link rel="stylesheet" href="style.css?v=167" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
@@ -25,10 +25,8 @@
 </head>
 <body class="player-mode">
 
-    <!-- ASETUKSET -->
+    <!-- ASETUKSET & OHJEET -->
     <button id="settingsToggleBtn" onclick="window.showModalSafe('settingsModal')" style="position:fixed; top:15px; right:15px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
-
-    <!-- UUSI SÄÄNNÖT JA OHJEET NAPPI -->
     <button id="rulesToggleBtn" onclick="window.showModalSafe('rulesModal')" style="position:fixed; top:15px; left:15px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; font-size:1.6rem; cursor:pointer; color:#111;">📖</button>
 
     <div id="installPromptModal" class="winner-overlay" style="z-index: 10010; flex-direction:column; justify-content:center; align-items:center;" onclick="if(event.target === this) { this.style.display='none'; }">
@@ -105,7 +103,7 @@
         <div class="pocket-lip board-lip-btn" id="boardBtnText" onclick="if(window.zoomToCurrentHole) window.zoomToCurrentHole()">📍 NYKYINEN VÄYLÄ</div>
     </div>
 
-    <!-- UUSI SÄÄNNÖT MODAALI -->
+    <!-- SÄÄNNÖT MODAALI -->
     <div id="rulesModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -119,9 +117,9 @@
                     
                     <h3 style="color:var(--warning); margin-bottom:10px; font-size:1.3rem; text-transform:uppercase;">Pisteiden kertyminen</h3>
                     <ul style="margin-left:20px; margin-bottom:20px;">
-                        <li>Väylän voitto (vähiten heittoja): <b id="infoPtsWin">2 P</b></li>
-                        <li>Väylätehtävän voitto: <b id="infoPtsTask">3 P</b></li>
-                        <li>Passiivinen tulo per väylä: <b id="infoPtsPass">1 P</b></li>
+                        <li>Väylän voitto (vähiten heittoja): <b id="infoPtsWin">3 P</b></li>
+                        <li>Väylätehtävän voitto: <b id="infoPtsTask">2 P</b></li>
+                        <li>Passiivinen tulo per väylä: <b id="infoPtsPass">2 P</b></li>
                         <li>Tappio väylällä: <b id="infoPtsLose">0 P</b></li>
                     </ul>
 
@@ -137,7 +135,7 @@
                     <p style="margin-bottom:20px;">Jos joku vastustajista pelaa sinuun Ison Sabotaasin (Taso 2) ja onnistut pelaamaan kyseisen väylän silti tulokseen <b>PAR tai alle</b>, saat välittömästi <b><span id="infoRewardMajor">5</span> P</b> selätyspalkkion!</p>
 
                     <h3 style="color:var(--warning); margin-bottom:10px; font-size:1.3rem; text-transform:uppercase;">Korttien myynti</h3>
-                    <p>Normaalin tason (Taso 1 & 2) kortteja ei ole pakko pelata. Voit aina myydä sellaisen pois kädestä saadaksesi heti <b>+1 P</b> takaisin kassaan. Premium-kortin hävittämisestä ei irtoa pisteitä.</p>
+                    <p>Normaalin tason (Taso 1 & 2) kortteja ei ole pakko pelata. Voit aina myydä sellaisen pois kädestä saadaksesi heti <b id="infoSellReward">+1 P</b> takaisin kassaan. Premium-kortin hävittämisestä ei irtoa pisteitä.</p>
 
                 </div>
                 
@@ -146,6 +144,7 @@
         </div>
     </div>
 
+    <!-- ASETUKSET MODAALI -->
     <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -177,15 +176,23 @@
                     
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
                         <span style="font-weight:800; font-size:1.1rem;">Pelirahaa voitosta:</span>
-                        <input type="number" id="gmSetPtsWin" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                        <input type="number" id="gmSetPtsWin" value="3" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
                     </div>
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
                         <span style="font-weight:800; font-size:1.1rem;">Rahaa tehtävästä:</span>
-                        <input type="number" id="gmSetPtsTask" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                        <input type="number" id="gmSetPtsTask" value="2" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
                     </div>
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
                         <span style="font-weight:800; font-size:1.1rem;">Miinusta häviöstä:</span>
-                        <input type="number" id="gmSetPtsLose" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                        <input type="number" id="gmSetPtsLose" value="0" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Passiivinen tulo/väylä:</span>
+                        <input type="number" id="gmSetPtsPassive" value="2" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Kortin myyntihinta:</span>
+                        <input type="number" id="gmSetSellReward" value="1" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
                     </div>
                     
                     <div style="border-top:2px solid rgba(255,255,255,0.2); margin:15px 0;"></div>
@@ -321,7 +328,7 @@
         <div id="zoomModalContent"></div>
     </div>
 
-    <script src="tasks.js?v=166"></script>
-    <script type="module" src="script.js?v=166"></script>
+    <script src="tasks.js?v=167"></script>
+    <script type="module" src="script.js?v=167"></script>
 </body>
 </html>
