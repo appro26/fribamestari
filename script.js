@@ -19,7 +19,8 @@ let currentHoleIndex = 1;
 let lastPlayedCardTimestamp = Date.now();
 window.gameHistory = []; 
 
-window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5 };
+// Oletusasetukset päivitetty optimaalisiksi!
+window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 3, ptsTask: 2, ptsLose: 0, ptsPassive: 2, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5, sellReward: 1 };
 window.pendingShopPurchase = null;
 
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
@@ -267,7 +268,6 @@ window.addEventListener('touchstart', e => {
 window.addEventListener('touchend', e => {
     if (swipeTouchY > 0 && swipeContentEl) {
         let endY = e.changedTouches[0].clientY;
-        // Sulkee kansion vain jos se oli aloittaessa skrollattu ylös asti
         if (initialScrollTop <= 5 && swipeContentEl.scrollTop <= 5 && (endY - swipeTouchY > 120)) {
             if(el('shopModal') && el('shopModal').style.display !== 'none') { window.closeShopModal(); }
             else if(el('settingsModal') && el('settingsModal').style.display !== 'none') { el('settingsModal').style.display='none'; }
@@ -297,9 +297,8 @@ window.getCardSortWeight = function(cId) {
 
 window.getCardDesc = function(cDef, cId) {
     let desc = cDef.d;
-    // Lisätään isoihin sabotaaseihin aina dynaamisesti selätyspalkkion ohjeteksti
     if (cId && cId.startsWith('major_')) {
-        let rew = window.gameSettings.rewardMajor || 5;
+        let rew = window.gameSettings.rewardMajor !== undefined ? window.gameSettings.rewardMajor : 5;
         desc += `<br><br><b style="color:var(--warning);">SELÄTYSPALKKIO:</b> Jos suorittaja pelaa tuloksen PAR tai alle, hän tienaa ${rew} P!`;
     }
     return desc;
@@ -585,7 +584,11 @@ window.forceDiscard = function(cId, isNormal) {
     
     if(idx !== -1) {
         me.cards.splice(idx, 1);
-        if (isNormal) { me.score = (parseInt(me.score) || 0) + 1; window.showAppleToast('+1 P (Myyty)', '💰'); }
+        if (isNormal) { 
+            let sellReward = window.gameSettings.sellReward !== undefined ? window.gameSettings.sellReward : 1;
+            me.score = (parseInt(me.score) || 0) + sellReward; 
+            window.showAppleToast(`+${sellReward} P (Myyty)`, '💰'); 
+        }
         else { window.showAppleToast('Kortti poistettu', '🗑️'); }
     }
     
@@ -716,6 +719,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             if(cDef.tier === 'premium') { typeClass = 'premium-card'; }
             let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
             let isNormal = cDef.tier === 'normal';
+            let sellReward = window.gameSettings.sellReward !== undefined ? window.gameSettings.sellReward : 1;
             let sellBtnIcon = isNormal ? '♻️' : '🗑️';
             
             let playCost = window.getCardPlayCost(cId);
@@ -766,12 +770,13 @@ window.showHandLimitModal = function(cards) {
     let html = '';
     
     cards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
-    
+    let sellReward = window.gameSettings.sellReward !== undefined ? window.gameSettings.sellReward : 1;
+
     cards.forEach(cId => {
         const cDef = (window.allCards || []).find(c => c && c.id === cId);
         if(!cDef) return;
         let isNormal = cDef.tier === 'normal';
-        let btnTxt = isNormal ? '♻️ MYY (+1 P)' : '🗑️ POISTA';
+        let btnTxt = isNormal ? `♻️ MYY (+${sellReward} P)` : '🗑️ POISTA';
         let btnClass = isNormal ? 'btn-success' : 'btn-danger';
         html += `<div style="background:#fff; border-radius:12px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; color:#000;"><div style="text-align:left;"><div style="font-size:0.75rem; font-weight:900; color:var(--text-muted);">${isNormal ? 'NORMAALI' : '💎 PREMIUM'}</div><div style="font-size:1.1rem; font-weight:900; color:#000;">${cDef.n}</div></div><button class="btn ${btnClass}" style="width:auto; padding:10px 15px; font-size:0.85rem; margin:0;" onclick="window.forceDiscard('${cId}', ${isNormal})">${btnTxt}</button></div>`;
     });
@@ -846,7 +851,7 @@ window.flipCard = function(index) {
             if(container) container.scrollLeft = (window.carouselCurrentIndex * 320);
         }
         window.isFlipping = false;
-    }, 300); // Nopeutettu korttien vaihto
+    }, 300); 
 };
 
 window.renderCarousel = function() {
@@ -965,9 +970,10 @@ window.updateCarouselButtons = function() {
         let canAffordPlay = myScore >= playCost;
         let playBtnClass = canAffordPlay ? 'btn-success' : 'btn-secondary';
         let playDisabled = canAffordPlay ? '' : 'disabled';
+        let sellReward = window.gameSettings.sellReward !== undefined ? window.gameSettings.sellReward : 1;
         
         btnHtml = `<button class="btn ${playBtnClass}" ${playDisabled} style="font-size:1.1rem; padding:18px; box-shadow:0 10px 25px rgba(16,185,129,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cId}')">PELAA KORTTI</button>`;
-        if (cDef.tier === 'normal') { btnHtml += `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; margin-top:5px; background:var(--danger); color:#fff; box-shadow:0 4px 15px rgba(220,38,38,0.5);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+1 P)</button>`; } 
+        if (cDef.tier === 'normal') { btnHtml += `<button class="btn btn-danger" style="font-size:1.1rem; padding:18px; margin-top:5px; background:var(--danger); color:#fff; box-shadow:0 4px 15px rgba(220,38,38,0.5);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', true)">♻️ MYY KORTTI (+${sellReward} P)</button>`; } 
         else { btnHtml += `<button class="btn btn-secondary glass-card" style="font-size:1.05rem; padding:16px; margin-top:5px; color:var(--danger);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.forceDiscard('${cId}', false)">🗑️ HÄVITÄ KORTTI (0 P)</button>`; }
     } else if (mode === 'shop') {
         let myScore = 0; let bought = false;
@@ -1060,10 +1066,10 @@ window.submitScores = function() {
     let normalPool = (window.allCards || []).filter(c => c && c.tier === "normal");
     let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
 
-    let ptsWin = window.gameSettings.ptsWin !== undefined ? window.gameSettings.ptsWin : 2;
-    let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
+    let ptsWin = window.gameSettings.ptsWin !== undefined ? window.gameSettings.ptsWin : 3;
+    let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 2;
     let ptsLose = window.gameSettings.ptsLose !== undefined ? window.gameSettings.ptsLose : 0;
-    let ptsPassive = window.gameSettings.ptsPassive !== undefined ? window.gameSettings.ptsPassive : 1;
+    let ptsPassive = window.gameSettings.ptsPassive !== undefined ? window.gameSettings.ptsPassive : 2;
     let rewardMajor = window.gameSettings.rewardMajor !== undefined ? window.gameSettings.rewardMajor : 5;
     let limitEnabled = window.gameSettings.handLimitEnabled !== undefined ? window.gameSettings.handLimitEnabled : true;
     let limit = window.gameSettings.handLimit !== undefined ? window.gameSettings.handLimit : 5;
@@ -1186,7 +1192,7 @@ window.cancelCourse = function() {
 window.resetGame = function() {
     if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos ja peliasetukset palautuvat oletuksiin.")) {
         localStorage.removeItem('friba_browser_mode');
-        const defaultSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5 };
+        const defaultSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 3, ptsTask: 2, ptsLose: 0, ptsPassive: 2, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5, sellReward: 1 };
         set(ref(db, 'gameState'), window.cleanFirebaseData({ settings: defaultSettings, players: [], activeHole: null, currentHoleIndex: 1, course: null, history: [] }))
         .then(() => { localStorage.clear(); location.reload(); });
     }
@@ -1195,10 +1201,16 @@ window.resetGame = function() {
 window.saveGameSettings = function() {
     set(ref(db, 'gameState/settings'), {
         shopEnabled: el('gmSetShop').checked, handLimitEnabled: el('gmSetLimitCheck').checked,
-        handLimit: parseInt(el('gmSetLimitCount').value, 10) || 5, ptsWin: parseInt(el('gmSetPtsWin').value, 10) || 0,
-        ptsTask: parseInt(el('gmSetPtsTask').value, 10) || 0, ptsLose: parseInt(el('gmSetPtsLose').value, 10) || 0, ptsPassive: window.gameSettings.ptsPassive || 1,
-        costMinor: parseInt(el('gmSetCostMinor').value, 10) || 2, costMajor: parseInt(el('gmSetCostMajor').value, 10) || 5, 
-        costBuff: parseInt(el('gmSetCostBuff').value, 10) || 3, rewardMajor: parseInt(el('gmSetRewardMajor').value, 10) || 5
+        handLimit: parseInt(el('gmSetLimitCount').value, 10) || 5, 
+        ptsWin: parseInt(el('gmSetPtsWin').value, 10) || 0,
+        ptsTask: parseInt(el('gmSetPtsTask').value, 10) || 0, 
+        ptsLose: parseInt(el('gmSetPtsLose').value, 10) || 0, 
+        ptsPassive: parseInt(el('gmSetPtsPassive').value, 10) || 0,
+        sellReward: parseInt(el('gmSetSellReward').value, 10) || 0,
+        costMinor: parseInt(el('gmSetCostMinor').value, 10) || 2, 
+        costMajor: parseInt(el('gmSetCostMajor').value, 10) || 5, 
+        costBuff: parseInt(el('gmSetCostBuff').value, 10) || 3, 
+        rewardMajor: parseInt(el('gmSetRewardMajor').value, 10) || 5
     });
     window.showNotification("Asetukset tallennettu!", "info");
     el('settingsModal').style.display = 'none';
@@ -1276,18 +1288,19 @@ onValue(ref(db, 'gameState'), (snap) => {
         return;
     }
 
-    window.gameSettings = data.settings || { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5 };
+    window.gameSettings = data.settings || { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 3, ptsTask: 2, ptsLose: 0, ptsPassive: 2, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5, sellReward: 1 };
     window.gameHistory = data.history ? (Array.isArray(data.history) ? data.history : Object.values(data.history)) : [];
 
-    // Ladataan ohjemodaalin tiedot automaattisesti asetuksista
+    // Päivitetään Säännöt-ikkunan luvut dynaamisesti asetuksista
     if(el('infoPtsWin')) el('infoPtsWin').innerText = `${window.gameSettings.ptsWin} P`;
     if(el('infoPtsTask')) el('infoPtsTask').innerText = `${window.gameSettings.ptsTask} P`;
     if(el('infoPtsLose')) el('infoPtsLose').innerText = `${window.gameSettings.ptsLose} P`;
-    if(el('infoPtsPass')) el('infoPtsPass').innerText = `${window.gameSettings.ptsPassive} P`;
+    if(el('infoPtsPass')) el('infoPtsPass').innerText = `${window.gameSettings.ptsPassive !== undefined ? window.gameSettings.ptsPassive : 2} P`;
     if(el('infoCostMinor')) el('infoCostMinor').innerText = `${window.gameSettings.costMinor || 2} P`;
     if(el('infoCostMajor')) el('infoCostMajor').innerText = `${window.gameSettings.costMajor || 5} P`;
     if(el('infoCostBuff')) el('infoCostBuff').innerText = `${window.gameSettings.costBuff || 3} P`;
     if(el('infoRewardMajor')) el('infoRewardMajor').innerText = `${window.gameSettings.rewardMajor || 5}`;
+    if(el('infoSellReward')) el('infoSellReward').innerText = `+${window.gameSettings.sellReward !== undefined ? window.gameSettings.sellReward : 1} P`;
 
     if (el('gmSetShop')) el('gmSetShop').checked = window.gameSettings.shopEnabled;
     if (el('gmSetLimitCheck')) el('gmSetLimitCheck').checked = window.gameSettings.handLimitEnabled;
@@ -1295,6 +1308,8 @@ onValue(ref(db, 'gameState'), (snap) => {
     if (el('gmSetPtsWin')) el('gmSetPtsWin').value = window.gameSettings.ptsWin;
     if (el('gmSetPtsTask')) el('gmSetPtsTask').value = window.gameSettings.ptsTask;
     if (el('gmSetPtsLose')) el('gmSetPtsLose').value = window.gameSettings.ptsLose;
+    if (el('gmSetPtsPassive')) el('gmSetPtsPassive').value = window.gameSettings.ptsPassive !== undefined ? window.gameSettings.ptsPassive : 2;
+    if (el('gmSetSellReward')) el('gmSetSellReward').value = window.gameSettings.sellReward !== undefined ? window.gameSettings.sellReward : 1;
     
     if (el('gmSetCostMinor')) el('gmSetCostMinor').value = window.gameSettings.costMinor || 2;
     if (el('gmSetCostMajor')) el('gmSetCostMajor').value = window.gameSettings.costMajor || 5;
