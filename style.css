@@ -21,9 +21,6 @@ html, body { overscroll-behavior-y: none; overscroll-behavior-x: none; touch-act
 
 input, textarea, select { -webkit-user-select: auto; user-select: auto; }
 
-/* ========================================= */
-/* TAUSTASEINÄ (BODY) & ILMOITUSTAULU        */
-/* ========================================= */
 body { 
     background-color: #1e293b; 
     background-image: linear-gradient(0deg, #0f172a 0%, transparent 100%);
@@ -37,7 +34,6 @@ body {
     touch-action: none; 
 }
 
-/* PUHDAS 2D TAULU (Ei välkkymistä) */
 #corkboard-surface {
     display: inline-grid;
     gap: 60px 80px; 
@@ -78,9 +74,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .cards-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 10px; box-sizing: border-box; overflow: visible; width: 100%;}
 
-/* ========================================= */
-/* KUITTIKONE (SUORA JA LEVEÄ)               */
-/* ========================================= */
 #receipt-printer-container { 
     width: 38%; max-width: 170px; cursor: pointer; pointer-events: auto; position: relative;
     margin-right: auto; margin-left: 5px;
@@ -139,9 +132,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .receipt-circle.red { background-color: #ef4444; color: #fff; }
 .receipt-circle.even { color: #111; }
 
-/* ========================================= */
-/* KIROILEVAT ELÄIMET (AINA POHJIMMAISENA!)  */
-/* ========================================= */
 .doodle-drawing { position: absolute; display: flex; flex-direction: column; align-items: center; pointer-events: none; opacity: 0; z-index: -1; }
 .doodle-drawing.drawn { opacity: 0.8; transition: opacity 2s; }
 .doodle-svg { width: 160px; height: 160px; fill: none; stroke: #1e293b; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; margin-bottom: -20px; }
@@ -149,9 +139,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .drawn .doodle-path { stroke-dasharray: 800; stroke-dashoffset: 800; animation: trace 3s ease-out forwards; }
 @keyframes trace { to { stroke-dashoffset: 0; } }
 
-/* ========================================= */
-/* 2D-ELEMENTIT TAULULLA                     */
-/* ========================================= */
 .hole-cell .index-card { width: 220px; padding: 10px 15px; margin-bottom: 15px; margin-left: 0; align-self: flex-start; }
 .index-card .banner-title { font-size: 1.8rem; margin-bottom: 2px; }
 .index-card .banner-par { font-size: 1.1rem; }
@@ -169,9 +156,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 }
 .hole-cell .score-spiral-note { width: 320px; margin-top: 15px; padding: 15px 15px 15px 40px;}
 
-/* ========================================= */
-/* REPÄISTY PAPERI (LOGIN)                   */
-/* ========================================= */
 .torn-paper {
     background: var(--paper-bg); padding: 24px; margin-bottom: 25px; position: relative;
     width: 92%; max-width: 450px; margin-left: auto; margin-right: auto;
@@ -186,9 +170,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .tape-br { bottom: -2px; right: -10px; transform: rotate(-45deg); }
 .tape-top { top: -8px; left: 50%; width: 45px; transform: translateX(-50%) rotate(var(--rot, 0deg)); background: rgba(240, 240, 240, 0.85); box-shadow: 0 2px 4px rgba(0,0,0,0.25); }
 
-/* ========================================= */
-/* VÄYLÄN TIETO (KLASSINEN HAKEMISTOKORTTI)  */
-/* ========================================= */
 .index-card {
     background: #fdfaf6; background-image: repeating-linear-gradient(transparent, transparent 23px, #bae6fd 24px);
     border-top: 16px solid #ef4444; border-radius: 4px; position: relative; 
@@ -206,9 +187,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .index-card .banner-title { font-weight: 700; color: var(--ink-blue); font-family: 'Kalam', cursive; line-height: 1.1; }
 .index-card .banner-par { display: inline-block; color: var(--danger); font-weight: 900; padding: 0; border: none; font-family: 'Kalam', cursive; background: transparent;}
 
-/* ========================================= */
-/* NUPPINEULAT (PIN)                         */
-/* ========================================= */
 .pin { position: absolute; width: 14px; height: 14px; border-radius: 50%; box-shadow: 2px 4px 6px rgba(0,0,0,0.5), inset -2px -2px 4px rgba(0,0,0,0.3); z-index: 20; pointer-events:none;}
 .pin::after { content:''; position:absolute; top:3px; left:3px; width:4px; height:4px; background:rgba(255,255,255,0.7); border-radius:50%; box-shadow: 0 0 2px rgba(255,255,255,0.8); }
 .pin-blue { background: radial-gradient(circle at 30% 30%, #3b82f6, #1e3a8a); }
@@ -217,9 +195,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .pin-yellow { background: radial-gradient(circle at 30% 30%, #f59e0b, #78350f); }
 .pin-orange { background: radial-gradient(circle at 30% 30%, #f97316, #9a3412); }
 
-/* ========================================= */
-/* ROIKKUVA KYNÄ (KIINNI HAKEMISTOKORTISSA)  */
-/* ========================================= */
 .pen-container {
     position: absolute; right: -45px; top: -15px; 
     display: flex; flex-direction: column; align-items: center;
@@ -238,9 +213,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .pen-text { writing-mode: vertical-rl; text-orientation: mixed; color: #fff; font-family: 'Inter', sans-serif; font-weight: 900; font-size: 0.8rem; letter-spacing: 2px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); transform: rotate(180deg); pointer-events: none; }
 @keyframes penSwing { 0%, 100% { transform: rotate(6deg); } 50% { transform: rotate(-6deg); } }
 
-/* ========================================= */
-/* VÄYLÄTEHTÄVÄN POST-IT LAPPU               */
-/* ========================================= */
 .post-it-note {
     background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(0,0,0,0.02) 100%);
     box-shadow: 3px 8px 15px rgba(0,0,0,0.2), inset -1px -1px 5px rgba(0,0,0,0.05);
@@ -251,9 +223,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     width: 60px; height: 25px; background: rgba(255,255,255,0.6); box-shadow: 0 1px 3px rgba(0,0,0,0.2); z-index: 5;
 }
 
-/* ========================================= */
-/* TULOSKORTTI (KIERREVIHKO SIVU)            */
-/* ========================================= */
 .score-spiral-note {
     background: #fdfaf6;
     background-image: linear-gradient(90deg, transparent 38px, rgba(244, 63, 94, 0.4) 38px, rgba(244, 63, 94, 0.4) 40px, transparent 40px), repeating-linear-gradient(transparent, transparent 23px, #e2e8f0 24px);
@@ -266,9 +235,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     background-size: 100% 24px; background-position: 0 12px; pointer-events:none;
 }
 
-/* ========================================= */
-/* KORTTIEN MITTASUHTEET JA TYYLIT           */
-/* ========================================= */
 .debuff-card { border-top: 8px solid var(--danger); }
 .buff-card { border-top: 8px solid var(--info); }
 .card-type-tag { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; flex-shrink: 0; }
@@ -278,7 +244,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .physical-card h3 { font-size: 0.95rem; font-weight: 900; color: #000; line-height: 1.15; margin-bottom: 6px; text-transform: uppercase; word-break: break-word; hyphens: auto; flex-shrink: 0;}
 .physical-card p { font-size: 0.8rem; color: #111; font-weight: 700; line-height: 1.35; margin-bottom: 4px; flex: 1; padding-right: 4px; overflow-y: auto; }
 
-/* Erikoisluokkien värit */
 .minor_sabotage .card-type-tag { color: #f97316 !important; }
 .minor_sabotage { border-top: 8px solid #f97316 !important; }
 .major_sabotage .card-type-tag { color: #991b1b !important; }
@@ -307,9 +272,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     pointer-events: none; z-index: 10; border-radius: inherit; overflow: hidden;
 }
 
-/* ========================================= */
-/* LOKERIKKO & KANSIOT (BOTTOM NAV)          */
-/* ========================================= */
 .corkboard-pocket-container {
     position: fixed; bottom: 0; left: 0; right: 0; height: 135px; 
     display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
@@ -347,9 +309,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 }
 .pocket-lip:active { background: #334155; }
 
-/* ========================================= */
-/* SKROLLATTAVAT MODAALIT (ASETUKSET YMS)    */
-/* ========================================= */
 .scrollable-modal {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
     background: rgba(0,0,0,0.95); display: none; z-index: 10000; 
@@ -360,9 +319,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     min-height: 100%; display: flex; flex-direction: column;
 }
 
-/* ========================================= */
-/* KANSIO-UI & VÄLILEHDET                    */
-/* ========================================= */
 .shop-binder-modal {
     position: relative; width: 95%; max-width: 500px; margin: 5% auto;
     border-radius: 5px 15px 15px 5px; display: flex; flex-direction: column; overflow: hidden; 
@@ -390,9 +346,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .shop-item-btn.btn-success { background: var(--primary); }
 .shop-item-btn.btn-danger { background: var(--danger); } 
 
-/* ========================================= */
-/* NATIIVI 3D KORTTIVIUHKA (Z-KORJATTU SYVYYS) */
-/* ========================================= */
 .native-carousel-container { 
     display: flex; overflow-x: auto; scroll-snap-type: x mandatory; 
     padding: 40px calc(50vw - 160px); gap: 0px; width: 100vw; height: 800px; 
@@ -417,14 +370,10 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .card-back-premium { background: linear-gradient(135deg, #b45309, #f59e0b); border-radius: 10px; }
 .card-back-icon { font-size: 6rem; opacity: 0.4; }
 
-/* MODAALIT */
 .fullscreen-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; flex-direction: column; align-items:flex-start; justify-content:flex-start; z-index: 10000; padding: 15px; overflow-y: hidden; overscroll-behavior-y: none; }
 .close-modal-btn { background: var(--danger); border: none; border-radius: 50%; width:44px; height:44px; color: #fff; font-size: 1.8rem; font-weight:bold; cursor: pointer; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4); z-index:100; flex-shrink:0;}
 .winner-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: none; align-items: center; justify-content: center; z-index: 10500; padding: 16px; overflow-y:auto; overscroll-behavior: none; overflow-x: hidden; } 
 
-/* ========================================= */
-/* FOTOREALISTINEN PAPERITULOSKORTTI (MODAL) */
-/* ========================================= */
 .paper-score-modal {
     background-color: #fdfaf6; background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px); background-size: 100% 2.2rem;
     font-family: 'Kalam', cursive, sans-serif !important; color: var(--ink-blue) !important; 
