@@ -60,7 +60,6 @@ body {
 
 .hole-cell { width: 380px; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; z-index: 10; }
 
-/* Kortit ja laput on pidettävä 2D:nä ilman transformZ -arvoja! */
 .index-card, .post-it-note, .pinned-card-container, .score-spiral-note { z-index: 5; position: relative; }
 
 .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 10; }
@@ -158,11 +157,10 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .index-card .banner-par { font-size: 1.1rem; }
 .index-card .banner-subtitle { font-size: 0.7rem; }
 
-.hole-cell .post-it-note { width: 280px; margin-bottom: 20px; padding: 15px 20px; font-size: 1.1rem; }
+.hole-cell .post-it-note { width: 280px; margin-bottom: 20px; padding: 15px 20px; font-size: 1.1rem; cursor: zoom-in; }
 .hole-cell .cards-grid-2 { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 340px; }
-.hole-cell .pinned-card-container { margin-bottom: 10px; position:relative;}
+.hole-cell .pinned-card-container { margin-bottom: 10px; position:relative; cursor: zoom-in; }
 
-/* Kortin kiinteät mitat kaikkialla */
 .physical-card {
     background: #fff; border-radius: 10px; width: 140px; height: 196px; padding: 10px; 
     display: flex; flex-direction: column; justify-content: flex-start;
@@ -181,7 +179,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     clip-path: polygon(0% 2%, 5% 0%, 10% 3%, 15% 0%, 20% 2%, 25% 0%, 30% 3%, 35% 0%, 40% 2%, 45% 0%, 50% 3%, 55% 0%, 60% 2%, 65% 0%, 70% 3%, 75% 0%, 80% 2%, 85% 0%, 90% 3%, 95% 0%, 100% 2%, 100% 98%, 95% 100%, 90% 97%, 85% 100%, 80% 98%, 75% 100%, 70% 97%, 65% 100%, 60% 98%, 55% 100%, 50% 97%, 45% 100%, 40% 98%, 35% 100%, 30% 97%, 25% 100%, 20% 98%, 15% 100%, 10% 97%, 5% 100%, 0% 98%);
 }
 
-/* TEIPIT LAPPUIHIN */
 .tape { position: absolute; width: 50px; height: 18px; background: rgba(255,255,255,0.75); box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 10; border-radius: 2px;}
 .tape-tl { top: -2px; left: -10px; transform: rotate(-45deg); }
 .tape-tr { top: -2px; right: -10px; transform: rotate(45deg); }
@@ -227,7 +224,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     position: absolute; right: -45px; top: -15px; 
     display: flex; flex-direction: column; align-items: center;
     transform-origin: top center; animation: penSwing 4s ease-in-out infinite;
-    cursor: pointer; z-index: 40; pointer-events: auto;
+    cursor: pointer; z-index: 100; pointer-events: auto;
 }
 .pen-container:active { transform: scale(0.95); }
 .pen-string { width: 2px; height: 35px; background: #94a3b8; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
@@ -287,7 +284,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .major_sabotage .card-type-tag { color: #991b1b !important; }
 .major_sabotage { border-top: 8px solid #991b1b !important; }
 
-/* Kaupan ja selauksen tiukat mitat, jotta koko on aina 100% sama! */
 .shop-item-wrapper .physical-card { width: 100%; height: 240px !important; min-height: 240px; padding: 12px; }
 
 .premium-card { 
@@ -375,7 +371,6 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .binder-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 25px 100px 55px; position: relative; }
 .binder-swipe-handle { width: 60px; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; margin: 0 auto 10px auto; box-shadow: 0 2px 4px rgba(0,0,0,0.5); flex-shrink: 0; }
 
-/* KANSION VÄLILEHDET */
 .shop-tabs { display: flex; gap: 8px; margin-bottom: 20px; padding-left: 10px; z-index: 20; position: relative; border-bottom: 3px solid rgba(255,255,255,0.2); }
 .shop-tab-btn { background: rgba(0,0,0,0.4); color: #ccc; padding: 14px 18px; border-radius: 12px 12px 0 0; font-weight: 900; font-size: 1rem; border: none; cursor: pointer; flex: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 .shop-tab-btn.active { background: #cbd5e1; color: #111; box-shadow: 0 -2px 10px rgba(0,0,0,0.5); border-bottom: none; transform: translateY(3px); }
