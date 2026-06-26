@@ -19,7 +19,7 @@ let currentHoleIndex = 1;
 let lastPlayedCardTimestamp = Date.now();
 window.gameHistory = []; 
 
-window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
+window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5 };
 window.pendingShopPurchase = null;
 
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
@@ -42,47 +42,13 @@ const insults = [
     "Edes myötätuuli ei pelasta tota räpellystä.", "Jos heittäisit silmät kiinni, menisi varmaan paremmin.",
     "Sun putti on yhtä epävarma kuin Suomen kesä.", "Caddiekin lähti kotiin häpeästä.",
     "Osuithan sä johonkin... nimittäin omaan egoosi.", "Miten voi heittää taaksepäin ohi korista?",
-    "Pelaatko sä tahallasi näin huonosti?", "Toi oli hieno heitto... siis jos maali ois toi koivu.",
-    "Sulla on enemmän puuosumia kuin metsurilla.", "Eikö tän pitänyt olla rento sunnuntailaji?",
-    "Se tunne kun rolleri pysähtyy ekaan käpyyn.", "Älä syytä tuulta, syytä peiliä.",
-    "Uusi kiekko ei korjaa tuota tekniikkaa.", "Bägi maksoi 200€, taidot 0€.",
-    "Haluatko GPS-paikantimen tuolle avaukselle?", "Miten voi kolmesta metristä laittaa alarautaan?",
-    "Tällä vauhdilla ollaan perillä ensi jouluna.", "Fore, rysty, upsi... mikään ei toimi.",
-    "Puiden halailu on erikseen, tää on frisbeegolfia.", "Sun draivi on lyhyempi kuin mun putti.",
-    "Hieno hyzer-flippi! Ai se oli vahinko?", "Voit aina alkaa kerätä postimerkkejä.",
-    "Kato! Se lensi melkein kymmenen metriä!", "Taidat olla radan paras puiden karsija.",
-    "Etsiikö sun kiekko sieniä tuolta ryteiköstä?", "Tuloskortin katsominen masentaa aina.",
-    "Onneksi tyylipisteitä ei lasketa.", "Lajin kalleimmat varusteet, halvimmat heitot.",
-    "Olisiko aika siirtyä e-urheiluun?", "Kiva nähdä, että joku muukin heittää ihan päin honkia.",
-    "Ei se kori sieltä metsästä löydy.", "Pääsitkö edes tiiltä pois tällä kertaa?",
-    "Tuo heitto rikkoi fysiikan lakeja... huonolla tavalla.", "Frisbeegolf ei ole piiloleikkiä kiekon kanssa.",
-    "Puttaaminen on taitolaji. Sä et todistetusti osaa.", "Harmi ettei tyhmyydestä jaeta miinuspisteitä.",
-    "Tänään on selvästi sun 'palauttava' kierros.", "Älä viitsi itkeä, tää on vaan muovia.",
-    "Sulla on draivia, mutta ei suuntaa.", "Hyvä yritys! (Ei oikeasti ollut).",
-    "Joko mennään kotiin? Mulla on nälkä.", "Edes ammattilainen ei selittäisi tuota.",
-    "Näytät ihan siltä, että tietäisit mitä teet.", "Kiekko pelkää sua. Siksi se karkaa pusikkoon.",
-    "Kokeileppa heittää ilman tuota irvistystä.", "Hieno lay-up. Myönnä vaan että lipsahti.",
-    "Sä olet syy miksi kiekoissa pitäisi olla palautusoikeus.", "Voimaa on, mutta älyä ei nimeksikään.",
-    "Tää ei ole pituusheittoa, vaan tarkkuuslaji.", "Kävitkö sä edes lämmittelemässä?",
-    "Taisi mennä vähän grippilokiksi.", "Kori on tuolla päin! Mihin sä oikein tähtäät?",
-    "Edes taikasauva ei pelastaisi tuota tekniikkaa.", "Ootko sä heittänyt koskaan aiemmin?",
-    "Laita silmät kii, ehkä se auttaa.", "Toivottavasti kukaan ei kuvannut tuota.",
-    "Ei edes tuurilla osuisi noin huonosti.", "Sun rysty on heikompi kuin mun isoäidin.",
-    "Ota rennosti, eihän tää oo vakavaa... paitsi sulle.", "Frisbeegolf - laji missä olet surkea.",
-    "Onko sulla kädessä joku asennusvirhe?", "Edes koira ei hakisi tuota kiekkoa.",
-    "Menikö kiekko taas mustikkaan?", "Sulla on lahjoja... johonkin aivan muuhun.",
-    "Toi heitto oli suorastaan traaginen.", "Vielä ehtii vaihtaa harrastusta.",
-    "Puut ovat ystäviä, älä osu jokaiseen.", "Näyttää siltä, että yrität liikaa. Ja epäonnistut.",
-    "Onneks sulla on edes hienot vaatteet.", "Jos voisin piirtää tuloskorttiin itkevän hymiön..."
+    "Pelaatko sä tahallasi näin huonosti?", "Toi oli hieno heitto... siis jos maali ois toi koivu."
 ];
 
 const doodleSVGs = [
     "M 20 70 C 20 90, 80 90, 80 70 C 90 40, 10 40, 20 70 M 20 60 L 10 50 M 35 45 L 30 30 M 65 45 L 70 30 M 80 60 L 90 50 M 40 60 C 45 65, 55 65, 60 60", 
     "M 40 80 C 20 80, 20 50, 40 50 C 45 40, 60 40, 65 50 C 80 50, 90 80, 70 90 C 80 60, 95 30, 70 20 C 50 10, 50 40, 60 60 M 45 65 C 50 70, 60 70, 65 65", 
-    "M 50 80 L 20 40 L 40 40 L 50 20 L 60 40 L 80 40 Z M 35 50 L 45 60 L 55 50", 
-    "M 20 50 C 20 10, 80 10, 80 50 C 80 90, 20 90, 20 50 M 20 30 C 10 20, 20 10, 30 20 M 80 30 C 90 20, 80 10, 70 20 M 40 60 C 50 70, 60 70, 60 60", 
-    "M 40 50 C 20 50, 20 90, 40 90 C 60 90, 60 50, 40 50 M 30 50 C 20 10, 40 10, 40 50 M 50 50 C 40 10, 60 10, 50 50 M 35 70 C 40 75, 45 75, 50 70", 
-    "M 20 80 C 20 40, 80 40, 80 80 Z M 35 60 C 40 65, 45 65, 50 60 M 30 50 C 35 50, 35 45, 30 45 M 70 50 C 65 50, 65 45, 70 45" 
+    "M 50 80 L 20 40 L 40 40 L 50 20 L 60 40 L 80 40 Z M 35 50 L 45 60 L 55 50"
 ];
 
 let deferredPrompt;
@@ -138,26 +104,18 @@ let isRendering = false;
 window.applyBoardTransform = function() {
     if(!boardEl) boardEl = el('corkboard-surface');
     if(boardEl) {
-        // Laitteistokiihdytys päälle, tekee liikkeestä voinpehmeää
         if(boardEl.style.willChange !== 'transform') boardEl.style.willChange = 'transform';
         
-        const vpWidth = window.innerWidth;
-        const vpHeight = window.innerHeight;
-        
-        // Luetaan taulun oikea koko (tai käytetään reilua oletusta)
+        const vpWidth = window.innerWidth; const vpHeight = window.innerHeight;
         const bWidth = parseFloat(boardEl.style.width) || 3000;
         const bHeight = parseFloat(boardEl.style.height) || 3000;
         
-        // Määritetään turvamarginaalit, ettei taulua voi raahata kokonaan ulos ruudusta
-        const marginX = vpWidth * 0.5;
-        const marginY = vpHeight * 0.5;
-        
+        const marginX = vpWidth * 0.5; const marginY = vpHeight * 0.5;
         const minX = vpWidth - (bWidth * boardState.scale) - marginX;
         const maxX = marginX;
         const minY = vpHeight - (bHeight * boardState.scale) - marginY;
         const maxY = marginY;
 
-        // Rajojen pakotus (taulu ei karkaa)
         if (boardState.x > maxX) boardState.x = maxX;
         if (boardState.x < minX) boardState.x = minX;
         if (boardState.y > maxY) boardState.y = maxY;
@@ -176,14 +134,12 @@ window.animateCameraTo = function(tX, tY, tScale, duration=350) {
     function step(time) {
         let p = (time - startT) / duration;
         if (p >= 1) p = 1;
-        let ease = 1 - Math.pow(1 - p, 3); // easeOutCubic
+        let ease = 1 - Math.pow(1 - p, 3);
         boardState.x = sX + (tX - sX) * ease;
         boardState.y = sY + (tY - sY) * ease;
         boardState.scale = sScale + (tScale - sScale) * ease;
         window.applyBoardTransform();
-        
-        if (p < 1) camAnim = requestAnimationFrame(step);
-        else camAnim = null;
+        if (p < 1) camAnim = requestAnimationFrame(step); else camAnim = null;
     }
     camAnim = requestAnimationFrame(step);
 };
@@ -204,9 +160,7 @@ if(vp) {
     vp.addEventListener('touchmove', e => {
         if(!isDraggingBoard) return;
         e.preventDefault(); 
-        
         if(e.touches.length === 1 && lastBoardTouch) {
-            // Suhteutetaan raahausnopeus zoomiin, jotta sormen liike vastaa aina taulun liikettä
             let panSpeed = 1 / Math.max(0.5, boardState.scale);
             boardState.x += (e.touches[0].clientX - lastBoardTouch.x) * panSpeed;
             boardState.y += (e.touches[0].clientY - lastBoardTouch.y) * panSpeed;
@@ -216,36 +170,22 @@ if(vp) {
             let scaleDiff = dist / initialPinchDist;
             let pinchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             let pinchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-            
             boardState.x -= (pinchX - boardState.x) * (scaleDiff - 1);
             boardState.y -= (pinchY - boardState.y) * (scaleDiff - 1);
             boardState.scale *= scaleDiff;
             
-            // Tiukemmat zoom-rajat: ei enää liian kauas!
             if(boardState.scale < 0.35) boardState.scale = 0.35;
             if(boardState.scale > 1.8) boardState.scale = 1.8;
-            
             initialPinchDist = dist;
         }
-
-        if (!isRendering) {
-            isRendering = true;
-            requestAnimationFrame(window.applyBoardTransform);
-        }
+        if (!isRendering) { isRendering = true; requestAnimationFrame(window.applyBoardTransform); }
     }, {passive: false});
 
     vp.addEventListener('touchend', e => {
         if(e.touches.length < 1) {
-            isDraggingBoard = false;
-            lastBoardTouch = null;
-            // Varmistetaan rajat kun sormi nousee ruudulta
-            if (!isRendering) {
-                isRendering = true;
-                requestAnimationFrame(window.applyBoardTransform);
-            }
-        } else if (e.touches.length === 1) {
-            lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        }
+            isDraggingBoard = false; lastBoardTouch = null;
+            if (!isRendering) { isRendering = true; requestAnimationFrame(window.applyBoardTransform); }
+        } else if (e.touches.length === 1) { lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
     }, {passive: true});
 }
 
@@ -260,14 +200,38 @@ window.zoomToHole = function(hIndex) {
     let cellY = 120 + row * 1010; 
     let targetX = (window.innerWidth - 380) / 2 - cellX;
     let targetY = 50 - cellY; 
-    
     window.animateCameraTo(targetX, targetY, 1, 400);
 };
 
-window.zoomToCurrentHole = function() {
-    window.zoomToHole(currentHoleIndex);
+window.zoomToCurrentHole = function() { window.zoomToHole(currentHoleIndex); };
+
+window.showZoomModal = function(html) {
+    html = html.replace(/transform:\s*rotate\([^)]+\);?/g, 'transform: none;');
+    el('zoomModalContent').innerHTML = html;
+    el('zoomModal').style.display = 'flex';
 };
 
+// ==============================================
+// KORTTIEN LAJITTELU JA HINTALOGIIKKA
+// ==============================================
+window.getCardPlayCost = function(cId) {
+    if (cId.startsWith('minor_')) return window.gameSettings.costMinor || 2;
+    if (cId.startsWith('major_')) return window.gameSettings.costMajor || 5;
+    if (cId.startsWith('buff_')) return window.gameSettings.costBuff || 3;
+    return 0; // Monsterit on ilmaisia pelata (mutta kalliita ostaa)
+};
+
+window.getCardSortWeight = function(cId) {
+    if(cId.startsWith('monster_')) return 1;
+    if(cId.startsWith('buff_')) return 2;
+    if(cId.startsWith('major_')) return 3;
+    if(cId.startsWith('minor_')) return 4;
+    return 5;
+};
+
+// ==============================================
+// TAULUN PIIRTÄMINEN
+// ==============================================
 window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     let clickAttr = `onclick="window.zoomToHole(${hIndex})" style="cursor:pointer;"`;
     let html = `<div class="hole-cell" ${clickAttr}>`;
@@ -277,7 +241,9 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     let rot2 = (pseudoRandom(hIndex * 2.2) * 6 - 3).toFixed(1);
     let rot3 = (pseudoRandom(hIndex * 3.3) * 6 - 3).toFixed(1);
 
-    html += `<div class="index-card" style="transform: rotate(${rot1}deg);">`;
+    // Kynän takia z-index on korkea vain aktiivisella väylällä
+    let activeStyle = isActive ? `z-index: 25;` : `z-index: 5;`;
+    html += `<div class="index-card" style="transform: rotate(${rot1}deg); position: relative; ${activeStyle}">`;
     html += `<div class="banner-subtitle">${currentCourse.name}</div><div class="banner-title">VÄYLÄ <span>${hIndex}</span></div><div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>`;
     
     if (isActive && hData.penColor) {
@@ -295,7 +261,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         let bTxt = hData.rule.type === 'bounty' ? `🏆 TEHTÄVÄ` : '🎲 VÄYLÄSÄÄNTÖ';
         let bgCol = hData.color || '#fef08a';
         html += `
-        <div class="post-it-note" style="background:${bgCol}; transform: rotate(${rot2}deg);">
+        <div class="post-it-note" style="background:${bgCol}; transform: rotate(${rot2}deg);" onclick="event.stopPropagation(); window.showZoomModal(this.outerHTML)">
             <div style="font-weight:900; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; color:#666;">📌 ${bTxt}</div>
             <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; color:#111;">${hData.rule.n}</div>
             <div style="font-size: 1.15rem; line-height: 1.4; font-weight:700; color:#222;">${hData.rule.d}</div>
@@ -306,27 +272,25 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     if(playedCards.length > 0) {
         let myCards = [];
         let otherCards = [];
-        
-        playedCards.forEach(pc => {
-            if (pc.target === myName) myCards.push(pc);
-            else otherCards.push(pc);
-        });
+        playedCards.forEach(pc => { if (pc.target === myName) myCards.push(pc); else otherCards.push(pc); });
 
-        // 1. MINUUN KOHDISTUVAT KORTIT (Fyysisinä kortteina YLIMPÄNÄ)
         if (myCards.length > 0) {
             html += `<div style="width: 100%; max-width:340px; margin-bottom: 15px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px;">`;
             myCards.forEach((pc, idx) => {
                 let typeClass = pc.type === 'buff' ? 'buff-card' : 'debuff-card';
                 if(pc.tier === 'premium') typeClass = 'premium-card';
                 let tagTxt = pc.tier === 'premium' ? '💎 PREMIUM' : (pc.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
+                let playCost = window.getCardPlayCost(pc.cardId);
+                let costHtml = playCost > 0 ? `<div style="background:var(--warning); color:#000; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:4px; margin-bottom:4px; width:fit-content;">HINTA: ${playCost} P</div>` : `<div style="background:#22c55e; color:#fff; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:4px; margin-bottom:4px; width:fit-content;">ILMAINEN PELATA</div>`;
                 
                 let cRot = (pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
                 let pinLeft = 50 + (Math.floor(pseudoRandom((hIndex + idx) * 5.5) * 20) - 10);
                 
                 html += `
-                <div class="pinned-card-container" style="transform: rotate(${cRot}deg);">
+                <div class="pinned-card-container" style="transform: rotate(${cRot}deg);" onclick="event.stopPropagation(); window.showZoomModal(this.outerHTML)">
                     <div class="pushpin" style="left: ${pinLeft}%;"></div>
                     <div class="physical-card ${typeClass}">
+                        ${costHtml}
                         <div class="card-type-tag">${tagTxt}</div>
                         <h3>${pc.cardName}</h3><p>${pc.cardDesc}</p>
                         <div style="background:rgba(0,0,0,0.05); padding:4px; border-radius:4px; font-size:0.75rem; text-align:center; font-weight:bold; margin-top:auto;">
@@ -338,18 +302,15 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
             html += `</div>`;
         }
 
-        // 2. MUIDEN PELITAPAHTUMAT (Lapulla omien korttien ALLA)
         if (otherCards.length > 0) {
             let pRot = (pseudoRandom(hIndex * 1.5) * 4 - 2).toFixed(1);
-            html += `<div style="width: 100%; max-width:300px; margin-top: 15px; margin-bottom: 15px; position:relative; background:var(--paper-bg); padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); border-radius:2px; transform: rotate(${pRot}deg);">
+            html += `<div style="width: 100%; max-width:300px; margin-top: 15px; margin-bottom: 15px; position:relative; background:var(--paper-bg); padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); border-radius:2px; transform: rotate(${pRot}deg); cursor:zoom-in;" onclick="event.stopPropagation(); window.showZoomModal(this.outerHTML)">
                         <div class="tape tape-top" style="--rot:-2deg;"></div>
                         <h2 style="color:var(--text-main); font-size:0.95rem; margin-bottom:10px; border-bottom:2px dashed #ccc; padding-bottom:5px; font-family:'Kalam', cursive; text-align:center;">PELITAPAHTUMAT</h2>
                         <div style="display:flex; flex-direction:column; gap:6px;">`;
-            
             otherCards.forEach((pc) => {
                 let typeIcon = pc.type === 'buff' ? '🛡️' : '🚫';
                 let typeColor = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
-                
                 html += `
                 <div style="background:rgba(0,0,0,0.05); padding:6px; border-radius:4px; font-size:0.75rem; border-left: 4px solid ${typeColor};">
                     <b style="font-size:0.85rem;">${typeIcon} ${pc.cardName}</b><br>
@@ -380,7 +341,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     sortedPlayers.forEach((p, i) => {
         let strokes = isHistory && hData.holeResults ? hData.holeResults[p.name] : null;
         let scoreHTML = renderScoreDots(strokes, par);
-
         html += `
         <div class="player-row-paper">
             <span class="paper-name" style="font-size:1.4rem;">${p.name}</span>
@@ -395,20 +355,11 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     if (isHistory) {
         let insultIndex = Math.floor(pseudoRandom(hIndex * 8.8) * insults.length);
         let svgIndex = Math.floor(pseudoRandom(hIndex * 9.9) * doodleSVGs.length);
-        
-        let dText = insults[insultIndex];
-        let dSvg = doodleSVGs[svgIndex];
+        let dText = insults[insultIndex]; let dSvg = doodleSVGs[svgIndex];
         let dRot = -15 + (pseudoRandom(hIndex * 3) * 30);
         let opacityStyle = `opacity: 0.8; transform: rotate(${dRot}deg) scale(1);`;
-        
-        let posRand = pseudoRandom(hIndex * 7);
-        let posCss = "";
-        let offsetX = 160; 
-        let offsetY = 80; 
-        if (posRand < 0.25) posCss = `top: -${offsetY}px; left: -${offsetX}px;`;
-        else if (posRand < 0.5) posCss = `top: -${offsetY}px; right: -${offsetX}px;`;
-        else if (posRand < 0.75) posCss = `bottom: -${offsetY}px; left: -${offsetX}px;`;
-        else posCss = `bottom: -${offsetY}px; right: -${offsetX}px;`;
+        let posRand = pseudoRandom(hIndex * 7); let posCss = ""; let offsetX = 160; let offsetY = 80; 
+        if (posRand < 0.25) posCss = `top: -${offsetY}px; left: -${offsetX}px;`; else if (posRand < 0.5) posCss = `top: -${offsetY}px; right: -${offsetX}px;`; else if (posRand < 0.75) posCss = `bottom: -${offsetY}px; left: -${offsetX}px;`; else posCss = `bottom: -${offsetY}px; right: -${offsetX}px;`;
 
         html += `
         <div class="doodle-drawing" style="${posCss} ${opacityStyle}">
@@ -416,7 +367,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
             <svg class="doodle-svg doodle-path" viewBox="0 0 100 100"><path d="${dSvg}"/></svg>
         </div>`;
     }
-
     html += `</div>`;
     return html;
 };
@@ -424,32 +374,16 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
 window.renderBoard = function() {
     const board = el('corkboard-surface');
     if (!board) return;
+    if (!currentCourse) { board.innerHTML = ''; return; }
+    let totalHoles = currentCourse.pars.length; let cols = Math.min(9, totalHoles); let rows = Math.ceil(totalHoles / cols);
+    let exactWidth = 240 + (cols * 380) + ((cols - 1) * 80); let exactHeight = 240 + (rows * 950) + ((rows - 1) * 60);
     
-    if (!currentCourse) { 
-        board.innerHTML = '';
-        return; 
-    }
-    
-    let totalHoles = currentCourse.pars.length;
-    let cols = Math.min(9, totalHoles);
-    let rows = Math.ceil(totalHoles / cols);
-    
-    let exactWidth = 240 + (cols * 380) + ((cols - 1) * 80);
-    let exactHeight = 240 + (rows * 950) + ((rows - 1) * 60);
-    
-    board.style.width = `${exactWidth}px`;
-    board.style.height = `${exactHeight}px`;
-    board.style.gridTemplateColumns = `repeat(${cols}, 380px)`;
-
-    let html = ``; 
-    window.gameHistory.forEach((h, index) => {
-        html += window.getHoleCellHTML(h, index + 1, false, true);
-    });
+    board.style.width = `${exactWidth}px`; board.style.height = `${exactHeight}px`; board.style.gridTemplateColumns = `repeat(${cols}, 380px)`;
+    let html = ``; window.gameHistory.forEach((h, index) => { html += window.getHoleCellHTML(h, index + 1, false, true); });
     
     if (currentHoleIndex > totalHoles) {
         let sortedPlayers = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
         let winner = sortedPlayers[0] || {name: "Tuntematon", dgScore: 0, score: 0};
-        
         html += `
         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-3deg); background:#fff; padding:50px; box-shadow:15px 30px 60px rgba(0,0,0,0.6); border:2px solid #ccc; z-index:100; text-align:center; min-width:350px; border-radius:4px;">
             <div class="tape tape-top" style="width:150px; top:-10px; height:25px;"></div>
@@ -461,64 +395,18 @@ window.renderBoard = function() {
                 <p style="font-size:1.5rem; font-weight:800; color:var(--warning);">Lopulliset varat: ${winner.score} P</p>
             </div>
         </div>`;
-    } else if (activeHole) {
-        html += window.getHoleCellHTML({
-            rule: activeHole.rule, playedCards: activeHole.playedCards,
-            color: activeHole.color, penColor: activeHole.penColor, players: allPlayers
-        }, currentHoleIndex, true, false);
-    }
-    
+    } else if (activeHole) { html += window.getHoleCellHTML({ rule: activeHole.rule, playedCards: activeHole.playedCards, color: activeHole.color, penColor: activeHole.penColor, players: allPlayers }, currentHoleIndex, true, false); }
     board.innerHTML = html;
 };
 
 window.renderReceipt = function() {
-    if(!allPlayers || allPlayers.length === 0 || !currentCourse) {
-        if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'none';
-        return;
-    }
+    if(!allPlayers || allPlayers.length === 0 || !currentCourse) { if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'none'; return; }
     if(el('receipt-printer-container')) el('receipt-printer-container').style.display = 'flex';
-
-    let renderScoreDots = (strokes, p_par) => {
-        if(!strokes) return '-';
-        let diff = strokes - p_par;
-        let cClass = diff === 0 ? 'even' : (diff < 0 ? 'green' : 'red');
-        if (diff < -1) cClass = 'blue'; 
-        return `<span class="receipt-circle ${cClass}">${strokes}</span>`;
-    };
-
-    let generateHistoryLines = (isMini) => {
-        let html = ``;
-        let startIdx = isMini ? Math.max(0, window.gameHistory.length - 2) : 0;
-        
-        for(let i=startIdx; i<window.gameHistory.length; i++) {
-            let h = window.gameHistory[i];
-            let par = currentCourse.pars ? (currentCourse.pars[i] || 3) : 3;
-            if(!isMini) html += `<div class="r-hole-title">Väylä ${i+1} <span style="color:#666;">(PAR ${par})</span></div>`;
-            if(h.holeResults && !isMini) {
-                for(let pName in h.holeResults) {
-                    html += `<div class="r-row"><span>${pName.substring(0, 12)}</span>${renderScoreDots(h.holeResults[pName], par)}</div>`;
-                }
-            }
-        }
-        return html;
-    };
-
-    let generateTotals = (isMini) => {
-        let html = ``; 
-        let sorted = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore||0) - (b.dgScore||0));
-        sorted.forEach(p => {
-            let dgStr = p.dgScore > 0 ? `+${p.dgScore}` : (p.dgScore === 0 ? 'E' : p.dgScore);
-            let fSize = isMini ? '1.3rem' : '1.8rem'; 
-            html += `<div class="r-row" style="font-size:${fSize}; margin-bottom: 2px;"><span>${p.name.substring(0, isMini?6:12)}</span><span>${dgStr}</span></div>`;
-        });
-        return html;
-    };
-
+    let renderScoreDots = (strokes, p_par) => { if(!strokes) return '-'; let diff = strokes - p_par; let cClass = diff === 0 ? 'even' : (diff < 0 ? 'green' : 'red'); if (diff < -1) cClass = 'blue'; return `<span class="receipt-circle ${cClass}">${strokes}</span>`; };
+    let generateHistoryLines = (isMini) => { let html = ``; let startIdx = isMini ? Math.max(0, window.gameHistory.length - 2) : 0; for(let i=startIdx; i<window.gameHistory.length; i++) { let h = window.gameHistory[i]; let par = currentCourse.pars ? (currentCourse.pars[i] || 3) : 3; if(!isMini) html += `<div class="r-hole-title">Väylä ${i+1} <span style="color:#666;">(PAR ${par})</span></div>`; if(h.holeResults && !isMini) { for(let pName in h.holeResults) { html += `<div class="r-row"><span>${pName.substring(0, 12)}</span>${renderScoreDots(h.holeResults[pName], par)}</div>`; } } } return html; };
+    let generateTotals = (isMini) => { let html = ``; let sorted = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore||0) - (b.dgScore||0)); sorted.forEach(p => { let dgStr = p.dgScore > 0 ? `+${p.dgScore}` : (p.dgScore === 0 ? 'E' : p.dgScore); let fSize = isMini ? '1.3rem' : '1.8rem'; html += `<div class="r-row" style="font-size:${fSize}; margin-bottom: 2px;"><span>${p.name.substring(0, isMini?6:12)}</span><span>${dgStr}</span></div>`; }); return html; };
     if(el('receipt-mini-totals')) el('receipt-mini-totals').innerHTML = generateTotals(true);
-    if(el('receipt-full-content')) {
-        let fullTitle = `<div class="r-title" style="font-size:1.5rem; margin-bottom:15px;">TULOKSET</div>`;
-        el('receipt-full-content').innerHTML = fullTitle + generateHistoryLines(false) + `<div class="r-tot-sec" style="margin-top:10px; border-top: 2px dashed #111; padding-top:10px;">${generateTotals(false)}</div>`;
-    }
+    if(el('receipt-full-content')) { el('receipt-full-content').innerHTML = `<div class="r-title" style="font-size:1.5rem; margin-bottom:15px;">TULOKSET</div>` + generateHistoryLines(false) + `<div class="r-tot-sec" style="margin-top:10px; border-top: 2px dashed #111; padding-top:10px;">${generateTotals(false)}</div>`; }
 };
 
 //==============================================
@@ -527,7 +415,15 @@ window.renderReceipt = function() {
 window.openTargetModal = function(cardId) {
     const cardDef = (window.allCards || []).find(c => c && c.id === cardId);
     if (!cardDef) return;
-    window.pendingCardPlay = { id: cardId, def: cardDef };
+    
+    let cost = window.getCardPlayCost(cardId);
+    const me = (allPlayers || []).find(p => p && p.name === myName);
+    if (cost > 0 && (!me || me.score < cost)) {
+        alert(`Ei riittävästi pelirahaa! Tarvitset ${cost} P pelataksesi tämän kortin.`);
+        return;
+    }
+
+    window.pendingCardPlay = { id: cardId, def: cardDef, cost: cost };
     if(cardDef.type === 'buff') { window.executeCardPlay(myName); return; }
     let opponents = (allPlayers || []).filter(p => p && p.name !== myName);
     if (opponents.length === 1) { window.executeCardPlay(opponents[0].name); return; }
@@ -557,6 +453,11 @@ window.executeCardPlay = function(targetName) {
         me.cards = me.cards.filter(Boolean);
         let actualIndex = me.cards.indexOf(card.id);
         if (actualIndex !== -1) me.cards.splice(actualIndex, 1); 
+        
+        if (card.cost > 0) {
+            me.score -= card.cost;
+            window.showAppleToast(`-${card.cost} P (Kortti)`, '💸');
+        }
     }
     
     let pCards = {};
@@ -574,7 +475,7 @@ window.executeCardPlay = function(targetName) {
     if(activeHole) updates['gameState/activeHole/playedCards'] = window.cleanFirebaseData(pCards); 
     
     update(ref(db), updates);
-    window.logEvent(`${myName} pelasi kortin ${card.def.n} kohteelle ${targetName}.`);
+    window.logEvent(`${myName} pelasi kortin ${card.def.n} kohteelle ${targetName}. (Hinta: ${card.cost} P)`);
     window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, card.def.type === 'buff' ? 'info' : 'debuff');
 };
 
@@ -658,7 +559,6 @@ window.closeShopModal = function() {
 
 window.switchShopTab = function(tab) {
     const modalEl = document.querySelector('#shopModal .shop-binder-modal');
-    
     if (tab === 'buy') {
         window.pendingShopPurchase = null; 
         el('shopBuyArea').style.display = 'block'; el('shopSellArea').style.display = 'none';
@@ -694,6 +594,7 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
                 <div class="shop-item-wrapper">
                     <div class="physical-card premium-card" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
                         <span class="card-price-tag">${item.price} P</span>
+                        <div style="background:#22c55e; color:#fff; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:4px; margin-bottom:4px; width:fit-content;">ILMAINEN PELATA</div>
                         <div class="card-type-tag">💎 KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p>
                         <div style="text-align:center; font-weight:900; font-size:0.75rem; color:#94a3b8; padding-top:10px; margin-top:auto;">🔄 TARKASTELU</div>
                     </div>
@@ -706,6 +607,9 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     let me = (allPlayers || []).find(p => p && p.name === myName);
     let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     
+    // Automaattinen lajittelu kategorioittain
+    myCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
+
     let sellHtml = '';
     if(myCards.length === 0) {
          sellHtml = '<p style="color:var(--text-muted); font-size:1.1rem; text-align:center; padding:20px; font-weight:bold; width:100%;">Kätesi on tyhjä.</p>';
@@ -719,9 +623,13 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let isNormal = cDef.tier === 'normal';
             let sellBtnIcon = isNormal ? '♻️' : '🗑️';
             
+            let playCost = window.getCardPlayCost(cId);
+            let costHtml = playCost > 0 ? `<div style="background:var(--warning); color:#000; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:4px; margin-bottom:4px; width:fit-content;">HINTA: ${playCost} P</div>` : `<div style="background:#22c55e; color:#fff; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:4px; margin-bottom:4px; width:fit-content;">ILMAINEN PELATA</div>`;
+            
             sellHtml += `
             <div class="shop-item-wrapper">
                 <div class="physical-card worn-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer;">
+                    ${costHtml}
                     <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p>
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 TARKASTELU</div>
                 </div>
@@ -757,6 +665,9 @@ window.showHandLimitModal = function(cards) {
     let limit = window.gameSettings.handLimit || 5;
     el('handLimitCount').innerText = `${cards.length} / ${limit}`;
     let html = '';
+    
+    cards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
+    
     cards.forEach(cId => {
         const cDef = (window.allCards || []).find(c => c && c.id === cId);
         if(!cDef) return;
@@ -770,13 +681,56 @@ window.showHandLimitModal = function(cards) {
 };
 
 //==============================================
-// TURVALLINEN KARUSELLI Z-PÄIVITYKSELLÄ
+// TURVALLINEN KARUSELLI Z-PÄIVITYKSELLÄ JA FLIP-LAJITTELULLA
 //==============================================
+window.isFlipping = false;
+window.flippedCards = new Set();
+
 window.flipCard = function(index) {
+    if(window.isFlipping) return;
     const inner = el(`card3d-inner-${index}`);
     if (!inner) return;
-    if(inner.classList.contains('flipped')) inner.classList.remove('flipped');
-    else inner.classList.add('flipped');
+    
+    window.isFlipping = true;
+    let cId = window.carouselCards[index];
+    let isFlippingDown = !window.flippedCards.has(cId);
+    
+    if (isFlippingDown) {
+        window.flippedCards.add(cId);
+        inner.classList.add('flipped');
+    } else {
+        window.flippedCards.delete(cId);
+        inner.classList.remove('flipped');
+    }
+    
+    // Odotetaan CSS-animaation valmistumista, sitten siirretään kortti pakassa vasemmalle
+    setTimeout(() => {
+        let currentMode = window.carouselCurrentMode;
+        if (currentMode === 'hand' || currentMode === 'sell') {
+            window.carouselCards.sort((a,b) => {
+                let fA = window.flippedCards.has(a) ? 1 : 0;
+                let fB = window.flippedCards.has(b) ? 1 : 0;
+                if (fA !== fB) return fB - fA; // Väärinpäin olevat eka (1 vs 0)
+                return window.getCardSortWeight(a) - window.getCardSortWeight(b);
+            });
+            
+            window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
+            window.renderCarousel();
+            window.initNativeCarousel();
+            const container = el('cardCarousel');
+            if(container) container.scrollLeft = (window.carouselCurrentIndex * 320);
+            
+            if (isFlippingDown) {
+                let newInner = el(`card3d-inner-${window.carouselCurrentIndex}`);
+                if (newInner) {
+                    newInner.style.transition = 'none'; 
+                    newInner.classList.add('flipped');
+                    setTimeout(() => { newInner.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'; }, 50);
+                }
+            }
+        }
+        window.isFlipping = false;
+    }, 550); 
 };
 
 window.renderCarousel = function() {
@@ -793,11 +747,16 @@ window.renderCarousel = function() {
         let backClass = cDef.tier === 'premium' ? 'card-back-premium' : (cDef.type === 'buff' ? 'card-back-buff' : 'card-back-sabotage');
         let backIcon = cDef.tier === 'premium' ? '💎' : (cDef.type === 'buff' ? '🛡️' : '🚫');
         
+        let playCost = window.getCardPlayCost(cId);
+        let costHtml = playCost > 0 ? `<div style="background:var(--warning); color:#000; font-weight:900; font-size:0.9rem; padding:4px 8px; border-radius:4px; margin-bottom:8px; width:fit-content; box-shadow:0 2px 4px rgba(0,0,0,0.3);">HINTA: ${playCost} P</div>` : `<div style="background:#22c55e; color:#fff; font-weight:900; font-size:0.9rem; padding:4px 8px; border-radius:4px; margin-bottom:8px; width:fit-content; box-shadow:0 2px 4px rgba(0,0,0,0.3);">ILMAINEN PELATA</div>`;
+        let flippedClass = window.flippedCards.has(cId) ? 'flipped' : '';
+        
         html += `
             <div class="carousel-card-wrapper" id="carousel-wrapper-${i}" onclick="window.flipCard(${i})">
-                <div class="card-3d-inner" id="card3d-inner-${i}">
+                <div class="card-3d-inner ${flippedClass}" id="card3d-inner-${i}">
                     <div class="card-face card-front ${typeClass}">
                         <div style="text-align:left; display:flex; flex-direction:column; height:100%; position:relative; z-index:20;">
+                            ${costHtml}
                             <div class="card-type-tag" style="font-size:1.3rem; margin-bottom:12px;">${tagTxt}</div>
                             <h3 style="font-size:2.4rem; margin-bottom:20px; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
                             <p style="font-size:1.6rem; font-weight:800; line-height:1.4; overflow-y:visible; padding-right:5px;">${cDef.d}</p>
@@ -851,7 +810,9 @@ window.initNativeCarousel = function() {
 window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     if (mode === 'hand' || mode === 'sell') {
         const me = (allPlayers || []).find(p => p && p.name === myName);
+        window.flippedCards = new Set();
         window.carouselCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
+        window.carouselCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
     } else if (mode === 'shop') {
         window.carouselCards = activeHole && activeHole.shop ? (activeHole.shop || []).map(c => c.id) : [];
     } else if (mode === 'gm') { window.carouselCards = (window.allCards || []).map(c => c.id); } 
@@ -865,6 +826,7 @@ window.openCardDetail = function(cId, mode, arg1, arg2, arg3) {
     
     setTimeout(() => {
         window.initNativeCarousel();
+        window.updateCarouselButtons(); 
         const container = el('cardCarousel');
         if(container) container.scrollLeft = (window.carouselCurrentIndex * 320); 
     }, 100);
@@ -973,17 +935,35 @@ window.submitScores = function() {
     let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 3;
     let ptsLose = window.gameSettings.ptsLose !== undefined ? window.gameSettings.ptsLose : 0;
     let ptsPassive = window.gameSettings.ptsPassive !== undefined ? window.gameSettings.ptsPassive : 1;
+    let rewardMajor = window.gameSettings.rewardMajor !== undefined ? window.gameSettings.rewardMajor : 5;
     let limitEnabled = window.gameSettings.handLimitEnabled !== undefined ? window.gameSettings.handLimitEnabled : true;
     let limit = window.gameSettings.handLimit !== undefined ? window.gameSettings.handLimit : 5;
+
+    // Tarkistetaan ketkä olivat ison sabotaasin kohteina
+    let majorTargets = [];
+    if (activeHole && activeHole.playedCards) {
+        Object.values(activeHole.playedCards).forEach(pc => {
+            if (pc && pc.cardId && pc.cardId.startsWith('major_')) {
+                majorTargets.push(pc.target);
+            }
+        });
+    }
 
     nextPlayers.forEach(p => {
         if (!p) return; let res = playerResults[p.name]; if (!res) return; 
         p.dgScore = (parseInt(p.dgScore, 10) || 0) + (res.strokes - par);
         let currentPoints = parseInt(p.score, 10) || 0;
         currentPoints += ptsPassive;
+        
         if (holeWinners.includes(p.name)) { currentPoints += ptsWin; }
         if (res.taskWon) { currentPoints += ptsTask; }
         if (holeLosers.includes(p.name) && minStrokes !== maxStrokes) { currentPoints -= Math.abs(ptsLose); currentPoints = Math.max(0, currentPoints); }
+        
+        // Selätyspalkkio (Iso sabotaasi ja Par tai alle)
+        if (majorTargets.includes(p.name) && res.strokes <= par) {
+            currentPoints += rewardMajor;
+            window.logEvent(`${p.name} selätti ison sabotaasin ja ansaitsi +${rewardMajor} P!`);
+        }
         
         p.score = currentPoints; p.boughtThisHole = false; 
         p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : []; p.cards = p.cards.filter(Boolean);
@@ -1079,7 +1059,7 @@ window.cancelCourse = function() {
 window.resetGame = function() {
     if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos ja peliasetukset palautuvat oletuksiin.")) {
         localStorage.removeItem('friba_browser_mode');
-        const defaultSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
+        const defaultSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5 };
         set(ref(db, 'gameState'), window.cleanFirebaseData({ settings: defaultSettings, players: [], activeHole: null, currentHoleIndex: 1, course: null, history: [] }))
         .then(() => { localStorage.clear(); location.reload(); });
     }
@@ -1089,7 +1069,9 @@ window.saveGameSettings = function() {
     set(ref(db, 'gameState/settings'), {
         shopEnabled: el('gmSetShop').checked, handLimitEnabled: el('gmSetLimitCheck').checked,
         handLimit: parseInt(el('gmSetLimitCount').value, 10) || 5, ptsWin: parseInt(el('gmSetPtsWin').value, 10) || 0,
-        ptsTask: parseInt(el('gmSetPtsTask').value, 10) || 0, ptsLose: parseInt(el('gmSetPtsLose').value, 10) || 0, ptsPassive: window.gameSettings.ptsPassive || 1
+        ptsTask: parseInt(el('gmSetPtsTask').value, 10) || 0, ptsLose: parseInt(el('gmSetPtsLose').value, 10) || 0, ptsPassive: window.gameSettings.ptsPassive || 1,
+        costMinor: parseInt(el('gmSetCostMinor').value, 10) || 2, costMajor: parseInt(el('gmSetCostMajor').value, 10) || 5, 
+        costBuff: parseInt(el('gmSetCostBuff').value, 10) || 3, rewardMajor: parseInt(el('gmSetRewardMajor').value, 10) || 5
     });
     window.showNotification("Asetukset tallennettu!", "info");
     el('settingsModal').style.display = 'none';
@@ -1166,7 +1148,7 @@ onValue(ref(db, 'gameState'), (snap) => {
         return;
     }
 
-    window.gameSettings = data.settings || { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1 };
+    window.gameSettings = data.settings || { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5 };
     window.gameHistory = data.history ? (Array.isArray(data.history) ? data.history : Object.values(data.history)) : [];
 
     if (el('gmSetShop')) el('gmSetShop').checked = window.gameSettings.shopEnabled;
@@ -1175,6 +1157,11 @@ onValue(ref(db, 'gameState'), (snap) => {
     if (el('gmSetPtsWin')) el('gmSetPtsWin').value = window.gameSettings.ptsWin;
     if (el('gmSetPtsTask')) el('gmSetPtsTask').value = window.gameSettings.ptsTask;
     if (el('gmSetPtsLose')) el('gmSetPtsLose').value = window.gameSettings.ptsLose;
+    
+    if (el('gmSetCostMinor')) el('gmSetCostMinor').value = window.gameSettings.costMinor || 2;
+    if (el('gmSetCostMajor')) el('gmSetCostMajor').value = window.gameSettings.costMajor || 5;
+    if (el('gmSetCostBuff')) el('gmSetCostBuff').value = window.gameSettings.costBuff || 3;
+    if (el('gmSetRewardMajor')) el('gmSetRewardMajor').value = window.gameSettings.rewardMajor || 5;
 
     allPlayers = data.players ? (Array.isArray(data.players) ? data.players : Object.values(data.players)) : [];
     activeHole = data.activeHole || null;
