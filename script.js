@@ -19,7 +19,6 @@ let currentHoleIndex = 1;
 let lastPlayedCardTimestamp = Date.now();
 window.gameHistory = []; 
 
-// Oletusasetukset päivitetty optimaalisiksi!
 window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 3, ptsTask: 2, ptsLose: 0, ptsPassive: 2, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5, sellReward: 1 };
 window.pendingShopPurchase = null;
 
@@ -446,17 +445,17 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     });
     html += `</div>`;
     
-    if (isHistory) {
+    // TÄSSÄ LISÄTTY ANIMOITU SOLVAUS VÄYLÄSTÄ 2 ALKAEN
+    if (hIndex >= 2) {
         let insultIndex = Math.floor(pseudoRandom(hIndex * 8.8) * insults.length);
         let svgIndex = Math.floor(pseudoRandom(hIndex * 9.9) * doodleSVGs.length);
         let dText = insults[insultIndex]; let dSvg = doodleSVGs[svgIndex];
         let dRot = -15 + (pseudoRandom(hIndex * 3) * 30);
-        let opacityStyle = `opacity: 0.8; transform: rotate(${dRot}deg) scale(1);`;
         let posRand = pseudoRandom(hIndex * 7); let posCss = ""; let offsetX = 160; let offsetY = 80; 
         if (posRand < 0.25) posCss = `top: -${offsetY}px; left: -${offsetX}px;`; else if (posRand < 0.5) posCss = `top: -${offsetY}px; right: -${offsetX}px;`; else if (posRand < 0.75) posCss = `bottom: -${offsetY}px; left: -${offsetX}px;`; else posCss = `bottom: -${offsetY}px; right: -${offsetX}px;`;
 
         html += `
-        <div class="doodle-drawing" style="${posCss} ${opacityStyle}">
+        <div class="doodle-drawing drawn" style="${posCss} opacity: 0.8; transform: rotate(${dRot}deg) scale(1);">
             <div class="doodle-bubble">${dText}</div>
             <svg class="doodle-svg doodle-path" viewBox="0 0 100 100"><path d="${dSvg}"/></svg>
         </div>`;
@@ -719,7 +718,6 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             if(cDef.tier === 'premium') { typeClass = 'premium-card'; }
             let tagTxt = cDef.tier === 'premium' ? '💎 PREMIUM' : (cDef.type === 'buff' ? '🛡️ HELPOTUS' : '🚫 SABOTAASI');
             let isNormal = cDef.tier === 'normal';
-            let sellReward = window.gameSettings.sellReward !== undefined ? window.gameSettings.sellReward : 1;
             let sellBtnIcon = isNormal ? '♻️' : '🗑️';
             
             let playCost = window.getCardPlayCost(cId);
@@ -1291,7 +1289,6 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.gameSettings = data.settings || { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 3, ptsTask: 2, ptsLose: 0, ptsPassive: 2, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5, sellReward: 1 };
     window.gameHistory = data.history ? (Array.isArray(data.history) ? data.history : Object.values(data.history)) : [];
 
-    // Päivitetään Säännöt-ikkunan luvut dynaamisesti asetuksista
     if(el('infoPtsWin')) el('infoPtsWin').innerText = `${window.gameSettings.ptsWin} P`;
     if(el('infoPtsTask')) el('infoPtsTask').innerText = `${window.gameSettings.ptsTask} P`;
     if(el('infoPtsLose')) el('infoPtsLose').innerText = `${window.gameSettings.ptsLose} P`;
@@ -1299,7 +1296,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     if(el('infoCostMinor')) el('infoCostMinor').innerText = `${window.gameSettings.costMinor || 2} P`;
     if(el('infoCostMajor')) el('infoCostMajor').innerText = `${window.gameSettings.costMajor || 5} P`;
     if(el('infoCostBuff')) el('infoCostBuff').innerText = `${window.gameSettings.costBuff || 3} P`;
-    if(el('infoRewardMajor')) el('infoRewardMajor').innerText = `${window.gameSettings.rewardMajor || 5}`;
+    if(el('infoRewardMajor')) el('infoRewardMajor').innerText = `${window.gameSettings.rewardMajor || 5} P`;
     if(el('infoSellReward')) el('infoSellReward').innerText = `+${window.gameSettings.sellReward !== undefined ? window.gameSettings.sellReward : 1} P`;
 
     if (el('gmSetShop')) el('gmSetShop').checked = window.gameSettings.shopEnabled;
