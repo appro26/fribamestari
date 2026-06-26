@@ -410,3 +410,16 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .notification { animation: slideDown 0.4s cubic-bezier(0.2, 1.2, 0.3, 1), fadeOut 0.4s ease-in 3.5s forwards; }
 @keyframes slideDown { 0% { transform: translateY(-100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
 @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+/* TÄMÄ ON ZOOMAUSMODAALIN KORJATTU ASETTELU */
+#zoomModalContent {
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+#zoomModalContent .post-it-note,
+#zoomModalContent .pinned-card-container {
+    margin: 0 !important;
+}
