@@ -16,7 +16,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=169" />
+    <link rel="stylesheet" href="style.css?v=170" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
@@ -25,7 +25,6 @@
 </head>
 <body class="player-mode">
 
-    <!-- ASETUKSET & OHJEET -->
     <button id="settingsToggleBtn" onclick="window.showModalSafe('settingsModal')" style="position:fixed; top:15px; right:15px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
     <button id="rulesToggleBtn" onclick="window.showModalSafe('rulesModal')" style="position:fixed; top:15px; right:75px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; font-size:1.6rem; cursor:pointer; color:#111;">📖</button>
 
@@ -40,7 +39,6 @@
         </div>
     </div>
 
-    <!-- VAROITUS: LIIKAA KORTTEJA -->
     <div id="handLimitModal" class="winner-overlay" style="z-index: 10005;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align:center;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
@@ -53,7 +51,6 @@
 
     <div id="notificationContainer"></div> 
 
-    <!-- AULA -->
     <div class="container" id="lobbyContainer">
         <div id="identityCard" class="torn-paper" style="text-align: center; margin-top:50px;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
@@ -71,11 +68,9 @@
         </div>
     </div>
 
-    <!-- PELIALUE -->
     <div id="corkboard-viewport" style="display:none;">
         <div id="corkboard-surface">
-            <!-- Sisältö generoidaan dynaamisesti -->
-        </div>
+            </div>
     </div>
 
     <div class="corkboard-pocket-container" id="pocketContainer" style="display:none;">
@@ -106,7 +101,6 @@
         <div class="pocket-lip board-lip-btn" id="boardBtnText" onclick="if(window.zoomToCurrentHole) window.zoomToCurrentHole()">📍 NYKYINEN VÄYLÄ</div>
     </div>
 
-    <!-- SÄÄNNÖT MODAALI -->
     <div id="rulesModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -129,7 +123,7 @@
 
                     <h3 style="color:var(--warning); margin-bottom:10px; font-size:1.3rem; text-transform:uppercase;">Extra Bonukset</h3>
                     <ul style="margin-left:20px; margin-bottom:20px;">
-                        <li>Birdie-Bonus (Tulos Par -1 tai parempi): <b style="color:var(--primary);">+2 P</b> extraa!</li>
+                        <li>Birdie-Allianssi (Kaikki ryhmästä heittävät alle Parin): KAIKKI saavat <b style="color:var(--primary);">+2 P</b> extraa!</li>
                     </ul>
 
                     <h3 style="color:var(--warning); margin-bottom:10px; font-size:1.3rem; text-transform:uppercase;">Korttien pelaaminen</h3>
@@ -138,11 +132,11 @@
                         <li>Pieni Sabotaasi (Taso 1) maksaa: <b id="infoCostMinor">2 P</b></li>
                         <li>Iso Sabotaasi (Taso 2) maksaa: <b id="infoCostMajor">5 P</b></li>
                         <li>Helpotuksen peluu maksaa: <b id="infoCostBuff">3 P</b></li>
-                        <li style="color:#fca5a5; margin-top:5px;">Kaupan Premium-kortit (💎) ovat ilmaisia pelata.</li>
+                        <li style="color:#fca5a5; margin-top:5px;">Kaupan Premium-kortit (💎) ovat ilmaisia pelata, mutta ne on ostettu erikseen.</li>
                     </ul>
 
                     <h3 style="color:var(--warning); margin-bottom:10px; font-size:1.3rem; text-transform:uppercase;">Selätyspalkkio</h3>
-                    <p style="margin-bottom:20px;">Jos vastustaja pelaa sinuun Ison Sabotaasin, saat tuloksesta (PAR tai alle) <b>Selätyspalkkion</b> kortin vaikeusasteen mukaan:<br>⭐ = 3 P | ⭐⭐ = 5 P | ⭐⭐⭐ = 8 P!</p>
+                    <p style="margin-bottom:20px;">Jos vastustaja pelaa sinuun Ison Sabotaasin (Taso 2), saat väylän tuloksesta (PAR tai alle) <b>Selätyspalkkion</b> kortin vaikeusasteen mukaan:<br>⭐ = 3 P | ⭐⭐ = 5 P | ⭐⭐⭐ = 8 P!</p>
 
                     <h3 style="color:var(--warning); margin-bottom:10px; font-size:1.3rem; text-transform:uppercase;">Korttien myynti</h3>
                     <p>Normaalitason (Taso 1 & 2) kortteja voi aina myydä pois kädestä saadakseen takaisin <b id="infoSellReward">+1 P</b>. Premium-kortin hävittämisestä ei saa pisteitä.</p>
@@ -154,7 +148,6 @@
         </div>
     </div>
 
-    <!-- ASETUKSET MODAALI -->
     <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -248,9 +241,11 @@
                     <button class="btn btn-warning" style="width:auto; padding:0 20px; font-size:1.1rem;" onclick="if(window.gmSetRule) { window.gmSetRule(); document.getElementById('settingsModal').style.display='none';}">ASETA</button>
                 </div>
 
+                <h2 style="color:#cbd5e1; font-size:1.1rem;">Pisteloki (Tulot & Menot)</h2>
+                <div id="adminScoreLog" class="log-box" style="margin-bottom:20px;"></div>
+
                 <h2 style="color:#cbd5e1; font-size:1.1rem;">Tapahtumalokit</h2>
                 <div id="adminEventLog" class="log-box" style="margin-bottom:15px;"></div>
-                <div id="adminScoreLog" class="log-box"></div>
                 
                 <button class="btn btn-danger" style="margin-top: 40px; padding:20px; font-size:1.2rem;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI (WIPE)</button>
 
@@ -259,7 +254,6 @@
         </div>
     </div>
 
-    <!-- KORTTIKIRJASTO MODAALI -->
     <div id="cardLibraryModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -271,15 +265,13 @@
                 <button class="btn btn-success" style="margin-bottom:25px; padding:18px; font-size:1.1rem;" onclick="window.showModalSafe('createCardModal')">➕ LUO UUSI KORTTI</button>
                 
                 <div id="cardLibraryContainer">
-                    <!-- Kortit renderöidään tänne script.js puolelta -->
-                </div>
+                    </div>
                 
                 <button class="btn btn-secondary" style="margin-top: 20px; padding:20px; font-size:1.2rem; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3);" onclick="document.getElementById('cardLibraryModal').style.display='none'">SULJE KIRJASTO</button>
             </div>
         </div>
     </div>
 
-    <!-- UUSI KORTTI MODAALI -->
     <div id="createCardModal" class="scrollable-modal" style="z-index:10500;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -306,9 +298,9 @@
                     <div id="newCardDiffContainer" style="display:none; margin-top:10px;">
                         <label style="font-weight:bold; margin-bottom:5px; display:block; color:var(--warning);">Vaikeusaste (Taso 2):</label>
                         <select id="newCardDiff" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
-                            <option value="1">⭐ Helppo (3 P Palkkio)</option>
-                            <option value="2">⭐⭐ Vaikea (5 P Palkkio)</option>
-                            <option value="3">⭐⭐⭐ HC (8 P Palkkio)</option>
+                            <option value="1">⭐ Helppo</option>
+                            <option value="2">⭐⭐ Vaikea</option>
+                            <option value="3">⭐⭐⭐ HC (Hardcore)</option>
                         </select>
                     </div>
 
@@ -401,6 +393,11 @@
         <div class="card glass-card" style="width: 100%; max-width: 400px; border: 4px solid var(--danger);">
             <h2 style="color:var(--text-main);">Valitse sabotaasin kohde</h2>
             <p id="targetCardName" style="color: var(--danger); font-weight: 900; margin-bottom: 20px; font-size: 1.5rem; text-align:center; text-transform:uppercase; line-height:1.2;"></p>
+            
+            <div id="targetAllContainer" style="display:none; margin-bottom:15px; padding-bottom:15px; border-bottom:2px dashed rgba(0,0,0,0.2);">
+                <button class="btn btn-warning target-btn glass-card" style="width:100%; padding:20px; border-radius:12px; font-weight:900; font-size:1.3rem; text-align:center; box-shadow: 0 4px 15px rgba(245,158,11,0.4); border: 3px solid #000;" onclick="window.executeCardPlay('KAIKKI VASTUSTAJAT')">KAIKKI VASTUSTAJAT</button>
+            </div>
+
             <div id="targetPlayerList" style="margin-bottom: 20px;"></div>
             <button class="btn btn-secondary glass-card" onclick="document.getElementById('targetModal').style.display='none'">PERUUTA</button>
         </div>
@@ -410,7 +407,7 @@
         <div id="zoomModalContent"></div>
     </div>
 
-    <script src="tasks.js?v=169"></script>
-    <script type="module" src="script.js?v=169"></script>
+    <script src="tasks.js?v=170"></script>
+    <script type="module" src="script.js?v=170"></script>
 </body>
 </html>
