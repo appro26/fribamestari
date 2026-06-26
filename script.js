@@ -62,7 +62,7 @@ window.addEventListener('load', () => {
 window.addEventListener('popstate', (e) => {
     const modals = [
         'cardDetailModal', 'targetModal', 'scoreModal', 'gmGiveCardModal',
-        'receiptModal', 'zoomModal', 'handLimitModal', 'shopModal', 'settingsModal', 'courseModal'
+        'receiptModal', 'zoomModal', 'handLimitModal', 'shopModal', 'settingsModal', 'courseModal', 'rulesModal'
     ];
     let closedAny = false;
     for (let i = 0; i < modals.length; i++) {
@@ -222,7 +222,6 @@ if(vp) {
     }, {passive: true});
 }
 
-// Kameran keskityskoordinaatteja säädetty niin, että asettuu enemmän vasemmalle ja ylemmäs
 window.zoomToHole = function(hIndex) {
     if(!currentCourse || !currentCourse.pars) return;
     let totalHoles = currentCourse.pars.length;
@@ -243,7 +242,6 @@ window.zoomToCurrentHole = function() { window.zoomToHole(currentHoleIndex); };
 
 window.showZoomModal = function(html) {
     html = html.replace(/transform:\s*rotate\([^)]+\);?/g, 'transform: none;');
-    // Luvut on säädetty niin, että elementit mahtuvat aina nätisti näyttöön.
     let scaleVal = Math.min(1.15, (window.innerWidth * 0.9) / 320);
     el('zoomModalContent').innerHTML = html;
     el('zoomModalContent').style.transform = `scale(${scaleVal})`;
@@ -255,20 +253,25 @@ window.showZoomModal = function(html) {
 // ==============================================
 let swipeTouchY = 0;
 let swipeContentEl = null;
+let initialScrollTop = 0;
+
 window.addEventListener('touchstart', e => {
-    if (e.target.closest('.scrollable-modal') || e.target.closest('.shop-binder-modal')) {
+    let el = e.target.closest('.scrollable-modal-content') || e.target.closest('.binder-content');
+    if (el) {
         swipeTouchY = e.touches[0].clientY;
-        swipeContentEl = e.target.closest('.binder-content') || e.target.closest('.scrollable-modal-content') || e.target.closest('.scrollable-modal');
+        swipeContentEl = el;
+        initialScrollTop = el.scrollTop; 
     }
 }, {passive:true});
 
 window.addEventListener('touchend', e => {
-    if (swipeTouchY > 0) {
+    if (swipeTouchY > 0 && swipeContentEl) {
         let endY = e.changedTouches[0].clientY;
-        let isAtTop = swipeContentEl ? swipeContentEl.scrollTop <= 5 : true;
-        if (endY - swipeTouchY > 100 && isAtTop) {
+        // Sulkee kansion vain jos se oli aloittaessa skrollattu ylös asti
+        if (initialScrollTop <= 5 && swipeContentEl.scrollTop <= 5 && (endY - swipeTouchY > 120)) {
             if(el('shopModal') && el('shopModal').style.display !== 'none') { window.closeShopModal(); }
             else if(el('settingsModal') && el('settingsModal').style.display !== 'none') { el('settingsModal').style.display='none'; }
+            else if(el('rulesModal') && el('rulesModal').style.display !== 'none') { el('rulesModal').style.display='none'; }
         }
         swipeTouchY = 0;
     }
@@ -290,6 +293,16 @@ window.getCardSortWeight = function(cId) {
     if(cId.startsWith('major_')) return 3;
     if(cId.startsWith('minor_')) return 4;
     return 5;
+};
+
+window.getCardDesc = function(cDef, cId) {
+    let desc = cDef.d;
+    // Lisätään isoihin sabotaaseihin aina dynaamisesti selätyspalkkion ohjeteksti
+    if (cId && cId.startsWith('major_')) {
+        let rew = window.gameSettings.rewardMajor || 5;
+        desc += `<br><br><b style="color:var(--warning);">SELÄTYSPALKKIO:</b> Jos suorittaja pelaa tuloksen PAR tai alle, hän tienaa ${rew} P!`;
+    }
+    return desc;
 };
 
 // ==============================================
@@ -321,7 +334,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     html += `<div class="index-card" style="transform: rotate(${rot1}deg); position: relative; ${activeStyle}">`;
     html += `<div class="banner-subtitle">${currentCourse.name}</div><div class="banner-title">VÄYLÄ <span>${hIndex}</span></div><div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>`;
     
-    // Tässä kutsutaan ohjatusti ikkunan avaavaa funktiota, ei safeModalia suoraan!
     if (isActive && hData.penColor) {
         html += `
         <div class="pen-container" onclick="event.stopPropagation(); window.openScoreModal();">
@@ -364,6 +376,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                 
                 let encodedBy = pc.by.replace(/"/g, '&quot;');
                 let encodedTarget = pc.target.replace(/"/g, '&quot;');
+                let descHtml = window.getCardDesc({d: pc.cardDesc}, pc.cardId);
                 
                 html += `
                 <div class="pinned-card-container" style="transform: rotate(${cRot}deg);" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
@@ -371,7 +384,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                     <div class="physical-card ${typeClass}">
                         ${costHtml}
                         <div class="card-type-tag">${tagTxt}</div>
-                        <h3>${pc.cardName}</h3><p>${pc.cardDesc}</p>
+                        <h3>${pc.cardName}</h3><p>${descHtml}</p>
                         <div style="background:rgba(0,0,0,0.05); padding:4px; border-radius:4px; font-size:0.75rem; text-align:center; font-weight:bold; margin-top:auto;">
                             Kohteelle: Sinuun!<br><span style="font-weight:normal;">(${pc.by})</span>
                         </div>
@@ -671,13 +684,14 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? 'OSTA ETU' : 'EI VARAA');
             let btnClass = canAfford && !boughtThisHole ? 'btn-warning' : 'btn-secondary';
             let dis = (!canAfford || boughtThisHole) ? 'disabled' : '';
+            let descHtml = window.getCardDesc({d: item.d}, item.id);
             
             html += `
                 <div class="shop-item-wrapper">
                     <div class="physical-card premium-card" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
                         <span class="card-price-tag">${item.price} P</span>
                         <div style="background:#22c55e; color:#fff; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:4px; margin-bottom:4px; width:fit-content;">ILMAINEN PELATA</div>
-                        <div class="card-type-tag">💎 KAUPPA</div><h3>${item.n}</h3><p>${item.d}</p>
+                        <div class="card-type-tag">💎 KAUPPA</div><h3>${item.n}</h3><p>${descHtml}</p>
                         <div style="text-align:center; font-weight:900; font-size:0.75rem; color:#94a3b8; padding-top:10px; margin-top:auto;">🔄 TARKASTELU</div>
                     </div>
                     <button class="shop-item-btn ${btnClass}" ${dis} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
@@ -708,14 +722,14 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let canAffordPlay = myPoints >= playCost;
             let playBtnClass = canAffordPlay ? 'btn-success' : 'btn-secondary';
             let playDisabled = canAffordPlay ? '' : 'disabled';
-            
             let costHtml = playCost > 0 ? `<div style="background:var(--warning); color:#000; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:4px; margin-bottom:4px; width:fit-content;">HINTA: ${playCost} P</div>` : `<div style="background:#22c55e; color:#fff; font-weight:900; font-size:0.75rem; padding:2px 6px; border-radius:4px; margin-bottom:4px; width:fit-content;">ILMAINEN PELATA</div>`;
+            let descHtml = window.getCardDesc({d: cDef.d}, cId);
             
             sellHtml += `
             <div class="shop-item-wrapper">
                 <div class="physical-card worn-card ${typeClass}" onclick="window.openCardDetail('${cId}', 'sell')" style="cursor:pointer;">
                     ${costHtml}
-                    <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${cDef.d}</p>
+                    <div class="card-type-tag">${tagTxt}</div><h3>${cDef.n}</h3><p>${descHtml}</p>
                     <div style="text-align:center; font-weight:900; font-size:0.75rem; color:var(--text-muted); margin-top:auto; padding-top:10px;">🔄 TARKASTELU</div>
                 </div>
                 <div style="display:flex; gap:5px;">
@@ -795,14 +809,12 @@ window.flipCard = function(index) {
             let targetCardIdToFocus = null;
 
             if (isFlippingDown) {
-                // Etsi seuraava avoin kortti oikealta
                 for (let i = index + 1; i < window.carouselCards.length; i++) {
                     if (!window.flippedCards.has(window.carouselCards[i])) {
                         targetCardIdToFocus = window.carouselCards[i];
                         break;
                     }
                 }
-                // Jos ei ollut, katsotaan vasemmalle
                 if (!targetCardIdToFocus) {
                     for (let i = index - 1; i >= 0; i--) {
                          if (!window.flippedCards.has(window.carouselCards[i])) {
@@ -832,19 +844,9 @@ window.flipCard = function(index) {
             window.initNativeCarousel();
             const container = el('cardCarousel');
             if(container) container.scrollLeft = (window.carouselCurrentIndex * 320);
-            
-            let movedFlippedIndex = window.carouselCards.indexOf(cId);
-            if (isFlippingDown && movedFlippedIndex !== -1) {
-                let newInner = el(`card3d-inner-${movedFlippedIndex}`);
-                if (newInner) {
-                    newInner.style.transition = 'none'; 
-                    newInner.classList.add('flipped');
-                    setTimeout(() => { newInner.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'; }, 50);
-                }
-            }
         }
         window.isFlipping = false;
-    }, 550); 
+    }, 300); // Nopeutettu korttien vaihto
 };
 
 window.renderCarousel = function() {
@@ -864,6 +866,7 @@ window.renderCarousel = function() {
         let playCost = window.getCardPlayCost(cId);
         let costHtml = playCost > 0 ? `<div style="background:var(--warning); color:#000; font-weight:900; font-size:0.9rem; padding:4px 8px; border-radius:4px; margin-bottom:8px; width:fit-content; box-shadow:0 2px 4px rgba(0,0,0,0.3);">HINTA: ${playCost} P</div>` : `<div style="background:#22c55e; color:#fff; font-weight:900; font-size:0.9rem; padding:4px 8px; border-radius:4px; margin-bottom:8px; width:fit-content; box-shadow:0 2px 4px rgba(0,0,0,0.3);">ILMAINEN PELATA</div>`;
         let flippedClass = window.flippedCards.has(cId) ? 'flipped' : '';
+        let descHtml = window.getCardDesc({d: cDef.d}, cId);
         
         html += `
             <div class="carousel-card-wrapper" id="carousel-wrapper-${i}" onclick="window.flipCard(${i})">
@@ -873,7 +876,7 @@ window.renderCarousel = function() {
                             ${costHtml}
                             <div class="card-type-tag" style="font-size:1.3rem; margin-bottom:12px;">${tagTxt}</div>
                             <h3 style="font-size:2.4rem; margin-bottom:20px; word-break:break-word; hyphens:auto; line-height:1.1;">${cDef.n}</h3>
-                            <p style="font-size:1.6rem; font-weight:800; line-height:1.4; overflow-y:visible; padding-right:5px;">${cDef.d}</p>
+                            <p style="font-size:1.6rem; font-weight:800; line-height:1.4; overflow-y:visible; padding-right:5px;">${descHtml}</p>
                         </div>
                     </div>
                     <div class="card-face card-back ${backClass}">
@@ -1268,12 +1271,23 @@ onValue(ref(db, 'gameState'), (snap) => {
         if(el('lobbyContainer')) el('lobbyContainer').style.display = 'block';
         if(el('corkboard-viewport')) el('corkboard-viewport').style.display = 'none';
         if(el('settingsToggleBtn')) el('settingsToggleBtn').style.display = 'none';
+        if(el('rulesToggleBtn')) el('rulesToggleBtn').style.display = 'none';
         if(el('pocketContainer')) el('pocketContainer').style.display = 'none';
         return;
     }
 
     window.gameSettings = data.settings || { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 2, ptsTask: 3, ptsLose: 0, ptsPassive: 1, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5 };
     window.gameHistory = data.history ? (Array.isArray(data.history) ? data.history : Object.values(data.history)) : [];
+
+    // Ladataan ohjemodaalin tiedot automaattisesti asetuksista
+    if(el('infoPtsWin')) el('infoPtsWin').innerText = `${window.gameSettings.ptsWin} P`;
+    if(el('infoPtsTask')) el('infoPtsTask').innerText = `${window.gameSettings.ptsTask} P`;
+    if(el('infoPtsLose')) el('infoPtsLose').innerText = `${window.gameSettings.ptsLose} P`;
+    if(el('infoPtsPass')) el('infoPtsPass').innerText = `${window.gameSettings.ptsPassive} P`;
+    if(el('infoCostMinor')) el('infoCostMinor').innerText = `${window.gameSettings.costMinor || 2} P`;
+    if(el('infoCostMajor')) el('infoCostMajor').innerText = `${window.gameSettings.costMajor || 5} P`;
+    if(el('infoCostBuff')) el('infoCostBuff').innerText = `${window.gameSettings.costBuff || 3} P`;
+    if(el('infoRewardMajor')) el('infoRewardMajor').innerText = `${window.gameSettings.rewardMajor || 5}`;
 
     if (el('gmSetShop')) el('gmSetShop').checked = window.gameSettings.shopEnabled;
     if (el('gmSetLimitCheck')) el('gmSetLimitCheck').checked = window.gameSettings.handLimitEnabled;
@@ -1299,6 +1313,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     const corkboardViewport = el('corkboard-viewport');
     const gameSetupArea = el('gameSetupArea');
     const btnSettings = el('settingsToggleBtn');
+    const btnRules = el('rulesToggleBtn');
     const pocket = el('pocketContainer');
     
     if (myName) {
@@ -1307,11 +1322,13 @@ onValue(ref(db, 'gameState'), (snap) => {
             if(gameSetupArea) gameSetupArea.style.display = 'block';
             if(corkboardViewport) corkboardViewport.style.display = 'none';
             if(btnSettings) btnSettings.style.display = 'flex'; 
+            if(btnRules) btnRules.style.display = 'none'; 
             if(pocket) pocket.style.display = 'none';
         } else {
             if(lobbyContainer) lobbyContainer.style.display = 'none';
             if(corkboardViewport) corkboardViewport.style.display = 'block';
             if(btnSettings) btnSettings.style.display = 'flex';
+            if(btnRules) btnRules.style.display = 'flex';
             if(pocket) pocket.style.display = 'flex';
         }
     } else {
@@ -1319,6 +1336,7 @@ onValue(ref(db, 'gameState'), (snap) => {
         if(gameSetupArea) gameSetupArea.style.display = 'none';
         if(corkboardViewport) corkboardViewport.style.display = 'none';
         if(btnSettings) btnSettings.style.display = 'none';
+        if(btnRules) btnRules.style.display = 'none';
         if(pocket) pocket.style.display = 'none';
     }
 
