@@ -155,7 +155,6 @@ window.zoomToHole = function(hIndex) {
     let targetX = (window.innerWidth - 380) / 2 - cellX; 
     let targetY = 60 - cellY; 
     
-    // Suojataan errorilta, jos funktiota kutsutaan ennen latausta
     if(typeof window.animateCameraTo === 'function') {
         window.animateCameraTo(targetX, targetY, 1, 400);
     }
@@ -1084,7 +1083,7 @@ window.updateCarouselButtons = function() {
 };
 
 //==============================================
-// TULOSTEN SYÖTTÖ & PELIN KULKU
+// TULOSTEN SYÖTTÖ & PELIN KULKU (TÄYDELLINEN LOGIIKKA)
 //==============================================
 window.changeScore = function(safeId, par, delta) {
     let input = el(`scoreInput_${safeId}`);
