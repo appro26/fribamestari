@@ -86,6 +86,7 @@ window.drawFromDeck = function(type, count) {
             if (type === 'normal' || type === 'premium') {
                 let available = window.allCards.filter(c => c.tier === type).map(c => c.id);
                 
+                // SKANNATAAN KAIKKI PELAAJAT JA KAUPAT
                 let inUse = new Set();
                 allPlayers.forEach(p => { 
                     if(p.cards) p.cards.forEach(c => {if(c) inUse.add(c)}); 
@@ -95,8 +96,9 @@ window.drawFromDeck = function(type, count) {
                     Object.values(activeHole.shop).forEach(sArr => { sArr.forEach(c => {if(c && c.id) inUse.add(c.id)}); });
                 }
                 
+                // POISTETAAN KÄYTÖSSÄ OLEVAT KORTIT POTISTA
                 let filtered = available.filter(id => !inUse.has(id));
-                if(filtered.length === 0) filtered = available; // Failsafe
+                if(filtered.length === 0) filtered = available; // Failsafe jos koko pakka on oikeasti loppu
                 
                 deck = filtered.sort(() => 0.5 - Math.random());
             } else if (type === 'rules') {
@@ -175,7 +177,7 @@ window.zoomToHole = function(hIndex) {
     let cellY = 120 + row * 1010; 
     
     let targetX = (window.innerWidth - 380) / 2 - cellX; 
-    let targetY = -40 - cellY; // Kamera korjattu vielä ylemmäs ruudulla
+    let targetY = 120 - cellY; // MUUTETTU: 120px marginaali ylhäältä, kamera on NYT YLHÄÄLLÄ!
     
     if(typeof window.animateCameraTo === 'function') {
         window.animateCameraTo(targetX, targetY, 1, 400);
@@ -541,6 +543,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         if (worstPlayers.length === 1) {
             dText = rawInsult.replace(/\[Pelaaja\]/g, worstPlayers[0]);
         } else {
+            // Jos tasapeli, poistetaan Pelaaja-tagi pilkkuineen ja lisätään Tasapeli-alku
             dText = rawInsult.replace(/\[Pelaaja\],\s*/g, '').replace(/\[Pelaaja\]\s*/g, '').replace(/\[Pelaaja\]/g, '');
             dText = "Tasapeli pohjalla! " + dText.charAt(0).toUpperCase() + dText.slice(1);
         }
@@ -806,7 +809,6 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
         
         me.cards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : []; me.cards.push(idStr);
         
-        // Puhdistetaan varaus jos tämä ostettiin
         if (me.reservedCardObj && me.reservedCardObj.id === idStr) me.reservedCardObj = null;
 
         update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers), 'gameState/activeHole/shop': window.cleanFirebaseData(nextShopAll) });
@@ -876,7 +878,6 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
             let pSize = cLen > 100 ? '0.65rem' : '0.85rem';
             let pLineHeight = cLen > 100 ? '1.15' : '1.35';
             
-            // Varausnapin logiikka lisätty kortin alapuolelle
             html += `
                 <div class="shop-item-wrapper">
                     <div class="physical-card premium-card" style="height: 260px; min-height: 260px;" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
@@ -1420,16 +1421,16 @@ window.submitScores = function() {
         p.dgScore = (parseInt(p.dgScore, 10) || 0) + (res.strokes - par);
         
         if (p.reservedCardObj) {
-            currentPoints -= 1; breakdown.push(`Varausmaksu (-${p.reservedCardObj.n}): -1P`);
+            currentPoints -= 1; breakdown.push(`Varausmaksu: -1 P`);
         }
 
         if (!res.denyPassive) {
-            currentPoints += ptsPassive; breakdown.push(`Passiivinen tulo: +${ptsPassive}P`);
+            currentPoints += ptsPassive; breakdown.push(`Passiivinen tulo: +${ptsPassive} P`);
         } else {
             window.logEvent(`${p.name} menetti passiivisen tulon sabotaasin takia.`);
         }
         
-        if (allGotBirdie) { currentPoints += 2; breakdown.push(`Birdie-Allianssi: +2P`); }
+        if (allGotBirdie) { currentPoints += 2; breakdown.push(`Birdie-Allianssi: +2 P`); }
 
         if (holeWinners.includes(p.name)) {
             if (!res.denyWin) {
@@ -1437,7 +1438,7 @@ window.submitScores = function() {
                 actualWinPts = Math.max(1, actualWinPts);
                 if (res.doubleWin) actualWinPts *= 2;
                 
-                currentPoints += actualWinPts; breakdown.push(`Väylävoitto: +${actualWinPts}P`);
+                currentPoints += actualWinPts; breakdown.push(`Väylävoitto: +${actualWinPts} P`);
             } else {
                 window.logEvent(`${p.name} voitti, mutta kortti epäsi voittopisteet!`);
             }
@@ -1446,7 +1447,7 @@ window.submitScores = function() {
         if (res.taskWon) { 
             if (!res.denyTask) {
                 let actualTaskPts = res.doubleTask ? (ptsTask * 2) : ptsTask;
-                currentPoints += actualTaskPts; breakdown.push(`Tehtävävoitto: +${actualTaskPts}P`);
+                currentPoints += actualTaskPts; breakdown.push(`Tehtävävoitto: +${actualTaskPts} P`);
             } else {
                 window.logEvent(`${p.name} suoritti tehtävän, mutta pisteet evättiin!`);
             }
@@ -1458,11 +1459,11 @@ window.submitScores = function() {
         
         if (res.majorDefeated && res.strokes <= par) {
             let rew = res.majorDefeated.diff === 3 ? 8 : (res.majorDefeated.diff === 2 ? 5 : 3);
-            currentPoints += rew; breakdown.push(`Selätyspalkkio: +${rew}P`);
+            currentPoints += rew; breakdown.push(`Selätyspalkkio: +${rew} P`);
         }
 
-        if (res.moneyMod > 0) { currentPoints += res.moneyMod; breakdown.push(`Kortin tuoma bonus: +${res.moneyMod}P`); }
-        if (res.moneyMod < 0) { currentPoints += res.moneyMod; breakdown.push(`Kortin tuoma sakko: ${res.moneyMod}P`); }
+        if (res.moneyMod > 0) { currentPoints += res.moneyMod; breakdown.push(`Kortin tuoma bonus: +${res.moneyMod} P`); }
+        if (res.moneyMod < 0) { currentPoints += res.moneyMod; breakdown.push(`Kortin tuoma sakko: ${res.moneyMod} P`); }
         
         p.score = currentPoints; 
         p.boughtThisHole = false; 
@@ -1511,7 +1512,6 @@ window.submitScores = function() {
         let sIds = window.drawFromDeck('premium', shopCardCount);
         let pShop = sIds.map(id => window.allCards.find(c => c.id === id)).filter(Boolean);
         
-        // Pidetään varattu kortti myös kaupassa tallessa
         if (p.reservedCardObj) { pShop[0] = p.reservedCardObj; }
         
         personalizedShop[p.name] = pShop;
@@ -1773,7 +1773,6 @@ window.logScore = function(playerName, delta, reason) { push(ref(db, 'gameState/
 
 window.updateIdentityUI = function() { if(el('identityCard')) { el('identityCard').style.display = myName ? 'none' : 'block'; } };
 
-// PISTEPÄIVITYKSET YLÄREUNAAN TULEVAT TÄTÄ KAUTTA
 window.showNotification = function(message, type = 'info') { 
     const container = el('notificationContainer'); 
     if(!container) return; 
@@ -1947,15 +1946,14 @@ onValue(ref(db, 'gameState'), (snap) => {
             else if (window.myLastHoleIndex !== currentHoleIndex) {
                 let diff = currentPoints - window.myLastScore;
                 let summary = me.lastHoleSummary ? me.lastHoleSummary : "Ei tuloja tai menoja.";
-                // Ylälaidan popuppiin erotellaan tiedot ranskalaisilla viivoilla tyylikkäästi
-                let cleanSummary = summary.replace(/, /g, '<br>• ');
+                let cleanSummary = summary.replace(/, /g, '<br>• '); 
                 
                 if (currentCourse && currentHoleIndex > currentCourse.pars.length) {
                      window.showNotification(`Kaikki väylät pelattu! Katso voittaja taululta.`, 'warning');
                 } else if (diff !== 0) {
                     window.showNotification(`<b>VÄYLÄ ${window.myLastHoleIndex} TULOS:</b><br><div style="font-size:0.95rem; line-height:1.4; margin-top:5px; margin-bottom:5px; text-align:left;">• ${cleanSummary}</div><b style="font-size:1.1rem;">Yhteensä: ${diff > 0 ? '+' : ''}${diff} P</b>`, diff > 0 ? 'info' : 'debuff');
                 } else {
-                    window.showNotification(`<b>VÄYLÄ ${window.myLastHoleIndex} TULOS:</b><br><span style="font-size:0.9rem; line-height:1.2;">• ${cleanSummary}</span><br><b>Yhteensä: 0 P</b>`, 'info');
+                    window.showNotification(`<b>VÄYLÄ ${window.myLastHoleIndex} TULOS:</b><br><div style="font-size:0.95rem; line-height:1.4; margin-top:5px; margin-bottom:5px; text-align:left;">• ${cleanSummary}</div><b style="font-size:1.1rem;">Yhteensä: 0 P</b>`, 'info');
                 }
                 
                 window.myLastHoleIndex = currentHoleIndex; 
