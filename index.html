@@ -16,7 +16,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=170" />
+    <link rel="stylesheet" href="style.css?v=172" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
@@ -25,6 +25,7 @@
 </head>
 <body class="player-mode">
 
+    <!-- ASETUKSET & OHJEET -->
     <button id="settingsToggleBtn" onclick="window.showModalSafe('settingsModal')" style="position:fixed; top:15px; right:15px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
     <button id="rulesToggleBtn" onclick="window.showModalSafe('rulesModal')" style="position:fixed; top:15px; right:75px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; font-size:1.6rem; cursor:pointer; color:#111;">📖</button>
 
@@ -39,6 +40,7 @@
         </div>
     </div>
 
+    <!-- VAROITUS: LIIKAA KORTTEJA -->
     <div id="handLimitModal" class="winner-overlay" style="z-index: 10005;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align:center;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
@@ -51,6 +53,7 @@
 
     <div id="notificationContainer"></div> 
 
+    <!-- AULA -->
     <div class="container" id="lobbyContainer">
         <div id="identityCard" class="torn-paper" style="text-align: center; margin-top:50px;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
@@ -64,13 +67,15 @@
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
             <h2 style="color: var(--text-main); font-size:1.4rem; margin-bottom: 10px;">Peli ei ole käynnissä</h2>
             <button class="btn btn-primary" onclick="if(window.startMeilahti) window.startMeilahti();" style="margin-bottom:15px;">🌲 PIKA-ALOITUS: MEILAHTI (16V)</button>
-            <button class="btn btn-secondary" onclick="document.getElementById('courseModal').style.display='flex'">LUO OMA RATA</button>
+            <button class="btn btn-secondary" onclick="window.showModalSafe('courseModal')">LUO OMA RATA</button>
         </div>
     </div>
 
+    <!-- PELIALUE -->
     <div id="corkboard-viewport" style="display:none;">
         <div id="corkboard-surface">
-            </div>
+            <!-- Sisältö generoidaan dynaamisesti -->
+        </div>
     </div>
 
     <div class="corkboard-pocket-container" id="pocketContainer" style="display:none;">
@@ -93,7 +98,8 @@
             
             <div class="binder-spine-btn" id="shopButtonElement" onclick="if(window.openShop) window.openShop('buy')">
                 <div class="binder-stitching"></div>
-                <span class="binder-spine-text">KAUPPA</span>
+                <!-- PADDING-RIGHT KORJATTU TÄSSÄ -->
+                <span class="binder-spine-text" style="padding-right: 35px;">KAUPPA</span>
                 <div class="binder-badge money-badge" id="myResPointsBtn">0 P</div>
             </div>
         </div>
@@ -101,6 +107,7 @@
         <div class="pocket-lip board-lip-btn" id="boardBtnText" onclick="if(window.zoomToCurrentHole) window.zoomToCurrentHole()">📍 NYKYINEN VÄYLÄ</div>
     </div>
 
+    <!-- SÄÄNNÖT MODAALI -->
     <div id="rulesModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -148,6 +155,29 @@
         </div>
     </div>
 
+    <!-- OMA RATA MODAALI (PUUTTUI AIEMMIN) -->
+    <div id="courseModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
+        <div class="scrollable-modal-content">
+            <div style="width:100%; max-width:500px; margin: 0 auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h1 style="color:#fff; font-size:2rem; font-weight:900;">🌲 UUSI RATA</h1>
+                    <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('courseModal').style.display='none'">&times;</button>
+                </div>
+                <div class="glass-card" style="padding:20px; border-radius:12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">
+                    <label style="font-weight:bold; margin-bottom:5px; display:block;">Radan nimi:</label>
+                    <input type="text" id="newCourseName" placeholder="Esim. Mukkula" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    
+                    <label style="font-weight:bold; margin-bottom:5px; display:block;">Väylien määrä:</label>
+                    <input type="number" id="newCourseHoles" value="18" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    
+                    <button class="btn btn-success" style="margin-top:15px; padding:18px; font-size:1.1rem;" onclick="if(window.startCustomCourse) window.startCustomCourse()">ALOITA PELI</button>
+                    <button class="btn btn-secondary" style="margin-top:15px; color:#000;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ASETUKSET MODAALI -->
     <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -254,6 +284,7 @@
         </div>
     </div>
 
+    <!-- KORTTIKIRJASTO MODAALI -->
     <div id="cardLibraryModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -265,13 +296,15 @@
                 <button class="btn btn-success" style="margin-bottom:25px; padding:18px; font-size:1.1rem;" onclick="window.showModalSafe('createCardModal')">➕ LUO UUSI KORTTI</button>
                 
                 <div id="cardLibraryContainer">
-                    </div>
+                    <!-- Kortit renderöidään tänne script.js puolelta -->
+                </div>
                 
                 <button class="btn btn-secondary" style="margin-top: 20px; padding:20px; font-size:1.2rem; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3);" onclick="document.getElementById('cardLibraryModal').style.display='none'">SULJE KIRJASTO</button>
             </div>
         </div>
     </div>
 
+    <!-- UUSI KORTTI MODAALI -->
     <div id="createCardModal" class="scrollable-modal" style="z-index:10500;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -407,7 +440,7 @@
         <div id="zoomModalContent"></div>
     </div>
 
-    <script src="tasks.js?v=170"></script>
-    <script type="module" src="script.js?v=170"></script>
+    <script src="tasks.js?v=172"></script>
+    <script type="module" src="script.js?v=172"></script>
 </body>
 </html>
