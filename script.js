@@ -86,16 +86,17 @@ window.drawFromDeck = function(type, count) {
             if (type === 'normal' || type === 'premium') {
                 let available = window.allCards.filter(c => c.tier === type).map(c => c.id);
                 
-                // SKANNATAAN KAIKKI PELAAJAT JA KAUPAT
                 let inUse = new Set();
-                allPlayers.forEach(p => { if(p.cards) p.cards.forEach(c => {if(c) inUse.add(c)}); });
+                allPlayers.forEach(p => { 
+                    if(p.cards) p.cards.forEach(c => {if(c) inUse.add(c)}); 
+                    if(p.reservedCardObj) inUse.add(p.reservedCardObj.id);
+                });
                 if(activeHole && activeHole.shop) {
                     Object.values(activeHole.shop).forEach(sArr => { sArr.forEach(c => {if(c && c.id) inUse.add(c.id)}); });
                 }
                 
-                // POISTETAAN KÄTÖSSÄ OLEVAT KORTIT POTOSTA
                 let filtered = available.filter(id => !inUse.has(id));
-                if(filtered.length === 0) filtered = available; // Failsafe jos koko maailman pakka on fyysisesti loppu
+                if(filtered.length === 0) filtered = available; // Failsafe
                 
                 deck = filtered.sort(() => 0.5 - Math.random());
             } else if (type === 'rules') {
@@ -174,7 +175,7 @@ window.zoomToHole = function(hIndex) {
     let cellY = 120 + row * 1010; 
     
     let targetX = (window.innerWidth - 380) / 2 - cellX; 
-    let targetY = 20 - cellY; // MUUTETTU: 20px marginaali yläreunasta (Tosi ylhäällä!)
+    let targetY = -40 - cellY; // Kamera korjattu vielä ylemmäs ruudulla
     
     if(typeof window.animateCameraTo === 'function') {
         window.animateCameraTo(targetX, targetY, 1, 400);
@@ -540,7 +541,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         if (worstPlayers.length === 1) {
             dText = rawInsult.replace(/\[Pelaaja\]/g, worstPlayers[0]);
         } else {
-            // Jos tasapeli, poistetaan Pelaaja-tagi pilkkuineen ja lisätään Tasapeli-alku
             dText = rawInsult.replace(/\[Pelaaja\],\s*/g, '').replace(/\[Pelaaja\]\s*/g, '').replace(/\[Pelaaja\]/g, '');
             dText = "Tasapeli pohjalla! " + dText.charAt(0).toUpperCase() + dText.slice(1);
         }
@@ -563,6 +563,9 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     return html;
 };
 
+// ==============================================
+// VOITTAJAN MÄÄRITYS: PIENIN TULOS VOITTAA!
+// ==============================================
 window.renderBoard = function() {
     const board = el('corkboard-surface');
     if (!board) return;
@@ -574,17 +577,18 @@ window.renderBoard = function() {
     let html = ``; window.gameHistory.forEach((h, index) => { html += window.getHoleCellHTML(h, index + 1, false, true); });
     
     if (currentHoleIndex > totalHoles) {
+        // MUUTETTU: Voittaja on se, jolla on pienin dgScore (Pelin virallinen tavoite)
         let sortedPlayers = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
         let winner = sortedPlayers[0] || {name: "Tuntematon", dgScore: 0, score: 0};
         html += `
         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%) rotate(-3deg); background:#fff; padding:50px; box-shadow:15px 30px 60px rgba(0,0,0,0.6); border:2px solid #ccc; z-index:100; text-align:center; min-width:350px; border-radius:4px;">
             <div class="tape tape-top" style="width:150px; top:-10px; height:25px;"></div>
-            <h1 style="font-family:'Kalam', cursive; font-size:4rem; color:var(--primary); margin-bottom:10px; line-height:1;">🏆 PELI<br>PÄÄTTYNYT!</h1>
-            <h2 style="font-size:1.5rem; margin-bottom:5px; color:#555;">VOITTAJA:</h2>
+            <h1 style="font-family:'Kalam', cursive; font-size:4rem; color:var(--primary); margin-bottom:10px; line-height:1;">🏆 MESTARI!</h1>
+            <h2 style="font-size:1.5rem; margin-bottom:5px; color:#555;">VOITTAJA (Pienin tulos):</h2>
             <div style="font-size:3.5rem; font-weight:900; color:var(--ink-blue); margin-bottom:20px; font-family:'Kalam', cursive;">${winner.name}</div>
             <div style="background:#f1f5f9; padding:20px; border-radius:12px; border:2px dashed #94a3b8;">
-                <p style="font-size:1.8rem; font-weight:900; color:#000; margin-bottom:10px;">Tulos: ${winner.dgScore > 0 ? '+' : ''}${winner.dgScore}</p>
-                <p style="font-size:1.5rem; font-weight:800; color:var(--warning);">Lopulliset varat: ${winner.score} P</p>
+                <p style="font-size:2rem; font-weight:900; color:#16a34a; margin-bottom:10px;">Lopullinen tulos: ${winner.dgScore > 0 ? '+' : ''}${winner.dgScore}</p>
+                <p style="font-size:1.1rem; font-weight:800; color:var(--warning);">Säästetyt pelimerkit: ${winner.score} P</p>
             </div>
         </div>`;
     } else if (activeHole) { html += window.getHoleCellHTML({ rule: activeHole.rule, playedCards: activeHole.playedCards, color: activeHole.color, penColor: activeHole.penColor, players: allPlayers }, currentHoleIndex, true, false); }
@@ -602,7 +606,7 @@ window.renderReceipt = function() {
 };
 
 //==============================================
-// KORTIN PELAAMINEN JA KAUPPA
+// KORTIN PELAAMINEN JA KAUPPA (Varausmaksut Lisätty)
 //==============================================
 window.openTargetModal = function(cardId) {
     const cardDef = window.allCards.find(c => c && c.id === cardId);
@@ -740,6 +744,8 @@ window.forceDiscard = function(cId, isNormal) {
                 if (sIdx !== -1) nextShopAll[myName].splice(sIdx, 1);
             }
             
+            if (me.reservedCardObj && me.reservedCardObj.id === pId) me.reservedCardObj = null;
+
             update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers), 'gameState/activeHole/shop': window.cleanFirebaseData(nextShopAll) });
             window.pendingShopPurchase = null; 
             window.switchShopTab('sell');
@@ -748,6 +754,30 @@ window.forceDiscard = function(cId, isNormal) {
         } else { window.pendingShopPurchase = null; }
     }
     set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
+};
+
+window.reserveShopItem = function(idStr) {
+    let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
+    const me = (nextPlayers || []).find(p => p && p.name === myName);
+    if (!me) return; 
+
+    let cardObj = window.allCards.find(c => c.id === idStr);
+    me.reservedCardObj = cardObj;
+    
+    update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) });
+    window.showAppleToast('Kortti varattu', '🔒');
+};
+
+window.cancelReservation = function(idStr) {
+    let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
+    const me = (nextPlayers || []).find(p => p && p.name === myName);
+    if (!me) return; 
+
+    if (me.reservedCardObj && me.reservedCardObj.id === idStr) {
+        me.reservedCardObj = null;
+        update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) });
+        window.showAppleToast('Varaus peruttu', '🔓');
+    }
 };
 
 window.buyShopItem = function(idStr, nameStr, priceVal) {
@@ -775,6 +805,10 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
         nextShopAll[myName].splice(shopIndex, 1);
         
         me.cards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)) : []; me.cards.push(idStr);
+        
+        // Puhdistetaan varaus jos tämä ostettiin
+        if (me.reservedCardObj && me.reservedCardObj.id === idStr) me.reservedCardObj = null;
+
         update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers), 'gameState/activeHole/shop': window.cleanFirebaseData(nextShopAll) });
         
         window.switchShopTab('sell');
@@ -822,6 +856,8 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
     const modalContainer = el('shopModalCards');
     const sellContainer = el('shopSellCardsContainer');
     
+    let me = (allPlayers || []).find(p => p && p.name === myName);
+
     if(!shopArray || shopArray.length === 0) { 
         if(modalContainer) modalContainer.innerHTML = '<p style="color:var(--text-muted); font-size:1.2rem; text-align:center; padding:20px; font-weight:bold; width:100%;">Kauppa on tyhjä tältä erää.</p>';
     } else {
@@ -829,15 +865,18 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
         shopArray.forEach(item => {
             if(!item) return; 
             const canAfford = myPoints >= item.price && !boughtThisHole;
-            let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? 'OSTA ETU' : 'EI VARAA');
-            let btnClass = canAfford && !boughtThisHole ? 'btn-warning' : 'btn-secondary';
-            let dis = (!canAfford || boughtThisHole) ? 'disabled' : '';
-            let descHtml = window.getCardDesc({d: item.d, customType: item.customType, diff: item.diff}, item.id);
+            let isReservedByMe = me && me.reservedCardObj && me.reservedCardObj.id === item.id;
             
+            let btnText = boughtThisHole ? 'OSTETTU' : (canAfford ? 'OSTA ETU' : 'EI VARAA');
+            let btnClass = boughtThisHole ? 'btn-secondary' : (canAfford ? 'btn-warning' : 'btn-secondary');
+            let dis = (!canAfford || boughtThisHole) ? 'disabled' : '';
+            
+            let descHtml = window.getCardDesc({d: item.d, customType: item.customType, diff: item.diff}, item.id);
             let cLen = descHtml.length;
             let pSize = cLen > 100 ? '0.65rem' : '0.85rem';
             let pLineHeight = cLen > 100 ? '1.15' : '1.35';
             
+            // Varausnapin logiikka lisätty kortin alapuolelle
             html += `
                 <div class="shop-item-wrapper">
                     <div class="physical-card premium-card" style="height: 260px; min-height: 260px;" onclick="window.openCardDetail('${item.id}', 'shop', ${item.price}, ${canAfford}, ${boughtThisHole})" style="cursor:pointer;">
@@ -846,13 +885,16 @@ window.renderShop = function(shopArray, myPoints, boughtThisHole) {
                         <div class="card-type-tag">💎 KAUPPA</div><h3>${item.n}</h3><p style="font-size:${pSize}; line-height:${pLineHeight}; overflow-y:auto; margin-bottom:4px; flex:1;">${descHtml}</p>
                         <div style="text-align:center; font-weight:900; font-size:0.75rem; color:#94a3b8; padding-top:10px; margin-top:auto;">🔄 TARKASTELU</div>
                     </div>
-                    <button class="shop-item-btn ${btnClass}" ${dis} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
+                    <div style="display:flex; gap:5px; margin-top:10px;">
+                        <button class="shop-item-btn ${btnClass}" style="flex:1; margin:0;" ${dis} onclick="window.buyShopItem('${item.id}', '${item.n}', ${item.price})">${btnText}</button>
+                        ${!boughtThisHole && !isReservedByMe ? `<button class="shop-item-btn btn-secondary" style="width:auto; padding:0 15px; font-size:0.85rem; margin:0; background:rgba(255,255,255,0.2);" onclick="window.reserveShopItem('${item.id}')">VARAA<br>(-1 P)</button>` : ''}
+                        ${isReservedByMe ? `<button class="shop-item-btn btn-info" style="width:auto; padding:0 15px; font-size:0.85rem; margin:0; background:var(--info); color:#fff; font-weight:bold;" onclick="window.cancelReservation('${item.id}')">PERU<br>VARAUS</button>` : ''}
+                    </div>
                 </div>`;
         });
         if(modalContainer) modalContainer.innerHTML = html; 
     }
 
-    let me = (allPlayers || []).find(p => p && p.name === myName);
     let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     myCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
 
@@ -1157,10 +1199,19 @@ window.updateCarouselButtons = function() {
         let item = activeHole && activeHole.shop && activeHole.shop[myName] ? activeHole.shop[myName].find(s=>s.id===cId) : null;
         let price = item ? item.price : 99;
         let canAfford = myScore >= price && !bought;
+        let isReservedByMe = me && me.reservedCardObj && me.reservedCardObj.id === cId;
+        
         let btnText = bought ? 'OSTETTU' : (canAfford ? `OSTA ETU (${price} P)` : 'EI VARAA');
         let btnClass = canAfford && !bought ? 'btn-warning' : 'btn-secondary';
         let dis = (!canAfford || bought) ? 'disabled' : '';
+        
         btnHtml = `<button class="btn ${btnClass}" ${dis} style="font-size:1.1rem; padding:18px; color:#000; box-shadow:0 10px 25px rgba(245,158,11,0.4);" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cId}', '${cDef.n}', ${price})">${btnText}</button>`;
+        if (!bought && !isReservedByMe) {
+            btnHtml += `<button class="btn btn-secondary" style="font-size:1.05rem; padding:16px; margin-top:5px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.reserveShopItem('${cId}')">VARAA KORTTI (-1 P/Väylä)</button>`;
+        }
+        if (isReservedByMe) {
+             btnHtml += `<button class="btn btn-info" style="font-size:1.05rem; padding:16px; margin-top:5px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.cancelReservation('${cId}')">PERU VARAUS</button>`;
+        }
     } else if (mode === 'gm') {
         btnHtml = `<button class="btn btn-success" style="font-size:1.1rem; padding:18px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.giveCardToPlayer('${cId}')">ANNA TÄMÄ</button>`;
     } else if (mode === 'event') {
@@ -1368,6 +1419,10 @@ window.submitScores = function() {
 
         p.dgScore = (parseInt(p.dgScore, 10) || 0) + (res.strokes - par);
         
+        if (p.reservedCardObj) {
+            currentPoints -= 1; breakdown.push(`Varausmaksu (-${p.reservedCardObj.n}): -1P`);
+        }
+
         if (!res.denyPassive) {
             currentPoints += ptsPassive; breakdown.push(`Passiivinen tulo: +${ptsPassive}P`);
         } else {
@@ -1454,7 +1509,12 @@ window.submitScores = function() {
     let personalizedShop = {};
     nextPlayers.forEach(p => {
         let sIds = window.drawFromDeck('premium', shopCardCount);
-        personalizedShop[p.name] = sIds.map(id => window.allCards.find(c => c.id === id)).filter(Boolean);
+        let pShop = sIds.map(id => window.allCards.find(c => c.id === id)).filter(Boolean);
+        
+        // Pidetään varattu kortti myös kaupassa tallessa
+        if (p.reservedCardObj) { pShop[0] = p.reservedCardObj; }
+        
+        personalizedShop[p.name] = pShop;
     });
     
     let ruleIdx = window.drawFromDeck('rules', 1)[0];
@@ -1587,9 +1647,9 @@ window.startMeilahti = function() {
     let nextPlayers = [];
     if(allPlayers) {
         nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean).map(p => {
-            // Aloituskäsi: Aina tasan 2 korttia pelin alkaessa!
+            // PAKOTETTU 2 KORTTIA PELIN ALUSSA KAIKILLE!
             let pCards = window.drawFromDeck('normal', 2);
-            return { ...p, score: 3, dgScore: 0, cards: pCards, boughtThisHole: false };
+            return { ...p, score: 3, dgScore: 0, cards: pCards, boughtThisHole: false, reservedCardObj: null };
         });
     }
 
@@ -1634,8 +1694,8 @@ window.startCustomCourse = function() {
     let nextPlayers = [];
     if(allPlayers) {
         nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean).map(p => {
-            // Aloituskäsi: Aina tasan 2 korttia pelin alkaessa!
-            return { ...p, score: 3, dgScore: 0, cards: window.drawFromDeck('normal', 2), boughtThisHole: false };
+            // PAKOTETTU 2 KORTTIA PELIN ALUSSA KAIKILLE!
+            return { ...p, score: 3, dgScore: 0, cards: window.drawFromDeck('normal', 2), boughtThisHole: false, reservedCardObj: null };
         });
     }
 
@@ -1712,10 +1772,21 @@ window.logEvent = function(msg) { push(ref(db, 'gameState/eventLog'), window.cle
 window.logScore = function(playerName, delta, reason) { push(ref(db, 'gameState/scoreLog'), window.cleanFirebaseData({ time: new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'}), playerName: playerName, delta: delta, msg: reason })); };
 
 window.updateIdentityUI = function() { if(el('identityCard')) { el('identityCard').style.display = myName ? 'none' : 'block'; } };
-window.showNotification = function(message, type = 'info') { const container = el('notificationContainer'); if(!container) return; const toast = document.createElement('div'); toast.className = `notification ${type}`; toast.innerHTML = `<span>${message}</span>`; container.appendChild(toast); setTimeout(() => { toast.remove(); }, 6000); };
-window.claimIdentity = function() { let n = el('playerNameInput').value.trim(); if(!n) return; myName = n; localStorage.setItem('friba_name', n); window.updateIdentityUI(); if(!(allPlayers || []).find(x => x && x.name === n)) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers)); window.logEvent(`${n} liittyi peliin.`); } };
 
-window.adminAddPlayer = function() { const input = el('adminNewPlayerName'); if(!input) return; const name = input.value.trim(); if(!name) return; let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: name, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); input.value = ''; window.logEvent(`${myName} (Asetukset) lisäsi pelaajan: ${name}`); };
+// PISTEPÄIVITYKSET YLÄREUNAAN TULEVAT TÄTÄ KAUTTA
+window.showNotification = function(message, type = 'info') { 
+    const container = el('notificationContainer'); 
+    if(!container) return; 
+    const toast = document.createElement('div'); 
+    toast.className = `notification ${type}`; 
+    toast.innerHTML = `<span>${message}</span>`; 
+    container.appendChild(toast); 
+    setTimeout(() => { toast.remove(); }, 6000); 
+};
+
+window.claimIdentity = function() { let n = el('playerNameInput').value.trim(); if(!n) return; myName = n; localStorage.setItem('friba_name', n); window.updateIdentityUI(); if(!(allPlayers || []).find(x => x && x.name === n)) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false, reservedCardObj: null }); set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers)); window.logEvent(`${n} liittyi peliin.`); } };
+
+window.adminAddPlayer = function() { const input = el('adminNewPlayerName'); if(!input) return; const name = input.value.trim(); if(!name) return; let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: name, score: 3, dgScore: 0, cards: [], boughtThisHole: false, reservedCardObj: null }); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); input.value = ''; window.logEvent(`${myName} (Asetukset) lisäsi pelaajan: ${name}`); };
 window.removePlayer = function(index) { if(confirm("Haluatko poistaa?")) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.splice(index, 1); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); } };
 window.adjustScore = function(index, delta) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); if(nextPlayers[index]) { nextPlayers[index].score = (parseInt(nextPlayers[index].score) || 0) + delta; window.logScore(nextPlayers[index].name, delta, "GM Muokkaus"); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); } };
 window.adjustDgScore = function(index, delta) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); if(nextPlayers[index]) { nextPlayers[index].dgScore = (parseInt(nextPlayers[index].dgScore) || 0) + delta; update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); } };
@@ -1876,15 +1947,15 @@ onValue(ref(db, 'gameState'), (snap) => {
             else if (window.myLastHoleIndex !== currentHoleIndex) {
                 let diff = currentPoints - window.myLastScore;
                 let summary = me.lastHoleSummary ? me.lastHoleSummary : "Ei tuloja tai menoja.";
-                let cleanSummary = summary.replace(/, /g, '<br>• '); // Ranskalaiset viivat
+                // Ylälaidan popuppiin erotellaan tiedot ranskalaisilla viivoilla tyylikkäästi
+                let cleanSummary = summary.replace(/, /g, '<br>• ');
                 
                 if (currentCourse && currentHoleIndex > currentCourse.pars.length) {
                      window.showNotification(`Kaikki väylät pelattu! Katso voittaja taululta.`, 'warning');
                 } else if (diff !== 0) {
-                    // Piste-erittely palautettu popupiin
                     window.showNotification(`<b>VÄYLÄ ${window.myLastHoleIndex} TULOS:</b><br><div style="font-size:0.95rem; line-height:1.4; margin-top:5px; margin-bottom:5px; text-align:left;">• ${cleanSummary}</div><b style="font-size:1.1rem;">Yhteensä: ${diff > 0 ? '+' : ''}${diff} P</b>`, diff > 0 ? 'info' : 'debuff');
                 } else {
-                    window.showNotification(`<b>VÄYLÄ ${window.myLastHoleIndex} TULOS:</b><br><span style="font-size:0.9rem; line-height:1.2;">${cleanSummary}</span><br><b>Yhteensä: 0 P</b>`, 'info');
+                    window.showNotification(`<b>VÄYLÄ ${window.myLastHoleIndex} TULOS:</b><br><span style="font-size:0.9rem; line-height:1.2;">• ${cleanSummary}</span><br><b>Yhteensä: 0 P</b>`, 'info');
                 }
                 
                 window.myLastHoleIndex = currentHoleIndex; 
