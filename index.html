@@ -16,7 +16,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=172" />
+    <link rel="stylesheet" href="style.css?v=173" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
@@ -98,7 +98,6 @@
             
             <div class="binder-spine-btn" id="shopButtonElement" onclick="if(window.openShop) window.openShop('buy')">
                 <div class="binder-stitching"></div>
-                <!-- PADDING-RIGHT KORJATTU TÄSSÄ -->
                 <span class="binder-spine-text" style="padding-right: 35px;">KAUPPA</span>
                 <div class="binder-badge money-badge" id="myResPointsBtn">0 P</div>
             </div>
@@ -155,7 +154,7 @@
         </div>
     </div>
 
-    <!-- OMA RATA MODAALI (PUUTTUI AIEMMIN) -->
+    <!-- OMA RATA MODAALI -->
     <div id="courseModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -165,10 +164,15 @@
                 </div>
                 <div class="glass-card" style="padding:20px; border-radius:12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">
                     <label style="font-weight:bold; margin-bottom:5px; display:block;">Radan nimi:</label>
-                    <input type="text" id="newCourseName" placeholder="Esim. Mukkula" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    <input type="text" id="newCourseName" placeholder="Esim. Mukkula" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); margin-bottom:15px;">
                     
                     <label style="font-weight:bold; margin-bottom:5px; display:block;">Väylien määrä:</label>
-                    <input type="number" id="newCourseHoles" value="18" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    <input type="number" id="newCourseHoles" value="18" min="1" max="36" oninput="if(window.renderParInputs) window.renderParInputs()" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); margin-bottom:20px;">
+                    
+                    <label style="font-weight:bold; margin-bottom:10px; display:block; color:var(--warning);">Määritä väylien Par-tulokset:</label>
+                    <div id="newCourseParsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 8px; max-height: 250px; overflow-y: auto; margin-bottom:15px; padding-right:5px;">
+                        <!-- Par-kentät generoidaan tänne -->
+                    </div>
                     
                     <button class="btn btn-success" style="margin-top:15px; padding:18px; font-size:1.1rem;" onclick="if(window.startCustomCourse) window.startCustomCourse()">ALOITA PELI</button>
                     <button class="btn btn-secondary" style="margin-top:15px; color:#000;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
@@ -211,10 +215,26 @@
                         <input type="checkbox" id="gmSetLimitCheck" style="width:24px; height:24px; margin:0;"> Käsiraja käytössä
                     </label>
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
-                        <span style="font-weight:800; font-size:1.1rem;">Maksimikortit:</span>
+                        <span style="font-weight:800; font-size:1.1rem;">Maksimikortit kädessä:</span>
                         <input type="number" id="gmSetLimitCount" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
                     </div>
                     
+                    <div style="border-top:2px solid rgba(255,255,255,0.2); margin:15px 0;"></div>
+                    <h3 style="color:#fff; font-size:1rem; text-transform:uppercase; margin-bottom:10px;">Korttien Jako & Kauppa</h3>
+                    
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Kortteja kaupassa (kpl):</span>
+                        <input type="number" id="gmSetShopCount" value="5" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Nostokortit (Normaali):</span>
+                        <input type="number" id="gmSetCardsDraw" value="2" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Nostokortit (Häviäjä):</span>
+                        <input type="number" id="gmSetCardsDrawLoser" value="3" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                    </div>
+
                     <div style="border-top:2px solid rgba(255,255,255,0.2); margin:15px 0;"></div>
                     <h3 style="color:#fff; font-size:1rem; text-transform:uppercase; margin-bottom:10px;">Pelitalous (Pisteet/Raha)</h3>
                     
@@ -422,6 +442,7 @@
         </div>
     </div>
 
+    <!-- PÄIVITETTY TARGET MODAALI: "Kaikki vastustajat" lisätty -->
     <div id="targetModal" class="winner-overlay" style="z-index: 10001;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="card glass-card" style="width: 100%; max-width: 400px; border: 4px solid var(--danger);">
             <h2 style="color:var(--text-main);">Valitse sabotaasin kohde</h2>
@@ -440,7 +461,7 @@
         <div id="zoomModalContent"></div>
     </div>
 
-    <script src="tasks.js?v=172"></script>
-    <script type="module" src="script.js?v=172"></script>
+    <script src="tasks.js?v=173"></script>
+    <script type="module" src="script.js?v=173"></script>
 </body>
 </html>
