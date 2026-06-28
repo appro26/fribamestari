@@ -16,7 +16,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=175" />
+    <link rel="stylesheet" href="style.css?v=176" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
@@ -49,7 +49,6 @@
 </head>
 <body class="player-mode">
 
-    <!-- ASETUKSET & OHJEET -->
     <button id="settingsToggleBtn" onclick="window.showModalSafe('settingsModal')" style="position:fixed; top:15px; right:15px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
     <button id="rulesToggleBtn" onclick="window.showModalSafe('rulesModal')" style="position:fixed; top:15px; right:75px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; font-size:1.6rem; cursor:pointer; color:#111;">📖</button>
 
@@ -64,7 +63,6 @@
         </div>
     </div>
 
-    <!-- VAROITUS: LIIKAA KORTTEJA -->
     <div id="handLimitModal" class="winner-overlay" style="z-index: 10005;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align:center;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
@@ -77,7 +75,6 @@
 
     <div id="notificationContainer"></div> 
 
-    <!-- AULA -->
     <div class="container" id="lobbyContainer">
         <div id="identityCard" class="torn-paper" style="text-align: center; margin-top:50px;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
@@ -95,11 +92,9 @@
         </div>
     </div>
 
-    <!-- PELIALUE -->
     <div id="corkboard-viewport" style="display:none;">
         <div id="corkboard-surface">
-            <!-- Sisältö generoidaan dynaamisesti -->
-        </div>
+            </div>
     </div>
 
     <div class="corkboard-pocket-container" id="pocketContainer" style="display:none;">
@@ -130,7 +125,6 @@
         <div class="pocket-lip board-lip-btn" id="boardBtnText" onclick="if(window.zoomToCurrentHole) window.zoomToCurrentHole()">📍 NYKYINEN VÄYLÄ</div>
     </div>
 
-    <!-- SÄÄNNÖT MODAALI -->
     <div id="rulesModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -178,7 +172,6 @@
         </div>
     </div>
 
-    <!-- OMA RATA MODAALI -->
     <div id="courseModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -195,8 +188,7 @@
                     
                     <label style="font-weight:bold; margin-bottom:10px; display:block; color:var(--warning);">Määritä väylien Par-tulokset:</label>
                     <div id="newCourseParsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 8px; max-height: 250px; overflow-y: auto; margin-bottom:15px; padding-right:5px;">
-                        <!-- Par-kentät generoidaan tänne -->
-                    </div>
+                        </div>
                     
                     <button class="btn btn-success" style="margin-top:15px; padding:18px; font-size:1.1rem;" onclick="if(window.startCustomCourse) window.startCustomCourse()">ALOITA PELI</button>
                     <button class="btn btn-secondary" style="margin-top:15px; color:#000;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
@@ -205,7 +197,6 @@
         </div>
     </div>
 
-    <!-- ASETUKSET MODAALI -->
     <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -328,7 +319,6 @@
         </div>
     </div>
 
-    <!-- KORTTIKIRJASTO MODAALI -->
     <div id="cardLibraryModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -340,15 +330,13 @@
                 <button class="btn btn-success" style="margin-bottom:25px; padding:18px; font-size:1.1rem;" onclick="window.showModalSafe('createCardModal')">➕ LUO UUSI KORTTI</button>
                 
                 <div id="cardLibraryContainer">
-                    <!-- Kortit renderöidään tänne script.js puolelta -->
-                </div>
+                    </div>
                 
                 <button class="btn btn-secondary" style="margin-top: 20px; padding:20px; font-size:1.2rem; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3);" onclick="document.getElementById('cardLibraryModal').style.display='none'">SULJE KIRJASTO</button>
             </div>
         </div>
     </div>
 
-    <!-- UUSI KORTTI MODAALI -->
     <div id="createCardModal" class="scrollable-modal" style="z-index:10500;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto;">
@@ -484,7 +472,7 @@
         <div id="zoomModalContent"></div>
     </div>
 
-    <script src="tasks.js?v=175"></script>
-    <script type="module" src="script.js?v=175"></script>
+    <script src="tasks.js?v=176"></script>
+    <script type="module" src="script.js?v=176"></script>
 </body>
 </html>
