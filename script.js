@@ -34,24 +34,30 @@ const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length
 
 const pseudoRandom = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
 
-const insults = [
-    "[Pelaaja], v*ttu mikä heitto, ootko sä koskaan edes pitänyt kiekkoa kädessä?",
-    "[Pelaaja] p*rkele, mummonikin puttaa paremmin, ja se on ollut kuolleena 10 vuotta.",
-    "S**tanan sirkkeli [Pelaaja], puut tykkää susta enemmän ku sun omat vanhemmat.",
-    "Ei h*lvetti [Pelaaja], jopa Jeesus itkee ton sun tekniikan takia.",
-    "P*ska veto [Pelaaja]. Sun draivi on lyhyempi ku mun kärsivällisyys.",
-    "V*tun hieno lay-up [Pelaaja]! Ai se olikin sun maksimidraivi?",
-    "Mene [Pelaaja] s**tana takas rangelle, tää on noloa meille kaikille.",
-    "P*rkeleen rystykääntö [Pelaaja], kiekko lensi enemmän taakse ku eteen.",
-    "Miten sä [Pelaaja] v*ttu onnistut missaamaan kahdesta metristä?",
-    "H*lvetin hieno puuosuma [Pelaaja]! Tähtäsitkö sä siihen vai ootko vaan sysip*ska?"
-];
-
+// ==============================================
+// ELÄINTEN GRAFIIKAT JA SOLVAUKSET
+// ==============================================
 const doodleSVGs = [
     "M 20 80 Q 20 60 40 60 L 45 40 L 50 60 L 60 30 L 65 60 L 75 40 L 80 80 Z M 30 70 L 32 70 M 15 75 L 20 80 M 85 75 L 80 80", 
     "M 20 80 L 20 40 L 30 20 L 40 40 L 60 40 L 70 20 L 80 40 L 80 80 Z M 35 55 L 37 55 M 65 55 L 63 55 M 45 65 L 55 65 L 50 72 Z",
     "M 20 80 C 20 30 80 30 80 80 Z M 20 40 C 10 40 10 20 25 30 M 80 40 C 90 40 90 20 75 30 M 40 55 L 42 55 M 60 55 L 58 55",
     "M 50 80 C 20 80 20 30 50 30 C 80 30 80 80 50 80 Z M 40 55 L 60 55 L 50 70 Z M 35 45 L 40 48 M 65 45 L 60 48"
+];
+
+const insults = [
+    "[Pelaaja], v*ttu mikä heitto, ootko sä koskaan edes pitänyt kiekkoa kädessä?",
+    "[Pelaaja] p*rkele, mummonikin puttaa paremmin.",
+    "S**tanan sirkkeli [Pelaaja], puut tykkää susta enemmän ku sun omat vanhemmat.",
+    "Ei h*lvetti [Pelaaja], jopa Jeesus itkee ton sun tekniikan takia.",
+    "P*ska veto [Pelaaja]. Sun draivi on lyhyempi ku mun kärsivällisyys.",
+    "V*tun hieno lay-up [Pelaaja]! Ai se olikin sun maksimidraivi?",
+    "P*rkeleen rystykääntö [Pelaaja], kiekko lensi enemmän taakse ku eteen.",
+    "Miten sä [Pelaaja] v*ttu onnistut missaamaan kahdesta metristä?",
+    "H*lvetin hieno puuosuma [Pelaaja]! Tähtäsitkö tahallaan vai ootko vaan sysip*ska?",
+    "P*rkele [Pelaaja], sun rystyheitto näyttää ku yrittäisit heittää pesukonetta.",
+    "V*tun grippilokki [Pelaaja]! Ota se käsi irti siitä muovista ajoissa.",
+    "P*ska putti, p*ska pelaaja. Yksinkertaista, eikö vain [Pelaaja]?",
+    "V*ttu mulla sulaa aivot ku joutuu kattoon tota sun räpellystä, [Pelaaja]."
 ];
 
 // ==============================================
@@ -153,7 +159,7 @@ window.zoomToHole = function(hIndex) {
     let cellY = 120 + row * 1010; 
     
     let targetX = (window.innerWidth - 380) / 2 - cellX; 
-    let targetY = -30 - cellY; // PALAUTETTU AIEMPAAN KOHTAAN (Ylemmäs)
+    let targetY = -30 - cellY; 
     
     if(typeof window.animateCameraTo === 'function') {
         window.animateCameraTo(targetX, targetY, 1, 400);
@@ -166,7 +172,6 @@ window.showZoomModal = function(html) {
     el('zoomModalContent').innerHTML = html;
     let child = el('zoomModalContent').firstElementChild;
     if(child) {
-        // Poistetaan pakotetut mitat, annetaan joustaa ruudun mukaan
         child.style.position = 'relative';
         child.style.left = 'auto';
         child.style.right = 'auto';
@@ -174,11 +179,10 @@ window.showZoomModal = function(html) {
         child.style.bottom = 'auto';
         child.style.margin = '0 auto';
         child.style.transform = 'none';
-        child.style.width = 'auto';
+        child.style.width = '100%';
         child.style.maxWidth = '90vw';
-        child.style.height = 'auto';
     }
-    let scaleVal = Math.min(1.2, (window.innerWidth * 0.95) / 300);
+    let scaleVal = Math.min(1.1, (window.innerWidth * 0.95) / 300);
     el('zoomModalContent').style.transform = `scale(${scaleVal})`;
     el('zoomModalContent').style.transformOrigin = `center center`;
     window.showModalSafe('zoomModal');
@@ -230,55 +234,40 @@ if(vp) {
 }
 
 // ==============================================
-// SWIPE TO CLOSE (SUOJATTU SKROLLAUKSEN AIKANA)
+// SWIPE TO CLOSE (KORJATTU: TOIMII VAIN KAHVASTA)
 // ==============================================
 let swipeStartX = 0;
 let swipeStartY = 0;
 let swipeContentEl = null;
-let isValidSwipeToClose = false;
 
-window.addEventListener('touchstart', e => {
-    let scrollable = e.target.closest('.scrollable-modal-content') || e.target.closest('.binder-content');
-    let isHandle = e.target.closest('.binder-swipe-handle');
-                   
-    if (scrollable) {
-        swipeStartY = e.touches[0].clientY;
-        swipeStartX = e.touches[0].clientX;
-        swipeContentEl = scrollable;
-        // Sulku on mahdollista vain jos skrollaus on tasan ylhäällä sormen osuessa
-        isValidSwipeToClose = (scrollable.scrollTop <= 2);
-    } else if (isHandle) {
-        swipeStartY = e.touches[0].clientY;
-        swipeStartX = e.touches[0].clientX;
-        swipeContentEl = isHandle;
-        isValidSwipeToClose = true;
-    } else {
-        isValidSwipeToClose = false;
-    }
-}, {passive:true});
-
-window.addEventListener('touchend', e => {
-    if (swipeStartY > 0 && swipeContentEl && isValidSwipeToClose) {
-        let currentScroll = swipeContentEl.scrollTop !== undefined ? swipeContentEl.scrollTop : 0;
-        let endX = e.changedTouches[0].clientX;
-        let endY = e.changedTouches[0].clientY;
-        let diffY = endY - swipeStartY;
-        let diffX = Math.abs(endX - swipeStartX);
+// Estetään vahinkosulkemiset poistamalla globaali kuuntelija ja kuunnellaan vain kahvaa
+document.addEventListener('DOMContentLoaded', () => {
+    const handles = document.querySelectorAll('.binder-swipe-handle');
+    handles.forEach(handle => {
+        handle.addEventListener('touchstart', e => {
+            swipeStartY = e.touches[0].clientY;
+            swipeStartX = e.touches[0].clientX;
+            swipeContentEl = handle;
+        }, {passive:true});
         
-        // Erittäin pitkä ja selkeä vetäisy alas, ja skrollauksen pitää edelleen olla 0
-        if (diffY > 150 && diffY > diffX * 2 && currentScroll <= 2) {
-            if(el('shopModal')) el('shopModal').style.display = 'none';
-            if(el('settingsModal')) el('settingsModal').style.display = 'none';
-            if(el('rulesModal')) el('rulesModal').style.display = 'none';
-            if(el('cardLibraryModal')) el('cardLibraryModal').style.display = 'none';
-            if(el('createCardModal')) el('createCardModal').style.display = 'none';
-            if(el('courseModal')) el('courseModal').style.display = 'none';
-            window.pendingShopPurchase = null;
-        }
-    }
-    swipeStartY = 0;
-    isValidSwipeToClose = false;
-}, {passive:true});
+        handle.addEventListener('touchend', e => {
+            if (swipeStartY > 0 && swipeContentEl) {
+                let endX = e.changedTouches[0].clientX;
+                let endY = e.changedTouches[0].clientY;
+                let diffY = endY - swipeStartY;
+                let diffX = Math.abs(endX - swipeStartX);
+                
+                // Selkeä alaspäin suuntautuva veto
+                if (diffY > 100 && diffY > diffX * 2) {
+                    if(el('shopModal')) el('shopModal').style.display = 'none';
+                    window.pendingShopPurchase = null;
+                }
+            }
+            swipeStartY = 0;
+            swipeContentEl = null;
+        }, {passive:true});
+    });
+});
 
 // ==============================================
 // KORTTIEN APUFUNKTIOT & TARKISTUKSET
@@ -308,13 +297,6 @@ window.getCardSortWeight = function(cId) {
 
 window.getCardDesc = function(cDef, cId) {
     let desc = cDef.d;
-    if ((cId && cId.startsWith('major_')) || cDef.customType === 'major_sabotage') {
-        let diff = cDef.diff || 1;
-        let rew = diff === 3 ? 8 : (diff === 2 ? 5 : 3);
-        if(!desc.includes('SELÄTYSPALKKIO')) {
-            desc += `<br><br><b style="color:var(--warning);">SELÄTYSPALKKIO:</b> Jos suorittaja pelaa tuloksen PAR tai alle, hän tienaa ${rew} P!`;
-        }
-    }
     return desc;
 };
 
@@ -459,7 +441,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         let strokes = isHistory && hData.holeResults ? hData.holeResults[p.name] : null;
         let scoreHTML = renderScoreDots(strokes, par);
         
-        // PISTEIDEN PIILOTUS: Vain oma saldo näkyy, paitsi pelin päättyessä.
         let displayScore = (p.name === myName || isHistory) ? `${p.score || 0} P` : `?? P`;
         
         html += `
@@ -474,11 +455,10 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     html += `</div>`;
     
     if (hIndex >= 2) {
-        // Etsitään edellisen väylän huonoin pelaaja solvausta varten
         let prevHole = window.gameHistory[hIndex - 2];
         let worstPlayer = "Pelaaja";
         if (prevHole && prevHole.holeResults) {
-            let maxS = -1;
+            let maxS = -999;
             for(let p in prevHole.holeResults) {
                 if(prevHole.holeResults[p] > maxS) { maxS = prevHole.holeResults[p]; worstPlayer = p; }
             }
@@ -486,20 +466,19 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
 
         let insultIndex = Math.floor(pseudoRandom(hIndex * 8.8) * insults.length);
         let svgIndex = Math.floor(pseudoRandom(hIndex * 9.9) * doodleSVGs.length);
-        let dText = insults[insultIndex].replace(/\[Pelaaja\]/g, worstPlayer); 
+        let dText = insults[insultIndex] ? insults[insultIndex].replace(/\[Pelaaja\]/g, worstPlayer) : `V*ttu mikä heitto, ${worstPlayer}!`; 
         let dSvg = doodleSVGs[svgIndex];
-        let dRot = -15 + (pseudoRandom(hIndex * 3) * 30);
+        let dRot = -3 + (pseudoRandom(hIndex * 3) * 6);
         
         let opacityClass = isHistory ? 'opacity: 0.8;' : 'opacity: 1;';
-        let drawnClass = isHistory ? 'drawn' : 'drawn'; 
         
-        let posRand = pseudoRandom(hIndex * 7); let posCss = ""; let offsetX = 160; let offsetY = 80; 
-        if (posRand < 0.25) posCss = `top: -${offsetY}px; left: -${offsetX}px;`; else if (posRand < 0.5) posCss = `top: -${offsetY}px; right: -${offsetX}px;`; else if (posRand < 0.75) posCss = `bottom: -${offsetY}px; left: -${offsetX}px;`; else posCss = `bottom: -${offsetY}px; right: -${offsetX}px;`;
-
+        // Eläimet asemoitu selkeästi Tuloslapun ALAPUOLELLE ilman leikkautumista
         html += `
-        <div class="doodle-drawing ${drawnClass}" style="${posCss} ${opacityClass} transform: rotate(${dRot}deg) scale(1);">
-            <div class="doodle-bubble">${dText}</div>
-            <svg class="doodle-svg doodle-path" viewBox="0 0 100 100"><path d="${dSvg}"/></svg>
+        <div style="width:100%; display:flex; justify-content:center; margin-top:25px; margin-bottom:20px; z-index:50; position:relative;">
+            <div class="doodle-drawing drawn" style="${opacityClass} transform: rotate(${dRot}deg) scale(1.1); position:relative; top:auto; left:auto; right:auto; bottom:auto;">
+                <div class="doodle-bubble" style="max-width: 250px; font-size: 1.1rem; line-height:1.3;">${dText}</div>
+                <svg class="doodle-svg doodle-path" viewBox="0 0 100 100"><path d="${dSvg}"/></svg>
+            </div>
         </div>`;
     }
     html += `</div>`;
@@ -1114,7 +1093,7 @@ window.updateCarouselButtons = function() {
 };
 
 //==============================================
-// TULOSTEN SYÖTTÖ & PELIN KULKU (TÄYDELLINEN LOGIIKKA)
+// TULOSTEN SYÖTTÖ & PELIN KULKU & AUTOMAATIO
 //==============================================
 window.changeScore = function(safeId, par, delta) {
     let input = el(`scoreInput_${safeId}`);
@@ -1175,45 +1154,104 @@ window.submitScores = function() {
     inputs.forEach(input => { let attrName = input.getAttribute('data-name'); if(playerResults[attrName]) { playerResults[attrName].strokes = parseInt(input.value, 10) || par; } });
     document.querySelectorAll('.task-paper-checkbox:checked').forEach(cb => { let pName = cb.getAttribute('data-name'); if (playerResults[pName]) { playerResults[pName].taskWon = true; } });
 
-    // MEKANIIKAT (Mechanics)
-    let majorTargets = [];
-    let deniedPassive = [];
-    let deniedWin = [];
-    let deniedDraw = [];
-    let forcePar = [];
-    let doubleWin = [];
-    let doubleTask = [];
+    // ==============================================
+    // THE CARD ENGINE (Täysautomaatio)
+    // ==============================================
+    let played = activeHole && activeHole.playedCards ? Object.values(activeHole.playedCards) : [];
+    played.sort((a,b) => a.timestamp - b.timestamp);
 
-    if (activeHole && activeHole.playedCards) {
-        Object.values(activeHole.playedCards).forEach(pc => {
-            if (!pc) return;
-            let cDef = window.allCards.find(c => c.id === pc.cardId);
-            let mech = cDef ? cDef.mech : pc.mech;
-            let diff = cDef ? (cDef.diff || 1) : 1;
-            
-            let targets = pc.target === 'KAIKKI VASTUSTAJAT' ? allPlayers.filter(p => p.name !== pc.by).map(p => p.name) : [pc.target];
+    let playerEffects = {};
+    allPlayers.forEach(p => playerEffects[p.name] = { sabotages: [], buffs: [], shields: 0 });
 
-            targets.forEach(t => {
-                if (pc.cardId.startsWith('major_') || (cDef && cDef.customType === 'major_sabotage')) {
-                    majorTargets.push({ name: t, diff: diff });
+    played.forEach(pc => {
+        let cDef = window.allCards.find(c => c.id === pc.cardId);
+        let mech = cDef ? cDef.mech : pc.mech;
+        let isSabotage = cDef ? cDef.type === 'sabotage' : pc.type === 'sabotage';
+        let isMajor = pc.cardId.startsWith('major_') || (cDef && cDef.customType === 'major_sabotage');
+        let isMinor = pc.cardId.startsWith('minor_') || (cDef && cDef.customType === 'minor_sabotage');
+        
+        let targets = pc.target === 'KAIKKI VASTUSTAJAT' ? allPlayers.filter(p => p.name !== pc.by).map(p => p.name) : [pc.target];
+
+        targets.forEach(t => {
+            if(!playerEffects[t]) return;
+
+            if (mech === 'cancel_minor' && t === pc.by) {
+                let idx = playerEffects[t].sabotages.findLastIndex(s => s.isMinor);
+                if(idx !== -1) { playerEffects[t].sabotages.splice(idx, 1); window.logEvent(`${t} kumosi Pienen Sabotaasin automaattisesti!`); }
+                return;
+            }
+            if (mech === 'cancel_major' && t === pc.by) {
+                let idx = playerEffects[t].sabotages.findLastIndex(s => s.isMajor);
+                if(idx !== -1) { playerEffects[t].sabotages.splice(idx, 1); window.logEvent(`${t} kumosi Ison Sabotaasin automaattisesti!`); }
+                return;
+            }
+            if (mech === 'cancel_all' && t === pc.by) {
+                playerEffects[t].sabotages = [];
+                window.logEvent(`${t} kumosi KAIKKI sabotaasit automaattisesti!`);
+                return;
+            }
+            if (mech === 'reflect' && t === pc.by) {
+                let lastSabo = playerEffects[t].sabotages.pop();
+                if(lastSabo && playerEffects[lastSabo.by]) {
+                    playerEffects[lastSabo.by].sabotages.push(lastSabo);
+                    window.logEvent(`${t} peilasi sabotaasin takaisin pelaajalle ${lastSabo.by}!`);
                 }
-                if (mech === 'deny_passive') deniedPassive.push(t);
-                if (mech === 'deny_win') deniedWin.push(t);
-                if (mech === 'deny_draw') deniedDraw.push(t);
-                if (mech === 'force_par' && t === pc.by) forcePar.push(t); 
-                if (mech === 'double_win' && t === pc.by) doubleWin.push(t);
-                if (mech === 'double_task' && t === pc.by) doubleTask.push(t);
-            });
-        });
-    }
+                return;
+            }
+            if (mech === 'shield' && t === pc.by) {
+                playerEffects[t].shields++;
+                return;
+            }
 
-    forcePar.forEach(pName => {
-        if (playerResults[pName] && playerResults[pName].strokes > par) {
-            playerResults[pName].strokes = par;
-            window.logEvent(`${pName} käytti Par-Varmistuksen! Tulos korjattiin Pariin.`);
-        }
+            if (isSabotage) {
+                if (playerEffects[t].shields > 0) {
+                    playerEffects[t].shields--;
+                    window.logEvent(`${t} suojautui sabotaasilta kilven avulla!`);
+                } else {
+                    playerEffects[t].sabotages.push({ ...pc, isMajor, isMinor, diff: cDef ? (cDef.diff||1) : 1, mech: mech });
+                }
+            } else {
+                playerEffects[t].buffs.push({ ...pc, mech: mech });
+            }
+        });
     });
 
+    for (let pName in playerResults) {
+        let pRes = playerResults[pName];
+        let pEff = playerEffects[pName];
+        pRes.moneyMod = 0; pRes.drawMod = 0; pRes.denyPassive = false; pRes.denyWin = false; pRes.denyTask = false; pRes.denyDraw = false; pRes.forcePar = false; pRes.forceBogey = false; pRes.doubleWin = false; pRes.doubleTask = false; pRes.majorDefeated = null;
+
+        pEff.sabotages.forEach(s => {
+            if (s.mech === 'score_+1') pRes.strokes += 1;
+            if (s.mech === 'score_+2') pRes.strokes += 2;
+            if (s.mech === 'deny_passive') pRes.denyPassive = true;
+            if (s.mech === 'deny_win') pRes.denyWin = true;
+            if (s.mech === 'deny_task') pRes.denyTask = true;
+            if (s.mech === 'deny_draw') pRes.denyDraw = true;
+            if (s.mech === 'force_bogey') pRes.forceBogey = true;
+            if (s.isMajor) { if (!pRes.majorDefeated || s.diff > pRes.majorDefeated.diff) { pRes.majorDefeated = { name: pName, diff: s.diff }; } }
+        });
+
+        pEff.buffs.forEach(b => {
+            if (b.mech === 'score_-1') pRes.strokes = Math.max(1, pRes.strokes - 1);
+            if (b.mech === 'score_-2') pRes.strokes = Math.max(1, pRes.strokes - 2);
+            if (b.mech === 'money_+1') pRes.moneyMod += 1;
+            if (b.mech === 'money_+2') pRes.moneyMod += 2;
+            if (b.mech === 'money_+5') pRes.moneyMod += 5;
+            if (b.mech === 'draw_1') pRes.drawMod += 1;
+            if (b.mech === 'draw_2') pRes.drawMod += 2;
+            if (b.mech === 'force_par') pRes.forcePar = true;
+            if (b.mech === 'double_win') pRes.doubleWin = true;
+            if (b.mech === 'double_task') pRes.doubleTask = true;
+        });
+
+        if (pRes.forcePar && pRes.strokes > par) { pRes.strokes = par; window.logEvent(`${pName} käytti Par-Varmistuksen!`); }
+        if (pRes.forceBogey && pRes.strokes > par + 1) { pRes.strokes = par + 1; window.logEvent(`${pName} asetettiin Bogey-Pakolla tulokseen ${par + 1}.`); }
+    }
+
+    // ==============================================
+    // VOITTAJIEN JA PISTEIDEN LASKENTA
+    // ==============================================
     let minStrokes = 9999; let maxStrokes = -9999;
     for (let key in playerResults) { let s = playerResults[key].strokes; if (s < minStrokes) minStrokes = s; if (s > maxStrokes) maxStrokes = s; }
 
@@ -1250,43 +1288,49 @@ window.submitScores = function() {
 
         p.dgScore = (parseInt(p.dgScore, 10) || 0) + (res.strokes - par);
         
-        if (!deniedPassive.includes(p.name)) {
+        if (!res.denyPassive) {
             currentPoints += ptsPassive; breakdown.push(`Passiivinen: +${ptsPassive}P`);
         } else {
-            window.logEvent(`${p.name} menetti passiivisen tulon kortin takia.`);
+            window.logEvent(`${p.name} menetti passiivisen tulon sabotaasin takia.`);
         }
         
         if (allGotBirdie) { currentPoints += 2; breakdown.push(`Allianssi: +2P`); }
 
         if (holeWinners.includes(p.name)) {
-            if (!deniedWin.includes(p.name)) {
+            if (!res.denyWin) {
                 let actualWinPts = (holeWinners.length > 1) ? Math.floor(ptsWin * 0.66) : ptsWin;
                 actualWinPts = Math.max(1, actualWinPts);
-                if (doubleWin.includes(p.name)) actualWinPts *= 2;
+                if (res.doubleWin) actualWinPts *= 2;
                 
                 currentPoints += actualWinPts; breakdown.push(`Voitto: +${actualWinPts}P`);
-                if(doubleWin.includes(p.name)) window.logEvent(`${p.name} sai tuplapisteet väylävoitosta!`);
+                if(res.doubleWin) window.logEvent(`${p.name} sai tuplapisteet väylävoitosta!`);
             } else {
                 window.logEvent(`${p.name} voitti, mutta kortti epäsi voittopisteet!`);
             }
         }
         
         if (res.taskWon) { 
-            let actualTaskPts = doubleTask.includes(p.name) ? (ptsTask * 2) : ptsTask;
-            currentPoints += actualTaskPts; breakdown.push(`Tehtävä: +${actualTaskPts}P`);
-            if(doubleTask.includes(p.name)) window.logEvent(`${p.name} sai tuplapisteet tehtävävoitosta!`);
+            if (!res.denyTask) {
+                let actualTaskPts = res.doubleTask ? (ptsTask * 2) : ptsTask;
+                currentPoints += actualTaskPts; breakdown.push(`Tehtävä: +${actualTaskPts}P`);
+                if(res.doubleTask) window.logEvent(`${p.name} sai tuplapisteet tehtävävoitosta!`);
+            } else {
+                window.logEvent(`${p.name} suoritti tehtävän, mutta pisteet evättiin!`);
+            }
         }
         
         if (holeLosers.includes(p.name) && minStrokes !== maxStrokes) { 
             currentPoints -= Math.abs(ptsLose); currentPoints = Math.max(0, currentPoints); 
         }
         
-        let majorDefeated = majorTargets.find(t => t.name === p.name);
-        if (majorDefeated && res.strokes <= par) {
-            let rew = majorDefeated.diff === 3 ? 8 : (majorDefeated.diff === 2 ? 5 : 3);
+        if (res.majorDefeated && res.strokes <= par) {
+            let rew = res.majorDefeated.diff === 3 ? 8 : (res.majorDefeated.diff === 2 ? 5 : 3);
             currentPoints += rew; breakdown.push(`Selätys: +${rew}P`);
-            window.logEvent(`${p.name} selätti ison sabotaasin (⭐x${majorDefeated.diff}) ja ansaitsi +${rew} P!`);
+            window.logEvent(`${p.name} selätti ison sabotaasin ja ansaitsi +${rew} P!`);
         }
+
+        if (res.moneyMod > 0) { currentPoints += res.moneyMod; breakdown.push(`Korttibonus: +${res.moneyMod}P`); }
+        if (res.moneyMod < 0) { currentPoints += res.moneyMod; breakdown.push(`Korttisakko: ${res.moneyMod}P`); }
         
         p.score = currentPoints; 
         p.boughtThisHole = false; 
@@ -1296,14 +1340,17 @@ window.submitScores = function() {
         if (scoreDelta !== 0) window.logScore(p.name, scoreDelta, `Väylä ${currentHoleIndex}: ${p.lastHoleSummary}`);
 
         p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : []; p.cards = p.cards.filter(Boolean);
-        if (!deniedDraw.includes(p.name)) {
+        if (!res.denyDraw) {
             let cardsToGive = (holeLosers.includes(p.name) && minStrokes !== maxStrokes) ? cardsDrawLoserCount : cardsDrawCount;
+            cardsToGive += res.drawMod;
+            cardsToGive = Math.max(0, cardsToGive);
+
             let drawn = window.drawFromDeck('normal', cardsToGive);
             drawn.forEach(cId => {
                 if (!limitEnabled || p.cards.length < limit) p.cards.push(cId);
             });
         } else {
-            window.logEvent(`${p.name} ei saanut nostaa uusia kortteja Korttikadon takia.`);
+            window.logEvent(`${p.name} ei saanut nostaa uusia kortteja sabotaasin takia.`);
         }
         p.cards = p.cards.filter(Boolean);
     });
@@ -1345,7 +1392,8 @@ window.submitScores = function() {
     if(el('scoreModal')) el('scoreModal').style.display = 'none'; 
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
     
-    setTimeout(() => { window.zoomToHole(nextHoleIndex); }, 400); 
+    // Siirtää KAIKKIEN pelaajien kameran uudelle väylälle!
+    setTimeout(() => { if(window.zoomToHole) window.zoomToHole(nextHoleIndex); }, 600); 
 };
 
 // ==============================================
