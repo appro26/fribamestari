@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fi">
 <head>
@@ -16,11 +17,35 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=173" />
+    <link rel="stylesheet" href="style.css?v=174" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <script>
       window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
+      
+      // Ladataan ikkunoiden hallinta välittömästi, jotta napit toimivat ennen raskaan datan latautumista
+      window.showModalSafe = function(id, displayType) {
+          var el = document.getElementById(id);
+          if(el) {
+              el.style.display = displayType || 'flex';
+              history.pushState({ fribaApp: true }, '');
+          }
+      };
+
+      window.addEventListener('popstate', function(e) {
+          var modals = ['cardDetailModal', 'targetModal', 'scoreModal', 'gmGiveCardModal', 'receiptModal', 'zoomModal', 'handLimitModal', 'shopModal', 'settingsModal', 'courseModal', 'rulesModal', 'cardLibraryModal', 'createCardModal'];
+          var closedAny = false;
+          for (var i = 0; i < modals.length; i++) {
+              var m = document.getElementById(modals[i]);
+              if (m && m.style.display !== 'none' && m.style.display !== '') {
+                  m.style.display = 'none';
+                  closedAny = true;
+                  if (modals[i] === 'shopModal') window.pendingShopPurchase = null;
+                  break; 
+              }
+          }
+          if (closedAny) { history.pushState({ fribaApp: true }, ''); }
+      });
     </script>
 </head>
 <body class="player-mode">
@@ -461,7 +486,7 @@
         <div id="zoomModalContent"></div>
     </div>
 
-    <script src="tasks.js?v=173"></script>
-    <script type="module" src="script.js?v=173"></script>
+    <script src="tasks.js?v=174"></script>
+    <script type="module" src="script.js?v=174"></script>
 </body>
 </html>
