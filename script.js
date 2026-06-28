@@ -155,7 +155,10 @@ window.zoomToHole = function(hIndex) {
     let targetX = (window.innerWidth - 380) / 2 - cellX; 
     let targetY = 60 - cellY; 
     
-    window.animateCameraTo(targetX, targetY, 1, 400);
+    // Suojataan errorilta, jos funktiota kutsutaan ennen latausta
+    if(typeof window.animateCameraTo === 'function') {
+        window.animateCameraTo(targetX, targetY, 1, 400);
+    }
 };
 
 window.zoomToCurrentHole = function() { window.zoomToHole(currentHoleIndex); };
@@ -224,7 +227,7 @@ if(vp) {
 }
 
 // ==============================================
-// SWIPE TO CLOSE (SUOJATTU, VAIN YLHÄÄLTÄ ALAS)
+// SWIPE TO CLOSE (SUOJATTU, VAIN KANSION KAHVASTA YLHÄÄLTÄ ALAS)
 // ==============================================
 let swipeStartX = 0;
 let swipeStartY = 0;
@@ -232,18 +235,13 @@ let swipeContentEl = null;
 let isValidSwipeToClose = false;
 
 window.addEventListener('touchstart', e => {
-    let el = e.target.closest('.scrollable-modal-content') || e.target.closest('.binder-content');
-    let isHandle = e.target.closest('.binder-swipe-handle') || 
-                   e.target.closest('.fullscreen-modal-header') || 
-                   e.target.closest('.shop-tabs') ||
-                   e.target.tagName.toLowerCase() === 'h1' ||
-                   e.target.closest('.close-modal-btn');
+    let isHandle = e.target.closest('.binder-swipe-handle');
                    
-    if (el && isHandle) {
+    if (isHandle) {
         swipeStartY = e.touches[0].clientY;
         swipeStartX = e.touches[0].clientX;
-        swipeContentEl = el;
-        isValidSwipeToClose = (el.scrollTop <= 5);
+        swipeContentEl = isHandle;
+        isValidSwipeToClose = true;
     } else {
         isValidSwipeToClose = false;
     }
@@ -256,42 +254,15 @@ window.addEventListener('touchend', e => {
         let diffY = endY - swipeStartY;
         let diffX = Math.abs(endX - swipeStartX);
         
-        if (diffY > 100 && diffY > diffX * 2 && swipeContentEl.scrollTop <= 5) {
+        // Puhdas vetäisy alaspäin
+        if (diffY > 100 && diffY > diffX * 2) {
             if(el('shopModal')) el('shopModal').style.display = 'none';
-            if(el('settingsModal')) el('settingsModal').style.display = 'none';
-            if(el('rulesModal')) el('rulesModal').style.display = 'none';
-            if(el('cardLibraryModal')) el('cardLibraryModal').style.display = 'none';
-            if(el('createCardModal')) el('createCardModal').style.display = 'none';
-            if(el('courseModal')) el('courseModal').style.display = 'none';
             window.pendingShopPurchase = null;
         }
     }
     swipeStartY = 0;
     isValidSwipeToClose = false;
 }, {passive:true});
-
-// ==============================================
-// NATIIVIN TAKAISIN-NAPIN HALLINTA (ROUTER)
-// ==============================================
-window.addEventListener('load', () => { 
-    history.pushState({ fribaApp: true }, ''); 
-    setTimeout(window.checkInstallPrompt, 1500); 
-    if(window.renderParInputs) window.renderParInputs();
-});
-
-window.addEventListener('popstate', (e) => {
-    const modals = ['cardDetailModal', 'targetModal', 'scoreModal', 'gmGiveCardModal', 'receiptModal', 'zoomModal', 'handLimitModal', 'shopModal', 'settingsModal', 'courseModal', 'rulesModal', 'cardLibraryModal', 'createCardModal'];
-    let closedAny = false;
-    for (let i = 0; i < modals.length; i++) {
-        let m = el(modals[i]);
-        if (m && m.style.display !== 'none' && m.style.display !== '') {
-            m.style.display = 'none'; closedAny = true;
-            if (modals[i] === 'shopModal') window.pendingShopPurchase = null;
-            break; 
-        }
-    }
-    if (closedAny) history.pushState({ fribaApp: true }, ''); 
-});
 
 // ==============================================
 // KORTTIEN APUFUNKTIOT & TARKISTUKSET
@@ -337,7 +308,9 @@ window.showEventCard = function(cId, target, by) {
     window.carouselCurrentMode = 'event';
     window.carouselCurrentIndex = 0;
     window.renderCarousel();
+    
     let targetStr = target ? `<div style="background:var(--danger); color:#fff; padding:15px; border-radius:8px; font-weight:900; font-size:1.2rem; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.4); margin-bottom:10px;">SUORITTAJA:<br><span style="font-size:1.8rem; font-family:'Kalam', cursive;">${target}</span><div style="font-size:0.85rem; margin-top:5px; opacity:0.9;">(Määrääjä: ${by})</div></div>` : '';
+    
     el('cardDetailActionArea').innerHTML = targetStr;
     window.showModalSafe('cardDetailModal');
     setTimeout(() => { window.initNativeCarousel(); }, 100);
@@ -468,7 +441,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         let strokes = isHistory && hData.holeResults ? hData.holeResults[p.name] : null;
         let scoreHTML = renderScoreDots(strokes, par);
         
-        // PISTEIDEN PIILOTUS: Vain oma saldo näkyy, paitsi pelin päättyessä.
         let displayScore = (p.name === myName || isHistory) ? `${p.score || 0} P` : `?? P`;
         
         html += `
@@ -1112,7 +1084,7 @@ window.updateCarouselButtons = function() {
 };
 
 //==============================================
-// TULOSTEN SYÖTTÖ & PELIN KULKU (TÄYDELLINEN LOGIIKKA)
+// TULOSTEN SYÖTTÖ & PELIN KULKU
 //==============================================
 window.changeScore = function(safeId, par, delta) {
     let input = el(`scoreInput_${safeId}`);
@@ -1235,7 +1207,6 @@ window.submitScores = function() {
     let limitEnabled = window.gameSettings.handLimitEnabled !== undefined ? window.gameSettings.handLimitEnabled : true;
     let limit = window.gameSettings.handLimit !== undefined ? window.gameSettings.handLimit : 5;
     
-    // Uudet dynaamiset asetukset kortin nostoille
     let cardsDrawCount = window.gameSettings.cardsDraw !== undefined ? window.gameSettings.cardsDraw : 2;
     let cardsDrawLoserCount = window.gameSettings.cardsDrawLoser !== undefined ? window.gameSettings.cardsDrawLoser : 3;
     let shopCardCount = window.gameSettings.shopCount !== undefined ? window.gameSettings.shopCount : 5;
@@ -1296,7 +1267,6 @@ window.submitScores = function() {
 
         p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : []; p.cards = p.cards.filter(Boolean);
         if (!deniedDraw.includes(p.name)) {
-            // Dynaaminen korttien nosto (Asetusten perusteella)
             let cardsToGive = (holeLosers.includes(p.name) && minStrokes !== maxStrokes) ? cardsDrawLoserCount : cardsDrawCount;
             let drawn = window.drawFromDeck('normal', cardsToGive);
             drawn.forEach(cId => {
@@ -1455,7 +1425,7 @@ window.startMeilahti = function() {
     window.gameDecks = { normal: normalDeck, premium: premiumDeck, rules: rulesDeck };
     
     let shopCardCount = window.gameSettings.shopCount || 5;
-    let cardsDrawCount = window.gameSettings.cardsDraw !== undefined ? window.gameSettings.cardsDraw : 3;
+    let cardsDrawCount = window.gameSettings.cardsDraw !== undefined ? window.gameSettings.cardsDraw : 2;
 
     let nextPlayers = [];
     if(allPlayers) {
@@ -1488,7 +1458,6 @@ window.startCustomCourse = function() {
     let name = el('newCourseName').value.trim() || "Oma Rata";
     let holesCount = parseInt(el('newCourseHoles').value, 10) || 18;
     
-    // Luetaan jokaisen väylän Par-arvot uuden radan kentistä
     let pars = [];
     for(let i=1; i<=holesCount; i++) {
         let pInput = el(`parInput_${i}`);
@@ -1503,7 +1472,7 @@ window.startCustomCourse = function() {
     window.gameDecks = { normal: normalDeck, premium: premiumDeck, rules: rulesDeck };
     
     let shopCardCount = window.gameSettings.shopCount || 5;
-    let cardsDrawCount = window.gameSettings.cardsDraw !== undefined ? window.gameSettings.cardsDraw : 3;
+    let cardsDrawCount = window.gameSettings.cardsDraw !== undefined ? window.gameSettings.cardsDraw : 2;
 
     let nextPlayers = [];
     if(allPlayers) {
