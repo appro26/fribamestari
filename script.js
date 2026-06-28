@@ -86,16 +86,14 @@ window.drawFromDeck = function(type, count) {
             if (type === 'normal' || type === 'premium') {
                 let available = window.allCards.filter(c => c.tier === type).map(c => c.id);
                 
-                // Kerätään kaikki pelissä jo olevat kortit
                 let inUse = new Set();
                 allPlayers.forEach(p => { if(p.cards) p.cards.forEach(c => inUse.add(c)); });
                 if(activeHole && activeHole.shop) {
                     Object.values(activeHole.shop).forEach(sArr => { sArr.forEach(c => inUse.add(c.id)); });
                 }
                 
-                // Suodatetaan pois ne, jotka ovat jo pelaajien käsissä tai kaupassa!
                 let filtered = available.filter(id => !inUse.has(id));
-                if(filtered.length === 0) filtered = available; // Failsafe jos kortit loppuu oikeasti
+                if(filtered.length === 0) filtered = available; // Failsafe jos pakka loppuu oikeasti
                 
                 deck = filtered.sort(() => 0.5 - Math.random());
             } else if (type === 'rules') {
@@ -174,7 +172,7 @@ window.zoomToHole = function(hIndex) {
     let cellY = 120 + row * 1010; 
     
     let targetX = (window.innerWidth - 380) / 2 - cellX; 
-    let targetY = 60 - cellY; // Y-Offset palautettu ylös
+    let targetY = 60 - cellY; // Kamera takaisin ylemmäs
     
     if(typeof window.animateCameraTo === 'function') {
         window.animateCameraTo(targetX, targetY, 1, 400);
@@ -249,7 +247,7 @@ if(vp) {
 }
 
 // ==============================================
-// SWIPE TO CLOSE
+// SWIPE TO CLOSE (TOIMII VAIN KAHVASTA)
 // ==============================================
 let swipeStartX = 0;
 let swipeStartY = 0;
@@ -272,6 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let endY = e.changedTouches[0].clientY;
                 let diffY = endY - swipeStartY;
                 let diffX = Math.abs(endX - swipeStartX);
+                
                 if (diffY > 100 && diffY > diffX * 2) {
                     if(el('shopModal')) el('shopModal').style.display = 'none';
                     window.pendingShopPurchase = null;
@@ -454,7 +453,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         let strokes = isHistory && hData.holeResults ? hData.holeResults[p.name] : null;
         let scoreHTML = renderScoreDots(strokes, par);
         
-        // PISTEIDEN PIILOTUS: Vain oma saldo näkyy muiden piilossa (paitsi pelin lopussa)
         let displayScore = (p.name === myName) ? `${p.score || 0} P` : `?? P`;
         
         html += `
@@ -480,53 +478,70 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
             parts.forEach(part => {
                 let kv = part.split(': ');
                 if(kv.length === 2) {
-                    rowsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding:4px 0;"><span style="color:#475569;">${kv[0]}</span><span style="font-weight:700;">${kv[1]}</span></div>`;
+                    rowsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #e2e8f0; padding:6px 0;"><span style="color:#475569;">${kv[0]}</span><span style="font-weight:700; color:#1e293b;">${kv[1]}</span></div>`;
                 } else {
-                    rowsHtml += `<div style="padding:4px 0; color:#475569;">${part}</div>`;
+                    rowsHtml += `<div style="padding:6px 0; color:#475569;">${part}</div>`;
                 }
             });
         }
 
         html += `
-        <div class="payslip-paper" style="background:#fff; border:1px solid #cbd5e1; border-radius:2px; transform: rotate(-0.5deg); margin-top: 25px; margin-bottom: 20px; width: 100%; max-width: 340px; padding: 20px; box-shadow: 2px 4px 12px rgba(0,0,0,0.15); z-index:30; position:relative; font-family:'Inter', sans-serif;">
-            <div style="border-bottom: 2px solid #1e293b; padding-bottom: 8px; margin-bottom: 12px;">
-                <div style="font-weight:900; font-size:1.2rem; color:#1e293b; letter-spacing:1px;">PALKKALASKELMA</div>
-                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#64748b; margin-top:4px;">
-                    <span>Kausi: Väylä ${hIndex}</span>
-                    <span style="font-weight:bold;">Tyontekijä: ${myName.toUpperCase()}</span>
+        <div class="payslip-paper" style="background:#fff; border:1px solid #cbd5e1; border-radius:2px; transform: rotate(-0.5deg); margin-top: 25px; margin-bottom: 20px; width: 100%; max-width: 340px; padding: 20px; box-shadow: 2px 4px 12px rgba(0,0,0,0.15); z-index:30; position:relative; font-family:'Courier Prime', monospace;">
+            <div style="border-bottom: 2px dashed #1e293b; padding-bottom: 8px; margin-bottom: 12px; text-align:center;">
+                <div style="font-weight:900; font-size:1.4rem; color:#1e293b; letter-spacing:1px; text-transform:uppercase;">Palkkalaskelma</div>
+                <div style="font-size:0.85rem; color:#64748b; margin-top:4px;">
+                    Kausi: Väylä ${hIndex}
                 </div>
             </div>
             
-            <div style="font-size:0.85rem; margin-bottom:15px;">
+            <div style="margin-bottom:12px; font-size:0.95rem; color:#1e293b;">
+                <span style="font-weight:bold;">Työntekijä:</span> ${myName.toUpperCase()}
+            </div>
+            
+            <div style="font-size:0.85rem; margin-bottom:15px; border-top:1px solid #94a3b8; padding-top:8px;">
                 <div style="display:flex; justify-content:space-between; font-weight:800; color:#1e293b; border-bottom:1px solid #94a3b8; padding-bottom:4px; margin-bottom:4px;">
-                    <span>Tapahtuma (Tulolaji)</span>
+                    <span>Tulolaji / Tapahtuma</span>
                     <span>Määrä</span>
                 </div>
                 ${rowsHtml}
             </div>
             
-            <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:10px; border-radius:4px; border-left:4px solid ${deltaColor};">
-                <span style="font-weight:800; font-size:0.9rem; color:#334155;">NETTOPALKKA</span>
-                <span style="font-weight:900; font-size:1.4rem; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:10px; border-radius:4px; border:2px solid ${deltaColor};">
+                <span style="font-weight:800; font-size:1.1rem; color:#334155;">NETTOPALKKA</span>
+                <span style="font-weight:900; font-size:1.5rem; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
             </div>
             
-            <div style="text-align:center; font-size:0.6rem; color:#94a3b8; margin-top:12px; text-transform:uppercase; letter-spacing:1px;">Fribamestarit OY - Talousosasto</div>
+            <div style="text-align:center; font-size:0.6rem; color:#94a3b8; margin-top:15px; text-transform:uppercase; letter-spacing:1px; border-top:1px dashed #cbd5e1; padding-top:8px;">Fribamestarit OY - Talousosasto</div>
         </div>`;
     }
     
     if (hIndex >= 2) {
         let prevHole = window.gameHistory[hIndex - 2];
-        let worstPlayer = "Pelaaja";
+        let worstPlayers = [];
         if (prevHole && prevHole.holeResults) {
             let maxS = -999;
             for(let p in prevHole.holeResults) {
-                if(prevHole.holeResults[p] > maxS) { maxS = prevHole.holeResults[p]; worstPlayer = p; }
+                if(prevHole.holeResults[p] > maxS) { 
+                    maxS = prevHole.holeResults[p]; 
+                    worstPlayers = [p]; 
+                } else if (prevHole.holeResults[p] === maxS) {
+                    worstPlayers.push(p);
+                }
             }
         }
 
         let insultIndex = Math.floor(pseudoRandom(hIndex * 8.8) * insults.length);
+        let rawInsult = insults[insultIndex] || "V*ttu mikä heitto!";
+        let dText = "";
+        
+        if (worstPlayers.length === 1) {
+            dText = rawInsult.replace(/\[Pelaaja\]/g, worstPlayers[0]);
+        } else {
+            dText = rawInsult.replace(/\[Pelaaja\],\s*/g, '').replace(/\[Pelaaja\]\s*/g, '').replace(/\[Pelaaja\]/g, 'Kaveri');
+            dText = dText.charAt(0).toUpperCase() + dText.slice(1);
+        }
+        
         let svgIndex = Math.floor(pseudoRandom(hIndex * 9.9) * doodleSVGs.length);
-        let dText = insults[insultIndex] ? insults[insultIndex].replace(/\[Pelaaja\]/g, worstPlayer) : `V*ttu mikä heitto, ${worstPlayer}!`; 
         let dSvg = doodleSVGs[svgIndex];
         let dRot = -3 + (pseudoRandom(hIndex * 3) * 6);
         
@@ -1403,7 +1418,7 @@ window.submitScores = function() {
         p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : []; p.cards = p.cards.filter(Boolean);
         if (!res.denyDraw) {
             let cardsToGive = (holeLosers.includes(p.name) && minStrokes !== maxStrokes) ? cardsDrawLoserCount : cardsDrawCount;
-            cardsToGive += res.drawMod;
+            if (res.drawMod) cardsToGive += res.drawMod;
             cardsToGive = Math.max(0, cardsToGive);
 
             let drawn = window.drawFromDeck('normal', cardsToGive);
@@ -1454,7 +1469,6 @@ window.submitScores = function() {
     if(el('scoreModal')) el('scoreModal').style.display = 'none'; 
     window.logEvent(`${myName} syötti tulokset väylältä ${currentHoleIndex}.`);
     
-    // Siirtää KAIKKIEN pelaajien kameran uudelle väylälle!
     setTimeout(() => { if(window.zoomToHole) window.zoomToHole(nextHoleIndex); }, 600); 
 };
 
@@ -1565,12 +1579,12 @@ window.startMeilahti = function() {
     window.gameDecks = { normal: normalDeck, premium: premiumDeck, rules: rulesDeck };
     
     let shopCardCount = window.gameSettings.shopCount || 5;
-    let cardsDrawCount = window.gameSettings.cardsDraw !== undefined ? window.gameSettings.cardsDraw : 2;
 
     let nextPlayers = [];
     if(allPlayers) {
         nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean).map(p => {
-            let pCards = window.drawFromDeck('normal', cardsDrawCount);
+            // Aloituskäsi: Aina tasan 2 korttia pelin alkaessa!
+            let pCards = window.drawFromDeck('normal', 2);
             return { ...p, score: 3, dgScore: 0, cards: pCards, boughtThisHole: false };
         });
     }
@@ -1612,12 +1626,12 @@ window.startCustomCourse = function() {
     window.gameDecks = { normal: normalDeck, premium: premiumDeck, rules: rulesDeck };
     
     let shopCardCount = window.gameSettings.shopCount || 5;
-    let cardsDrawCount = window.gameSettings.cardsDraw !== undefined ? window.gameSettings.cardsDraw : 2;
 
     let nextPlayers = [];
     if(allPlayers) {
         nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean).map(p => {
-            return { ...p, score: 3, dgScore: 0, cards: window.drawFromDeck('normal', cardsDrawCount), boughtThisHole: false };
+            // Aloituskäsi: Aina tasan 2 korttia pelin alkaessa!
+            return { ...p, score: 3, dgScore: 0, cards: window.drawFromDeck('normal', 2), boughtThisHole: false };
         });
     }
 
@@ -1857,8 +1871,9 @@ onValue(ref(db, 'gameState'), (snap) => {
             } 
             else if (window.myLastHoleIndex !== currentHoleIndex) {
                 let diff = currentPoints - window.myLastScore;
-                let summary = me.lastHoleSummary ? me.lastHoleSummary : "Ei muutoksia";
+                let summary = me.lastHoleSummary ? me.lastHoleSummary : "Ei tuloja";
                 
+                // POPUP-ILMOITUS YLÄLAITAAN VÄYLÄN VAIHTUESSA
                 if (currentCourse && currentHoleIndex > currentCourse.pars.length) {
                      window.showNotification(`Kaikki väylät pelattu! Katso voittaja taululta.`, 'warning');
                 } else if (diff !== 0) {
