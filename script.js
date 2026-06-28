@@ -20,7 +20,7 @@ let lastPlayedCardTimestamp = Date.now();
 window.gameHistory = []; 
 window.gameDecks = { normal: [], premium: [], rules: [] };
 
-window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 3, ptsTask: 2, ptsLose: 0, ptsPassive: 2, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5, sellReward: 1 };
+window.gameSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 3, ptsTask: 2, ptsLose: 0, ptsPassive: 2, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5, sellReward: 1, shopCount: 5, cardsDraw: 2, cardsDrawLoser: 3 };
 window.pendingShopPurchase = null;
 
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
@@ -55,6 +55,20 @@ const doodleSVGs = [
 ];
 
 // ==============================================
+// PAR-TULOSTEN RENDERÖINTI (UUDEN RADAN LUONTI)
+// ==============================================
+window.renderParInputs = function() {
+    let count = parseInt(el('newCourseHoles').value, 10) || 18;
+    let container = el('newCourseParsContainer');
+    if(!container) return;
+    let html = '';
+    for(let i=1; i<=count; i++) {
+        html += `<div style="display:flex; flex-direction:column; align-items:center;"><span style="font-size:0.85rem; font-weight:bold;">V${i}</span><input type="number" class="custom-par-input" id="parInput_${i}" value="3" style="width:100%; padding:8px; margin:0; text-align:center; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:4px;"></div>`;
+    }
+    container.innerHTML = html;
+};
+
+// ==============================================
 // PAKKA-LOGIIKKA (SHUFFLE & DRAW)
 // ==============================================
 window.drawFromDeck = function(type, count) {
@@ -77,6 +91,57 @@ window.drawFromDeck = function(type, count) {
 // ==============================================
 // VAPAA KAMERA & OPTIMOITU KESKITYS
 // ==============================================
+let boardState = { scale: 1, x: 0, y: 0 };
+let isDraggingBoard = false;
+let lastBoardTouch = null;
+let initialPinchDist = 0;
+let camAnim = null; 
+let boardEl = null;
+let isRendering = false;
+
+window.applyBoardTransform = function() {
+    if(!boardEl) boardEl = el('corkboard-surface');
+    if(boardEl) {
+        if(boardEl.style.willChange !== 'transform') boardEl.style.willChange = 'transform';
+        
+        const vpWidth = window.innerWidth; const vpHeight = window.innerHeight;
+        const bWidth = parseFloat(boardEl.style.width) || 3000;
+        const bHeight = parseFloat(boardEl.style.height) || 3000;
+        
+        const marginX = vpWidth * 0.5; const marginY = vpHeight * 0.5;
+        const minX = vpWidth - (bWidth * boardState.scale) - marginX;
+        const maxX = marginX;
+        const minY = vpHeight - (bHeight * boardState.scale) - marginY;
+        const maxY = marginY;
+
+        if (boardState.x > maxX) boardState.x = maxX;
+        if (boardState.x < minX) boardState.x = minX;
+        if (boardState.y > maxY) boardState.y = maxY;
+        if (boardState.y < minY) boardState.y = minY;
+
+        boardEl.style.transform = `translate3d(${boardState.x}px, ${boardState.y}px, 0) scale(${boardState.scale})`;
+    }
+    isRendering = false;
+};
+
+window.animateCameraTo = function(tX, tY, tScale, duration=350) {
+    if (camAnim) cancelAnimationFrame(camAnim);
+    let sX = boardState.x; let sY = boardState.y; let sScale = boardState.scale;
+    let startT = performance.now();
+    
+    function step(time) {
+        let p = (time - startT) / duration;
+        if (p >= 1) p = 1;
+        let ease = 1 - Math.pow(1 - p, 3);
+        boardState.x = sX + (tX - sX) * ease;
+        boardState.y = sY + (tY - sY) * ease;
+        boardState.scale = sScale + (tScale - sScale) * ease;
+        window.applyBoardTransform();
+        if (p < 1) camAnim = requestAnimationFrame(step); else camAnim = null;
+    }
+    camAnim = requestAnimationFrame(step);
+};
+
 window.zoomToHole = function(hIndex) {
     if(!currentCourse || !currentCourse.pars) return;
     let totalHoles = currentCourse.pars.length;
@@ -99,7 +164,6 @@ window.showZoomModal = function(html) {
     el('zoomModalContent').innerHTML = html;
     let child = el('zoomModalContent').firstElementChild;
     if(child) {
-        // Poistaa kaikki satunnaiset sijainnit ja keskittää täydellisesti ruudulle
         child.style.position = 'relative';
         child.style.left = 'auto';
         child.style.right = 'auto';
@@ -114,6 +178,51 @@ window.showZoomModal = function(html) {
     window.showModalSafe('zoomModal');
 };
 
+const vp = el('corkboard-viewport');
+if(vp) {
+    vp.addEventListener('touchstart', e => {
+        if(camAnim) { cancelAnimationFrame(camAnim); camAnim = null; }
+        if(e.touches.length === 1) {
+            isDraggingBoard = true;
+            lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else if (e.touches.length === 2) {
+            initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            isDraggingBoard = true;
+        }
+    }, {passive: false});
+
+    vp.addEventListener('touchmove', e => {
+        if(!isDraggingBoard) return;
+        e.preventDefault(); 
+        if(e.touches.length === 1 && lastBoardTouch) {
+            let panSpeed = 1 / Math.max(0.5, boardState.scale);
+            boardState.x += (e.touches[0].clientX - lastBoardTouch.x) * panSpeed;
+            boardState.y += (e.touches[0].clientY - lastBoardTouch.y) * panSpeed;
+            lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else if (e.touches.length === 2) {
+            let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            let scaleDiff = dist / initialPinchDist;
+            let pinchX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            let pinchY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            boardState.x -= (pinchX - boardState.x) * (scaleDiff - 1);
+            boardState.y -= (pinchY - boardState.y) * (scaleDiff - 1);
+            boardState.scale *= scaleDiff;
+            
+            if(boardState.scale < 0.35) boardState.scale = 0.35;
+            if(boardState.scale > 1.8) boardState.scale = 1.8;
+            initialPinchDist = dist;
+        }
+        if (!isRendering) { isRendering = true; requestAnimationFrame(window.applyBoardTransform); }
+    }, {passive: false});
+
+    vp.addEventListener('touchend', e => {
+        if(e.touches.length < 1) {
+            isDraggingBoard = false; lastBoardTouch = null;
+            if (!isRendering) { isRendering = true; requestAnimationFrame(window.applyBoardTransform); }
+        } else if (e.touches.length === 1) { lastBoardTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
+    }, {passive: true});
+}
+
 // ==============================================
 // SWIPE TO CLOSE (SUOJATTU, VAIN YLHÄÄLTÄ ALAS)
 // ==============================================
@@ -124,11 +233,16 @@ let isValidSwipeToClose = false;
 
 window.addEventListener('touchstart', e => {
     let el = e.target.closest('.scrollable-modal-content') || e.target.closest('.binder-content');
-    if (el) {
+    let isHandle = e.target.closest('.binder-swipe-handle') || 
+                   e.target.closest('.fullscreen-modal-header') || 
+                   e.target.closest('.shop-tabs') ||
+                   e.target.tagName.toLowerCase() === 'h1' ||
+                   e.target.closest('.close-modal-btn');
+                   
+    if (el && isHandle) {
         swipeStartY = e.touches[0].clientY;
         swipeStartX = e.touches[0].clientX;
         swipeContentEl = el;
-        // Sulku on sallittu VAIN jos sormen osuessa näyttöön, elementti on jo täysin ylhäällä
         isValidSwipeToClose = (el.scrollTop <= 5);
     } else {
         isValidSwipeToClose = false;
@@ -142,13 +256,14 @@ window.addEventListener('touchend', e => {
         let diffY = endY - swipeStartY;
         let diffX = Math.abs(endX - swipeStartX);
         
-        // Varmistetaan että kyseessä on pitkä, ylhäältä alas suuntautuva pyyhkäisy
-        if (diffY > 120 && diffY > diffX * 2 && swipeContentEl.scrollTop <= 5) {
-            if(el('shopModal') && el('shopModal').style.display !== 'none') window.closeShopModal();
-            if(el('settingsModal') && el('settingsModal').style.display !== 'none') el('settingsModal').style.display='none';
-            if(el('rulesModal') && el('rulesModal').style.display !== 'none') el('rulesModal').style.display='none';
-            if(el('cardLibraryModal') && el('cardLibraryModal').style.display !== 'none') el('cardLibraryModal').style.display='none';
-            if(el('createCardModal') && el('createCardModal').style.display !== 'none') el('createCardModal').style.display='none';
+        if (diffY > 100 && diffY > diffX * 2 && swipeContentEl.scrollTop <= 5) {
+            if(el('shopModal')) el('shopModal').style.display = 'none';
+            if(el('settingsModal')) el('settingsModal').style.display = 'none';
+            if(el('rulesModal')) el('rulesModal').style.display = 'none';
+            if(el('cardLibraryModal')) el('cardLibraryModal').style.display = 'none';
+            if(el('createCardModal')) el('createCardModal').style.display = 'none';
+            if(el('courseModal')) el('courseModal').style.display = 'none';
+            window.pendingShopPurchase = null;
         }
     }
     swipeStartY = 0;
@@ -161,71 +276,22 @@ window.addEventListener('touchend', e => {
 window.addEventListener('load', () => { 
     history.pushState({ fribaApp: true }, ''); 
     setTimeout(window.checkInstallPrompt, 1500); 
+    if(window.renderParInputs) window.renderParInputs();
 });
 
 window.addEventListener('popstate', (e) => {
-    const modals = [
-        'cardDetailModal', 'targetModal', 'scoreModal', 'gmGiveCardModal',
-        'receiptModal', 'zoomModal', 'handLimitModal', 'shopModal', 'settingsModal', 'courseModal', 'rulesModal', 'cardLibraryModal', 'createCardModal'
-    ];
+    const modals = ['cardDetailModal', 'targetModal', 'scoreModal', 'gmGiveCardModal', 'receiptModal', 'zoomModal', 'handLimitModal', 'shopModal', 'settingsModal', 'courseModal', 'rulesModal', 'cardLibraryModal', 'createCardModal'];
     let closedAny = false;
     for (let i = 0; i < modals.length; i++) {
         let m = el(modals[i]);
         if (m && m.style.display !== 'none' && m.style.display !== '') {
-            m.style.display = 'none';
-            closedAny = true;
+            m.style.display = 'none'; closedAny = true;
             if (modals[i] === 'shopModal') window.pendingShopPurchase = null;
             break; 
         }
     }
-    if (closedAny) {
-        history.pushState({ fribaApp: true }, ''); 
-    }
+    if (closedAny) history.pushState({ fribaApp: true }, ''); 
 });
-
-window.showModalSafe = function(id, displayType = 'flex') {
-    if(el(id)) {
-        el(id).style.display = displayType;
-        history.pushState({ fribaApp: true }, '');
-    }
-};
-
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault(); deferredPrompt = e;
-    if (!localStorage.getItem('friba_browser_mode') && el('installPromptModal')) {
-        el('installInstructions').innerHTML = "Tämä peli toimii parhaiten puhelimen omana sovelluksena. Asenna se nyt yhdellä painalluksella!";
-        el('nativeInstallBtn').style.display = 'block';
-        window.showModalSafe('installPromptModal');
-    }
-});
-
-window.triggerNativeInstall = async function() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted' && el('installPromptModal')) el('installPromptModal').style.display = 'none';
-        deferredPrompt = null;
-    }
-};
-
-window.checkInstallPrompt = function() {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
-    if (isStandalone || localStorage.getItem('friba_browser_mode')) return;
-    if (!deferredPrompt && el('installPromptModal')) {
-        const os = /iPad|iPhone|iPod/.test(navigator.userAgent) ? "iOS" : (/android/i.test(navigator.userAgent) ? "Android" : "Other");
-        let instText = os === "iOS" ? "Paina selaimen alalaidasta <b>Jaa-kuvaketta</b> ja valitse <b>'Lisää kotivalikkoon'</b>." : 
-                       (os === "Android" ? "Paina selaimen <b>valikkoa</b> ja valitse <b>'Asenna sovellus'</b>." : "Asenna peli selaimesi valikosta.");
-        el('installInstructions').innerHTML = instText;
-        el('nativeInstallBtn').style.display = 'none'; 
-        window.showModalSafe('installPromptModal');
-    }
-};
-
-window.dismissInstallPrompt = function() {
-    localStorage.setItem('friba_browser_mode', 'true');
-    if(el('installPromptModal')) el('installPromptModal').style.display = 'none';
-};
 
 // ==============================================
 // KORTTIEN APUFUNKTIOT & TARKISTUKSET
@@ -271,9 +337,7 @@ window.showEventCard = function(cId, target, by) {
     window.carouselCurrentMode = 'event';
     window.carouselCurrentIndex = 0;
     window.renderCarousel();
-    
     let targetStr = target ? `<div style="background:var(--danger); color:#fff; padding:15px; border-radius:8px; font-weight:900; font-size:1.2rem; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.4); margin-bottom:10px;">SUORITTAJA:<br><span style="font-size:1.8rem; font-family:'Kalam', cursive;">${target}</span><div style="font-size:0.85rem; margin-top:5px; opacity:0.9;">(Määrääjä: ${by})</div></div>` : '';
-    
     el('cardDetailActionArea').innerHTML = targetStr;
     window.showModalSafe('cardDetailModal');
     setTimeout(() => { window.initNativeCarousel(); }, 100);
@@ -405,7 +469,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         let scoreHTML = renderScoreDots(strokes, par);
         
         // PISTEIDEN PIILOTUS: Vain oma saldo näkyy, paitsi pelin päättyessä.
-        let displayScore = (p.name === myName) ? `${p.score || 0} P` : `?? P`;
+        let displayScore = (p.name === myName || isHistory) ? `${p.score || 0} P` : `?? P`;
         
         html += `
         <div class="player-row-paper">
@@ -612,7 +676,6 @@ window.forceDiscard = function(cId, isNormal) {
             window.logScore(myName, -pPrice, `Osti kortin kaupasta`);
             let nextShopAll = JSON.parse(JSON.stringify(activeHole.shop || {}));
             
-            // Poista kortti vain kyseisen pelaajan omasta henkilökohtaisesta kaupasta
             if (nextShopAll[myName]) {
                 const sIdx = nextShopAll[myName].findIndex(i => i && i.id === pId);
                 if (sIdx !== -1) nextShopAll[myName].splice(sIdx, 1);
@@ -649,7 +712,6 @@ window.buyShopItem = function(idStr, nameStr, priceVal) {
         me.score -= priceVal; me.boughtThisHole = true;
         window.logScore(myName, -priceVal, `Osti kortin: ${nameStr}`);
         
-        // Henkilökohtainen kauppa
         let nextShopAll = JSON.parse(JSON.stringify(activeHole.shop)); 
         nextShopAll[myName].splice(shopIndex, 1);
         
@@ -815,7 +877,7 @@ window.showHandLimitModal = function(cards) {
 };
 
 //==============================================
-// TURVALLINEN KARUSELLI Z-PÄIVITYKSELLÄ (VÄLÄHTÄMÄTÖN)
+// TURVALLINEN KARUSELLI Z-PÄIVITYKSELLÄ
 //==============================================
 window.isFlipping = false;
 window.flippedCards = new Set();
@@ -1172,6 +1234,11 @@ window.submitScores = function() {
     let ptsPassive = window.gameSettings.ptsPassive !== undefined ? window.gameSettings.ptsPassive : 2;
     let limitEnabled = window.gameSettings.handLimitEnabled !== undefined ? window.gameSettings.handLimitEnabled : true;
     let limit = window.gameSettings.handLimit !== undefined ? window.gameSettings.handLimit : 5;
+    
+    // Uudet dynaamiset asetukset kortin nostoille
+    let cardsDrawCount = window.gameSettings.cardsDraw !== undefined ? window.gameSettings.cardsDraw : 2;
+    let cardsDrawLoserCount = window.gameSettings.cardsDrawLoser !== undefined ? window.gameSettings.cardsDrawLoser : 3;
+    let shopCardCount = window.gameSettings.shopCount !== undefined ? window.gameSettings.shopCount : 5;
 
     nextPlayers.forEach(p => {
         if (!p) return; let res = playerResults[p.name]; if (!res) return; 
@@ -1229,7 +1296,8 @@ window.submitScores = function() {
 
         p.cards = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : []; p.cards = p.cards.filter(Boolean);
         if (!deniedDraw.includes(p.name)) {
-            let cardsToGive = (holeLosers.includes(p.name) && minStrokes !== maxStrokes) ? 3 : 2;
+            // Dynaaminen korttien nosto (Asetusten perusteella)
+            let cardsToGive = (holeLosers.includes(p.name) && minStrokes !== maxStrokes) ? cardsDrawLoserCount : cardsDrawCount;
             let drawn = window.drawFromDeck('normal', cardsToGive);
             drawn.forEach(cId => {
                 if (!limitEnabled || p.cards.length < limit) p.cards.push(cId);
@@ -1255,10 +1323,9 @@ window.submitScores = function() {
     
     let nextHoleIndex = currentHoleIndex + 1;
     
-    // Henkilökohtaisten kauppojen luonti
     let personalizedShop = {};
     nextPlayers.forEach(p => {
-        let sIds = window.drawFromDeck('premium', 4);
+        let sIds = window.drawFromDeck('premium', shopCardCount);
         personalizedShop[p.name] = sIds.map(id => window.allCards.find(c => c.id === id)).filter(Boolean);
     });
     
@@ -1387,17 +1454,20 @@ window.startMeilahti = function() {
     let rulesDeck = window.holeRules.map((_, i) => i).sort(() => 0.5 - Math.random());
     window.gameDecks = { normal: normalDeck, premium: premiumDeck, rules: rulesDeck };
     
+    let shopCardCount = window.gameSettings.shopCount || 5;
+    let cardsDrawCount = window.gameSettings.cardsDraw !== undefined ? window.gameSettings.cardsDraw : 3;
+
     let nextPlayers = [];
     if(allPlayers) {
         nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean).map(p => {
-            let pCards = window.drawFromDeck('normal', 3);
+            let pCards = window.drawFromDeck('normal', cardsDrawCount);
             return { ...p, score: 3, dgScore: 0, cards: pCards, boughtThisHole: false };
         });
     }
 
     let personalizedShop = {};
     nextPlayers.forEach(p => {
-        let sIds = window.drawFromDeck('premium', 4);
+        let sIds = window.drawFromDeck('premium', shopCardCount);
         personalizedShop[p.name] = sIds.map(id => window.allCards.find(c => c.id === id)).filter(Boolean);
     });
     
@@ -1417,23 +1487,34 @@ window.startMeilahti = function() {
 window.startCustomCourse = function() {
     let name = el('newCourseName').value.trim() || "Oma Rata";
     let holesCount = parseInt(el('newCourseHoles').value, 10) || 18;
-    let nextCourse = { name: name, pars: Array(holesCount).fill(3) };
+    
+    // Luetaan jokaisen väylän Par-arvot uuden radan kentistä
+    let pars = [];
+    for(let i=1; i<=holesCount; i++) {
+        let pInput = el(`parInput_${i}`);
+        pars.push(pInput ? (parseInt(pInput.value, 10) || 3) : 3);
+    }
+    
+    let nextCourse = { name: name, pars: pars };
     
     let normalDeck = window.allCards.filter(c => c.tier === 'normal').map(c => c.id).sort(() => 0.5 - Math.random());
     let premiumDeck = window.allCards.filter(c => c.tier === 'premium').map(c => c.id).sort(() => 0.5 - Math.random());
     let rulesDeck = window.holeRules.map((_, i) => i).sort(() => 0.5 - Math.random());
     window.gameDecks = { normal: normalDeck, premium: premiumDeck, rules: rulesDeck };
     
+    let shopCardCount = window.gameSettings.shopCount || 5;
+    let cardsDrawCount = window.gameSettings.cardsDraw !== undefined ? window.gameSettings.cardsDraw : 3;
+
     let nextPlayers = [];
     if(allPlayers) {
         nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean).map(p => {
-            return { ...p, score: 3, dgScore: 0, cards: window.drawFromDeck('normal', 3), boughtThisHole: false };
+            return { ...p, score: 3, dgScore: 0, cards: window.drawFromDeck('normal', cardsDrawCount), boughtThisHole: false };
         });
     }
 
     let personalizedShop = {};
     nextPlayers.forEach(p => {
-        let sIds = window.drawFromDeck('premium', 4);
+        let sIds = window.drawFromDeck('premium', shopCardCount);
         personalizedShop[p.name] = sIds.map(id => window.allCards.find(c => c.id === id)).filter(Boolean);
     });
     
@@ -1460,7 +1541,7 @@ window.cancelCourse = function() {
 window.resetGame = function() {
     if (confirm("Haluatko varmasti nollata koko kierroksen tiedot? Kaikki kirjataan ulos ja peliasetukset palautuvat oletuksiin.")) {
         localStorage.removeItem('friba_browser_mode');
-        const defaultSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 3, ptsTask: 2, ptsLose: 0, ptsPassive: 2, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5, sellReward: 1 };
+        const defaultSettings = { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 3, ptsTask: 2, ptsLose: 0, ptsPassive: 2, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5, sellReward: 1, shopCount: 5, cardsDraw: 2, cardsDrawLoser: 3 };
         set(ref(db, 'gameState'), window.cleanFirebaseData({ settings: defaultSettings, players: [], activeHole: null, currentHoleIndex: 1, course: null, history: [], customCards: [], decks: {normal:[], premium:[], rules:[]} }))
         .then(() => { localStorage.clear(); location.reload(); });
     }
@@ -1478,7 +1559,10 @@ window.saveGameSettings = function() {
         costMinor: parseInt(el('gmSetCostMinor').value, 10) || 2, 
         costMajor: parseInt(el('gmSetCostMajor').value, 10) || 5, 
         costBuff: parseInt(el('gmSetCostBuff').value, 10) || 3, 
-        rewardMajor: parseInt(el('gmSetRewardMajor').value, 10) || 5
+        rewardMajor: parseInt(el('gmSetRewardMajor').value, 10) || 5,
+        shopCount: parseInt(el('gmSetShopCount').value, 10) || 5,
+        cardsDraw: parseInt(el('gmSetCardsDraw').value, 10) || 2,
+        cardsDrawLoser: parseInt(el('gmSetCardsDrawLoser').value, 10) || 3
     });
     window.showNotification("Asetukset tallennettu!", "info");
     el('settingsModal').style.display = 'none';
@@ -1566,7 +1650,7 @@ onValue(ref(db, 'gameState'), (snap) => {
         return;
     }
 
-    window.gameSettings = data.settings || { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 3, ptsTask: 2, ptsLose: 0, ptsPassive: 2, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5, sellReward: 1 };
+    window.gameSettings = data.settings || { shopEnabled: true, handLimitEnabled: true, handLimit: 5, ptsWin: 3, ptsTask: 2, ptsLose: 0, ptsPassive: 2, costMinor: 2, costMajor: 5, costBuff: 3, rewardMajor: 5, sellReward: 1, shopCount: 5, cardsDraw: 2, cardsDrawLoser: 3 };
     window.gameHistory = data.history ? (Array.isArray(data.history) ? data.history : Object.values(data.history)) : [];
     window.gameDecks = data.decks || { normal: [], premium: [], rules: [] };
 
@@ -1600,6 +1684,9 @@ onValue(ref(db, 'gameState'), (snap) => {
     if (el('gmSetPtsLose')) el('gmSetPtsLose').value = window.gameSettings.ptsLose;
     if (el('gmSetPtsPassive')) el('gmSetPtsPassive').value = window.gameSettings.ptsPassive !== undefined ? window.gameSettings.ptsPassive : 2;
     if (el('gmSetSellReward')) el('gmSetSellReward').value = window.gameSettings.sellReward !== undefined ? window.gameSettings.sellReward : 1;
+    if (el('gmSetShopCount')) el('gmSetShopCount').value = window.gameSettings.shopCount !== undefined ? window.gameSettings.shopCount : 5;
+    if (el('gmSetCardsDraw')) el('gmSetCardsDraw').value = window.gameSettings.cardsDraw !== undefined ? window.gameSettings.cardsDraw : 2;
+    if (el('gmSetCardsDrawLoser')) el('gmSetCardsDrawLoser').value = window.gameSettings.cardsDrawLoser !== undefined ? window.gameSettings.cardsDrawLoser : 3;
     
     if (el('gmSetCostMinor')) el('gmSetCostMinor').value = window.gameSettings.costMinor || 2;
     if (el('gmSetCostMajor')) el('gmSetCostMajor').value = window.gameSettings.costMajor || 5;
