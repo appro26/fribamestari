@@ -86,14 +86,16 @@ window.drawFromDeck = function(type, count) {
             if (type === 'normal' || type === 'premium') {
                 let available = window.allCards.filter(c => c.tier === type).map(c => c.id);
                 
+                // SKANNATAAN KAIKKI PELAAJAT JA KAUPAT
                 let inUse = new Set();
-                allPlayers.forEach(p => { if(p.cards) p.cards.forEach(c => inUse.add(c)); });
+                allPlayers.forEach(p => { if(p.cards) p.cards.forEach(c => {if(c) inUse.add(c)}); });
                 if(activeHole && activeHole.shop) {
-                    Object.values(activeHole.shop).forEach(sArr => { sArr.forEach(c => inUse.add(c.id)); });
+                    Object.values(activeHole.shop).forEach(sArr => { sArr.forEach(c => {if(c && c.id) inUse.add(c.id)}); });
                 }
                 
+                // POISTETAAN KÄTÖSSÄ OLEVAT KORTIT POTOSTA
                 let filtered = available.filter(id => !inUse.has(id));
-                if(filtered.length === 0) filtered = available; // Failsafe jos pakka loppuu oikeasti
+                if(filtered.length === 0) filtered = available; // Failsafe jos koko maailman pakka on fyysisesti loppu
                 
                 deck = filtered.sort(() => 0.5 - Math.random());
             } else if (type === 'rules') {
@@ -172,7 +174,7 @@ window.zoomToHole = function(hIndex) {
     let cellY = 120 + row * 1010; 
     
     let targetX = (window.innerWidth - 380) / 2 - cellX; 
-    let targetY = 60 - cellY; // Kamera takaisin ylemmäs
+    let targetY = 20 - cellY; // MUUTETTU: 20px marginaali yläreunasta (Tosi ylhäällä!)
     
     if(typeof window.animateCameraTo === 'function') {
         window.animateCameraTo(targetX, targetY, 1, 400);
@@ -478,7 +480,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
             parts.forEach(part => {
                 let kv = part.split(': ');
                 if(kv.length === 2) {
-                    rowsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #e2e8f0; padding:6px 0;"><span style="color:#475569;">${kv[0]}</span><span style="font-weight:700; color:#1e293b;">${kv[1]}</span></div>`;
+                    rowsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #cbd5e1; padding:6px 0;"><span style="color:#475569;">${kv[0]}</span><span style="font-weight:700; color:#1e293b;">${kv[1]}</span></div>`;
                 } else {
                     rowsHtml += `<div style="padding:6px 0; color:#475569;">${part}</div>`;
                 }
@@ -515,6 +517,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         </div>`;
     }
     
+    // TASAPELIN TUNNISTAMINEN SOLVAUKSISSA
     if (hIndex >= 2) {
         let prevHole = window.gameHistory[hIndex - 2];
         let worstPlayers = [];
@@ -537,8 +540,9 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         if (worstPlayers.length === 1) {
             dText = rawInsult.replace(/\[Pelaaja\]/g, worstPlayers[0]);
         } else {
-            dText = rawInsult.replace(/\[Pelaaja\],\s*/g, '').replace(/\[Pelaaja\]\s*/g, '').replace(/\[Pelaaja\]/g, 'Kaveri');
-            dText = dText.charAt(0).toUpperCase() + dText.slice(1);
+            // Jos tasapeli, poistetaan Pelaaja-tagi pilkkuineen ja lisätään Tasapeli-alku
+            dText = rawInsult.replace(/\[Pelaaja\],\s*/g, '').replace(/\[Pelaaja\]\s*/g, '').replace(/\[Pelaaja\]/g, '');
+            dText = "Tasapeli pohjalla! " + dText.charAt(0).toUpperCase() + dText.slice(1);
         }
         
         let svgIndex = Math.floor(pseudoRandom(hIndex * 9.9) * doodleSVGs.length);
@@ -1708,7 +1712,7 @@ window.logEvent = function(msg) { push(ref(db, 'gameState/eventLog'), window.cle
 window.logScore = function(playerName, delta, reason) { push(ref(db, 'gameState/scoreLog'), window.cleanFirebaseData({ time: new Date().toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'}), playerName: playerName, delta: delta, msg: reason })); };
 
 window.updateIdentityUI = function() { if(el('identityCard')) { el('identityCard').style.display = myName ? 'none' : 'block'; } };
-window.showNotification = function(message, type = 'info') { const container = el('notificationContainer'); if(!container) return; const toast = document.createElement('div'); toast.className = `notification ${type}`; toast.innerHTML = `<span>${message}</span>`; container.appendChild(toast); setTimeout(() => { toast.remove(); }, 4000); };
+window.showNotification = function(message, type = 'info') { const container = el('notificationContainer'); if(!container) return; const toast = document.createElement('div'); toast.className = `notification ${type}`; toast.innerHTML = `<span>${message}</span>`; container.appendChild(toast); setTimeout(() => { toast.remove(); }, 6000); };
 window.claimIdentity = function() { let n = el('playerNameInput').value.trim(); if(!n) return; myName = n; localStorage.setItem('friba_name', n); window.updateIdentityUI(); if(!(allPlayers || []).find(x => x && x.name === n)) { let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); set(ref(db, 'gameState/players'), window.cleanFirebaseData(nextPlayers)); window.logEvent(`${n} liittyi peliin.`); } };
 
 window.adminAddPlayer = function() { const input = el('adminNewPlayerName'); if(!input) return; const name = input.value.trim(); if(!name) return; let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean); nextPlayers.push({ name: name, score: 3, dgScore: 0, cards: [], boughtThisHole: false }); update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) }); input.value = ''; window.logEvent(`${myName} (Asetukset) lisäsi pelaajan: ${name}`); };
@@ -1871,15 +1875,16 @@ onValue(ref(db, 'gameState'), (snap) => {
             } 
             else if (window.myLastHoleIndex !== currentHoleIndex) {
                 let diff = currentPoints - window.myLastScore;
-                let summary = me.lastHoleSummary ? me.lastHoleSummary : "Ei tuloja";
+                let summary = me.lastHoleSummary ? me.lastHoleSummary : "Ei tuloja tai menoja.";
+                let cleanSummary = summary.replace(/, /g, '<br>• '); // Ranskalaiset viivat
                 
-                // POPUP-ILMOITUS YLÄLAITAAN VÄYLÄN VAIHTUESSA
                 if (currentCourse && currentHoleIndex > currentCourse.pars.length) {
                      window.showNotification(`Kaikki väylät pelattu! Katso voittaja taululta.`, 'warning');
                 } else if (diff !== 0) {
-                    window.showNotification(`<b>VÄYLÄ ${window.myLastHoleIndex} TULOS:</b><br><span style="font-size:0.9rem; line-height:1.2;">${summary}</span><br><b>Yhteensä: ${diff > 0 ? '+' : ''}${diff} P</b>`, diff > 0 ? 'info' : 'debuff');
+                    // Piste-erittely palautettu popupiin
+                    window.showNotification(`<b>VÄYLÄ ${window.myLastHoleIndex} TULOS:</b><br><div style="font-size:0.95rem; line-height:1.4; margin-top:5px; margin-bottom:5px; text-align:left;">• ${cleanSummary}</div><b style="font-size:1.1rem;">Yhteensä: ${diff > 0 ? '+' : ''}${diff} P</b>`, diff > 0 ? 'info' : 'debuff');
                 } else {
-                    window.showNotification(`<b>VÄYLÄ ${window.myLastHoleIndex} TULOS:</b><br><span style="font-size:0.9rem; line-height:1.2;">${summary}</span><br><b>Yhteensä: 0 P</b>`, 'info');
+                    window.showNotification(`<b>VÄYLÄ ${window.myLastHoleIndex} TULOS:</b><br><span style="font-size:0.9rem; line-height:1.2;">${cleanSummary}</span><br><b>Yhteensä: 0 P</b>`, 'info');
                 }
                 
                 window.myLastHoleIndex = currentHoleIndex; 
