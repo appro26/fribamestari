@@ -35,23 +35,23 @@ const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length
 const pseudoRandom = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
 
 const insults = [
-    "V*ttu mikä heitto, ootko sä koskaan edes pitänyt kiekkoa kädessä?",
-    "P*rkele, mummonikin puttaa paremmin, ja se on ollut kuolleena 10 vuotta.",
-    "S**tanan sirkkeli, puut tykkää susta enemmän ku sun omat vanhemmat.",
-    "Ei h*lvetti, jopa Jeesus itkee ton sun tekniikan takia.",
-    "P*ska veto. Sun draivi on lyhyempi ku mun kärsivällisyys.",
-    "V*tun hieno lay-up! Ai se olikin sun maksimidraivi?",
-    "Mene s**tana takas rangelle, tää on noloa meille kaikille.",
-    "P*rkeleen rystykääntö, kiekko lensi enemmän taakse ku eteen.",
-    "Miten sä v*ttu onnistut missaamaan 2 metristä?",
-    "H*lvetin hieno puuosuma! Tähtäsitkö sä siihen vai ootko vaan p*ska?"
+    "[Pelaaja], v*ttu mikä heitto, ootko sä koskaan edes pitänyt kiekkoa kädessä?",
+    "[Pelaaja] p*rkele, mummonikin puttaa paremmin, ja se on ollut kuolleena 10 vuotta.",
+    "S**tanan sirkkeli [Pelaaja], puut tykkää susta enemmän ku sun omat vanhemmat.",
+    "Ei h*lvetti [Pelaaja], jopa Jeesus itkee ton sun tekniikan takia.",
+    "P*ska veto [Pelaaja]. Sun draivi on lyhyempi ku mun kärsivällisyys.",
+    "V*tun hieno lay-up [Pelaaja]! Ai se olikin sun maksimidraivi?",
+    "Mene [Pelaaja] s**tana takas rangelle, tää on noloa meille kaikille.",
+    "P*rkeleen rystykääntö [Pelaaja], kiekko lensi enemmän taakse ku eteen.",
+    "Miten sä [Pelaaja] v*ttu onnistut missaamaan kahdesta metristä?",
+    "H*lvetin hieno puuosuma [Pelaaja]! Tähtäsitkö sä siihen vai ootko vaan sysip*ska?"
 ];
 
 const doodleSVGs = [
-    "M 30 70 Q 20 70 20 60 Q 30 20 60 20 Q 80 20 80 50 Q 80 70 70 70 Z M 25 50 L 15 40 M 35 35 L 25 20 M 50 25 L 50 10 M 65 30 L 75 15 M 75 45 L 90 40", 
-    "M 30 70 L 30 40 L 20 20 L 40 30 L 60 30 L 80 20 L 70 40 L 70 70 Z M 20 50 L 10 45 M 20 55 L 10 55 M 80 50 L 90 45 M 80 55 L 90 55",
-    "M 25 70 C 10 70 10 30 35 30 C 35 20 45 20 50 30 C 55 20 65 20 65 30 C 90 30 90 70 75 70 Z",
-    "M 50 70 C 20 70 30 40 50 30 C 70 40 80 70 50 70 M 50 30 L 45 20 L 50 25 L 55 20 Z"
+    "M 20 80 Q 20 60 40 60 L 45 40 L 50 60 L 60 30 L 65 60 L 75 40 L 80 80 Z M 30 70 L 32 70 M 15 75 L 20 80 M 85 75 L 80 80", 
+    "M 20 80 L 20 40 L 30 20 L 40 40 L 60 40 L 70 20 L 80 40 L 80 80 Z M 35 55 L 37 55 M 65 55 L 63 55 M 45 65 L 55 65 L 50 72 Z",
+    "M 20 80 C 20 30 80 30 80 80 Z M 20 40 C 10 40 10 20 25 30 M 80 40 C 90 40 90 20 75 30 M 40 55 L 42 55 M 60 55 L 58 55",
+    "M 50 80 C 20 80 20 30 50 30 C 80 30 80 80 50 80 Z M 40 55 L 60 55 L 50 70 Z M 35 45 L 40 48 M 65 45 L 60 48"
 ];
 
 // ==============================================
@@ -153,7 +153,7 @@ window.zoomToHole = function(hIndex) {
     let cellY = 120 + row * 1010; 
     
     let targetX = (window.innerWidth - 380) / 2 - cellX; 
-    let targetY = 60 - cellY; 
+    let targetY = -30 - cellY; // PALAUTETTU AIEMPAAN KOHTAAN (Ylemmäs)
     
     if(typeof window.animateCameraTo === 'function') {
         window.animateCameraTo(targetX, targetY, 1, 400);
@@ -166,6 +166,7 @@ window.showZoomModal = function(html) {
     el('zoomModalContent').innerHTML = html;
     let child = el('zoomModalContent').firstElementChild;
     if(child) {
+        // Poistetaan pakotetut mitat, annetaan joustaa ruudun mukaan
         child.style.position = 'relative';
         child.style.left = 'auto';
         child.style.right = 'auto';
@@ -173,6 +174,9 @@ window.showZoomModal = function(html) {
         child.style.bottom = 'auto';
         child.style.margin = '0 auto';
         child.style.transform = 'none';
+        child.style.width = 'auto';
+        child.style.maxWidth = '90vw';
+        child.style.height = 'auto';
     }
     let scaleVal = Math.min(1.2, (window.innerWidth * 0.95) / 300);
     el('zoomModalContent').style.transform = `scale(${scaleVal})`;
@@ -226,7 +230,7 @@ if(vp) {
 }
 
 // ==============================================
-// SWIPE TO CLOSE (SUOJATTU, VAIN KANSION KAHVASTA YLHÄÄLTÄ ALAS)
+// SWIPE TO CLOSE (SUOJATTU SKROLLAUKSEN AIKANA)
 // ==============================================
 let swipeStartX = 0;
 let swipeStartY = 0;
@@ -234,9 +238,16 @@ let swipeContentEl = null;
 let isValidSwipeToClose = false;
 
 window.addEventListener('touchstart', e => {
+    let scrollable = e.target.closest('.scrollable-modal-content') || e.target.closest('.binder-content');
     let isHandle = e.target.closest('.binder-swipe-handle');
                    
-    if (isHandle) {
+    if (scrollable) {
+        swipeStartY = e.touches[0].clientY;
+        swipeStartX = e.touches[0].clientX;
+        swipeContentEl = scrollable;
+        // Sulku on mahdollista vain jos skrollaus on tasan ylhäällä sormen osuessa
+        isValidSwipeToClose = (scrollable.scrollTop <= 2);
+    } else if (isHandle) {
         swipeStartY = e.touches[0].clientY;
         swipeStartX = e.touches[0].clientX;
         swipeContentEl = isHandle;
@@ -248,14 +259,20 @@ window.addEventListener('touchstart', e => {
 
 window.addEventListener('touchend', e => {
     if (swipeStartY > 0 && swipeContentEl && isValidSwipeToClose) {
+        let currentScroll = swipeContentEl.scrollTop !== undefined ? swipeContentEl.scrollTop : 0;
         let endX = e.changedTouches[0].clientX;
         let endY = e.changedTouches[0].clientY;
         let diffY = endY - swipeStartY;
         let diffX = Math.abs(endX - swipeStartX);
         
-        // Puhdas vetäisy alaspäin
-        if (diffY > 100 && diffY > diffX * 2) {
+        // Erittäin pitkä ja selkeä vetäisy alas, ja skrollauksen pitää edelleen olla 0
+        if (diffY > 150 && diffY > diffX * 2 && currentScroll <= 2) {
             if(el('shopModal')) el('shopModal').style.display = 'none';
+            if(el('settingsModal')) el('settingsModal').style.display = 'none';
+            if(el('rulesModal')) el('rulesModal').style.display = 'none';
+            if(el('cardLibraryModal')) el('cardLibraryModal').style.display = 'none';
+            if(el('createCardModal')) el('createCardModal').style.display = 'none';
+            if(el('courseModal')) el('courseModal').style.display = 'none';
             window.pendingShopPurchase = null;
         }
     }
@@ -294,7 +311,9 @@ window.getCardDesc = function(cDef, cId) {
     if ((cId && cId.startsWith('major_')) || cDef.customType === 'major_sabotage') {
         let diff = cDef.diff || 1;
         let rew = diff === 3 ? 8 : (diff === 2 ? 5 : 3);
-        desc += `<br><br><b style="color:var(--warning);">SELÄTYSPALKKIO:</b> Jos suorittaja pelaa tuloksen PAR tai alle, hän tienaa ${rew} P!`;
+        if(!desc.includes('SELÄTYSPALKKIO')) {
+            desc += `<br><br><b style="color:var(--warning);">SELÄTYSPALKKIO:</b> Jos suorittaja pelaa tuloksen PAR tai alle, hän tienaa ${rew} P!`;
+        }
     }
     return desc;
 };
@@ -361,7 +380,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         playedCards.forEach(pc => { if (pc.target === myName || pc.target === 'KAIKKI VASTUSTAJAT') myCards.push(pc); else otherCards.push(pc); });
 
         if (myCards.length > 0) {
-            html += `<div style="width: 100%; max-width:340px; margin-bottom: 15px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px;">`;
+            html += `<div style="width: 100%; max-width:360px; margin-bottom: 15px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px;">`;
             myCards.forEach((pc, idx) => {
                 let typeClass = pc.type === 'buff' ? 'buff-card' : 'debuff-card';
                 if(pc.tier === 'premium') typeClass = 'premium-card';
@@ -378,16 +397,16 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                 let descHtml = window.getCardDesc(cDef, pc.cardId);
                 
                 let pLen = descHtml.length;
-                let pSize = pLen > 100 ? '0.7rem' : '0.85rem';
-                let pLineHeight = pLen > 100 ? '1.15' : '1.35';
+                let pSize = pLen > 100 ? '0.75rem' : '0.9rem';
+                let pLineHeight = pLen > 100 ? '1.2' : '1.35';
 
                 html += `
                 <div class="pinned-card-container" style="transform: rotate(${cRot}deg);" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div class="pushpin" style="left: ${pinLeft}%;"></div>
-                    <div class="physical-card ${typeClass}" style="width: 155px; height: 215px;">
+                    <div class="physical-card ${typeClass}" style="width: 175px; height: 245px;">
                         ${costHtml}
                         <div class="card-type-tag">${tagTxt}</div>
-                        <h3>${pc.cardName}</h3><p style="font-size:${pSize}; line-height:${pLineHeight}; overflow-y:auto; margin-bottom:4px; flex:1;">${descHtml}</p>
+                        <h3 style="font-size:1.3rem;">${pc.cardName}</h3><p style="font-size:${pSize}; line-height:${pLineHeight}; overflow-y:auto; margin-bottom:4px; flex:1;">${descHtml}</p>
                         <div style="background:rgba(0,0,0,0.05); padding:4px; border-radius:4px; font-size:0.75rem; text-align:center; font-weight:bold; margin-top:auto;">
                             Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal;">(${pc.by})</span>
                         </div>
@@ -440,6 +459,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         let strokes = isHistory && hData.holeResults ? hData.holeResults[p.name] : null;
         let scoreHTML = renderScoreDots(strokes, par);
         
+        // PISTEIDEN PIILOTUS: Vain oma saldo näkyy, paitsi pelin päättyessä.
         let displayScore = (p.name === myName || isHistory) ? `${p.score || 0} P` : `?? P`;
         
         html += `
@@ -454,9 +474,20 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     html += `</div>`;
     
     if (hIndex >= 2) {
+        // Etsitään edellisen väylän huonoin pelaaja solvausta varten
+        let prevHole = window.gameHistory[hIndex - 2];
+        let worstPlayer = "Pelaaja";
+        if (prevHole && prevHole.holeResults) {
+            let maxS = -1;
+            for(let p in prevHole.holeResults) {
+                if(prevHole.holeResults[p] > maxS) { maxS = prevHole.holeResults[p]; worstPlayer = p; }
+            }
+        }
+
         let insultIndex = Math.floor(pseudoRandom(hIndex * 8.8) * insults.length);
         let svgIndex = Math.floor(pseudoRandom(hIndex * 9.9) * doodleSVGs.length);
-        let dText = insults[insultIndex]; let dSvg = doodleSVGs[svgIndex];
+        let dText = insults[insultIndex].replace(/\[Pelaaja\]/g, worstPlayer); 
+        let dSvg = doodleSVGs[svgIndex];
         let dRot = -15 + (pseudoRandom(hIndex * 3) * 30);
         
         let opacityClass = isHistory ? 'opacity: 0.8;' : 'opacity: 1;';
@@ -1709,7 +1740,11 @@ onValue(ref(db, 'gameState'), (snap) => {
         const me = allPlayers.find(p => p && p.name === myName);
         if (me) {
             let currentPoints = parseInt(me.score, 10) || 0;
-            if (typeof window.myLastHoleIndex === 'undefined') { window.myLastHoleIndex = currentHoleIndex; window.myLastScore = currentPoints; } 
+            if (typeof window.myLastHoleIndex === 'undefined') { 
+                window.myLastHoleIndex = currentHoleIndex; 
+                window.myLastScore = currentPoints; 
+                setTimeout(() => { if(window.zoomToHole) window.zoomToHole(currentHoleIndex); }, 600);
+            } 
             else if (window.myLastHoleIndex !== currentHoleIndex) {
                 let diff = currentPoints - window.myLastScore;
                 let summary = me.lastHoleSummary ? me.lastHoleSummary : "Ei tuloja";
@@ -1722,7 +1757,10 @@ onValue(ref(db, 'gameState'), (snap) => {
                     window.showNotification(`<b>VÄYLÄ ${window.myLastHoleIndex} TULOS:</b><br><span style="font-size:0.9rem; line-height:1.2;">${summary}</span><br><b>Yhteensä: 0 P</b>`, 'info');
                 }
                 
-                window.myLastHoleIndex = currentHoleIndex; window.myLastScore = currentPoints;
+                window.myLastHoleIndex = currentHoleIndex; 
+                window.myLastScore = currentPoints;
+                
+                setTimeout(() => { if(window.zoomToHole) window.zoomToHole(currentHoleIndex); }, 600);
             } else { window.myLastScore = currentPoints; }
 
             let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
@@ -1741,7 +1779,11 @@ onValue(ref(db, 'gameState'), (snap) => {
             const playedCards = Array.isArray(activeHole.playedCards) ? activeHole.playedCards : Object.values(activeHole.playedCards);
             const myNewDebuffs = playedCards.filter(Boolean).filter(pc => (pc.target === myName || pc.target === 'KAIKKI VASTUSTAJAT') && pc.timestamp > lastPlayedCardTimestamp && pc.type === 'sabotage' && pc.by !== myName);
             if (myNewDebuffs.length > 0) {
-                myNewDebuffs.forEach(db => { window.showNotification(`💥 Sinua sabotoitiin: ${db.cardName}`, 'debuff'); if (navigator.vibrate) navigator.vibrate([200, 100, 200]); });
+                myNewDebuffs.forEach(db => { 
+                    window.showNotification(`💥 Sinua sabotoitiin: ${db.cardName}`, 'debuff'); 
+                    alert(`🚨 SABOTAASI! 🚨\n\n${db.by} pelasi sinuun kortin:\n"${db.cardName}"\n\nLue tarkemmat ohjeet ilmoitustaululta!`);
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
+                });
                 lastPlayedCardTimestamp = Math.max(...playedCards.map(pc => pc.timestamp));
             }
         }
