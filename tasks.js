@@ -23,138 +23,384 @@ const insults = [
     "H*lvetin hieno puuosuma [Pelaaja]! Tähtäsitkö tahallaan vai ootko vaan sysip*ska?",
     "P*rkele [Pelaaja], sun rystyheitto näyttää ku yrittäisit heittää pesukonetta.",
     "V*tun grippilokki [Pelaaja]! Ota se käsi irti siitä muovista ajoissa.",
-    "P*ska putti, p*ska pelaaja. Yksinkertaista, eikö vain [Pelaaja]?",
-    "V*ttu mulla sulaa aivot ku joutuu kattoon tota sun räpellystä, [Pelaaja]."
+    "P*ska putti, p*ska pelaaja. Yksinkertaista, eikö vain [Pelaaja]?"
 ];
 
-let cId = 1; // Pidetään ID-laskuri sataprosenttisen täsmällisenä
-
 // ==========================================
-// TASO 1: PIENET SABOTAASIT (50 KPL - 100% UNIIKKEJA)
+// KORTTIPERHEET (CONCEPT LOCKING & UPGRADES)
 // ==========================================
+// T1 hinta: 3P | T2 hinta: 7P | T3 hinta: 15P (Nämä ovat kauppahintoja, upgreidaus maksaa 3P tai 5P)
+const familyDefs = [
+    // --- KATEGORIA A: FYYSISET SABOTAASIT ---
+    {
+        family: "weak_hand", name: "Heikompi käsi", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "Kohteen on suoritettava SEURAAVA HEITTO kokonaan heikommalla kädellään." },
+            { lvl: 2, d: "Kohteen on pelattava KOKO VÄYLÄ (pl. alle 10m putit) heikommalla kädellään." },
+            { lvl: 3, d: "Kohteen on pelattava KOKO VÄYLÄ MUKAAN LUKIEN putit heikommalla kädellään." }
+        ]
+    },
+    {
+        family: "eyes_closed", name: "Silmät kiinni", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO silmät kiinni. Turvamies ohjaa heittopaikalle ja kertoo suunnan." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. alle 10m putit) silmät kiinni. Turvamies ohjaa." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit silmät kiinni. Turvamies ohjaa." }
+        ]
+    },
+    {
+        family: "one_leg", name: "Yhdellä jalalla", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO yhdellä jalalla (aloitettava jo ennen vauhdinottoa/heittoa)." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) yhdellä jalalla." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit yhdellä jalalla." }
+        ]
+    },
+    {
+        family: "knee", name: "Polvelta", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO vähintään toinen polvi maassa." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) vähintään toinen polvi maassa." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit vähintään toinen polvi maassa." }
+        ]
+    },
+    {
+        family: "sitting", name: "Istualtaan", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO istualtaan, pylly tukevasti maassa." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) istualtaan." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit istualtaan." }
+        ]
+    },
+    {
+        family: "forehand", name: "Kämmenpakko", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO on pakko heittää forella (kämmenellä)." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) on pakko heittää forella." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit on pakko heittää forella." }
+        ]
+    },
+    {
+        family: "backhand", name: "Rystypakko", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO on pakko heittää rystyllä." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) on pakko heittää rystyllä." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit on pakko heittää rystyllä." }
+        ]
+    },
+    {
+        family: "overhead", name: "Pystyheitto", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO on heitettävä upsinä, tomahawkina tai thumberina." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) on heitettävä pystyheitolla." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit on heitettävä pystyheitolla." }
+        ]
+    },
+    {
+        family: "standstill", name: "Paikaltaan", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO on suoritettava staattisesta haaraseisonnasta (ei vauhtia)." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) on heitettävä staattisesti paikaltaan." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit on heitettävä staattisesti paikaltaan." }
+        ]
+    },
+    {
+        family: "max_driver", name: "Maksimidraiveri", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO on pakko heittää bägisi nopeimmalla kiekolla." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) on heitettävä bägisi nopeimmalla kiekolla." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit on heitettävä nopeimmalla kiekolla." }
+        ]
+    },
+    {
+        family: "putter_only", name: "Putteripakko", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO (esim. avaus) on pakko heittää putterilla." },
+            { lvl: 2, d: "KOKO VÄYLÄ on pelattava putterilla." },
+            { lvl: 3, d: "KOKO VÄYLÄ on pelattava bägisi HITAAKSEMMALLA / alivakaimmalla putterilla." }
+        ]
+    },
+    {
+        family: "reverse_spin", name: "Vastakierre", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO: Kiekon on pyörittävä väärään suuntaan (esim. kämmenkiekko rystyllä)." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Kiekon on pyörittävä väärään suuntaan." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit: Kiekon on pyörittävä väärään suuntaan." }
+        ]
+    },
+    {
+        family: "no_thumb", name: "Peukalokielto", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO: Peukalo ei saa koskea kiekon kanteen." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Peukalo ei saa koskea kanteen." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit: Peukalo ei saa koskea kanteen." }
+        ]
+    },
+    {
+        family: "no_followthrough", name: "Ei saattoa", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO: Heittokäden on pysähdyttävä kuin seinään irrotuksessa." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Heittokäden on pysähdyttävä irrotuksessa." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit: Heittokäden on pysähdyttävä irrotuksessa." }
+        ]
+    },
+    {
+        family: "pizza_grip", name: "Pizza-grippi", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO: Kiekkoa pidetään molemmin käsin kiinni ja heitetään alakautta." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Heitettävä Pizza-gripillä alakautta." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit: Heitettävä Pizza-gripillä alakautta." }
+        ]
+    },
+    {
+        family: "fore_roller", name: "Fore-Rolleri", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO on osuttava maahan ja rullattava eteenpäin kämmenpuolelta." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) on heitettävä fore-rollerina." }
+            // Tasoa 3 ei ole.
+        ]
+    },
+    {
+        family: "shoe_off", name: "Kenkä pois", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO: Toinen kenkä on riisuttava jalasta heiton ajaksi." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Toinen kenkä on oltava irti jalasta heitettäessä." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit: Toinen kenkä pois jalasta." }
+        ]
+    },
+    {
+        family: "hand_pocket", name: "Käsi taskussa", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO: Ei-heittokäden on oltava syvällä taskussa koko liikkeen ajan." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Ei-heittokäsi on pidettävä taskussa." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit: Ei-heittokäsi on pidettävä taskussa." }
+        ]
+    },
+    {
+        family: "back_to_basket", name: "Selin koriin", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO: Rintamasuunnan on oltava poispäin korista irrotushetkellä." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Rintamasuunta poispäin korista." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit: Rintamasuunta poispäin korista." }
+        ]
+    },
+    {
+        family: "slow_mo", name: "Hidasliike", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO: Vauhdinotto ja heitto on tehtävä korostetun hitaasti." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Suoritettava korostetun hitaasti." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit: Suoritettava korostetun hitaasti." }
+        ]
+    },
+    {
+        family: "devil_shoulder", name: "Piru olkapäällä", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "SEURAAVA HEITTO: Vastustaja saa seistä vieressä ja häiritä kovaäänisesti." },
+            { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Vastustaja saa seistä vieressä ja häiritä." },
+            { lvl: 3, d: "KOKO VÄYLÄ MUKAAN LUKIEN putit: Vastustaja saa seistä vieressä ja häiritä." }
+        ]
+    },
 
-// 25x Mekaaniset automaatiosakot (+1 tulokseen jne)
-const minorMechs = [
-    "Sakkorinki", "Kompastus", "Oksaosuma", "Tuulen viemää", "Varvaskipu", 
-    "Lipsahdus", "Kiekkopesu", "Huono Tuuri", "Väärä Arvio", "Nyssykkä", 
-    "Puunhalaaja", "Vesikammo", "Kivenkolo", "Tuulenvire", "Grippari", 
-    "Aikavirhe", "Jalkavika", "Kämmi", "Huti", "Alarauta", 
-    "Ylärauta", "Sylky", "Rollaway", "Skipin puute", "Liukastuminen"
+    // --- KATEGORIA B: ERIKOISSABOTAASIT ---
+    {
+        family: "turbo_putt", name: "Turboputti", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "Kohteen SEURAAVA PUTTI on heitettävä turboputtina." },
+            { lvl: 2, d: "Kohteen KAIKKI C1 & C2 alueen putit tällä väylällä on heitettävä turboputtina." },
+            { lvl: 3, d: "Kohteen KOKO VÄYLÄ (avauksesta alkaen) on heitettävä turboputtina." }
+        ]
+    },
+    {
+        family: "c2_max", name: "C2 Täysiä", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "Kohteen seuraava 10-20m (C2) heitto on vedettävä 100% maksimiteholla." },
+            { lvl: 2, d: "Kohteen KAIKKI 10-20m heitot tällä väylällä on vedettävä 100% teholla." },
+            { lvl: 3, d: "Kohteen KAIKKI 10-20m heitot SEKÄ C1 PUTIT on vedettävä 100% teholla." }
+        ]
+    },
+
+    // --- KATEGORIA C: TALOUS / TULOS ---
+    {
+        family: "score_penalty", name: "Sakkoryöppy", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "Lisää automaattisesti +1 HEITTO kohteen väylätulokseen.", mech: "score_+1" },
+            { lvl: 2, d: "Lisää automaattisesti +2 HEITTOA kohteen väylätulokseen.", mech: "score_+2" },
+            { lvl: 3, d: "Lisää automaattisesti +3 HEITTOA kohteen väylätulokseen.", mech: "score_+3" }
+        ]
+    },
+    {
+        family: "deny_income", name: "Tulojen eväys", type: "sabotage",
+        levels: [
+            { lvl: 1, d: "Kohde menettää peruspalkan (passiivisen tulon) tältä väylältä.", mech: "deny_passive" },
+            { lvl: 2, d: "Kohde menettää peruspalkan SEKÄ mahdollisen väylävoiton rahat.", mech: "deny_win" },
+            { lvl: 3, d: "Kohde menettää KAIKKI tulot (palkka, voitto, tehtävä, bonus).", mech: "deny_all_income" }
+        ]
+    },
+
+    // --- KATEGORIA D: EDUT & PELASTUKSET ---
+    {
+        family: "mulligan_throw", name: "Mulligan (Heitot)", type: "buff",
+        levels: [
+            { lvl: 1, d: "Uusi 1 epäonnistunut lähestymisheitto rangaistuksetta." },
+            { lvl: 2, d: "Uusi 1 avausheitto tiiltä rangaistuksetta." },
+            { lvl: 3, d: "Tupla-avaus: Saat avata tiiltä kahdella kiekolla ja valita niistä kummalla jatkat." }
+        ]
+    },
+    {
+        family: "mulligan_putt", name: "Mulligan (Putit)", type: "buff",
+        levels: [
+            { lvl: 1, d: "Uusi 1 epäonnistunut putti rangaistuksetta." },
+            { lvl: 2, d: "Uusi 2 epäonnistunutta puttia rangaistuksetta (samaan yritykseen)." },
+            { lvl: 3, d: "Magneettikori: Seuraava alle 10m putti lasketaan automaattisesti sisään menneeksi." }
+        ]
+    },
+    {
+        family: "move_lie", name: "Siirto", type: "buff",
+        levels: [
+            { lvl: 1, d: "Siirrä omaa kiekkoasi rangaistuksetta +2 metriä mihin tahansa suuntaan." },
+            { lvl: 2, d: "Siirrä omaa kiekkoasi rangaistuksetta +5 metriä mihin tahansa suuntaan." },
+            { lvl: 3, d: "Siirrä omaa kiekkoasi rangaistuksetta +10 metriä mihin tahansa suuntaan!" }
+        ]
+    },
+    {
+        family: "cancel_sabo", name: "Kumous", type: "buff",
+        levels: [
+            { lvl: 1, d: "Peruuta sinuun kohdistettu Tason 1 sabotaasi automaattisesti.", mech: "cancel_1" },
+            { lvl: 2, d: "Peruuta sinuun kohdistettu Tason 1 tai 2 sabotaasi automaattisesti.", mech: "cancel_2" },
+            { lvl: 3, d: "Peruuta MIKÄ TAHANSA sinuun kohdistettu sabotaasi automaattisesti.", mech: "cancel_3" }
+        ]
+    },
+    {
+        family: "happy_mulligan", name: "Happy Mulligan", type: "buff",
+        levels: [
+            { lvl: 1, d: "Uusi epäonnistunut heitto ja saat +1 P hyvän mielen bonuksen.", mech: "money_+1" },
+            { lvl: 2, d: "Uusi heitto. Saat +2 P bonuksen JA nostat heti uuden kortin pakasta.", mech: "money_+2_draw" },
+            { lvl: 3, d: "Uusi heitto. Saat +3 P, kortin JA Turvakilven seuraavalle väylälle.", mech: "money_+3_shield" }
+        ]
+    },
+
+    // --- KATEGORIA E: YKSITTÄISET / VAJAAT TASOT ---
+    {
+        family: "ob_rescue", name: "OB-Pelastus", type: "buff",
+        levels: [
+            { lvl: 2, d: "Jos heität OB:lle, jatka rangaistuksetta samasta heittopaikasta." }
+        ]
+    },
+    {
+        family: "mando_bypass", name: "Mando-ohitus", type: "buff",
+        levels: [
+            { lvl: 3, d: "Saat jättää pakollisen kierron (mandon) huomioimatta ilman rangaistusta." }
+        ]
+    },
+    {
+        family: "reflect", name: "Peilaus", type: "buff",
+        levels: [
+            { lvl: 3, d: "Käännä MIKÄ TAHANSA sinuun kohdistettu sabotaasi takaisin sen heittäjälle.", mech: "reflect" }
+        ]
+    },
+    {
+        family: "triple_bounty", name: "Triplatehtävä", type: "buff",
+        levels: [
+            { lvl: 3, d: "Jos voitat väylällä olevan sääntö/bounty-tehtävän, saat rahan triplana (x3)." }
+        ]
+    },
+    {
+        family: "card_deny", name: "Korttikato", type: "sabotage",
+        levels: [
+            { lvl: 2, d: "Kohde ei saa nostaa kortteja väylän lopussa.", mech: "deny_draw" }
+        ]
+    },
+    {
+        family: "early_start", name: "Varaslähtö", type: "buff",
+        levels: [
+            { lvl: 2, d: "Saat aloittaa tämän väylän 5 metriä tiipadin etupuolelta." },
+            { lvl: 3, d: "Saat aloittaa tämän väylän 10 metriä tiipadin etupuolelta." }
+        ]
+    }
 ];
-minorMechs.forEach((name) => {
-    window.allCards.push({ id: "minor_" + cId++, n: `Pikkusako: ${name}`, d: "Lisää automaattisesti +1 heitto kohteen väylätulokseen.", tier: "normal", type: "minor_sabotage", diff: 1, mech: "score_+1" });
-});
 
-// 25x Fyysiset pikkuhäiriöt (5 Tointa x 5 Rajoitetta = 25 uniikkia)
-const minorActions = ["Seuraava heitto", "Seuraava putti", "Seuraava avausheitto", "Väylän seuraavat 2 heittoa", "Kaikki alle 10m putit"];
-const minorConstraints = ["staattisesta haaraseisonnasta.", "yhdellä jalalla seisten.", "täysin paikaltaan ilman vauhtiaskeleita.", "vähintään toinen polvi maassa.", "ilman ristiaskelta (x-step)."];
-minorActions.forEach(action => {
-    minorConstraints.forEach(constraint => {
-        window.allCards.push({ id: "minor_" + cId++, n: `Häiriö: ${action}`, d: `Kohteen on suoritettava ${action.toLowerCase()} ${constraint}`, tier: "normal", type: "minor_sabotage", diff: 1, mech: null });
+// ==========================================
+// RAKENNETAAN window.allCards ARRAY
+// ==========================================
+const upgCostT1toT2 = 3;
+const upgCostT2toT3 = 5;
+const shopPriceT1 = 3;
+const shopPriceT2 = 7;
+const shopPriceT3 = 15;
+
+familyDefs.forEach(fam => {
+    let maxLvl = Math.max(...fam.levels.map(l => l.lvl));
+    
+    fam.levels.forEach((lvDef, index) => {
+        let cardId = `${fam.family}_t${lvDef.lvl}`;
+        
+        // Hinta kaupassa
+        let p = shopPriceT1;
+        if(lvDef.lvl === 2) p = shopPriceT2;
+        if(lvDef.lvl === 3) p = shopPriceT3;
+
+        // Etsitään seuraava taso, jos on
+        let nextLvlDef = fam.levels.find(l => l.lvl === lvDef.lvl + 1);
+        let upgradeText = "";
+        let nextIdStr = null;
+
+        if (nextLvlDef) {
+            nextIdStr = `${fam.family}_t${nextLvlDef.lvl}`;
+            let uCost = (lvDef.lvl === 1) ? upgCostT1toT2 : upgCostT2toT3;
+            upgradeText = `Päivitys Tasolle ${nextLvlDef.lvl} (Hinta: ${uCost} P): ${nextLvlDef.d}`;
+        }
+
+        window.allCards.push({
+            id: cardId,
+            family: fam.family,
+            n: `${fam.name} (Taso ${lvDef.lvl})`,
+            d: lvDef.d,
+            level: lvDef.lvl,
+            maxLevel: maxLvl,
+            upgradeDesc: upgradeText,
+            nextId: nextIdStr,
+            tier: "normal", // Voi käyttää CSS väreissä
+            type: fam.type,
+            price: p,
+            mech: lvDef.mech || null
+        });
     });
 });
 
 // ==========================================
-// TASO 2: ISOT SABOTAASIT (50 KPL - 100% UNIIKKEJA)
-// Täällä on VAIN fyysisiä haasteita, kaikki +2 sakot on siirretty Premium-kauppaan.
+// LAATUTARKISTETUT VÄYLÄSÄÄNNÖT & TEHTÄVÄT (30 kpl)
 // ==========================================
-const majorActions = ["Avausheitto tiiltä", "Kaikki väylän putit", "Seuraava lähestyminen", "Koko loppuväylä", "Kaksi ensimmäistä heittoa"];
-const majorConstraints = [
-    "heitettävä pystyheittona (upsi/thumber).", "suoritettava pelkällä kämmenellä (fore).", 
-    "suoritettava pelkällä rystyllä.", "heitettävä silmät tiukasti kiinni.", 
-    "heitettävä istualtaan maassa.", "heitettävä täysin heikommalla kädellä.", 
-    "heitettävä vain putterilla.", "heitettävä bägisi nopeimmalla draiverilla.", 
-    "heitettävä vastakierteellä (väärä pyörimissuunta).", "heitettävä siten, että peukalo ei koske kiekkoon."
+window.holeRules = [
+    { type: "rule", n: "Putteriväylä", d: "Koko väylä on pelattava pelkillä puttereilla (mukaan lukien avaus)." },
+    { type: "rule", n: "Kämmen-avaus", d: "Kaikkien on avattava tämä väylä kämmenheitolla (fore)." },
+    { type: "rule", n: "Rysty-avaus", d: "Kaikkien on avattava tämä väylä rystyheitolla." },
+    { type: "rule", n: "Paikaltaan", d: "Avausheitossa ei saa käyttää vauhtiaskeleita." },
+    { type: "rule", n: "Väärä käsi (Putit)", d: "Kaikki C1-alueen putit on heitettävä heikommalla kädellä." },
+    { type: "rule", n: "Pystyheitto-avaus", d: "Avausheitto on pakko suorittaa pystyheittona (upsi/tomahawk/thumber)." },
+    { type: "rule", n: "Midariväylä", d: "Avaus ja lähestymiset on pakko heittää midareilla." },
+    { type: "rule", n: "Ei saattoa", d: "Avausheitossa käden on pysähdyttävä irrotukseen." },
+    { type: "rule", n: "Polvelta", d: "Kaikkien on heitettävä ensimmäinen lähestymisheitto polvelta." },
+    { type: "rule", n: "Yhden jalan putti", d: "Kaikki alle 10m putit on suoritettava yhdellä jalalla tasapainoillen." },
+    { type: "rule", n: "Ei hypytystä", d: "Steppi- ja hyppyputit ovat ankarasti kielletty tällä väylällä." },
+    { type: "rule", n: "Haaraputti-pakko", d: "Kaikki putit on suoritettava haaraputtina." },
+    { type: "rule", n: "Vain alivakain", d: "Väylä on pelattava bägisi alivakaimmalla kiekolla." },
+    { type: "rule", n: "Vain vakain", d: "Väylä on pelattava bägisi vakaimmalla kiekolla." },
+    { type: "rule", n: "Selin koriin", d: "Jokainen joutuu heittämään yhden heiton selin koria kohti." },
+    { type: "rule", n: "Kenkä pois", d: "Avausheitto heitetään ilman toista kenkää." },
+    { type: "rule", n: "Hiljaisuus", d: "Tällä väylällä ei saa puhua sanaakaan. Puhumisesta +1 tulokseen." },
+    { type: "rule", n: "Maksimidraiveri", d: "Kaikki (myös putit) on heitettävä nopeimmalla kiekolla." },
+    
+    // Bountyt (Palkkiotehtävät)
+    { type: "bounty", n: "Tarkka-ampuja", d: "Pelaaja, kenen avausheitto on lähimpänä koria, voittaa tehtävän." },
+    { type: "bounty", n: "Pituuslyönti", d: "Pelaaja, kenen avausheitto on pisimmällä (ilman OB:ta), voittaa tehtävän." },
+    { type: "bounty", n: "Pelastaja", d: "Ensimmäinen pelaaja, joka tekee onnistuneen pitkän putin (C2), voittaa." },
+    { type: "bounty", n: "Puu-magneetti", d: "Pelaaja, joka osuu ensimmäisenä puuhun (ilman OB:ta), voittaa." },
+    { type: "bounty", n: "Rolleri-kuningas", d: "Pelaaja, kenen heittämä rolleri vierii pisimmälle, voittaa tehtävän." },
+    { type: "bounty", n: "Pikagolf", d: "Pelaaja, joka suorittaa väylän nopeimmin alusta loppuun, voittaa." },
+    { type: "bounty", n: "Metsuri", d: "Ensimmäinen pelaaja, joka heittää kiekkonsa pahaan puskaan, saa lohdutuspalkkion." },
+    { type: "bounty", n: "Birdie-jahti", d: "Jokainen pelaaja, joka heittää tälle väylälle Birdien, voittaa tehtävän." },
+    { type: "bounty", n: "Kuoleman putti", d: "Ensimmäinen pelaaja, joka uskaltaa hakea yli 15m puttia (ja osuu edes rautoihin), voittaa." },
+    { type: "bounty", n: "Kiekkotaituri", d: "Pelaaja, joka tekee komeimman flex-heiton (S-kurvin) avauksessa, voittaa." },
+    { type: "bounty", n: "Nyssykkä", d: "Pelaaja, kenen avausheitto on lyhin (mutta pysyy pelialueella), voittaa." },
+    { type: "bounty", n: "Koriin kilahtaa", d: "Ensimmäinen pelaaja, joka puttaa ensimmäisellä yrittämällä sisään, voittaa." }
 ];
-let selatys = `<br><br><span style="color:#ef4444; font-weight:900; font-size:1.1em;">🔥 SELÄTYS:</span> Tee Par tai parempi!`;
-
-majorActions.forEach(action => {
-    majorConstraints.forEach(constraint => {
-        window.allCards.push({ id: "major_" + cId++, n: `Iso Haaste: ${action}`, d: `[Vaikeus: ⭐⭐] ${action} on ${constraint}${selatys}`, tier: "normal", type: "major_sabotage", diff: 2, mech: null });
-    });
-});
-
-// ==========================================
-// TASO 1: HELPOTUKSET (70 KPL - 100% UNIIKKEJA)
-// Huom! Ei lainkaan "ilmaista rahaa" tuovia kortteja. 
-// ==========================================
-
-// 60x Mekaaniset automaatio-buffit
-for(let i=1; i<=15; i++) window.allCards.push({ id: "buff_" + cId++, n: `Pieni Kumous V${i}`, d: "Peruuta sinuun juuri kohdistettu 1-tason sabotaasi automaattisesti.", tier: "normal", type: "buff", mech: "cancel_minor" });
-for(let i=1; i<=10; i++) window.allCards.push({ id: "buff_" + cId++, n: `Vahva Kumous V${i}`, d: "Peruuta sinuun kohdistettu 2-tason sabotaasi automaattisesti.", tier: "normal", type: "buff", mech: "cancel_major" });
-for(let i=1; i<=5; i++) window.allCards.push({ id: "buff_" + cId++, n: `Täys Kumous V${i}`, d: "Peruuta MIKÄ TAHANSA sinuun kohdistettu sabotaasi automaattisesti.", tier: "normal", type: "buff", mech: "cancel_all" });
-for(let i=1; i<=10; i++) window.allCards.push({ id: "buff_" + cId++, n: `Turvakilpi V${i}`, d: "Suojaa sinut automaattisesti seuraavalta sabotaasilta tällä väylällä.", tier: "normal", type: "buff", mech: "shield" });
-for(let i=1; i<=5; i++) window.allCards.push({ id: "buff_" + cId++, n: `Peilaus V${i}`, d: "Käännä sinuun pelattu sabotaasi automaattisesti takaisin sen alkuperäiselle pelaajalle.", tier: "normal", type: "buff", mech: "reflect" });
-for(let i=1; i<=5; i++) window.allCards.push({ id: "buff_" + cId++, n: `Tuplavoitto V${i}`, d: "Jos voitat tämän väylän, saat x2 voittopisteet automaattisesti!", tier: "normal", type: "buff", mech: "double_win" });
-for(let i=1; i<=5; i++) window.allCards.push({ id: "buff_" + cId++, n: `Tuplatehtävä V${i}`, d: "Jos voitat väylätehtävän, saat x2 rahat automaattisesti.", tier: "normal", type: "buff", mech: "double_task" });
-for(let i=1; i<=5; i++) window.allCards.push({ id: "buff_" + cId++, n: `Lisänosto V${i}`, d: "Nostat automaattisesti 1 uuden kortin tämän väylän lopussa.", tier: "normal", type: "buff", mech: "draw_1" });
-
-// 10x Fyysiset helpotukset
-const buffPhys = ["Mulligan", "Siirto +2m", "Puskasta pois", "OB-pelastus", "Taikamarkkeri", "Oksan poisto", "Tiipaikan vaihto", "Kiekon lainaus", "Ketjuralli", "Suunta on oikea"];
-buffPhys.forEach((name) => {
-    window.allCards.push({ id: "buff_" + cId++, n: `Erikoisetu: ${name}`, d: `Voit käyttää fyysisen edun: '${name}' rangaistuksetta tällä väylällä.`, tier: "normal", type: "buff", mech: null });
-});
-
-// ==========================================
-// TASO 3: PREMIUM KORTIT / KAUPPA (30 KPL - UNIIKIT JA KALLIIT)
-// Nämä vaikuttavat voimakkaasti itse tulokseen.
-// ==========================================
-
-// 10x Score -1
-const premMinus1 = ["Huippuvire", "Varma Putti", "Ihme-Pelastus", "Tuulen tyven", "Mestariveto", "Täydellinen linja", "Keskittyminen", "Onnenkantamoinen", "Zone-tila", "Täydellinen irrotus"];
-premMinus1.forEach(n => window.allCards.push({ id: "premium_" + cId++, n: `Premium: ${n} (-1)`, d: "Vähennä automaattisesti 1 heitto väylätuloksestasi.", tier: "premium", type: "buff", price: 15, mech: "score_-1" }));
-
-// 5x Score -2 (Pelin kovimmat kortit!)
-const premMinus2 = ["Hole-in-one Taika", "Kotka-lento", "Tupla-Mestari", "Jumal-Heitto", "Albatrossi"];
-premMinus2.forEach(n => window.allCards.push({ id: "premium_" + cId++, n: `Premium: ${n} (-2)`, d: "Vähennä automaattisesti huimat 2 heittoa väylätuloksestasi.", tier: "premium", type: "buff", price: 30, mech: "score_-2" }));
-
-// 5x Tulos +1 Vastustajalle
-const premPlus1 = ["Sakkoryöppy", "Epäonnen Kierre", "Myrskyn Silmä", "Kädenlämpöinen", "Paineen alla"];
-premPlus1.forEach(n => window.allCards.push({ id: "premium_" + cId++, n: `Premium: ${n} (+1)`, d: "Kohde saa automaattisesti +1 heittoa tulokseensa.", tier: "premium", type: "major_sabotage", price: 15, mech: "score_+1" }));
-
-// 1x AOE +1 Score
-window.allCards.push({ id: "premium_" + cId++, n: `Premium: Ukkosmyrsky (AOE +1)`, d: "KAIKKI vastustajat saavat automaattisesti +1 heittoa tulokseensa.", tier: "premium", type: "major_sabotage", aoe: true, price: 40, mech: "score_+1" });
-
-// 2x Tulos +2 Vastustajalle
-const premPlus2 = ["Katastrofi", "Täystuho"];
-premPlus2.forEach(n => window.allCards.push({ id: "premium_" + cId++, n: `Premium: ${n} (+2)`, d: "Kohde saa automaattisesti +2 heittoa tulokseensa.", tier: "premium", type: "major_sabotage", price: 30, mech: "score_+2" }));
-
-// 2x Passiivisen tulon eväys
-const premDenyPass = ["Köyhyyskirous", "Ryöstö"];
-premDenyPass.forEach(n => window.allCards.push({ id: "premium_" + cId++, n: `Premium: ${n}`, d: "Kohde ei saa ollenkaan passiivista tuloa tältä väylältä.", tier: "premium", type: "major_sabotage", price: 8, mech: "deny_passive" }));
-
-// 1x AOE Passiivisen eväys
-window.allCards.push({ id: "premium_" + cId++, n: `Premium: Veromätky (AOE)`, d: "KAIKKI vastustajat menettävät passiivisen tulonsa automaattisesti.", tier: "premium", type: "major_sabotage", aoe: true, price: 15, mech: "deny_passive" });
-
-// 2x Voiton/Korttien eväys
-window.allCards.push({ id: "premium_" + cId++, n: `Premium: Palkkion Eväys`, d: "Kohde ei saa väylävoiton pisteitä automaattisesti, vaikka voittaisi.", tier: "premium", type: "major_sabotage", price: 10, mech: "deny_win" });
-window.allCards.push({ id: "premium_" + cId++, n: `Premium: Korttikato`, d: "Kohde ei saa nostaa uusia kortteja tämän väylän lopussa.", tier: "premium", type: "major_sabotage", price: 12, mech: "deny_draw" });
-
-// 2x Pakotetut tulokset (Pelastus tai tuho)
-window.allCards.push({ id: "premium_" + cId++, n: `Premium: Bogey-Pakko`, d: "Kohteen tulokseksi merkitään automaattisesti vähintään Bogey (+1).", tier: "premium", type: "major_sabotage", price: 25, mech: "force_bogey" });
-window.allCards.push({ id: "premium_" + cId++, n: `Premium: Par-Varmistus`, d: "Omaan tuloskorttiisi merkitään automaattisesti enintään PAR.", tier: "premium", type: "buff", price: 20, mech: "force_par" });
-
-// ==========================================
-// VÄYLÄSÄÄNNÖT (150 Kpl - Uniikit matriisilla generoituna)
-// ==========================================
-let ruleCounter = 1;
-
-// Säännöt (10 Kontekstia x 10 Rajoitetta = 100 Sääntöä)
-const ruleContexts = ["Kaikki avaukset", "Kaikki lähestymiset", "Kaikki putit", "Koko väylä", "Ensimmäiset 2 heittoa", "Jokainen rystyheitto", "Jokainen foreheitto", "Kaikki yli 10m heitot", "Kaikki alle 20m heitot", "Vain tii-heitot"];
-const ruleConstraints = ["on heitettävä paikaltaan ilman vauhtia.", "suoritetaan pakolla putterilla.", "suoritetaan midarilla.", "pelataan alivakaimmalla kiekolla.", "heitetään kämmenellä (fore).", "heitetään rystyllä.", "heitetään pystyheittona (upsi).", "heitetään staattisesta haaraseisonnasta.", "heitetään toinen polvi maassa.", "suoritetaan max 10 sekunnissa merkiltä."];
-
-ruleContexts.forEach(ctx => {
-    ruleConstraints.forEach(con => {
-        window.holeRules.push({ type: "rule", n: `Väyläsääntö #${ruleCounter++}`, d: `${ctx} ${con}` });
-    });
-});
-
-// Tehtävät / Bountyt (5 Tehtävää x 10 Ehtoa = 50 Tehtävää)
-const bountyConds = ["Lähimmäksi koria osunut", "Pisimmälle heitetty", "Nopeiten suoritettu", "Ensimmäinen onnistunut", "Ainut täydellisesti suoritettu"];
-const bountyActs = ["avausheitto voittaa.", "putti voittaa.", "puuosuma (rangaistuksetta) voittaa.", "OB-pelastus voittaa.", "midari-lähestyminen voittaa.", "Par-pelastus voittaa.", "Birdie-tulos voittaa.", "fore-heitto voittaa.", "rysty-heitto voittaa.", "rolleri voittaa."];
-
-bountyConds.forEach(cond => {
-    bountyActs.forEach(act => {
-        window.holeRules.push({ type: "bounty", n: `Erikoistehtävä #${ruleCounter++}`, d: `${cond} ${act}` });
-    });
-});
