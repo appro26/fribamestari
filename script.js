@@ -98,7 +98,7 @@ window.drawFromDeck = function(type, count) {
                 
                 // POISTETAAN KÄYTÖSSÄ OLEVAT KORTIT POTISTA
                 let filtered = available.filter(id => !inUse.has(id));
-                if(filtered.length === 0) filtered = available; // Failsafe jos koko pakka on oikeasti loppu
+                if(filtered.length === 0) filtered = available; // Failsafe jos pakka loppuu täysin
                 
                 deck = filtered.sort(() => 0.5 - Math.random());
             } else if (type === 'rules') {
@@ -177,7 +177,7 @@ window.zoomToHole = function(hIndex) {
     let cellY = 120 + row * 1010; 
     
     let targetX = (window.innerWidth - 380) / 2 - cellX; 
-    let targetY = 120 - cellY; // MUUTETTU: 120px marginaali ylhäältä, kamera on NYT YLHÄÄLLÄ!
+    let targetY = 10 - cellY; // KAMERA KORJATTU: Aivan ruudun yläreunaan!
     
     if(typeof window.animateCameraTo === 'function') {
         window.animateCameraTo(targetX, targetY, 1, 400);
@@ -314,6 +314,7 @@ window.getCardSortWeight = function(cId) {
 };
 
 window.getCardDesc = function(cDef, cId) {
+    if (!cDef) return "";
     return cDef.d;
 };
 
@@ -478,7 +479,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         let sign = myBreakdown.delta > 0 ? '+' : '';
         
         let rowsHtml = '';
-        if (myBreakdown.summary) {
+        if (myBreakdown.summary && myBreakdown.summary !== "Ei tuloja tai menoja.") {
             let parts = myBreakdown.summary.split(', ');
             parts.forEach(part => {
                 let kv = part.split(': ');
@@ -488,6 +489,8 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                     rowsHtml += `<div style="padding:6px 0; color:#475569;">${part}</div>`;
                 }
             });
+        } else {
+             rowsHtml += `<div style="padding:6px 0; color:#475569; text-align:center; font-style:italic;">Ei tapahtumia tällä jaksolla.</div>`;
         }
 
         html += `
@@ -580,7 +583,7 @@ window.renderBoard = function() {
     let html = ``; window.gameHistory.forEach((h, index) => { html += window.getHoleCellHTML(h, index + 1, false, true); });
     
     if (currentHoleIndex > totalHoles) {
-        // MUUTETTU: Voittaja on se, jolla on pienin dgScore (Pelin virallinen tavoite)
+        // Tulos ratkaisee voittajan, ei raha.
         let sortedPlayers = [...allPlayers].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
         let winner = sortedPlayers[0] || {name: "Tuntematon", dgScore: 0, score: 0};
         html += `
