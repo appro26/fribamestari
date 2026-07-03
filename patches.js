@@ -1,7 +1,9 @@
 // Kääritään koodi suojakuoreen (IIFE), jotta vältytään "already declared" -virheiltä!
 (function() {
     
-    // 1. INJEKTOIDAAN KORJAAVAA CSS-TYYLIÄ KORTTIEN JA NAPPIEN PÄÄLLEKKÄISYYTEEN
+    // ==========================================
+    // 1. LAITTEISTOKIIHDYTYS JA TYYLIKORJAUKSET
+    // ==========================================
     let styleFix = document.getElementById('patch-styles');
     if(!styleFix) {
         styleFix = document.createElement('style');
@@ -9,8 +11,13 @@
         document.head.appendChild(styleFix);
     }
     styleFix.innerHTML = `
-        /* Estetään taustan hajoaminen laudan ulkopuolella */
+        /* Estetään taustan hajoaminen ja PAKOTETAAN GPU-kiihdytys laudan piirtoon (Poistaa lagia!) */
         body { background-color: #cbd5e1 !important; overflow: hidden; }
+        #corkboard-surface { 
+            will-change: transform; 
+            transform: translateZ(0); 
+            backface-visibility: hidden; 
+        }
         
         /* Tehdään tilaa "Sulje kortti" napille karusellin alle */
         #cardDetailModal { padding-bottom: 120px !important; justify-content: flex-start !important; padding-top: 5vh !important; }
@@ -19,17 +26,177 @@
         .fixed-close-btn { bottom: 20px !important; width: 90% !important; max-width: 400px !important; border-radius: 16px !important; padding: 18px !important; font-size: 1.3rem !important; box-shadow: 0 10px 25px rgba(0,0,0,0.6) !important; }
     `;
 
-    // 2. KORJATAAN KORTTIEN MUOTO KARUSELLISSA
+    // ==========================================
+    // 2. KAMERAN MOOTTORI (1:1 Sormiseuranta ilman viivettä)
+    // ==========================================
+    window.camCurrent = { x: 0, y: 0, scale: 1 };
+    let renderPending = false;
+
+    window.applyBounds = function(target) {
+        let boardEl = document.getElementById('corkboard-surface');
+        if(!boardEl) return target;
+        
+        let rightXPanel = window.getRightXPanel ? window.getRightXPanel() : 2000;
+        let corkW = rightXPanel + 400;
+        let boardW = corkW + 2000; 
+        
+        let totalHoles = window.currentCourse ? window.currentCourse.pars.length : 18; 
+        let cols = Math.min(9, totalHoles); 
+        let rows = Math.ceil(totalHoles / cols);
+        let boardH = Math.max((rows * 1010) + 200, 2500) + 800; 
+        
+        let minX = window.innerWidth - boardW * target.scale - 1200;
+        let maxX = 1200;
+        let minY = window.innerHeight - boardH * target.scale - 1200;
+        let maxY = 1200;
+
+        if (target.x < minX) target.x = minX;
+        if (target.x > maxX) target.x = maxX;
+        if (target.y < minY) target.y = minY;
+        if (target.y > maxY) target.y = maxY;
+        
+        return target;
+    };
+
+    window.applyTransform = function() {
+        let boardEl = document.getElementById('corkboard-surface');
+        if(boardEl) {
+            // Välitön, tarkka päivitys ilman pyöristyksiä
+            boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
+        }
+        renderPending = false;
+    };
+
+    // TUHOTAAN VANHAT LAGIVIIVEELLISET KOSKETUSTAPAHTUMAT KLOONAAMALLA VIEWPORT
+    let oldVp = document.getElementById('corkboard-viewport');
+    if (oldVp) {
+        let vp = oldVp.cloneNode(true);
+        oldVp.parentNode.replaceChild(vp, oldVp);
+        
+        let isDraggingBoard = false;
+        let lastTouch = null;
+        let initialPinchDist = 0;
+        let pinchCenterBoard = { x: 0, y: 0 };
+        
+        vp.addEventListener('touchstart', e => {
+            if(window.animFrame) { cancelAnimationFrame(window.animFrame); window.animFrame = null; }
+            if(e.touches.length === 1) {
+                isDraggingBoard = true;
+                lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            } else if (e.touches.length === 2) {
+                isDraggingBoard = true;
+                initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                let screenCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                let screenCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                pinchCenterBoard = {
+                    x: (screenCX - window.camCurrent.x) / window.camCurrent.scale,
+                    y: (screenCY - window.camCurrent.y) / window.camCurrent.scale
+                };
+            }
+        }, {passive: false});
+
+        vp.addEventListener('touchmove', e => {
+            if(!isDraggingBoard) return;
+            e.preventDefault(); 
+            
+            let nextCam = { ...window.camCurrent };
+
+            if(e.touches.length === 1 && lastTouch) {
+                // Välitön ja suora 1:1 siirto sormen mukana (Ei lerppiä = Ei lagia)
+                nextCam.x += (e.touches[0].clientX - lastTouch.x);
+                nextCam.y += (e.touches[0].clientY - lastTouch.y);
+                lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            } else if (e.touches.length === 2) {
+                // Välitön zoomaus
+                let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                let scaleDelta = dist / initialPinchDist;
+                
+                let newScale = window.camCurrent.scale * scaleDelta;
+                if(newScale < 0.2) newScale = 0.2;
+                if(newScale > 2.5) newScale = 2.5;
+                
+                let screenCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                let screenCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                
+                nextCam.scale = newScale;
+                nextCam.x = screenCX - pinchCenterBoard.x * newScale;
+                nextCam.y = screenCY - pinchCenterBoard.y * newScale;
+                
+                initialPinchDist = dist;
+            }
+
+            window.camCurrent = window.applyBounds(nextCam);
+            
+            if(!renderPending) {
+                renderPending = true;
+                requestAnimationFrame(window.applyTransform);
+            }
+        }, {passive: false});
+
+        vp.addEventListener('touchend', e => {
+            if(e.touches.length === 0) {
+                isDraggingBoard = false;
+                lastTouch = null;
+            } else if (e.touches.length === 1) {
+                lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+        }, {passive: true});
+    }
+
+    // NAPPIEN ELOKUVAMAINEN ANIMATIO
+    window.animFrame = null;
+    window.animateCameraTo = function(tX, tY, tScale) {
+        if(window.animFrame) cancelAnimationFrame(window.animFrame);
+        let sX = window.camCurrent.x, sY = window.camCurrent.y, sScale = window.camCurrent.scale;
+        
+        let target = window.applyBounds({x: tX, y: tY, scale: tScale});
+        tX = target.x; tY = target.y; tScale = target.scale;
+
+        let startTime = performance.now();
+        let duration = 350; 
+        
+        function step(time) {
+            let p = (time - startTime) / duration;
+            if(p > 1) p = 1;
+            let ease = 1 - Math.pow(1 - p, 3); 
+            
+            window.camCurrent.x = sX + (tX - sX) * ease;
+            window.camCurrent.y = sY + (tY - sY) * ease;
+            window.camCurrent.scale = sScale + (tScale - sScale) * ease;
+            
+            if(!renderPending) {
+                renderPending = true;
+                window.applyTransform();
+            }
+            if(p < 1) window.animFrame = requestAnimationFrame(step);
+        }
+        window.animFrame = requestAnimationFrame(step);
+    };
+
+    window.zoomToShop = function() { 
+        let tScale = Math.min(0.60, window.innerWidth / 1250); 
+        let wrapper = document.getElementById('board-shop-wrapper');
+        let tY = 50; let tX = 50;
+        if(wrapper) {
+            let wX = parseInt(wrapper.style.left) || 0;
+            let wY = parseInt(wrapper.style.top) || 0;
+            tX = (window.innerWidth - 1100 * tScale) / 2 - wX * tScale; 
+            tY = 100 - wY * tScale; 
+        }
+        window.animateCameraTo(tX, tY, tScale);
+    };
+
+    // ==========================================
+    // 3. AIEMMAT KORJAUKSET (Kortit, Kauppa ja Lauta)
+    // ==========================================
     window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
         if (!cDef) return '';
         let typeClass = `tier-${cDef.level || 1}`;
         let typeIcon = cDef.type === 'buff' ? '🛡️' : '💥';
         let typeName = cDef.type === 'buff' ? 'buff' : 'sabotage';
         let safeCardName = cDef.n ? cDef.n.split(' (')[0] : '';
-        
         let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cDef.id) : (cDef.level === 3 ? 6 : (cDef.level === 2 ? 4 : 2));
         let lockedStyle = isLocked ? 'opacity: 0.5; filter: grayscale(50%);' : '';
-        
         let dimensions = isCarousel ? 'width: 210px; height: 312px;' : 'width: 175px; height: 260px;';
         
         return `
@@ -46,7 +213,6 @@
         </div>`;
     };
 
-    // 3. FOTOREALISTINEN JA ISO KAUPPA-AUTOMAATTI
     window.renderShopOnBoard = function() {
         let wrapper = document.getElementById('board-shop-wrapper');
         if(!wrapper) return;
@@ -169,7 +335,6 @@
         `;
     };
 
-    // 4. ÄÄRETÖN TAUSTA & KORJATUT LAUDAN RAJAT
     window.renderBoard = function() {
         const board = document.getElementById('corkboard-surface');
         if (!board || !window.currentCourse) return;
@@ -226,44 +391,6 @@
         if(window.renderBinderOnBoard) window.renderBinderOnBoard();
         if(window.renderReceiptOnBoard) window.renderReceiptOnBoard();
         if(window.renderShopOnBoard) window.renderShopOnBoard();
-    };
-
-    // 5. KAMERAN RAJOJEN JA KAUPPAZOOMAUKSEN PÄIVITYS
-    window.applyBounds = function() {
-        let boardEl = document.getElementById('corkboard-surface');
-        if(!boardEl) return;
-        
-        let rightXPanel = window.getRightXPanel ? window.getRightXPanel() : 2000;
-        let corkW = rightXPanel + 400;
-        let boardW = corkW + 2000; 
-        
-        let totalHoles = window.currentCourse ? window.currentCourse.pars.length : 18; 
-        let cols = Math.min(9, totalHoles); 
-        let rows = Math.ceil(totalHoles / cols);
-        let boardH = Math.max((rows * 1010) + 200, 2500) + 800; 
-        
-        let minX = window.innerWidth - boardW * window.camTarget.scale - 1200;
-        let maxX = 1200;
-        let minY = window.innerHeight - boardH * window.camTarget.scale - 1200;
-        let maxY = 1200;
-
-        if (window.camTarget.x < minX) window.camTarget.x = minX;
-        if (window.camTarget.x > maxX) window.camTarget.x = maxX;
-        if (window.camTarget.y < minY) window.camTarget.y = minY;
-        if (window.camTarget.y > maxY) window.camTarget.y = maxY;
-    };
-
-    window.zoomToShop = function() { 
-        let tScale = Math.min(0.60, window.innerWidth / 1250); 
-        let wrapper = document.getElementById('board-shop-wrapper');
-        let tY = 50; let tX = 50;
-        if(wrapper) {
-            let wX = parseInt(wrapper.style.left) || 0;
-            let wY = parseInt(wrapper.style.top) || 0;
-            tX = (window.innerWidth - 1100 * tScale) / 2 - wX * tScale; 
-            tY = 100 - wY * tScale; 
-        }
-        window.animateCameraTo(tX, tY, tScale);
     };
 
 })();
