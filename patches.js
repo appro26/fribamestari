@@ -2,7 +2,7 @@
 (function() {
     
     // ==========================================
-    // 1. TYYLIT JA GPU-OPTIMOINTI (Repeilyn estäminen)
+    // 1. TYYLIT JA TILE TEARING -ESTO
     // ==========================================
     let styleFix = document.getElementById('patch-styles');
     if(!styleFix) {
@@ -11,18 +11,18 @@
         document.head.appendChild(styleFix);
     }
     styleFix.innerHTML = `
-        /* touch-action: none poistaa sormen vetoviiveen kokonaan! */
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #cbd5e1; overflow: hidden; touch-action: none; overscroll-behavior: none; }
         #corkboard-viewport { width: 100vw; height: 100vh; position: absolute; top:0; left:0; z-index: 5; touch-action: none; }
         
-        /* Poistettu will-change, koska se aiheutti laatoittumista isolla laudalla */
-        #corkboard-surface { transform-origin: 0 0; }
+        /* MUUTOS: Poistettu will-change ja backface-visibility. Pakotetaan selain renderöimään normaalisti ilman GPU-laattoja! */
+        #corkboard-surface { transform-origin: 0 0; width: 0px; height: 0px; overflow: visible; }
+        
         .is-dragging * { pointer-events: none !important; }
         #cardDetailModal { padding-bottom: 120px !important; justify-content: flex-start !important; padding-top: 5vh !important; }
         .fixed-close-btn { bottom: 20px !important; width: 90% !important; max-width: 400px !important; border-radius: 16px !important; padding: 18px !important; font-size: 1.3rem !important; box-shadow: 0 10px 25px rgba(0,0,0,0.6) !important; }
     `;
 
-    // LUODAAN PAIKALLAAN PYSYVÄ HUONE (Estää taustan repeilyn)
+    // LUODAAN PAIKALLAAN PYSYVÄ HUONE
     let roomBg = document.getElementById('fixed-room-bg');
     if(!roomBg) {
         roomBg = document.createElement('div');
@@ -32,24 +32,22 @@
     roomBg.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; background: linear-gradient(to bottom, #cbd5e1 55%, #334155 55%, #1e293b 100%); pointer-events:none;";
 
     // ==========================================
-    // 2. KAMERAN MOOTTORI (1:1 Välitön sormiseuranta + Momentum)
+    // 2. KAMERAN MOOTTORI (Käytetään 2D-transformia repeilyn estämiseksi)
     // ==========================================
     window.camCurrent = window.camCurrent || { x: 0, y: 0, scale: 1 };
     window.camTarget = window.camTarget || { x: 0, y: 0, scale: 1 };
 
     window.applyBounds = function(customTarget) {
         let target = customTarget || window.camTarget; 
-        let boardEl = document.getElementById('corkboard-surface');
-        if(!boardEl) return target;
-        
         let rightXPanel = window.getRightXPanel ? window.getRightXPanel() : 2000;
         let corkW = rightXPanel + 400;
         let boardW = corkW + 1500; 
         
+        // Koska vaihdoimme sarakkeiden määrän viiteen (Math.min(5)), korkeutta tarvitaan enemmän
         let totalHoles = window.currentCourse ? window.currentCourse.pars.length : 18; 
-        let cols = Math.min(9, totalHoles); 
+        let cols = Math.min(5, totalHoles); 
         let rows = Math.ceil(totalHoles / cols);
-        let boardH = Math.max((rows * 1010) + 200, 2500) + 800; 
+        let boardH = Math.max((rows * 1010) + 200, 3000) + 1500; 
         
         let minX = window.innerWidth - boardW * target.scale - 1000;
         let maxX = 1000;
@@ -63,6 +61,14 @@
         
         return target;
     };
+
+    // Apufunktio joka käyttää TRANSLATE eikä TRANSLATE3D (Tämä korjaa GPU-bugin)
+    function applyTransformToBoard() {
+        let boardEl = document.getElementById('corkboard-surface');
+        if(boardEl) {
+            boardEl.style.transform = `translate(${window.camCurrent.x}px, ${window.camCurrent.y}px) scale(${window.camCurrent.scale})`;
+        }
+    }
 
     let oldVp = document.getElementById('corkboard-viewport');
     if (oldVp) {
@@ -89,8 +95,7 @@
             window.camCurrent.x = window.camTarget.x;
             window.camCurrent.y = window.camTarget.y;
             
-            let boardEl = document.getElementById('corkboard-surface');
-            if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
+            applyTransformToBoard();
             
             if (Math.abs(velX) > 0.5 || Math.abs(velY) > 0.5) momentumFrame = requestAnimationFrame(applyMomentum);
         }
@@ -149,8 +154,7 @@
             }
 
             window.camCurrent = window.applyBounds(nextCam);
-            let boardEl = document.getElementById('corkboard-surface');
-            if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
+            applyTransformToBoard();
         }, {passive: false});
 
         vp.addEventListener('touchend', e => {
@@ -187,35 +191,31 @@
             window.camCurrent.scale = sScale + (tScale - sScale) * ease;
             window.camTarget = {...window.camCurrent}; 
             
-            let boardEl = document.getElementById('corkboard-surface');
-            if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
+            applyTransformToBoard();
             if(p < 1) window.animFrame = requestAnimationFrame(step);
         }
         window.animFrame = requestAnimationFrame(step);
     };
 
-    // ZOOMAA KOKO NÄYTÖN LEVEYDELLE! 
-    // Kauppa on 650px leveä. Lasketaan scale niin, että se täyttää puhelimen ruudun täydellisesti.
+    // ZOOMAA KESKELLE UUTTA KAUPPAA (Täyttää puhelimen ruudun)
     window.zoomToShop = function() { 
         let wrapper = document.getElementById('board-shop-wrapper');
-        let tY = 50; let tX = 50;
         let shopPhysicalWidth = 650; 
+        // Skaala lasketaan niin, että kauppa mahtuu juuri ja juuri näytölle reunoineen
+        let tScale = window.innerWidth / (shopPhysicalWidth + 20); 
         
-        // Kamera zoomaa niin, että kaupan ympärille jää pieni 15px reuna
-        let tScale = window.innerWidth / (shopPhysicalWidth + 30); 
-        if (tScale > 1.4) tScale = 1.4; // Maksimizoom
-        
+        let tY = 50; let tX = 50;
         if(wrapper) {
             let wX = parseInt(wrapper.style.left) || 0;
             let wY = parseInt(wrapper.style.top) || 0;
             tX = (window.innerWidth - shopPhysicalWidth * tScale) / 2 - wX * tScale; 
-            tY = 40 - wY * tScale; 
+            tY = 30 - wY * tScale; 
         }
         window.animateCameraTo(tX, tY, tScale);
     };
 
     // ==========================================
-    // 3. KEVYT DOM & KORTTIEN RENDERÖINTI
+    // 3. KORTTIEN JA KAUPAN RENDERÖINTI
     // ==========================================
     window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
         if (!cDef) return '';
@@ -257,7 +257,8 @@
         let levels = [3, 2, 1]; 
 
         levels.forEach(lvl => {
-            shelvesHtml += `<div style="display:flex; justify-content:space-around; padding: 30px 0; border-bottom: 12px solid #020617; background: #1e293b; border-radius: 6px; margin-bottom: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.5);">`;
+            // Tehdään hyllyvälistä korkea jotta jättikortit mahtuvat pystysuunnassa
+            shelvesHtml += `<div style="display:flex; justify-content:space-around; padding: 45px 0; border-bottom: 12px solid #020617; background: #1e293b; border-radius: 6px; margin-bottom: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.5);">`;
             let shelfItems = (shopArray || []).filter(c => c === null || c.level === lvl);
             
             for(let i=0; i<2; i++) {
@@ -270,10 +271,10 @@
                     
                     shelvesHtml += `
                         <div style="position:relative; width:45%; display:flex; flex-direction:column; align-items:center;">
-                            <div style="transform: scale(1.4); cursor:pointer; width:175px; margin-bottom: 80px; transform-origin: top center;" onclick="window.openCardDetail('${item.id}', 'shop')">
+                            <div style="transform: scale(1.7); cursor:pointer; width:175px; margin-bottom: 110px; transform-origin: top center;" onclick="window.openCardDetail('${item.id}', 'shop')">
                                 ${fullCardHtml}
                             </div>
-                            <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 10px 25px; border-radius: 6px; border: 4px solid #22c55e; font-weight: 900; font-size: 1.8rem; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.6); text-align: center; margin-bottom: 15px;">${item.price} P</div>
+                            <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 10px 25px; border-radius: 6px; border: 4px solid #22c55e; font-weight: 900; font-size: 2rem; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.6); text-align: center; margin-bottom: 15px;">${item.price} P</div>
                             <div style="display:flex; flex-direction:column; gap:10px; width:90%;">
                                 <button class="btn btn-success" ${!canAfford?'disabled':''} style="padding:15px; font-size:1.3rem; font-weight:900;" onclick="window.buyShopItem('${item.id}', ${item.price}, false)">OSTA</button>
                                 ${!isResFull ? `<button class="btn btn-primary" style="padding:12px; font-size:1.1rem; font-weight:900;" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
@@ -283,10 +284,10 @@
                 } else {
                     shelvesHtml += `
                         <div style="position:relative; width:45%; display:flex; flex-direction:column; align-items:center;">
-                            <div style="width:175px; height:260px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); border-radius:8px; border:4px dashed #333; transform: scale(1.4); margin-bottom: 80px; transform-origin: top center;">
+                            <div style="width:175px; height:260px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); border-radius:8px; border:4px dashed #333; transform: scale(1.7); margin-bottom: 110px; transform-origin: top center;">
                                 <div style="color:#666; font-weight:900; font-size:2rem; letter-spacing:4px; transform:rotate(-45deg);">TYHJÄ</div>
                             </div>
-                            <div style="background: #000; color: #555; font-family: 'Courier Prime', monospace; padding: 10px 25px; border-radius: 6px; border: 4px solid #444; font-weight: 900; font-size: 1.8rem; margin-top: 10px; text-align: center; margin-bottom: 15px;">---</div>
+                            <div style="background: #000; color: #555; font-family: 'Courier Prime', monospace; padding: 10px 25px; border-radius: 6px; border: 4px solid #444; font-weight: 900; font-size: 2rem; margin-top: 10px; text-align: center; margin-bottom: 15px;">---</div>
                         </div>
                     `;
                 }
@@ -306,11 +307,11 @@
                 
                 reserveHtml += `
                     <div style="width:45%; display:flex; flex-direction:column; align-items:center; background: rgba(0,0,0,0.3); padding: 30px 15px; border-radius: 12px; border: 3px solid #334155;">
-                        <div style="transform: scale(1.3); margin-bottom: 70px; cursor:pointer; width:175px; transform-origin: top center; position:relative;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
+                        <div style="transform: scale(1.5); margin-bottom: 90px; cursor:pointer; width:175px; transform-origin: top center; position:relative;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
                             <div style="position:absolute; top:-20px; right:-20px; background:#eab308; color:#000; padding:8px 12px; font-weight:900; font-size: 1.1rem; border-radius:8px; z-index:30; border: 3px solid #fff;">🔒 VARATTU</div>
                             ${fullCardHtml}
                         </div>
-                        <div style="background: #000; color: #eab308; font-family: 'Courier Prime', monospace; padding: 10px 20px; border-radius: 6px; border: 4px solid #eab308; font-weight: 900; font-size: 1.8rem; margin-top: 10px; text-align: center; margin-bottom:15px;">${resItem.price} P</div>
+                        <div style="background: #000; color: #eab308; font-family: 'Courier Prime', monospace; padding: 10px 20px; border-radius: 6px; border: 4px solid #eab308; font-weight: 900; font-size: 2rem; margin-top: 10px; text-align: center; margin-bottom:15px;">${resItem.price} P</div>
                         <div style="display:flex; flex-direction:column; gap:10px; width:90%;">
                             <button class="btn btn-success" ${!canAfford?'disabled':''} style="padding:15px; font-size:1.3rem; font-weight:900;" onclick="window.buyShopItem('${resItem.id}', ${resItem.price}, true)">LUNASTA</button>
                             <button class="btn btn-danger" style="padding:12px; font-size:1.1rem; font-weight:900;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
@@ -321,7 +322,7 @@
             reserveHtml += `</div></div>`;
         }
 
-        // KEVYT, 650px leveä automaatti. Vähän varjoja, GPU lepää!
+        // Tihkeä mutta selkeä 650px leveä kauppa
         wrapper.innerHTML = `
         <div style="position: relative; width: 650px; background: #0f172a; border: 15px solid #000; border-bottom: 60px solid #050505; border-radius: 20px; padding: 40px 30px; box-shadow: 20px 30px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; z-index:20;">
             <div style="background: #000; padding: 25px 30px; border-radius: 12px; border: 6px solid #222; display:flex; justify-content:space-between; align-items:center; margin-bottom: 40px;">
@@ -362,25 +363,27 @@
         if (!board || !window.currentCourse) return;
         
         let totalHoles = window.currentCourse.pars.length; 
-        let cols = Math.min(9, totalHoles); 
+        
+        // KAVENNETTU LAUTA! (Kutistetaan max leveys 5 sarakkeeseen, jotta lauta menee pystysuuntaan eikä leveyteen)
+        // Tämä on se vihoviimeinen jippo jolla vältetään GPU-rajan ylittyminen!
+        let cols = Math.min(5, totalHoles); 
         let rows = Math.ceil(totalHoles / cols);
-        let rightXPanel = window.getRightXPanel ? window.getRightXPanel() : 2000;
-        let corkW = rightXPanel + 400;
+        
+        let holesWidth = (cols * 380) + ((cols - 1) * 80);
+        let startXHolesVal = window.startXHoles || 1000;
+        let corkW = startXHolesVal + holesWidth + 300; 
         let corkH = Math.max((rows * 1010) + 200, 2500);
         
-        let totalW = corkW + 1500; 
-        let totalH = corkH + 1500; 
-        
-        board.style.width = `${totalW}px`;
-        board.style.height = `${totalH}px`;
-        board.style.background = 'transparent';
+        // Nollataan liikuteltavan elementin koko, niin selain ei tee siitä jättimäistä laattaa
+        board.style.width = `0px`;
+        board.style.height = `0px`;
+        board.style.overflow = 'visible';
         
         let html = ``;
         html += `<div style="position:absolute; left:50px; top:50px; width:${corkW}px; height:${corkH}px; background-color: #e2e8f0; background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px); background-size: 12px 12px; border: 35px solid #5c4033; border-top-color: #7b4e35; border-left-color: #7b4e35; border-bottom-color: #3e2723; border-right-color: #3e2723; border-radius: 12px; z-index:1; box-shadow: 15px 25px 50px rgba(0,0,0,0.7);"></div>`;
         html += `<div id="board-binder-wrapper" style="position:absolute; left:80px; top:120px; z-index:10; width:500px;"></div>`;
         html += `<div id="board-receipt-wrapper" style="position:absolute; left:100px; top:1200px; z-index:10; width:450px;"></div>`;
         
-        let startXHolesVal = window.startXHoles || 1000;
         html += `<div id="holes-grid" style="display:grid; grid-template-columns:repeat(${cols}, 380px); gap:60px 80px; position:absolute; left:${startXHolesVal + 50}px; top:150px; z-index:5;">`;
         window.gameHistory.forEach((h, index) => { html += window.getHoleCellHTML(h, index + 1, false, true); });
         
@@ -410,6 +413,15 @@
         if(window.renderBinderOnBoard) window.renderBinderOnBoard();
         if(window.renderReceiptOnBoard) window.renderReceiptOnBoard();
         if(window.renderShopOnBoard) window.renderShopOnBoard();
+    };
+
+    // Asetetaan GetRightXPanel hyödyntämään uutta viiden sarakkeen kapeaa leveyttä
+    window.getRightXPanel = function() {
+        if(!window.currentCourse || !window.currentCourse.pars) return 2000;
+        let totalHoles = window.currentCourse.pars.length; 
+        let cols = Math.min(5, totalHoles);
+        let startX = window.startXHoles || 1000;
+        return startX + (cols * 380) + ((cols - 1) * 80) + 150;
     };
 
 })();
