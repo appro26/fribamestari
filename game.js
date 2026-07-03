@@ -2,7 +2,7 @@
 // PELIN YDINLOGIIKKA JA SÄÄNNÖT (game.js)
 // ==============================================
 
-const el = id => document.getElementById(id);
+var el = id => document.getElementById(id);
 
 window.cleanFirebaseData = function(obj) {
     if (obj === null || obj === undefined) return null;
