@@ -7,22 +7,20 @@
     
     <script>
         if ('caches' in window) {
-            caches.keys().then(function(names) {
-                for (let name of names) caches.delete(name);
-            });
+            caches.keys().then(function(names) { for (let name of names) caches.delete(name); });
         }
     </script>
 
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=181" />
+    <link rel="stylesheet" href="style.css?v=182" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <style>
         /* KORJAUS CORKBOARDIN ALALAIDAN JUMIUTUMISEEN (10+ väylät) */
         #corkboard-surface {
-            padding-bottom: 800px !important;
+            padding-bottom: 1200px !important;
             padding-right: 500px !important;
             transform-origin: 0 0;
         }
@@ -31,12 +29,12 @@
            RPG KORTTIEN TASOVÄRIT (Pronssi, Hopea, Kulta)
            ------------------------------------------- */
         .tier-1 {
-            background: linear-gradient(135deg, #f5d0a9, #c49a6c) !important;
-            border: 3px solid #8b5a2b !important;
-            box-shadow: inset 0 0 10px rgba(139,90,43,0.3), 0 4px 8px rgba(0,0,0,0.3) !important;
-            color: #3e2723 !important;
+            background: linear-gradient(135deg, #e3b78c, #b37e4c) !important;
+            border: 3px solid #6b4423 !important;
+            box-shadow: inset 0 0 10px rgba(107,68,35,0.4), 0 4px 8px rgba(0,0,0,0.3) !important;
+            color: #2b1810 !important;
         }
-        .tier-1 .card-type-tag { background: #8b5a2b !important; color: #fff !important; }
+        .tier-1 .card-type-tag { background: #6b4423 !important; color: #fff !important; }
 
         .tier-2 {
             background: linear-gradient(135deg, #e2e8f0, #94a3b8) !important;
@@ -47,12 +45,12 @@
         .tier-2 .card-type-tag { background: #475569 !important; color: #fff !important; }
 
         .tier-3 {
-            background: linear-gradient(135deg, #fef08a, #eab308) !important;
-            border: 3px solid #a16207 !important;
-            box-shadow: inset 0 0 20px rgba(255,255,255,0.8), 0 0 15px rgba(234,179,8,0.6) !important;
-            color: #422006 !important;
+            background: linear-gradient(135deg, #fef08a, #d97706) !important;
+            border: 3px solid #854d0e !important;
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.8), 0 0 15px rgba(217,119,6,0.6) !important;
+            color: #451a03 !important;
         }
-        .tier-3 .card-type-tag { background: #ca8a04 !important; color: #fff !important; }
+        .tier-3 .card-type-tag { background: #b45309 !important; color: #fff !important; }
 
         .play-cost-badge {
             background: #111; color: #fff; font-weight: 900; font-size: 0.8rem;
@@ -61,111 +59,123 @@
         }
 
         /* -------------------------------------------
-           VÄLIPALA-AUTOMAATTI (Vending Machine)
+           FOTOREALISTINEN VÄLIPALA-AUTOMAATTI
            ------------------------------------------- */
         .vending-machine {
-            background: #1e293b;
-            border: 8px solid #0f172a;
-            border-radius: 12px;
-            padding: 20px 10px 40px 10px;
+            background: linear-gradient(to bottom right, #2c3e50, #000000);
+            border: 12px solid #1a252f;
+            border-radius: 16px;
+            padding: 20px 10px 0 10px;
             position: relative;
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+            box-shadow: inset 0 0 60px rgba(0,0,0,0.9), 0 15px 30px rgba(0,0,0,0.6);
             width: 100%;
             box-sizing: border-box;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
+        /* Sisäinen LED-valaistus reunoilla */
+        .vending-machine::before {
+            content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 6px;
+            background: rgba(56, 189, 248, 0.6); box-shadow: 0 0 15px #38bdf8; z-index: 2;
+        }
+        .vending-machine::after {
+            content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: 6px;
+            background: rgba(56, 189, 248, 0.6); box-shadow: 0 0 15px #38bdf8; z-index: 2;
+        }
+        /* Lasiheijastus */
         .vending-glass {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0.05) 60%, rgba(255,255,255,0) 100%);
+            background: linear-gradient(105deg, rgba(255,255,255,0) 25%, rgba(255,255,255,0.15) 35%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0) 60%);
             pointer-events: none; z-index: 10;
         }
         .vending-shelf {
-            background: #334155;
-            border-bottom: 6px solid #0f172a;
-            padding: 15px 5px;
-            margin-bottom: 25px;
+            background: linear-gradient(to bottom, #7f8c8d, #34495e);
+            border-bottom: 8px solid #111;
+            padding: 10px 5px 20px 5px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-around;
             position: relative;
-            box-shadow: 0 10px 15px rgba(0,0,0,0.5);
-        }
-        .vending-shelf::after {
-            content: ''; position: absolute; bottom: -6px; left: 0; width: 100%; height: 6px;
-            background: linear-gradient(to right, #475569, #1e293b);
+            box-shadow: inset 0 -10px 20px rgba(0,0,0,0.5);
         }
         .vending-slot {
-            position: relative; width: 45%; display: flex; flex-direction: column; align-items: center;
+            position: relative; width: 45%; display: flex; flex-direction: column; align-items: center; z-index: 5;
         }
+        /* Kierrejousi */
         .vending-coil {
-            position: absolute; bottom: 20px; width: 110%; height: 40px;
-            background: repeating-linear-gradient(90deg, transparent, transparent 15px, #94a3b8 15px, #94a3b8 20px);
-            z-index: 5; opacity: 0.8;
+            position: absolute; bottom: 10px; width: 120%; height: 35px;
+            background: repeating-linear-gradient(90deg, transparent, transparent 15px, #bdc3c7 15px, #bdc3c7 20px);
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.8));
+            z-index: 8; opacity: 0.9;
         }
         .empty-slot-text {
             color: #ef4444; font-family: 'Courier Prime', monospace; font-weight: 900; font-size: 1.2rem;
-            text-align: center; margin-top: 50px; text-shadow: 0 0 5px rgba(239,68,68,0.5);
+            text-align: center; margin-top: 50px; text-shadow: 0 0 10px rgba(239,68,68,0.8);
         }
         .vending-price-tag {
             background: #000; color: #22c55e; font-family: 'Courier Prime', monospace;
             padding: 4px 10px; border-radius: 4px; border: 2px solid #22c55e;
-            font-weight: 900; font-size: 1rem; margin-top: 10px; z-index: 6;
-            box-shadow: 0 0 8px rgba(34,197,94,0.4); text-align: center;
+            font-weight: 900; font-size: 1rem; margin-top: 15px; z-index: 15;
+            box-shadow: 0 0 10px rgba(34,197,94,0.5); text-align: center;
         }
+        /* Ulostuloluukku */
         .vending-push-door {
-            background: #0f172a; border: 2px solid #334155; height: 60px;
-            border-radius: 8px; margin: 20px; display: flex; align-items: center; justify-content: center;
-            color: #475569; font-weight: 900; font-size: 1.5rem; letter-spacing: 5px; box-shadow: inset 0 10px 10px rgba(0,0,0,0.8);
+            background: linear-gradient(to bottom, #111, #222);
+            border: 4px solid #000; border-top: 6px solid #0a0a0a;
+            height: 70px; border-radius: 4px; margin: 10px 20px 20px 20px;
+            display: flex; align-items: center; justify-content: center;
+            color: #444; font-weight: 900; font-size: 1.8rem; letter-spacing: 8px; 
+            box-shadow: inset 0 20px 20px rgba(0,0,0,0.8); position: relative; z-index: 15;
         }
+        .vending-push-door::before {
+            content: 'PUSH'; position: absolute;
+            color: rgba(255,255,255,0.1);
+        }
+
+        /* -------------------------------------------
+           KORJATTU ALAPALKKI (Dashboard)
+           ------------------------------------------- */
+        .fixed-bottom-dashboard {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(to bottom, #1e293b, #0f172a);
+            border-top: 2px solid #475569;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 10px 5px 15px 5px; z-index: 9000; gap: 8px;
+        }
+        .dashboard-btn {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #334155; color: #e2e8f0; border: 1px solid #475569;
+            border-radius: 8px; padding: 10px 5px; font-weight: 800; font-size: 0.85rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); cursor: pointer; text-align: center;
+        }
+        .dashboard-btn:active { transform: scale(0.95); background: #475569; }
+        .dashboard-btn .badge {
+            background: var(--danger); color: #fff; border-radius: 10px; padding: 2px 6px;
+            font-size: 0.7rem; margin-top: 4px; border: 1px solid #fff;
+        }
+        .dashboard-btn.accent { background: var(--primary); color: #fff; border-color: #059669; }
         
-        .binder-content {
-            width: 100% !important; max-width: 100vw !important; box-sizing: border-box !important;
-            padding-right: 15px !important; padding-left: 5px !important; overflow-x: hidden !important;
+        /* Pysyvä SULJE-nappi modaalien päälle */
+        .fixed-close-btn {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #ef4444; color: #fff; border: 2px solid #fff; border-radius: 30px;
+            padding: 15px 40px; font-weight: 900; font-size: 1.2rem; z-index: 10000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.6); text-transform: uppercase;
+        }
+
+        .cards-grid-2 {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; box-sizing: border-box;
         }
     </style>
-
-    <script>
-      window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
-      
-      window.showModalSafe = function(id, displayType) {
-          var el = document.getElementById(id);
-          if(el) {
-              el.style.display = displayType || 'flex';
-              history.pushState({ fribaApp: true }, '');
-          }
-      };
-
-      window.addEventListener('popstate', function(e) {
-          var modals = ['cardDetailModal', 'targetModal', 'scoreModal', 'gmGiveCardModal', 'receiptModal', 'zoomModal', 'handLimitModal', 'shopModal', 'settingsModal', 'courseModal', 'rulesModal', 'cardLibraryModal', 'createCardModal'];
-          var closedAny = false;
-          for (var i = 0; i < modals.length; i++) {
-              var m = document.getElementById(modals[i]);
-              if (m && m.style.display !== 'none' && m.style.display !== '') {
-                  m.style.display = 'none';
-                  closedAny = true;
-                  if (modals[i] === 'shopModal') window.pendingShopPurchase = null;
-                  break; 
-              }
-          }
-          if (closedAny) { history.pushState({ fribaApp: true }, ''); }
-      });
-    </script>
 </head>
 <body class="player-mode">
 
-    <button id="settingsToggleBtn" onclick="window.showModalSafe('settingsModal')" style="position:fixed; top:15px; right:15px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
-    <button id="rulesToggleBtn" onclick="window.showModalSafe('rulesModal')" style="position:fixed; top:15px; right:75px; z-index:9500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; font-size:1.6rem; cursor:pointer; color:#111;">📖</button>
+    <button id="settingsToggleBtn" onclick="window.showModalSafe('settingsModal')" style="position:fixed; top:15px; right:15px; z-index:8500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
+    <button id="rulesToggleBtn" onclick="window.showModalSafe('rulesModal')" style="position:fixed; top:15px; right:75px; z-index:8500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; font-size:1.6rem; cursor:pointer; color:#111;">📖</button>
     
     <div id="notificationContainer"></div> 
-
-    <div id="handLimitModal" class="winner-overlay" style="z-index: 10005;" onclick="if(event.target === this) { this.style.display='none'; }">
-        <div class="torn-paper" style="text-align:center;">
-            <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
-            <div style="font-size:4rem; margin-bottom:10px;">⚠️</div>
-            <h1 style="font-size:2rem; margin-bottom:10px; font-weight:900; color:var(--danger);">LIIKAA KORTTEJA</h1>
-            <p style="font-size:1.15rem; font-weight:700; margin-bottom:25px; line-height:1.4;">Käsiraja on ylittynyt (<span id="handLimitCount" style="font-weight:900; font-size:1.3rem;"></span>).</p>
-            <div id="handLimitCards" style="display:flex; flex-direction:column; gap:10px; text-align:left; max-height:60vh; overflow-y:auto; padding-bottom:20px;"></div>
-        </div>
-    </div>
 
     <div class="container" id="lobbyContainer">
         <div id="identityCard" class="torn-paper" style="text-align: center; margin-top:50px;">
@@ -178,69 +188,51 @@
         <div id="gameSetupArea" class="torn-paper" style="display:none; text-align:center; margin-top:50px;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
             <h2 style="color: var(--text-main); font-size:1.4rem; margin-bottom: 10px;">Peli ei ole käynnissä</h2>
-            <button class="btn btn-primary" onclick="if(window.startMeilahti) window.startMeilahti();" style="margin-bottom:15px;">🌲 PIKA-ALOITUS: MEILAHTI (16V)</button>
+            <button class="btn btn-primary" onclick="if(window.startMeilahti) window.startMeilahti();" style="margin-bottom:15px;">🌲 PIKA-ALOITUS (16V)</button>
             <button class="btn btn-secondary" onclick="window.showModalSafe('courseModal')">LUO OMA RATA</button>
         </div>
     </div>
 
     <div id="corkboard-viewport" style="display:none;">
-        <div id="corkboard-surface">
-            </div>
+        <div id="corkboard-surface"></div>
     </div>
 
-    <div class="corkboard-pocket-container" id="pocketContainer" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; width:100%; position:relative; z-index:10; padding: 0 5px; gap: 5px;">
-            
-            <div class="pocket-lip board-lip-btn" onclick="window.showModalSafe('receiptModal')" style="padding: 10px; font-size:0.9rem; flex:0.8; text-align:center;">🧾 KUITTI</div>
-
-            <div class="binder-spine-btn" id="ownCardsButtonElement" onclick="if(window.openShop) window.openShop('sell')">
-                <div class="binder-stitching"></div>
-                <span class="binder-spine-text">KORTIT</span>
-                <div class="binder-badge" id="handCountBadge">0</div>
-            </div>
-            
-            <div class="binder-spine-btn" id="shopButtonElement" onclick="if(window.openShop) window.openShop('buy')">
-                <div class="binder-stitching"></div>
-                <span class="binder-spine-text" style="padding-right: 35px;">KAUPPA</span>
-                <div class="binder-badge money-badge" id="myResPointsBtn">0 P</div>
-            </div>
-            
-            <div class="pocket-lip board-lip-btn" id="boardBtnText" onclick="if(window.zoomToCurrentHole) window.zoomToCurrentHole()" style="flex:1.2; text-align:center;">📍 NYKYINEN VÄYLÄ</div>
+    <div class="fixed-bottom-dashboard" id="pocketContainer" style="display:none;">
+        <div class="dashboard-btn" onclick="window.showModalSafe('receiptModal')">
+            <span>🧾 KUITTI</span>
+        </div>
+        <div class="dashboard-btn" onclick="if(window.openShop) window.openShop('sell')">
+            <span>📂 KORTIT</span>
+            <span class="badge" id="handCountBadge">0 / 6</span>
+        </div>
+        <div class="dashboard-btn" onclick="if(window.openShop) window.openShop('buy')">
+            <span>🎰 KAUPPA</span>
+            <span class="badge" style="background:var(--warning); color:#000;" id="myResPointsBtn">0 P</span>
+        </div>
+        <div class="dashboard-btn accent" onclick="if(window.zoomToCurrentHole) window.zoomToCurrentHole()">
+            <span>📍 NYKYINEN</span>
+            <span>VÄYLÄ</span>
         </div>
     </div>
 
     <div id="rulesModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
-            <div style="width:100%; max-width:500px; margin: 0 auto;">
+            <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:30px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h1 style="color:#fff; font-size:2rem; font-weight:900;">📖 SÄÄNNÖT</h1>
                     <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('rulesModal').style.display='none'">&times;</button>
                 </div>
-                
                 <div class="glass-card" style="padding:20px; border-radius:12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:1.1rem; line-height:1.5;">
-                    <h3 style="color:var(--warning); margin-bottom:10px; font-size:1.3rem; text-transform:uppercase;">Tavoite</h3>
-                    <p style="margin-bottom:20px; color:#6ee7b7; font-weight:bold;">Pelin voittaa pelaaja, jolla on pelin lopussa <u>pienin heittotulos</u>. Raha (P) on vain keino ostaa etuja ja haittoja!</p>
-
-                    <h3 style="color:var(--warning); margin-bottom:10px; font-size:1.3rem; text-transform:uppercase;">Rahatalous (P)</h3>
+                    <h3 style="color:var(--warning); margin-bottom:10px; font-size:1.3rem; text-transform:uppercase;">Korttien Peluumaksut</h3>
+                    <p style="margin-bottom:10px;">Jotta voit pelata kortin, sinulla on oltava varaa peluumaksuun:</p>
                     <ul style="margin-left:20px; margin-bottom:20px;">
-                        <li>Väylän voitto (vähiten heittoja): <b>3 P</b></li>
-                        <li>Tehtävä-bountyn suorittaminen: <b>2 P</b></li>
-                        <li>Passiivinen tulo per väylä: <b>2 P</b></li>
-                        <li>Birdie-Allianssi (Kaikki tekevät alle parin): KAIKILLE <b>+2 P</b></li>
+                        <li><b>Taso 1 (Pronssi):</b> Maksaa <b>2 P</b>.</li>
+                        <li><b>Taso 2 (Hopea):</b> Maksaa <b>4 P</b>.</li>
+                        <li><b>Taso 3 (Kulta):</b> Maksaa <b>6 P</b>.</li>
                     </ul>
-
-                    <h3 style="color:var(--warning); margin-bottom:10px; font-size:1.3rem; text-transform:uppercase;">Kortit & Tasot</h3>
-                    <p style="margin-bottom:10px;">Kortit on jaettu kolmeen tasoon. Taso määrittää vaikutuksen laajuuden ja peluumaksun:</p>
-                    <ul style="margin-left:20px; margin-bottom:20px;">
-                        <li><b>Taso 1 (Pronssi):</b> Vaikuttaa SEURAAVAAN heittoon. Maksaa pelata <b>2 P</b>.</li>
-                        <li><b>Taso 2 (Hopea):</b> Vaikuttaa KOKO VÄYLÄÄN (pl. alle 10m putit). Maksaa pelata <b>4 P</b>.</li>
-                        <li><b>Taso 3 (Kulta):</b> Vaikuttaa KOKO VÄYLÄÄN, myöt putteihin. Maksaa pelata <b>6 P</b>.</li>
-                    </ul>
-
-                    <h3 style="color:var(--warning); margin-bottom:10px; font-size:1.3rem; text-transform:uppercase;">Upgradetus & Kauppa</h3>
-                    <p style="margin-bottom:10px;">Voit päivittää kortteja Omat Kortit -kansiossasi rahalla. T1 ➡️ T2 maksaa 3 P, ja T2 ➡️ T3 maksaa 5 P. <b>Huom: Päivitettyä korttia ei saa pelata samalla väylällä!</b></p>
-                    <p>Välipala-automaatista voit ostaa suoraan valmiiksi päivitettyjä kortteja, mutta ne ovat kalliita. Voit myös varata max 2 korttia kaupasta, mutta varaus maksaa -1 P per väylä.</p>
+                    <p style="margin-bottom:10px; color:#6ee7b7; font-weight:bold;">Päivitettyä korttia ei saa pelata samalla väylällä, jolla se päivitettiin!</p>
                 </div>
+                <button class="btn btn-secondary" style="margin-top:20px; padding:15px; width:100%;" onclick="document.getElementById('rulesModal').style.display='none'">SULJE</button>
             </div>
         </div>
     </div>
@@ -250,20 +242,14 @@
             <div style="width:100%; max-width:500px; margin: 0 auto;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h1 style="color:#fff; font-size:2rem; font-weight:900;">🌲 UUSI RATA</h1>
-                    <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('courseModal').style.display='none'">&times;</button>
+                    <button class="close-modal-btn" onclick="document.getElementById('courseModal').style.display='none'">&times;</button>
                 </div>
-                <div class="glass-card" style="padding:20px; border-radius:12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">
-                    <label style="font-weight:bold; margin-bottom:5px; display:block;">Radan nimi:</label>
-                    <input type="text" id="newCourseName" placeholder="Esim. Mukkula" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); margin-bottom:15px;">
-                    
+                <div class="glass-card" style="padding:20px; border-radius:12px; background:rgba(255,255,255,0.1); color:#fff;">
                     <label style="font-weight:bold; margin-bottom:5px; display:block;">Väylien määrä:</label>
                     <input type="number" id="newCourseHoles" value="18" min="1" max="36" oninput="if(window.renderParInputs) window.renderParInputs()" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); margin-bottom:20px;">
-                    
                     <label style="font-weight:bold; margin-bottom:10px; display:block; color:var(--warning);">Määritä väylien Par-tulokset:</label>
                     <div id="newCourseParsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 8px; max-height: 250px; overflow-y: auto; margin-bottom:15px; padding-right:5px;"></div>
-                    
                     <button class="btn btn-success" style="margin-top:15px; padding:18px; font-size:1.1rem;" onclick="if(window.startCustomCourse) window.startCustomCourse()">ALOITA PELI</button>
-                    <button class="btn btn-secondary" style="margin-top:15px; color:#000;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
                 </div>
             </div>
         </div>
@@ -274,30 +260,28 @@
             <div style="width:100%; max-width:500px; margin: 0 auto;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
                     <h1 style="color:#fff; font-size:2rem; font-weight:900;">⚙️ ASETUKSET</h1>
-                    <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('settingsModal').style.display='none'">&times;</button>
+                    <button class="close-modal-btn" onclick="document.getElementById('settingsModal').style.display='none'">&times;</button>
                 </div>
 
                 <button class="btn btn-secondary" onclick="location.reload()" style="font-size:1.1rem; margin-bottom:25px; padding:18px;">🔄 PÄIVITÄ SIVU (RELOAD)</button>
-                <button class="btn btn-primary" style="margin-bottom: 25px; padding:18px; font-size:1.1rem;" onclick="document.getElementById('settingsModal').style.display='none'; window.showModalSafe('cardLibraryModal');">📚 KORTTIKIRJASTO & UUDET KORTIT</button>
 
-                <h2 style="color:#cbd5e1; margin-top:20px; font-size:1.1rem;">Rata & Väylät (GM)</h2>
-                <div class="glass-card" style="padding:20px; border-radius:12px; margin-bottom:25px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
-                    <div style="display:flex; gap:10px; margin-bottom: 15px;">
-                        <select id="gmSetCurrentHole" style="margin:0; padding:15px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); flex:1; font-size:1.1rem;"></select>
-                        <button class="btn btn-warning" style="width:auto; padding:0 20px; font-size:1.1rem;" onclick="if(window.gmChangeHole) window.gmChangeHole()">SIIRRY</button>
-                    </div>
-                    <button class="btn btn-danger" style="padding:15px; font-size:1.1rem;" onclick="if(window.gmRemoveCurrentHole) window.gmRemoveCurrentHole()">🗑️ POISTA NYKYINEN VÄYLÄ</button>
-                    <button class="btn btn-secondary" style="margin-top: 15px; padding:15px; color:#000; font-size:1.1rem;" onclick="if(window.cancelCourse) { window.cancelCourse(); document.getElementById('settingsModal').style.display='none'; }">🛑 LOPETA KOKO RATA</button>
-                </div>
-                
                 <h2 style="color:#cbd5e1; font-size:1.1rem;">Peliasetukset (GM)</h2>
                 <div class="glass-card" style="padding:20px; border-radius:12px; margin-bottom:25px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
-                    <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:800; font-size:1.1rem; color:#fff;">
-                        <input type="checkbox" id="gmSetLimitCheck" style="width:24px; height:24px; margin:0;"> Käsiraja käytössä
-                    </label>
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
                         <span style="font-weight:800; font-size:1.1rem;">Maksimikortit kädessä:</span>
-                        <input type="number" id="gmSetLimitCount" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                        <input type="number" id="gmSetLimitCount" value="6" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff;">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Rahaa Voitosta:</span>
+                        <input type="number" id="gmSetPtsWin" value="3" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff;">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Rahaa Tehtävästä:</span>
+                        <input type="number" id="gmSetPtsTask" value="2" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff;">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
+                        <span style="font-weight:800; font-size:1.1rem;">Passiivinen Tulo:</span>
+                        <input type="number" id="gmSetPtsPassive" value="2" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff;">
                     </div>
                     <button class="btn btn-primary" style="padding:16px; margin-top:15px; font-size:1.1rem;" onclick="if(window.saveGameSettings) window.saveGameSettings();">TALLENNA ASETUKSET</button>
                 </div>
@@ -305,56 +289,7 @@
                 <h2 style="color:#cbd5e1; font-size:1.1rem;">Pisteloki (Tulot & Menot)</h2>
                 <div id="adminScoreLog" class="log-box" style="margin-bottom:20px;"></div>
 
-                <h2 style="color:#cbd5e1; font-size:1.1rem;">Tapahtumalokit</h2>
-                <div id="adminEventLog" class="log-box" style="margin-bottom:15px;"></div>
-                
                 <button class="btn btn-danger" style="margin-top: 40px; padding:20px; font-size:1.2rem;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI (WIPE)</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="cardLibraryModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
-        <div class="scrollable-modal-content">
-            <div style="width:100%; max-width:500px; margin: 0 auto;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h1 style="color:#fff; font-size:1.8rem; font-weight:900;">📚 KORTTIKIRJASTO</h1>
-                    <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('cardLibraryModal').style.display='none'">&times;</button>
-                </div>
-                <button class="btn btn-success" style="margin-bottom:25px; padding:18px; font-size:1.1rem;" onclick="window.showModalSafe('createCardModal')">➕ LUO UUSI KORTTI</button>
-                <div id="cardLibraryContainer"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="createCardModal" class="scrollable-modal" style="z-index:10500;" onclick="if(event.target === this) { this.style.display='none'; }">
-        <div class="scrollable-modal-content">
-            <div style="width:100%; max-width:500px; margin: 0 auto;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h1 style="color:#fff; font-size:1.8rem; font-weight:900;">➕ LUO KORTTI</h1>
-                    <button class="close-modal-btn" aria-label="Sulje" onclick="document.getElementById('createCardModal').style.display='none'">&times;</button>
-                </div>
-                <div class="glass-card" style="padding:20px; border-radius:12px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff;">
-                    <label style="font-weight:bold; margin-bottom:5px; display:block;">Kortin Nimi:</label>
-                    <input type="text" id="newCardName" placeholder="Esim. Tuplapommi" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
-                    
-                    <label style="font-weight:bold; margin-bottom:5px; display:block;">Kuvaus:</label>
-                    <textarea id="newCardDesc" rows="3" placeholder="Mitä kortti tekee..." style="width:100%; padding:16px; margin-bottom:12px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:12px; font-size:1.1rem;"></textarea>
-                    
-                    <label style="font-weight:bold; margin-bottom:5px; display:block;">Tyyppi:</label>
-                    <select id="newCardType" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
-                        <option value="sabotage">Sabotaasi</option>
-                        <option value="buff">Helpotus</option>
-                    </select>
-
-                    <label style="font-weight:bold; margin-top:10px; margin-bottom:5px; display:block;">Taso (1-3):</label>
-                    <select id="newCardLevel" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3);">
-                        <option value="1">Taso 1 (Pronssi)</option>
-                        <option value="2">Taso 2 (Hopea)</option>
-                        <option value="3">Taso 3 (Kulta)</option>
-                    </select>
-                    
-                    <button class="btn btn-success" style="margin-top:15px; padding:18px; font-size:1.1rem;" onclick="if(window.createNewCard) window.createNewCard()">TALLENNA KORTTI</button>
-                </div>
             </div>
         </div>
     </div>
@@ -364,28 +299,27 @@
     </div>
 
     <div id="shopModal" class="scrollable-modal" style="padding:0; background:rgba(0,0,0,0.85);" onclick="if(event.target === this) { window.closeShopModal(); }">
-        <div class="shop-binder-modal theme-shop" style="background: transparent; box-shadow: none;">
-            <div class="binder-swipe-handle" style="background: rgba(255,255,255,0.5);"></div>
+        <div class="shop-binder-modal theme-shop" style="background: transparent; box-shadow: none; max-width: 600px; margin: 0 auto; height: 100vh;">
             
-            <div class="shop-tabs">
+            <div class="shop-tabs" style="margin-top:20px; position:relative; z-index:30;">
                 <button id="shopTabSellBtn" class="shop-tab-btn" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('sell')">OMAT KORTIT</button>
                 <button id="shopTabBuyBtn" class="shop-tab-btn active" onclick="event.stopPropagation(); if(window.switchShopTab) window.switchShopTab('buy')">VÄLIPALA-AUTOMAATTI</button>
             </div>
 
-            <div id="shopBuyArea" style="position:relative; z-index:20; width: 100%; padding: 10px;">
+            <div id="shopBuyArea" style="position:relative; z-index:20; width: 100%; padding: 10px; padding-bottom:100px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; background:#000; padding:10px; border-radius:8px; border:2px solid #333;">
-                    <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:1.2rem; text-shadow: 0 0 5px #ef4444;">FRIBAMART</div>
+                    <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:1.2rem; text-shadow: 0 0 5px #ef4444;">FRIBAMART 🎰</div>
                     <div style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:1.2rem; font-weight:900;">SALDO: <span id="shopModalWallet">0 P</span></div>
                 </div>
 
                 <div class="vending-machine" id="vendingMachineContainer">
                     <div class="vending-glass"></div>
                     <div id="vendingShelves"></div>
-                    <div class="vending-push-door">PUSH</div>
+                    <div class="vending-push-door"></div>
                 </div>
             </div>
 
-            <div id="shopSellArea" style="display:none; position:relative; z-index:20; width: 100%; background:#8b4513; min-height:100vh; padding-top:20px;">
+            <div id="shopSellArea" style="display:none; position:relative; z-index:20; width: 100%; background:#8b4513; min-height:100vh; padding-top:20px; padding-bottom:100px;">
                 <div style="display: flex; flex: 1; overflow: hidden; position: relative;">
                     <div class="binder-spine" style="left: -15px;">
                         <div class="binder-ring" style="margin-top: 30px;"></div>
@@ -396,18 +330,19 @@
                         <h2 style="color:#fff; font-size:1.5rem; margin-bottom:20px; font-family:'Kalam', cursive;">Omat Kortit</h2>
                         <div id="pendingPurchaseAlert" style="display:none; background:var(--danger); color:#fff; padding:16px; border-radius:12px; margin-bottom:20px;"></div>
                         
-                        <div id="shopSellCardsContainer" style="display:flex; flex-direction:column; gap:20px;"></div>
+                        <div id="shopSellCardsContainer" class="cards-grid-2"></div>
                     </div>
                 </div>
             </div>
             
+            <button class="fixed-close-btn" onclick="window.closeShopModal()">SULJE</button>
         </div>
     </div>
 
     <div id="targetModal" class="winner-overlay" style="z-index: 10001;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="card glass-card" style="width: 100%; max-width: 400px; border: 4px solid var(--danger);">
             <h2 style="color:var(--text-main);">Valitse sabotaasin kohde</h2>
-            <p id="targetCardName" style="color: var(--danger); font-weight: 900; margin-bottom: 20px; font-size: 1.5rem; text-align:center; text-transform:uppercase; line-height:1.2;"></p>
+            <p id="targetCardName" style="color: var(--danger); font-weight: 900; margin-bottom: 20px; font-size: 1.5rem; text-align:center; text-transform:uppercase;"></p>
             <div id="targetPlayerList" style="margin-bottom: 20px;"></div>
             <button class="btn btn-secondary glass-card" onclick="document.getElementById('targetModal').style.display='none'">PERUUTA</button>
         </div>
@@ -416,34 +351,28 @@
     <div id="scoreModal" class="winner-overlay" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="paper-score-modal" style="max-height: 90vh; overflow-y:auto;">
             <div class="pin pin-green" style="top: 15px; right: 20px;"></div>
-            <div class="pin pin-yellow" style="bottom: 25px; left: 35px;"></div>
-            <div style="text-align: center; margin-bottom: 15px; position:relative; z-index:30;">
+            <div style="text-align: center; margin-bottom: 15px;">
                 <h2>VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
                 <p>Par <strong id="scoreModalPar">3</strong></p>
             </div>
-            <div id="scoreModalRuleBox" style="display: none; z-index: 25;"></div>
-            <div id="scoreInputsContainer" style="margin-bottom: 20px; position:relative; z-index:30;"></div>
-            <div style="margin-bottom: 25px; border-top: 2px dashed var(--ink-blue); padding-top:15px; position: relative; z-index: 30; background: transparent;">
+            <div id="scoreInputsContainer" style="margin-bottom: 20px;"></div>
+            <div style="margin-bottom: 25px; border-top: 2px dashed var(--ink-blue); padding-top:15px;">
                 <label style="font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; display: block; font-family:'Kalam', cursive; color:var(--ink-blue);">Kuka suoritti tehtävän?</label>
                 <div id="taskWinnerContainer" class="task-checkbox-grid"></div>
             </div>
-            <button class="btn" style="background:var(--ink-blue); color:#fff; font-family:'Kalam', cursive; font-size:1.6rem; padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); position:relative; z-index:30;" onclick="if(window.submitScores) { window.submitScores(); }">TALLENNA</button>
-            <button class="btn" style="background:transparent; border: 2px solid var(--ink-blue); color:var(--ink-blue); font-family:'Kalam', cursive; font-size:1.4rem; margin-top:15px; padding:8px; position:relative; z-index:30;" onclick="document.getElementById('scoreModal').style.display='none'">PERUUTA</button>
+            <button class="btn" style="background:var(--ink-blue); color:#fff; font-family:'Kalam', cursive; font-size:1.6rem; padding:10px;" onclick="if(window.submitScores) { window.submitScores(); }">TALLENNA</button>
+            <button class="btn" style="background:transparent; border: 2px solid var(--ink-blue); color:var(--ink-blue); font-family:'Kalam', cursive; font-size:1.4rem; margin-top:15px; padding:8px;" onclick="document.getElementById('scoreModal').style.display='none'">PERUUTA</button>
         </div>
     </div>
 
-    <div id="zoomModal" class="winner-overlay" style="z-index: 10500;" onclick="if(event.target === this) { this.style.display='none'; }">
-        <div id="zoomModalContent"></div>
-    </div>
-
-    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container"></div>
-        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">👆 KÄÄNNÄ KORTTI KOSKETTAMALLA 👆<br>👈 VAIHDA KORTTIA SELAAMALLA 👉</div>
+        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px;">👆 KÄÄNNÄ KORTTI KOSKETTAMALLA 👆</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:340px; display:flex; flex-direction:column; gap:10px; min-height: 120px;"></div>
         <button class="btn" style="width:100%; max-width:340px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px; margin-top:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
-    <script src="tasks.js?v=181"></script>
-    <script type="module" src="script.js?v=181"></script>
+    <script src="tasks.js?v=182"></script>
+    <script type="module" src="script.js?v=182"></script>
 </body>
 </html>
