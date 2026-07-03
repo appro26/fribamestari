@@ -10,57 +10,128 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=188" />
+    <link rel="stylesheet" href="style.css?v=189" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <style>
         #corkboard-surface { padding-bottom: 1200px !important; padding-right: 500px !important; transform-origin: 0 0; }
 
-        /* KORTTIEN TASOVÄRIT */
-        .tier-1 { background: linear-gradient(135deg, #e3b78c, #b37e4c) !important; border: 3px solid #6b4423 !important; box-shadow: inset 0 0 10px rgba(107,68,35,0.4), 0 4px 8px rgba(0,0,0,0.3) !important; color: #2b1810 !important; }
-        .tier-1 .card-type-tag { background: #6b4423 !important; color: #fff !important; }
-        .tier-2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8) !important; border: 3px solid #475569 !important; box-shadow: inset 0 0 15px rgba(255,255,255,0.6), 0 5px 12px rgba(0,0,0,0.4) !important; color: #0f172a !important; }
-        .tier-2 .card-type-tag { background: #475569 !important; color: #fff !important; }
-        .tier-3 { background: linear-gradient(135deg, #fef08a, #d97706) !important; border: 3px solid #854d0e !important; box-shadow: inset 0 0 20px rgba(255,255,255,0.8), 0 0 15px rgba(217,119,6,0.6) !important; color: #451a03 !important; }
-        .tier-3 .card-type-tag { background: #b45309 !important; color: #fff !important; }
-
-        .play-cost-badge { background: #111; color: #fff; font-weight: 900; font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; border: 2px solid #fff; width: fit-content; margin-bottom: 8px; text-transform: uppercase; }
-
-        /* -------------------------------------------
-           VÄLIPALA-AUTOMAATTI KORJATTU
-           ------------------------------------------- */
-        .vending-machine {
-            background: linear-gradient(to bottom, #1a252f, #000); border: 12px solid #34495e; border-radius: 12px;
-            padding: 20px 10px 40px 10px; position: relative;
-            box-shadow: inset 0 0 50px #000, 0 20px 40px rgba(0,0,0,0.8);
-            width: 100%; box-sizing: border-box; display: flex; flex-direction: column;
+        /* =========================================
+           KORTTIEN REDESIGN (Selkeä valkoinen pohja)
+           ========================================= */
+        .physical-card {
+            background: #ffffff;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+            overflow: hidden;
+            height: auto;
+            min-height: 220px;
+            position: relative;
         }
-        .vending-machine::before, .vending-machine::after { content:''; position:absolute; top:0; bottom:0; width:8px; background:rgba(56,189,248,0.5); box-shadow:0 0 20px #38bdf8; z-index:2; }
-        .vending-machine::before { left: 0; } .vending-machine::after { right: 0; }
+        .card-header {
+            padding: 8px 10px;
+            font-weight: 900;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-transform: uppercase;
+        }
+        .card-body {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            color: #111;
+            background: #fafafa;
+        }
+        .card-body h3 { font-size: 1.1rem; margin-bottom: 8px; line-height: 1.1; color: #000; font-family: 'Inter', sans-serif; }
+        .card-body p { font-size: 0.85rem; line-height: 1.4; margin-bottom: 10px; color: #333; font-weight: 600; }
         
-        /* Lasi ei saa mennä nappien päälle! Bottom nostettu ylemmäs */
-        .vending-glass { position: absolute; top: 0; left: 0; right: 0; bottom: 120px; background: linear-gradient(105deg, rgba(255,255,255,0) 10%, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 40%, rgba(255,255,255,0) 60%); pointer-events: none; z-index: 5; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
-        
+        .play-cost-badge {
+            background: #111; color: #fff; font-weight: 900; font-size: 0.75rem;
+            padding: 4px 8px; border-radius: 4px; border: 2px solid #fff;
+            width: fit-content; margin-bottom: 10px; text-transform: uppercase;
+        }
+
+        /* Taso 1 (Pronssi) */
+        .tier-1 { border: 4px solid #b37e4c; }
+        .tier-1 .card-header { background: linear-gradient(135deg, #e3b78c, #b37e4c); color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        /* Taso 2 (Hopea) */
+        .tier-2 { border: 4px solid #475569; }
+        .tier-2 .card-header { background: linear-gradient(135deg, #94a3b8, #475569); color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        /* Taso 3 (Kulta) */
+        .tier-3 { border: 4px solid #d97706; }
+        .tier-3 .card-header { background: linear-gradient(135deg, #fde047, #d97706); color: #000; }
+
+
+        /* =========================================
+           REALISTINEN VÄLIPALA-AUTOMAATTI
+           ========================================= */
+        .vending-machine-wrapper {
+            display: flex;
+            background: linear-gradient(to bottom, #1e293b, #0f172a);
+            border: 10px solid #0f172a;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.1);
+            margin-bottom: 40px;
+        }
+        .vending-glass-area {
+            flex: 1;
+            position: relative;
+            background: #000;
+            border: 6px solid #111;
+            border-radius: 8px 0 0 8px;
+            padding: 15px 5px 90px 5px; /* Alhaalla tilaa luukulle */
+            overflow: hidden;
+        }
+        /* Lasiheijastus */
+        .vending-glass-area::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 80px;
+            background: linear-gradient(105deg, rgba(255,255,255,0) 10%, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 40%, rgba(255,255,255,0) 60%);
+            pointer-events: none; z-index: 10;
+        }
+        .vending-control-panel {
+            width: 60px;
+            background: #1e293b;
+            border-left: 4px solid #0f172a;
+            border-radius: 0 8px 8px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 30px;
+            gap: 20px;
+            box-shadow: inset 5px 0 15px rgba(0,0,0,0.5);
+        }
+        .coin-slot { width: 8px; height: 35px; background: #000; border: 2px solid #64748b; border-radius: 4px; box-shadow: inset 0 2px 5px rgba(0,0,0,1); }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 40px; }
+        .keypad-btn { background: #475569; height: 10px; border-radius: 2px; box-shadow: 0 2px 0 #0f172a; }
+
         .vending-shelf { background: linear-gradient(to bottom, #7f8c8d, #2c3e50); border-bottom: 6px solid #111; margin-bottom: 25px; display: flex; justify-content: space-around; padding-bottom: 20px; padding-top: 10px; box-shadow: inset 0 -10px 15px rgba(0,0,0,0.7); position: relative; z-index: 6;}
         .vending-slot { position: relative; width: 45%; display: flex; flex-direction: column; align-items: center; z-index: 10; }
-        
-        /* Kierrejousi alemmas */
         .vending-coil { background: repeating-linear-gradient(90deg, transparent, transparent 15px, #bdc3c7 15px, #bdc3c7 22px); height: 40px; width: 120%; position: absolute; bottom: 50px; filter: drop-shadow(0 8px 5px #000); z-index: 8; opacity: 0.8; }
         
         .empty-slot-text { color: #ef4444; font-family: 'Courier Prime', monospace; font-weight: 900; font-size: 1.2rem; text-align: center; margin-top: 50px; text-shadow: 0 0 10px rgba(239,68,68,0.8); }
         .vending-price-tag { background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 4px 10px; border-radius: 4px; border: 2px solid #22c55e; font-weight: 900; font-size: 1.1rem; margin-top: 10px; z-index: 15; box-shadow: 0 0 10px rgba(34,197,94,0.5); text-align: center; margin-bottom: 10px;}
         
+        /* Ulostuloluukku */
+        .vending-push-door { position:absolute; bottom:15px; left:15px; right:15px; height:60px; background:linear-gradient(to bottom, #111, #222); border:4px solid #000; border-top:6px solid #1a1a1a; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#333; font-weight:900; font-size:1.5rem; letter-spacing:8px; box-shadow:inset 0 20px 20px rgba(0,0,0,0.8); z-index:15; }
+        .vending-push-door::before { content:'PUSH'; position:absolute; color:rgba(255,255,255,0.05); }
+
         .vending-reserved-area { background: #111; border: 6px solid #eab308; border-radius: 8px; padding: 15px; margin-top: 20px; box-shadow: 0 0 20px rgba(234,179,8,0.3), inset 0 0 30px rgba(0,0,0,0.9); position: relative; }
         .vending-reserved-area::before { content: 'NOUTOLUUKKU (VARAUKSET)'; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: #eab308; color: #000; font-weight: 900; padding: 2px 10px; border-radius: 4px; font-size: 0.8rem; letter-spacing: 1px; }
 
-        /* Selkeät, pinnalla olevat napit (z-index korkea) */
         .vending-btn-buy { background: linear-gradient(to bottom, #22c55e, #16a34a); border: 2px solid #14532d; border-bottom: 4px solid #14532d; border-radius: 6px; color: white; font-weight: 900; text-shadow: 0 1px 2px rgba(0,0,0,0.5); padding:12px; width:100%; font-size:1.1rem; cursor:pointer; position: relative; z-index: 30;}
         .vending-btn-buy:active { transform: translateY(4px); box-shadow: 0 0 0 #14532d; }
         .vending-btn-buy:disabled { background: #475569; border-color: #1e293b; color: #94a3b8; cursor: not-allowed; }
         .vending-btn-reserve { background: linear-gradient(to bottom, #3b82f6, #2563eb); border: 2px solid #1e3a8a; border-bottom: 4px solid #1e3a8a; border-radius: 6px; color: white; font-weight: 900; text-shadow: 0 1px 2px rgba(0,0,0,0.5); padding:10px; width:100%; font-size:1rem; cursor:pointer; position: relative; z-index: 30;}
         .vending-btn-reserve:active { transform: translateY(4px); box-shadow: 0 0 0 #1e3a8a; }
 
-        /* OMAT KORTIT (Muovitaskukansio Korjattu) */
+        /* =========================================
+           OMAT KORTIT (Muovitaskukansio Korjattu)
+           ========================================= */
         .binder-cover-bg { background: radial-gradient(circle at center, #5c3a21 0%, #3e2723 100%); width: 100%; min-height: 100vh; padding-top: 20px; padding-bottom: 120px; position: relative; }
         .binder-page { background: #fdfbf7; border-radius: 4px 12px 12px 4px; box-shadow: inset 0 0 20px rgba(0,0,0,0.05), 5px 5px 20px rgba(0,0,0,0.5); border-left: 2px solid rgba(0,0,0,0.1); padding: 40px 15px 20px 15px; margin-left: 30px; margin-right: 15px; position: relative; min-height: 80vh; }
         .binder-page h2 { margin-top: 15px; color:#111; font-size:1.8rem; margin-bottom:25px; font-family:'Kalam', cursive; border-bottom:2px dashed #ccc; padding-bottom:15px; text-align:center; }
@@ -69,21 +140,28 @@
 
         .cards-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; box-sizing: border-box; }
         
-        /* ALAPALKKI */
-        .fixed-bottom-dashboard { position: fixed; bottom: 15px; left: 15px; right: 15px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.2); display: flex; justify-content: space-around; align-items: center; padding: 8px 5px; z-index: 9000; gap: 5px; }
-        .dashboard-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: transparent; color: #94a3b8; border: none; padding: 6px 2px; font-weight: 800; font-size: 0.75rem; cursor: pointer; text-align: center; position: relative; transition: all 0.2s; }
-        .dashboard-btn:active { transform: scale(0.92); }
-        .dashboard-btn .icon { font-size: 1.5rem; margin-bottom: 4px; display: block; }
-        .dashboard-btn.accent { background: linear-gradient(135deg, var(--primary), #047857); color: #fff; border-radius: 16px; padding: 10px 5px; box-shadow: 0 6px 15px rgba(16,185,129,0.4); }
-        .dashboard-btn.accent .icon { font-size: 1.7rem; }
-        .dashboard-btn .badge { position: absolute; top: -2px; right: 8px; background: var(--danger); color: #fff; border-radius: 12px; padding: 2px 6px; font-size: 0.65rem; border: 2px solid #1e293b; font-weight: 900; }
-        .dashboard-btn .badge.money { background: var(--warning); color: #000; }
+        /* =========================================
+           UUSI MODERNI ALAPALKKI (Dashboard)
+           ========================================= */
+        .modern-bottom-nav {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 92%; max-width: 450px;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px;
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 8px 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); z-index: 9000;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; color: #94a3b8; background: none; border: none;
+            font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; position: relative; transition: transform 0.1s;
+        }
+        .nav-item:active { transform: scale(0.9); }
+        .nav-item .icon { font-size: 1.5rem; margin-bottom: 3px; }
+        .nav-item .badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 10px; padding: 2px 5px; font-size: 0.6rem; border: 2px solid #0f172a; }
+        .nav-item .badge.money { background: var(--warning); color: #000; }
         
+        /* KIINTEÄ SULJENAPPI NÄKYMIIN */
         .fixed-close-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #ef4444; color: #fff; border: 2px solid #fff; border-radius: 30px; padding: 15px 40px; font-weight: 900; font-size: 1.2rem; z-index: 100000; box-shadow: 0 5px 15px rgba(0,0,0,0.6); text-transform: uppercase; cursor: pointer;}
-
-        /* APPLE TOAST KORJATTU */
-        .apple-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 15px 25px; border-radius: 30px; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 10px; z-index: 99999; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter: blur(10px); box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
-        .apple-toast.show { top: 40px; }
 
         #shopModal .shop-binder-modal { overflow-y: auto; height: 100vh; padding-bottom: 120px; box-sizing: border-box; }
         .binder-content { width: 100% !important; max-width: 100vw !important; box-sizing: border-box !important; padding-right: 10px !important; padding-left: 35px !important; overflow-x: hidden !important; }
@@ -109,7 +187,7 @@
 <body class="player-mode">
 
     <!-- APPLE TOAST ILMOITUKSET -->
-    <div id="appleToast" class="apple-toast">
+    <div id="appleToast" class="apple-toast" style="position:fixed; top:-100px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); color:#fff; padding:15px 25px; border-radius:30px; font-size:1.1rem; font-weight:700; display:flex; align-items:center; gap:10px; z-index:99999; transition:top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); backdrop-filter:blur(10px); box-shadow:0 10px 25px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1);">
         <span id="appleToastIcon">✨</span>
         <span id="appleToastText">Ilmoitus</span>
     </div>
@@ -151,22 +229,26 @@
     <!-- PELIALUE (TAULU) -->
     <div id="corkboard-viewport" style="display:none;"><div id="corkboard-surface"></div></div>
 
-    <!-- UUSI KIINTEÄ ALAPALKKI (Dashboard) -->
-    <div class="fixed-bottom-dashboard" id="pocketContainer" style="display:none;">
-        <div class="dashboard-btn" onclick="window.showModalSafe('receiptModal')">
-            <span class="icon">🧾</span><span>KUITTI</span>
-        </div>
-        <div class="dashboard-btn" onclick="if(window.openShop) window.openShop('sell')">
-            <span class="icon">📂</span><span>KORTIT</span>
+    <!-- UUSI MODERNI ALAPALKKI (Dashboard) -->
+    <div class="modern-bottom-nav" id="pocketContainer" style="display:none;">
+        <button class="nav-item" onclick="if(window.zoomToCurrentHole) window.zoomToCurrentHole()">
+            <span class="icon">🎯</span>
+            <span>TULOKSET</span>
+        </button>
+        <button class="nav-item" onclick="if(window.zoomToPreviousHole) window.zoomToPreviousHole()">
+            <span class="icon">📜</span>
+            <span>LASKELMA</span>
+        </button>
+        <button class="nav-item" onclick="if(window.openShop) window.openShop('sell')">
             <span class="badge" id="handCountBadge">0/6</span>
-        </div>
-        <div class="dashboard-btn" onclick="if(window.openShop) window.openShop('buy')">
-            <span class="icon">🎰</span><span>KAUPPA</span>
+            <span class="icon">📂</span>
+            <span>KORTIT</span>
+        </button>
+        <button class="nav-item" onclick="if(window.openShop) window.openShop('buy')">
             <span class="badge money" id="myResPointsBtn">0 P</span>
-        </div>
-        <div class="dashboard-btn accent" onclick="if(window.zoomToCurrentHole) window.zoomToCurrentHole()">
-            <span class="icon">📍</span><span>VÄYLÄ</span>
-        </div>
+            <span class="icon">🎰</span>
+            <span>KAUPPA</span>
+        </button>
     </div>
 
     <!-- SÄÄNNÖT MODAALI -->
@@ -299,9 +381,20 @@
                     <div style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:1.2rem; font-weight:900;">SALDO: <span id="shopModalWallet">0 P</span></div>
                 </div>
 
-                <div class="vending-machine" id="vendingMachineContainer">
-                    <div class="vending-glass"></div>
-                    <div id="vendingShelves"></div>
+                <div class="vending-machine-wrapper">
+                    <div class="vending-glass-area">
+                        <div class="vending-glass"></div>
+                        <div id="vendingShelves"></div>
+                        <div class="vending-push-door"></div>
+                    </div>
+                    <div class="vending-control-panel">
+                        <div class="coin-slot"></div>
+                        <div class="keypad">
+                            <div class="keypad-btn"></div><div class="keypad-btn"></div><div class="keypad-btn"></div>
+                            <div class="keypad-btn"></div><div class="keypad-btn"></div><div class="keypad-btn"></div>
+                            <div class="keypad-btn"></div><div class="keypad-btn"></div><div class="keypad-btn"></div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div id="shopReserveArea"></div>
@@ -366,11 +459,13 @@
         <div id="cardCarousel" class="native-carousel-container"></div>
         <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px;">👆 KÄÄNNÄ KORTTI KOSKETTAMALLA 👆</div>
         
-        <!-- Napit generoidaan tähän JS:n puolelta turvallisesti peräkkäin. EI SULJENAPPIA HTML:SSÄ! -->
-        <div id="cardDetailActionArea" style="width:100%; max-width:340px; display:flex; flex-direction:column; gap:10px; min-height: 120px;"></div>
+        <div id="cardDetailActionArea" style="width:100%; max-width:340px; display:flex; flex-direction:column; gap:10px; min-height: 120px; margin-bottom: 60px;"></div>
+        
+        <!-- YKSI AINOA, KIINTEÄ SULJE NAPPI -->
+        <button class="fixed-close-btn" style="bottom: 20px; z-index: 10005;" onclick="document.getElementById('cardDetailModal').style.display='none'">❌ SULJE NÄKYMÄ</button>
     </div>
 
-    <script src="tasks.js?v=188"></script>
-    <script type="module" src="script.js?v=188"></script>
+    <script src="tasks.js?v=189"></script>
+    <script type="module" src="script.js?v=189"></script>
 </body>
 </html>
