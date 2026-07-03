@@ -361,7 +361,7 @@ window.renderShopOnBoard = function() {
                 shelvesHtml += `
                     <div class="vending-slot">
                         <div style="width:175px; height:260px; display:flex; align-items:center; justify-content:center;">
-                            <div class="empty-slot-text">TYHJÄ</div>
+                            <div class="empty-slot-text" style="color:#555; font-weight:900; font-size:1.5rem; letter-spacing:2px;">TYHJÄ</div>
                         </div>
                         <div class="vending-coil"></div>
                         <div class="vending-price-tag" style="background:#333; color:#666; border-color:#666;">---</div>
@@ -374,7 +374,7 @@ window.renderShopOnBoard = function() {
 
     let reserveHtml = '';
     if(actRes.length > 0) {
-        reserveHtml += `<div class="vending-reserved-area"><div style="display:flex; justify-content:space-around; width:100%; gap:20px;">`;
+        reserveHtml += `<div class="vending-reserved-area" style="margin-top:30px;"><div style="display:flex; justify-content:space-around; width:100%; gap:20px;">`;
         actRes.forEach(rId => {
             let resItem = window.allCards.find(c => c.id === rId);
             if(!resItem) return;
@@ -399,27 +399,26 @@ window.renderShopOnBoard = function() {
         reserveHtml += `</div></div>`;
     }
 
+    // Luodaan realistinen, lattialla seisova automaatti vahvoilla varjoilla
     wrapper.innerHTML = `
-    <div class="vending-machine-wrapper">
-        <div class="vending-glass-area">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; background:#000; padding:15px; border-radius:8px; border:3px solid #333; position:relative; z-index:20;">
-                <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:2rem; text-shadow: 0 0 10px #ef4444;">FRIBAMART 🎰</div>
-                <div style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:1.8rem; font-weight:900;">SALDO: ${myPoints} P</div>
+    <div style="position: relative;">
+        <div style="background: linear-gradient(to bottom, #1a252f, #0f172a); border: 15px solid #34495e; border-bottom: 40px solid #111; border-radius: 12px 12px 4px 4px; padding: 30px 20px 40px 20px; box-shadow: 25px 40px 60px rgba(0,0,0,0.8), inset 0 0 50px #000;">
+            <div class="vending-glass-area" style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; border: 4px solid #222; box-shadow: inset 0 10px 30px rgba(0,0,0,0.8);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; background:#000; padding:15px; border-radius:8px; border:3px solid #333; position:relative; z-index:20;">
+                    <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:2rem; text-shadow: 0 0 10px #ef4444;">FRIBAMART 🎰</div>
+                    <div style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:1.8rem; font-weight:900;">SALDO: ${myPoints} P</div>
+                </div>
+                ${shelvesHtml}
+                <!-- Noutoluukku -->
+                <div style="height: 60px; background: #000; margin: 20px auto 0 auto; width: 80%; border-radius: 4px; border: 4px solid #333; box-shadow: inset 0 20px 20px rgba(0,0,0,0.9); position: relative;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 30px; background: #222; border-bottom: 2px solid #111; transform-origin: top; transform: rotateX(-20deg);"></div>
+                </div>
             </div>
-            <div class="vending-glass"></div>
-            ${shelvesHtml}
-            <div class="vending-push-door"></div>
+            ${reserveHtml}
         </div>
-        <div class="vending-control-panel">
-            <div class="coin-slot"></div>
-            <div class="keypad">
-                <div class="keypad-btn"></div><div class="keypad-btn"></div><div class="keypad-btn"></div>
-                <div class="keypad-btn"></div><div class="keypad-btn"></div><div class="keypad-btn"></div>
-                <div class="keypad-btn"></div><div class="keypad-btn"></div><div class="keypad-btn"></div>
-            </div>
-        </div>
-    </div>
-    ${reserveHtml}`;
+        <!-- Lattiavarjo koneen alle -->
+        <div style="position: absolute; bottom: -30px; left: -20px; right: -20px; height: 40px; background: radial-gradient(ellipse at center, rgba(0,0,0,0.8) 0%, transparent 70%); z-index: -1;"></div>
+    </div>`;
 };
 
 window.renderReceiptOnBoard = function() {
@@ -436,7 +435,11 @@ window.renderReceiptOnBoard = function() {
         return html; 
     };
 
-    let html = `<div class="board-receipt-paper"><div style="font-size:2.5rem; font-weight:900; margin-bottom:30px; text-align:center; border-bottom:4px solid #111; padding-bottom:10px;">TULOSSEURANTA</div>`;
+    // Muutettu tuloslappu näyttämään irralliselta paperilta, joka on teipattu kansion alapuolelle
+    let html = `
+    <div class="board-receipt-paper" style="position:relative; transform: rotate(-1deg); box-shadow: 10px 20px 40px rgba(0,0,0,0.6);">
+        <div class="tape tape-top" style="width: 180px; top: -15px;"></div>
+        <div style="font-size:2.5rem; font-weight:900; margin-bottom:30px; text-align:center; border-bottom:4px solid #111; padding-bottom:10px;">TULOSSEURANTA</div>`;
     
     for(let i=0; i<window.gameHistory.length; i++) { 
         let h = window.gameHistory[i]; 
@@ -472,6 +475,9 @@ window.renderBoard = function() {
     let html = ``; 
     html += `<div id="board-binder-wrapper" style="position:absolute; left:20px; top:120px; z-index:10; width:900px;"></div>`;
     
+    // Siirretty Tulosseuranta kansion alapuolelle y-akselilla (top: 1200px)
+    html += `<div id="board-receipt-wrapper" style="position:absolute; left:20px; top:1200px; z-index:10; width:500px;"></div>`;
+    
     let startXHolesVal = window.startXHoles || 1000;
     html += `<div id="holes-grid" style="display:grid; grid-template-columns:repeat(${cols}, 380px); gap:60px 80px; position:absolute; left:${startXHolesVal}px; top:120px; z-index:5;">`;
     window.gameHistory.forEach((h, index) => { html += window.getHoleCellHTML(h, index + 1, false, true); });
@@ -497,8 +503,8 @@ window.renderBoard = function() {
     }
     html += `</div>`;
     
-    html += `<div id="board-receipt-wrapper" style="position:absolute; left:${rightXPanel}px; top:120px; z-index:10; width:500px;"></div>`;
-    html += `<div id="board-shop-wrapper" style="position:absolute; left:${rightXPanel}px; top:800px; z-index:10; width:800px;"></div>`;
+    // Siirretty Kauppa ilmoitustaulun oikealle puolelle
+    html += `<div id="board-shop-wrapper" style="position:absolute; left:${rightXPanel + 50}px; top:100px; z-index:10; width:800px;"></div>`;
     
     board.innerHTML = html;
     
