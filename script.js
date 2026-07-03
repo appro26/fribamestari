@@ -109,7 +109,6 @@ window.animateCameraTo = function(tX, tY, tScale, duration=350) {
         boardState.scale = sScale + (tScale - sScale) * ease;
         
         window.applyBoardTransform();
-        
         if (p < 1) {
             camAnim = requestAnimationFrame(step);
         } else {
@@ -139,7 +138,11 @@ window.zoomToCurrentHole = function() {
     window.zoomToHole(currentHoleIndex); 
 };
 
-// Touch-liikkuminen
+window.zoomToPreviousHole = function() {
+    let prev = Math.max(1, currentHoleIndex - 1);
+    window.zoomToHole(prev);
+};
+
 const vp = el('corkboard-viewport');
 if(vp) {
     vp.addEventListener('touchstart', e => {
@@ -276,13 +279,8 @@ window.getGlobalLockedFamilies = function(playersArray, currentActiveHole) {
 
 window.drawSpecificCard = function(type, maxLevel, lockedFamilies) {
     let pool = window.allCards.filter(c => c.type === type && c.level <= maxLevel && !lockedFamilies.has(c.family));
-    
-    if (pool.length === 0) {
-        pool = window.allCards.filter(c => c.type === type && !lockedFamilies.has(c.family)); 
-    }
-    if (pool.length === 0) {
-        pool = window.allCards.filter(c => !lockedFamilies.has(c.family)); 
-    }
+    if (pool.length === 0) pool = window.allCards.filter(c => c.type === type && !lockedFamilies.has(c.family)); 
+    if (pool.length === 0) pool = window.allCards.filter(c => !lockedFamilies.has(c.family)); 
     if (pool.length === 0) return null; 
 
     let candidates = pool;
@@ -309,10 +307,7 @@ window.generatePersonalShop = function(lockedFamilies) {
     
     levelsToDraw.forEach(lvl => {
         let pool = window.allCards.filter(c => c.level === lvl && !lockedFamilies.has(c.family));
-        
-        if (pool.length === 0) {
-            pool = window.allCards.filter(c => !lockedFamilies.has(c.family)); 
-        }
+        if (pool.length === 0) pool = window.allCards.filter(c => !lockedFamilies.has(c.family)); 
         
         if (pool.length > 0) {
             let picked = pool[Math.floor(Math.random() * pool.length)];
@@ -367,9 +362,9 @@ window.showEventCard = function(cId, target, by) {
             </div>`;
     }
     
-    el('cardDetailActionArea').innerHTML = targetStr + `<button class="btn btn-secondary glass-card" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE</button>`;
-    
+    el('cardDetailActionArea').innerHTML = targetStr;
     window.showModalSafe('cardDetailModal');
+    setTimeout(() => { if(window.initNativeCarousel) window.initNativeCarousel(); }, 100);
 };
 
 window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
@@ -385,7 +380,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     html += `<div class="index-card" style="transform: rotate(${rot1}deg); position: relative; ${activeStyle}">`;
     html += `<div class="banner-subtitle">${currentCourse.name}</div><div class="banner-title">VÄYLÄ <span>${hIndex}</span></div><div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>`;
     
-    // HEILUVA KYNÄ PALAUTETTU TÄHÄN!
     if (isActive && hData.penColor) {
         html += `
         <div class="pen-container" onclick="event.stopPropagation(); window.openScoreModal();">
@@ -422,18 +416,14 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         let otherCards = [];
         
         playedCards.forEach(pc => { 
-            if (pc.target === myName || pc.target === 'KAIKKI VASTUSTAJAT') {
-                myCards.push(pc); 
-            } else {
-                otherCards.push(pc); 
-            }
+            if (pc.target === myName || pc.target === 'KAIKKI VASTUSTAJAT') { myCards.push(pc); } 
+            else { otherCards.push(pc); }
         });
 
         if (myCards.length > 0) {
             html += `<div style="width: 100%; max-width:360px; margin-bottom: 15px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px;">`;
             myCards.forEach((pc, idx) => {
                 let typeClass = `tier-${pc.level || 1}`;
-                let tagTxt = `TASO ${pc.level || 1}`;
                 let cRot = (pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
                 let pinLeft = 50 + (Math.floor(pseudoRandom((hIndex + idx) * 5.5) * 20) - 10);
                 
@@ -441,16 +431,21 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                 let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {d: pc.cardDesc};
                 let safeCardName = pc.cardName ? pc.cardName.split(' (')[0] : '';
+                let typeIcon = pc.type === 'buff' ? '🛡️' : '💥';
                 
                 html += `
                 <div class="pinned-card-container" style="transform: rotate(${cRot}deg);" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div class="pushpin" style="left: ${pinLeft}%;"></div>
                     <div class="physical-card ${typeClass}" style="width: 175px; height: 245px;">
-                        <div class="card-type-tag">${tagTxt}</div>
-                        <h3 style="font-size:1.1rem; margin-top:10px; line-height:1.1;">${safeCardName}</h3>
-                        <p style="font-size:0.75rem; line-height:1.2; overflow-y:auto; margin-bottom:4px; flex:1;">${cDef.d}</p>
-                        <div style="background:rgba(0,0,0,0.5); color:#fff; padding:4px; border-radius:4px; font-size:0.75rem; text-align:center; font-weight:bold; margin-top:auto;">
-                            Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal;">(${pc.by})</span>
+                        <div class="card-header">
+                            <span>${typeIcon}</span><span>TASO ${pc.level || 1}</span>
+                        </div>
+                        <div class="card-body">
+                            <h3>${safeCardName}</h3>
+                            <p>${cDef.d}</p>
+                            <div style="background:rgba(0,0,0,0.8); color:#fff; padding:6px; border-radius:4px; font-size:0.75rem; text-align:center; font-weight:bold; margin-top:auto;">
+                                Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(Käyttäjä: ${pc.by})</span>
+                            </div>
                         </div>
                     </div>
                 </div>`;
@@ -467,7 +462,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                     <div style="display:flex; flex-direction:column; gap:6px;">`;
             
             otherCards.forEach((pc) => {
-                let typeIcon = pc.type === 'buff' ? '🛡️' : '🚫';
+                let typeIcon = pc.type === 'buff' ? '🛡️' : '💥';
                 let typeColor = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
                 let encodedBy = pc.by ? pc.by.replace(/"/g, '&quot;') : '';
                 let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
@@ -679,7 +674,7 @@ window.renderReceipt = function() {
 };
 
 // ==============================================
-// KORTTIEN PELAAMINEN, UPGRADE JA HÄVITYS
+// KORTTIEN PELAAMINEN, UPGRADE JA TARKASTELU
 // ==============================================
 window.openTargetModal = function(cardId) {
     const cardDef = window.allCards.find(c => c && c.id === cardId);
@@ -746,6 +741,7 @@ window.executeCardPlay = function(targetName) {
         if (card.cost > 0) {
             me.score -= card.cost;
             window.logScore(myName, -card.cost, `Pelasi kortin: ${card.def.n}`);
+            if(window.showAppleToast) window.showAppleToast(`-${card.cost} P (Pelattu)`, '💸');
         }
     }
     
@@ -1000,17 +996,10 @@ window.switchShopTab = function(tab) {
         window.pendingShopPurchase = null; 
         el('shopBuyArea').style.display = 'block'; 
         el('shopSellArea').style.display = 'none';
-        
-        if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.add('active');
-        if(el('shopTabSellBtn')) el('shopTabSellBtn').classList.remove('active');
     } else {
         el('shopBuyArea').style.display = 'none'; 
         el('shopSellArea').style.display = 'block';
-        
-        if(el('shopTabBuyBtn')) el('shopTabBuyBtn').classList.remove('active');
-        if(el('shopTabSellBtn')) el('shopTabSellBtn').classList.add('active');
     }
-    
     let me = (allPlayers || []).find(p => p && p.name === myName);
     window.renderShop(activeHole && activeHole.shop ? activeHole.shop[myName] : [], me ? me.reservations : [], me ? me.score : 0);
 };
@@ -1035,18 +1024,23 @@ window.renderShop = function(shopArray, resArray, myPoints) {
             if (item) {
                 const canAfford = myPoints >= item.price;
                 let isResFull = actRes.length >= 2;
+                let typeIcon = item.type === 'buff' ? '🛡️' : '💥';
                 
                 shelvesHtml += `
                     <div class="vending-slot">
-                        <div class="physical-card tier-${item.level}" style="width:140px; height:200px; transform: scale(0.9); cursor:pointer;" onclick="window.openCardDetail('${item.id}', 'shop')">
-                            <div class="play-cost-badge" style="background:#111; color:#fff; border:1px solid #fff; font-size:0.65rem; padding:2px 6px;">MAKSU: ${window.getCardPlayCost(item.id)} P</div>
-                            <div class="card-type-tag">TASO ${item.level}</div>
-                            <h3 style="font-size:1rem; margin-top:5px; line-height:1.1;">${item.n.split(' (')[0]}</h3>
-                            <p style="font-size:0.65rem; line-height:1.1; overflow-y:auto;">${item.d}</p>
+                        <div class="physical-card tier-${item.level}" style="width:140px; height:auto; min-height:180px; transform: scale(0.95); cursor:pointer;" onclick="window.openCardDetail('${item.id}', 'shop')">
+                            <div class="card-header">
+                                <span>${typeIcon}</span><span>TASO ${item.level}</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="play-cost-badge">MAKSU: ${window.getCardPlayCost(item.id)} P</div>
+                                <h3 style="font-size:0.95rem;">${item.n.split(' (')[0]}</h3>
+                                <p style="font-size:0.65rem;">${item.d}</p>
+                            </div>
                         </div>
                         <div class="vending-coil"></div>
                         <div class="vending-price-tag">${item.price} P</div>
-                        <div style="display:flex; gap:5px; margin-top:5px; width:140px; transform:scale(0.9);">
+                        <div style="display:flex; flex-direction:column; gap:5px; margin-top:5px; width:140px; transform:scale(0.95);">
                             <button class="vending-btn-buy" ${!canAfford?'disabled':''} onclick="window.buyShopItem('${item.id}', ${item.price}, false)">OSTA</button>
                             ${!isResFull ? `<button class="vending-btn-reserve" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
                         </div>
@@ -1055,7 +1049,7 @@ window.renderShop = function(shopArray, resArray, myPoints) {
             } else {
                 shelvesHtml += `
                     <div class="vending-slot">
-                        <div style="width:140px; height:200px; display:flex; align-items:center; justify-content:center;">
+                        <div style="width:140px; height:180px; display:flex; align-items:center; justify-content:center;">
                             <div class="empty-slot-text">TYHJÄ</div>
                         </div>
                         <div class="vending-coil"></div>
@@ -1077,17 +1071,22 @@ window.renderShop = function(shopArray, resArray, myPoints) {
             let resItem = window.allCards.find(c => c.id === rId);
             if(!resItem) return;
             const canAfford = myPoints >= resItem.price;
+            let typeIcon = resItem.type === 'buff' ? '🛡️' : '💥';
             
             reserveHtml += `
                 <div class="vending-slot" style="width:48%;">
-                    <div class="physical-card tier-${resItem.level}" style="width:140px; height:200px; transform: scale(0.9); margin:0 auto; cursor:pointer;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
-                        <div class="play-cost-badge" style="background:#111; color:#fff; font-size:0.65rem; padding:2px 6px;">MAKSU: ${window.getCardPlayCost(resItem.id)} P</div>
-                        <div class="card-type-tag" style="background:#eab308; color:#000;">🔒 LOCK</div>
-                        <h3 style="font-size:1rem; margin-top:5px; line-height:1.1;">${resItem.n.split(' (')[0]}</h3>
-                        <p style="font-size:0.65rem; line-height:1.1; overflow-y:auto;">${resItem.d}</p>
+                    <div class="physical-card tier-${resItem.level}" style="width:140px; height:auto; min-height:180px; transform: scale(0.95); margin:0 auto; cursor:pointer;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
+                        <div class="card-header" style="background:#eab308; color:#000;">
+                            <span>🔒</span><span>VARATTU</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="play-cost-badge">MAKSU: ${window.getCardPlayCost(resItem.id)} P</div>
+                            <h3 style="font-size:0.95rem;">${resItem.n.split(' (')[0]}</h3>
+                            <p style="font-size:0.65rem;">${resItem.d}</p>
+                        </div>
                     </div>
                     <div class="vending-price-tag" style="background:#eab308; color:#000; border-color:#000; margin-top:5px;">${resItem.price} P</div>
-                    <div style="display:flex; gap:5px; margin-top:5px; width:140px; transform:scale(0.9); margin:0 auto;">
+                    <div style="display:flex; gap:5px; margin-top:5px; width:140px; transform:scale(0.95); margin:0 auto;">
                         <button class="vending-btn-buy" ${!canAfford?'disabled':''} onclick="window.buyShopItem('${resItem.id}', ${resItem.price}, true)">LUNASTA</button>
                         <button class="vending-btn-reserve" style="background:#ef4444; border-color:#991b1b; box-shadow:0 4px 0 #991b1b;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
                     </div>
@@ -1112,14 +1111,19 @@ window.renderShop = function(shopArray, resArray, myPoints) {
             let typeClass = `tier-${cDef.level}`;
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
             let playCost = window.getCardPlayCost(cId);
+            let typeIcon = cDef.type === 'buff' ? '🛡️' : '💥';
             
             sellHtml += `
             <div class="plastic-sleeve">
-                <div class="physical-card ${typeClass}" style="width: 100%; height: 200px; margin: 0 auto; ${isLocked ? 'opacity:0.6;' : ''} cursor:pointer;" onclick="window.openCardDetail('${cId}', 'sell')">
-                    <div class="play-cost-badge">MAKSU: ${playCost} P</div>
-                    <h3 style="font-size:1rem; margin-top:5px; line-height:1.1;">${cDef.n.split(' (')[0]}</h3>
-                    <p style="font-size:0.75rem; line-height:1.2; overflow-y:auto; margin-bottom:4px; flex:1;">${cDef.d}</p>
-                    <div style="text-align:center; font-weight:900; font-size:0.75rem; color:#111; margin-top:auto; padding-top:5px;">🔄 KATSO TASOT / UPGRADE</div>
+                <div class="physical-card ${typeClass}" style="width: 100%; height: auto; min-height: 180px; margin: 0 auto; ${isLocked ? 'opacity:0.6;' : ''} cursor:pointer;" onclick="window.openCardDetail('${cId}', 'sell')">
+                    <div class="card-header">
+                        <span>${typeIcon}</span><span>TASO ${cDef.level}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="play-cost-badge">MAKSU: ${playCost} P</div>
+                        <h3>${cDef.n.split(' (')[0]}</h3>
+                        <p>${cDef.d}</p>
+                    </div>
                 </div>
             </div>`;
         });
@@ -1167,14 +1171,13 @@ window.showHandLimitModal = function(cards) {
     window.showModalSafe('handLimitModal');
 };
 
-// ==============================================
+//==============================================
 // TURVALLINEN KARUSELLI (Ei sekoita järjestystä)
-// ==============================================
+//==============================================
 window.isFlipping = false;
 window.flippedCards = new Set();
 
 window.initNativeCarousel = function() {
-    // Selaus on korjattu ja palautettu!
     const container = el('cardCarousel');
     if(!container) return;
     
@@ -1182,7 +1185,8 @@ window.initNativeCarousel = function() {
         requestAnimationFrame(() => {
             const cards = Array.from(container.querySelectorAll('.carousel-card-wrapper'));
             const scrollLeft = container.scrollLeft; 
-            const centerOffset = (container.clientWidth || window.innerWidth) / 2; 
+            const containerWidth = container.clientWidth || window.innerWidth;
+            const centerOffset = containerWidth / 2; 
             const cardWidth = 320; 
             const paddingLeft = centerOffset - (cardWidth / 2); 
             
@@ -1192,10 +1196,8 @@ window.initNativeCarousel = function() {
                 card.style.transform = `translate3d(${diff * -40}px, ${Math.abs(diff) * 20}px, ${Math.abs(diff) * -150}px) rotateZ(${diff * 5}deg) scale(${Math.max(0.85, 1 - Math.abs(diff) * 0.15)})`;
                 card.style.zIndex = 100 - Math.floor(Math.abs(diff)*10);
                 
-                // Päivitetään aktiivinen indeksi
                 if(Math.abs(diff) < 0.5 && window.carouselCurrentIndex !== i) {
                     window.carouselCurrentIndex = i;
-                    // Napit päivittyvät automaattisesti jos mode on sell tai shop
                     if(window.carouselCurrentMode === 'sell' || window.carouselCurrentMode === 'shop' || window.carouselCurrentMode === 'shop_res') {
                         window.renderCarouselActionButtons();
                     }
@@ -1236,6 +1238,7 @@ window.renderCarousel = function() {
         let typeClass = `tier-${cDef.level}`;
         let flippedClass = window.flippedCards.has(cId) ? 'flipped' : '';
         let playCost = window.getCardPlayCost(cId);
+        let typeIcon = cDef.type === 'buff' ? '🛡️' : '💥';
         
         let familyCards = window.allCards.filter(c => c.family === cDef.family).sort((a,b) => a.level - b.level);
         let levelsHtml = '';
@@ -1255,21 +1258,24 @@ window.renderCarousel = function() {
                 <ul class="card-levels-list" style="flex:1; overflow-y:auto; list-style-type:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px;">
                     ${levelsHtml}
                 </ul>
-                <div style="text-align:center; font-weight:900; font-size:0.75rem; color:#aaa; margin-top:5px;">🔄 NAPSAUTTAMALLA ETUPUOLI</div>
             </div>`;
         
         html += `
-            <div class="carousel-card-wrapper" data-id="${cId}" onclick="window.flipCard(${i})">
+            <div class="carousel-card-wrapper" style="transform:none; position:relative; margin:0 auto;" data-id="${cId}" onclick="window.flipCard(${i})">
                 <div class="card-3d-inner ${flippedClass}" id="card3d-inner-${i}">
-                    <div class="card-face card-front ${typeClass}">
-                        <div style="text-align:left; display:flex; flex-direction:column; height:100%; position:relative; z-index:20;">
+                    
+                    <div class="card-face card-front physical-card ${typeClass}" style="height:100%; margin:0; box-shadow:none;">
+                        <div class="card-header">
+                            <span>${typeIcon}</span><span>TASO ${cDef.level}</span>
+                        </div>
+                        <div class="card-body">
                             <div class="play-cost-badge">MAKSU: ${playCost} P</div>
-                            <div class="card-type-tag" style="font-size:1.1rem; margin-bottom:8px;">TASO ${cDef.level}</div>
-                            <h3 style="font-size:2rem; margin-bottom:15px; line-height:1.1;">${cDef.n.split(' (')[0]}</h3>
-                            <p style="font-size:1.1rem; font-weight:800; line-height:1.3; overflow-y:auto;">${cDef.d}</p>
-                            <div style="text-align:center; font-weight:900; color:#111; margin-top:auto; padding-bottom:10px;">🔄 KÄÄNNÄ (KATSO KAIKKI TASOT)</div>
+                            <h3>${cDef.n.split(' (')[0]}</h3>
+                            <p>${cDef.d}</p>
+                            <div style="text-align:center; font-weight:900; color:#111; margin-top:auto; padding-bottom:10px; font-size:0.8rem;">🔄 NAPSAUTTAMALLA TASOT</div>
                         </div>
                     </div>
+                    
                     <div class="card-face card-back" style="pointer-events: auto;">
                         ${backHtml}
                     </div>
@@ -1279,7 +1285,6 @@ window.renderCarousel = function() {
     container.innerHTML = html;
 };
 
-// Erillinen funktio nappien renderöintiin, jotta karusellia rullattaessa napit päivittyvät oikeaan korttiin
 window.renderCarouselActionButtons = function() {
     let mode = window.carouselCurrentMode;
     let cId = window.carouselCards[window.carouselCurrentIndex];
@@ -1315,8 +1320,6 @@ window.renderCarouselActionButtons = function() {
         }
     }
     
-    btnHtml += `<button class="btn btn-secondary glass-card" style="width:100%; padding:15px; font-weight:bold; background:rgba(255,255,255,0.2); color:#fff; border:2px solid #fff;" onclick="document.getElementById('cardDetailModal').style.display='none'">❌ SULJE NÄKYMÄ</button>`;
-    
     el('cardDetailActionArea').innerHTML = btnHtml;
 };
 
@@ -1324,7 +1327,6 @@ window.openCardDetail = function(cId, mode) {
     const me = (allPlayers || []).find(p => p && p.name === myName);
     window.flippedCards = new Set(); 
     
-    // SELATTAVUUS ON PALAUTETTU TÄSSÄ! 
     if (mode === 'sell') {
         window.carouselCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
         window.carouselCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
@@ -1346,11 +1348,10 @@ window.openCardDetail = function(cId, mode) {
     window.renderCarouselActionButtons();
     
     setTimeout(() => {
-        window.initNativeCarousel();
+        if(window.initNativeCarousel) window.initNativeCarousel();
         const container = el('cardCarousel');
         if(container) { 
             container.scrollLeft = (window.carouselCurrentIndex * 320); 
-            // Laukaistaan forceCarouselLayoutUpdate kerran manuaalisesti
             container.dispatchEvent(new Event('scroll'));
         }
     }, 50);
@@ -1738,7 +1739,14 @@ window.gmRemoveCurrentHole = function() {
         if(nextHistory.length >= currentHoleIndex) { 
             nextHistory = nextHistory.slice(0, currentHoleIndex - 1); 
         }
-        let nextActiveHole = { rule: window.holeRules[0], shop: {}, playedCards: {}, timestamp: Date.now(), color: getRandomColor(), penColor: getRandomPen() };
+        let nextActiveHole = { 
+            rule: window.holeRules[0], 
+            shop: {}, 
+            playedCards: {}, 
+            timestamp: Date.now(), 
+            color: getRandomColor(),
+            penColor: getRandomPen()
+        };
         allPlayers.forEach(p => { 
             nextActiveHole.shop[p.name] = window.generatePersonalShop(window.getGlobalLockedFamilies(allPlayers, null)); 
         });
