@@ -2,7 +2,7 @@
 // KÄYTTÖLIITTYMÄN RENDERÖINTI JA MODAALIT (ui.js)
 // ==============================================
 
-const el = id => document.getElementById(id);
+var el = id => document.getElementById(id);
 
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
 window.getRandomColor = () => postItColors[Math.floor(Math.random() * postItColors.length)];
