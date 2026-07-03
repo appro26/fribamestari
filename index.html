@@ -336,4 +336,22 @@
 
     <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow-y:auto; padding:20px 0;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container"></div>
-        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px;">👆 KÄÄNNÄ K
+        <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px;">👆 KÄÄNNÄ KORTTIA SIVULLE 👆</div>
+        <div id="cardDetailActionArea" style="width:100%; max-width:400px; margin:0 auto; padding: 0 20px;"></div>
+        <button class="fixed-close-btn" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE KORTTI</button>
+    </div>
+
+    <script src="tasks.js?v=191"></script>
+    <script type="module" src="script.js?v=191"></script>
+    <script src="game.js?v=191"></script>
+    <script src="ui.js?v=191"></script>
+    <script src="camera.js?v=191"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+            .then(r => console.log('SW rekisteröity'))
+            .catch(e => console.error('SW virhe:', e));
+        }
+    </script>
+</body>
+</html>
