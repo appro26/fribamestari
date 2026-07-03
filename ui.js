@@ -242,7 +242,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     });
     html += `</div>`;
     
-    // Yksityinen palkkalaskelma
     if (isHistory && window.myName && hData.pointBreakdowns && hData.pointBreakdowns[window.myName]) {
         let myBreakdown = hData.pointBreakdowns[window.myName];
         let deltaColor = myBreakdown.delta >= 0 ? '#16a34a' : '#dc2626';
@@ -288,7 +287,7 @@ window.renderBinderOnBoard = function() {
 
     let cardsHtml = '';
     if(myCards.length === 0) {
-        cardsHtml = '<p style="color:var(--text-muted); font-size:1.4rem; text-align:center; padding:50px; font-weight:bold; grid-column: 1 / -1;">Kansiosi on tyhjä.</p>';
+        cardsHtml = '<p style="color:#555; font-size:1.4rem; text-align:center; padding:50px; font-weight:bold; grid-column: 1 / -1;">Kansiosi on tyhjä.</p>';
     } else {
         myCards.forEach((cId) => {
             let cDef = window.allCards.find(sc => sc && sc.id === cId);
@@ -305,15 +304,15 @@ window.renderBinderOnBoard = function() {
     }
 
     wrapper.innerHTML = `
-    <div class="board-binder">
-        <div class="binder-spine" style="left: 0; z-index: 30;">
+    <div class="board-binder" style="width: 500px; min-height: 800px; padding-top: 20px; padding-bottom: 20px; background: radial-gradient(circle at center, #3e2723 0%, #211412 100%);">
+        <div class="binder-spine" style="position: absolute; top: 0; bottom: 0; left: 0; z-index: 30; width: 40px; background: linear-gradient(to right, #111, #222, #111); display:flex; flex-direction:column; justify-content:space-evenly; align-items:center;">
             <div class="binder-ring" style="margin-top: 50px;"></div>
             <div class="binder-ring"></div>
             <div class="binder-ring" style="margin-bottom: 50px;"></div>
         </div>
-        <div class="binder-page">
-            <h2 style="color:#111; font-size:2.5rem; margin-bottom:30px; font-family:'Kalam', cursive; border-bottom:3px dashed #ccc; padding-bottom:15px; text-align:center;">OMAT KORTIT</h2>
-            <div class="cards-grid-4">
+        <div class="binder-page" style="margin-left: 35px; margin-right: 15px; padding: 25px; border-radius: 4px 12px 12px 4px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1), 5px 5px 15px rgba(0,0,0,0.6);">
+            <h2 style="color:#111; font-size:2rem; margin-bottom:20px; font-family:'Kalam', cursive; border-bottom:3px dashed #ccc; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%;">
                 ${cardsHtml}
             </div>
         </div>
@@ -333,7 +332,7 @@ window.renderShopOnBoard = function() {
     let levels = [3, 2, 1]; 
 
     levels.forEach(lvl => {
-        shelvesHtml += `<div class="vending-shelf">`;
+        shelvesHtml += `<div style="display:flex; justify-content:space-around; padding: 20px 0 30px 0; border-bottom: 12px solid #0f172a; box-shadow: inset 0 -15px 20px rgba(0,0,0,0.9); position:relative; margin-bottom: 25px; background: linear-gradient(to bottom, #334155, #0f172a); border-radius: 4px;">`;
         let shelfItems = (shopArray || []).filter(c => c === null || c.level === lvl);
         
         for(let i=0; i<2; i++) {
@@ -345,12 +344,12 @@ window.renderShopOnBoard = function() {
                 let fullCardHtml = window.generateCardHTML(item, false, extraHtml);
                 
                 shelvesHtml += `
-                    <div class="vending-slot">
+                    <div style="position:relative; width:30%; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="transform: scale(0.95); cursor:pointer; width:175px;" onclick="window.openCardDetail('${item.id}', 'shop')">
                             ${fullCardHtml}
                         </div>
-                        <div class="vending-coil"></div>
-                        <div class="vending-price-tag">${item.price} P</div>
+                        <div style="background: repeating-linear-gradient(90deg, transparent, transparent 15px, #94a3b8 15px, #94a3b8 22px); height: 40px; width: 120%; position: absolute; bottom: 50px; filter: drop-shadow(0 8px 5px #000); z-index: 8; opacity: 0.8;"></div>
+                        <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 4px; border: 3px solid #22c55e; font-weight: 900; font-size: 1.3rem; margin-top: 15px; z-index: 15; box-shadow: 0 0 10px rgba(34,197,94,0.5); text-align: center; margin-bottom: 15px;">${item.price} P</div>
                         <div style="display:flex; flex-direction:column; gap:8px; margin-top:5px; width:160px;">
                             <button class="vending-btn-buy" ${!canAfford?'disabled':''} onclick="window.buyShopItem('${item.id}', ${item.price}, false)">OSTA</button>
                             ${!isResFull ? `<button class="vending-btn-reserve" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
@@ -359,12 +358,12 @@ window.renderShopOnBoard = function() {
                 `;
             } else {
                 shelvesHtml += `
-                    <div class="vending-slot">
-                        <div style="width:175px; height:260px; display:flex; align-items:center; justify-content:center;">
-                            <div class="empty-slot-text" style="color:#555; font-weight:900; font-size:1.5rem; letter-spacing:2px;">TYHJÄ</div>
+                    <div style="position:relative; width:30%; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                        <div style="width:175px; height:260px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); border-radius:8px; border:2px dashed #444;">
+                            <div style="color:#555; font-weight:900; font-size:1.5rem; letter-spacing:2px;">TYHJÄ</div>
                         </div>
-                        <div class="vending-coil"></div>
-                        <div class="vending-price-tag" style="background:#333; color:#666; border-color:#666;">---</div>
+                        <div style="background: repeating-linear-gradient(90deg, transparent, transparent 15px, #94a3b8 15px, #94a3b8 22px); height: 40px; width: 120%; position: absolute; bottom: 50px; filter: drop-shadow(0 8px 5px #000); z-index: 8; opacity: 0.8;"></div>
+                        <div style="background: #000; color: #444; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 4px; border: 3px solid #444; font-weight: 900; font-size: 1.3rem; margin-top: 15px; z-index: 15; text-align: center; margin-bottom: 15px;">---</div>
                     </div>
                 `;
             }
@@ -374,7 +373,7 @@ window.renderShopOnBoard = function() {
 
     let reserveHtml = '';
     if(actRes.length > 0) {
-        reserveHtml += `<div class="vending-reserved-area" style="margin-top:30px;"><div style="display:flex; justify-content:space-around; width:100%; gap:20px;">`;
+        reserveHtml += `<div style="margin-top:30px;"><div style="display:flex; justify-content:space-around; width:100%; gap:20px;">`;
         actRes.forEach(rId => {
             let resItem = window.allCards.find(c => c.id === rId);
             if(!resItem) return;
@@ -383,13 +382,13 @@ window.renderShopOnBoard = function() {
             let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml);
             
             reserveHtml += `
-                <div class="vending-slot" style="width:48%;">
+                <div style="position:relative; width:48%; display:flex; flex-direction:column; align-items:center;">
                     <div style="transform: scale(0.9); margin:0 auto; cursor:pointer; width:175px;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
                         <div style="position:absolute; top:-10px; right:-10px; background:#eab308; color:#000; padding:5px 10px; font-weight:900; border-radius:8px; z-index:30; box-shadow:0 2px 10px rgba(0,0,0,0.5);">🔒 VARATTU</div>
                         ${fullCardHtml}
                     </div>
-                    <div class="vending-price-tag" style="background:#eab308; color:#000; border-color:#000; margin-top:5px;">${resItem.price} P</div>
-                    <div style="display:flex; gap:5px; margin-top:5px; width:160px; margin:0 auto;">
+                    <div style="background: #000; color: #eab308; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 4px; border: 3px solid #eab308; font-weight: 900; font-size: 1.3rem; margin-top: 10px; z-index: 15; text-align: center;">${resItem.price} P</div>
+                    <div style="display:flex; gap:5px; margin-top:10px; width:160px; margin:0 auto;">
                         <button class="vending-btn-buy" ${!canAfford?'disabled':''} onclick="window.buyShopItem('${resItem.id}', ${resItem.price}, true)">LUNASTA</button>
                         <button class="vending-btn-reserve" style="background:#ef4444; border-color:#991b1b; box-shadow:0 4px 0 #991b1b;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
                     </div>
@@ -399,26 +398,44 @@ window.renderShopOnBoard = function() {
         reserveHtml += `</div></div>`;
     }
 
-    // Luodaan realistinen, lattialla seisova automaatti vahvoilla varjoilla
     wrapper.innerHTML = `
-    <div style="position: relative;">
-        <div style="background: linear-gradient(to bottom, #1a252f, #0f172a); border: 15px solid #34495e; border-bottom: 40px solid #111; border-radius: 12px 12px 4px 4px; padding: 30px 20px 40px 20px; box-shadow: 25px 40px 60px rgba(0,0,0,0.8), inset 0 0 50px #000;">
-            <div class="vending-glass-area" style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; border: 4px solid #222; box-shadow: inset 0 10px 30px rgba(0,0,0,0.8);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; background:#000; padding:15px; border-radius:8px; border:3px solid #333; position:relative; z-index:20;">
-                    <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:2rem; text-shadow: 0 0 10px #ef4444;">FRIBAMART 🎰</div>
-                    <div style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:1.8rem; font-weight:900;">SALDO: ${myPoints} P</div>
-                </div>
-                ${shelvesHtml}
-                <!-- Noutoluukku -->
-                <div style="height: 60px; background: #000; margin: 20px auto 0 auto; width: 80%; border-radius: 4px; border: 4px solid #333; box-shadow: inset 0 20px 20px rgba(0,0,0,0.9); position: relative;">
-                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 30px; background: #222; border-bottom: 2px solid #111; transform-origin: top; transform: rotateX(-20deg);"></div>
+    <div style="position: relative; width: 750px; background: linear-gradient(to right, #0f172a, #1e293b, #0f172a); border: 12px solid #020617; border-bottom: 50px solid #000; border-radius: 20px 20px 4px 4px; box-shadow: 40px 50px 80px rgba(0,0,0,0.9), inset 0 0 30px #000; padding: 30px 25px; display: flex; flex-direction: column; z-index:20;">
+        
+        <!-- Header -->
+        <div style="background: #000; padding: 20px 30px; border-radius: 12px; border: 5px solid #222; display:flex; justify-content:space-between; align-items:center; margin-bottom: 40px; box-shadow: inset 0 0 20px rgba(239,68,68,0.15);">
+            <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:2.8rem; text-shadow: 0 0 20px #ef4444, 0 0 5px #fff; letter-spacing: 2px;">FRIBAMART 🎰</div>
+            <div style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:2.2rem; font-weight:900; text-shadow: 0 0 15px #22c55e;">${myPoints} P</div>
+        </div>
+
+        <!-- Glass Area -->
+        <div style="background: #020617; border-radius: 12px; border: 8px solid #000; box-shadow: inset 0 20px 50px #000, inset 0 0 15px rgba(56,189,248,0.1); position:relative; padding: 25px; overflow:hidden;">
+            <!-- Glass reflection -->
+            <div style="position:absolute; top:0; left:-50%; width:200%; height:100%; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.08) 50%, transparent 55%); pointer-events:none; z-index:40;"></div>
+            ${shelvesHtml}
+        </div>
+
+        <!-- Dispenser & Controls -->
+        <div style="height: 250px; margin-top: 40px; display:flex; gap:40px;">
+            <!-- Dispenser flap -->
+            <div style="flex: 1; background: #000; border-radius: 12px; border: 6px solid #111; box-shadow: inset 0 30px 40px #000; position:relative;">
+                <div style="position:absolute; top:0; left:0; right:0; height: 90px; background: #1a1a1a; border-bottom: 3px solid #000; transform-origin: top; transform: rotateX(-20deg); box-shadow: 0 10px 15px rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center;">
+                    <span style="color:#333; font-weight:900; font-size:1.8rem; letter-spacing:6px; text-shadow: -1px -1px 0 #000;">PUSH</span>
                 </div>
             </div>
-            ${reserveHtml}
+            
+            <!-- Keypad/Coin slot -->
+            <div style="width: 160px; background: #111; border-radius: 12px; border: 5px solid #000; padding: 20px; display:flex; flex-direction:column; align-items:center; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);">
+                <div style="width: 25px; height: 70px; background: #000; border-radius: 15px; border: 3px solid #333; margin-bottom: 25px; box-shadow: inset 0 10px 15px #000;"></div>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width:100%;">
+                    ${Array(9).fill('<div style="background:#0a0a0a; height:25px; border-radius:5px; border-bottom:4px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.5);"></div>').join('')}
+                </div>
+            </div>
         </div>
-        <!-- Lattiavarjo koneen alle -->
-        <div style="position: absolute; bottom: -30px; left: -20px; right: -20px; height: 40px; background: radial-gradient(ellipse at center, rgba(0,0,0,0.8) 0%, transparent 70%); z-index: -1;"></div>
-    </div>`;
+
+    </div>
+    <!-- Floor Shadow -->
+    <div style="position:absolute; bottom:-60px; left:-50px; right:-50px; height:80px; background:radial-gradient(ellipse at center, rgba(0,0,0,0.9) 0%, transparent 70%); z-index:0; pointer-events:none;"></div>
+    `;
 };
 
 window.renderReceiptOnBoard = function() {
@@ -435,7 +452,6 @@ window.renderReceiptOnBoard = function() {
         return html; 
     };
 
-    // Muutettu tuloslappu näyttämään irralliselta paperilta, joka on teipattu kansion alapuolelle
     let html = `
     <div class="board-receipt-paper" style="position:relative; transform: rotate(-1deg); box-shadow: 10px 20px 40px rgba(0,0,0,0.6);">
         <div class="tape tape-top" style="width: 180px; top: -15px;"></div>
@@ -469,17 +485,35 @@ window.renderBoard = function() {
     let rows = Math.ceil(totalHoles / cols);
     
     let rightXPanel = window.getRightXPanel ? window.getRightXPanel() : 2000;
-    board.style.width = `${rightXPanel + 1000}px`; 
-    board.style.height = `${Math.max((rows * 1010) + 200, 2500)}px`; 
     
-    let html = ``; 
-    html += `<div id="board-binder-wrapper" style="position:absolute; left:20px; top:120px; z-index:10; width:900px;"></div>`;
+    let corkW = rightXPanel + 400;
+    let corkH = Math.max((rows * 1010) + 200, 2500);
+    let totalW = corkW + 1200; 
+    let totalH = corkH + 600; 
     
-    // Siirretty Tulosseuranta kansion alapuolelle y-akselilla (top: 1200px)
-    html += `<div id="board-receipt-wrapper" style="position:absolute; left:20px; top:1200px; z-index:10; width:500px;"></div>`;
+    board.style.width = `${totalW}px`;
+    board.style.height = `${totalH}px`;
+    board.style.background = 'transparent';
+    board.style.border = 'none';
+    board.style.padding = '0';
+    
+    let html = ``;
+    
+    // HUONEEN SEINÄ JA LATTIA
+    html += `<div style="position:absolute; left:0; top:0; width:${totalW}px; height:${corkH + 150}px; background: #cbd5e1; z-index:0;"></div>`;
+    html += `<div style="position:absolute; left:0; top:${corkH + 150}px; width:${totalW}px; height:${totalH - (corkH + 150)}px; background: #475569; z-index:0; border-top: 15px solid #334155; box-shadow: inset 0 20px 30px rgba(0,0,0,0.4);"></div>`;
+    
+    // ILMOITUSTAULU
+    html += `<div style="position:absolute; left:50px; top:50px; width:${corkW}px; height:${corkH}px; background-color: #e2e8f0; background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px); background-size: 12px 12px; border: 35px solid #5c4033; border-top-color: #7b4e35; border-left-color: #7b4e35; border-bottom-color: #3e2723; border-right-color: #3e2723; border-radius: 12px; z-index:1; box-shadow: 15px 25px 50px rgba(0,0,0,0.7);"></div>`;
+    
+    // KANSIO (Taulun päällä)
+    html += `<div id="board-binder-wrapper" style="position:absolute; left:80px; top:120px; z-index:10; width:500px;"></div>`;
+    
+    // KUITTI (Taulun päällä kansion alapuolella)
+    html += `<div id="board-receipt-wrapper" style="position:absolute; left:100px; top:1200px; z-index:10; width:450px;"></div>`;
     
     let startXHolesVal = window.startXHoles || 1000;
-    html += `<div id="holes-grid" style="display:grid; grid-template-columns:repeat(${cols}, 380px); gap:60px 80px; position:absolute; left:${startXHolesVal}px; top:120px; z-index:5;">`;
+    html += `<div id="holes-grid" style="display:grid; grid-template-columns:repeat(${cols}, 380px); gap:60px 80px; position:absolute; left:${startXHolesVal + 50}px; top:150px; z-index:5;">`;
     window.gameHistory.forEach((h, index) => { html += window.getHoleCellHTML(h, index + 1, false, true); });
     
     if (window.currentHoleIndex > totalHoles) {
@@ -503,8 +537,10 @@ window.renderBoard = function() {
     }
     html += `</div>`;
     
-    // Siirretty Kauppa ilmoitustaulun oikealle puolelle
-    html += `<div id="board-shop-wrapper" style="position:absolute; left:${rightXPanel + 50}px; top:100px; z-index:10; width:800px;"></div>`;
+    // KAUPPA (Taulun ulkopuolella lattialla)
+    let shopX = corkW + 150;
+    let shopY = corkH + 150 - 950; // Seisoo tarkasti lattialinjalla
+    html += `<div id="board-shop-wrapper" style="position:absolute; left:${shopX}px; top:${shopY}px; z-index:10; width:750px;"></div>`;
     
     board.innerHTML = html;
     
