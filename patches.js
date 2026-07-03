@@ -19,7 +19,7 @@
         .fixed-close-btn { bottom: 20px !important; width: 90% !important; max-width: 400px !important; border-radius: 16px !important; padding: 18px !important; font-size: 1.3rem !important; box-shadow: 0 10px 25px rgba(0,0,0,0.6) !important; }
     `;
 
-    // 2. KORJATAAN KORTTIEN MUOTO KARUSELLISSA (BUG 3)
+    // 2. KORJATAAN KORTTIEN MUOTO KARUSELLISSA
     window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
         if (!cDef) return '';
         let typeClass = `tier-${cDef.level || 1}`;
@@ -30,7 +30,6 @@
         let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cDef.id) : (cDef.level === 3 ? 6 : (cDef.level === 2 ? 4 : 2));
         let lockedStyle = isLocked ? 'opacity: 0.5; filter: grayscale(50%);' : '';
         
-        // Pakotetaan fyysinen muoto! Ei anneta venyä 100% korkeuteen.
         let dimensions = isCarousel ? 'width: 210px; height: 312px;' : 'width: 175px; height: 260px;';
         
         return `
@@ -47,7 +46,7 @@
         </div>`;
     };
 
-    // 3. FOTOREALISTINEN JA ISO KAUPPA-AUTOMAATTI (BUG 4)
+    // 3. FOTOREALISTINEN JA ISO KAUPPA-AUTOMAATTI
     window.renderShopOnBoard = function() {
         let wrapper = document.getElementById('board-shop-wrapper');
         if(!wrapper) return;
@@ -74,7 +73,6 @@
                     
                     shelvesHtml += `
                         <div style="position:relative; width:38%; display:flex; flex-direction:column; align-items:center; z-index:10;">
-                            <!-- Skaalataan korttia yli 20% isommaksi automaatin sisällä -->
                             <div style="transform: scale(1.25); cursor:pointer; width:175px; margin-bottom: 35px; transform-origin: bottom center;" onclick="window.openCardDetail('${item.id}', 'shop')">
                                 ${fullCardHtml}
                             </div>
@@ -128,15 +126,11 @@
             reserveHtml += `</div></div>`;
         }
 
-        // TODELLA ISO FOTOREALISTINEN AUTOMAATTI (1100px leveä)
         wrapper.innerHTML = `
         <div style="position: relative; width: 1100px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #020617 100%); border: 20px solid #000; border-bottom: 100px solid #050505; border-radius: 30px 30px 10px 10px; box-shadow: 60px 100px 120px rgba(0,0,0,0.95), inset 25px 25px 80px rgba(255,255,255,0.06), inset -25px -25px 80px rgba(0,0,0,0.9); padding: 50px 40px; display: flex; flex-direction: column; z-index:20;">
-            
-            <!-- Metalliset heijastukset koneen reunoilla -->
             <div style="position:absolute; top:0; left:0; right:0; height:5px; background:rgba(255,255,255,0.3); border-radius:25px 25px 0 0;"></div>
             <div style="position:absolute; top:0; bottom:0; left:0; width:5px; background:rgba(255,255,255,0.15); border-radius:25px 0 0 0;"></div>
 
-            <!-- Header Paneeli -->
             <div style="background: linear-gradient(to bottom, #000, #111); padding: 30px 50px; border-radius: 20px; border: 8px solid #222; border-bottom: 12px solid #000; display:flex; justify-content:space-between; align-items:center; margin-bottom: 60px; box-shadow: inset 0 0 50px rgba(239,68,68,0.25), 0 15px 30px rgba(0,0,0,0.6);">
                 <div style="display:flex; align-items:center; gap: 25px;">
                     <div style="width: 25px; height: 25px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 30px #22c55e, inset 0 0 8px #fff;"></div>
@@ -147,31 +141,22 @@
                 </div>
             </div>
 
-            <!-- Lasinen Tuotealue -->
             <div style="background: #020617; border-radius: 20px; border: 16px solid #050505; box-shadow: inset 0 40px 100px #000, inset 0 0 40px rgba(56,189,248,0.2), 0 25px 40px rgba(0,0,0,0.7); position:relative; padding: 40px; overflow:hidden;">
-                <!-- Lasiheijastus diagonaalissa -->
                 <div style="position:absolute; top:-30%; left:-30%; width:160%; height:160%; background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.08) 50%, transparent 55%); pointer-events:none; z-index:40; transform: rotate(15deg);"></div>
-                <!-- Varjot lasin reunoilla sisäpuolella -->
                 <div style="position:absolute; top:0; right:0; bottom:0; width: 25px; background: linear-gradient(to left, rgba(0,0,0,0.9), transparent); z-index:35;"></div>
                 <div style="position:absolute; top:0; left:0; bottom:0; width: 25px; background: linear-gradient(to right, rgba(0,0,0,0.9), transparent); z-index:35;"></div>
-                
                 ${shelvesHtml}
             </div>
 
-            <!-- Koneen Alaosa (Noutoluukku ja Näppäimistö) -->
             <div style="height: 350px; margin-top: 60px; display:flex; gap:60px; align-items:flex-start;">
-                <!-- Noutoluukku -->
                 <div style="flex: 1; background: #050505; border-radius: 20px; border: 10px solid #111; box-shadow: inset 0 50px 80px #000, 0 15px 25px rgba(0,0,0,0.6); position:relative; height: 300px;">
                     <div style="position:absolute; top:0; left:0; right:0; height: 140px; background: linear-gradient(to bottom, #1a1a1a, #0a0a0a); border-bottom: 5px solid #000; transform-origin: top; transform: rotateX(-15deg); box-shadow: 0 20px 30px rgba(0,0,0,0.95); display:flex; justify-content:center; align-items:center;">
                         <span style="color:#222; font-weight:900; font-size:3rem; letter-spacing:15px; text-shadow: -2px -2px 0 #000, 2px 2px 0 rgba(255,255,255,0.05);">PUSH</span>
                     </div>
                 </div>
-                
-                <!-- Näppäimistö ja kolikkoluukku -->
                 <div style="width: 240px; background: linear-gradient(135deg, #111, #0a0a0a); border-radius: 20px; border: 8px solid #000; padding: 40px; display:flex; flex-direction:column; align-items:center; box-shadow: inset 0 0 35px rgba(0,0,0,0.9), 0 20px 40px rgba(0,0,0,0.7);">
                     <div style="width: 20px; height: 80px; background: #000; border-radius: 10px; border: 5px solid #333; margin-bottom: 15px; box-shadow: inset 0 15px 25px #000, 0 3px 0 rgba(255,255,255,0.1);"></div>
                     <div style="width: 50px; height: 20px; background: #000; border-radius: 8px; border: 3px solid #222; margin-bottom: 50px;"></div>
-                    
                     <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width:100%;">
                         ${Array(12).fill('<div style="background: linear-gradient(to bottom, #222, #111); height:35px; border-radius:8px; border-bottom:5px solid #000; box-shadow: 0 5px 8px rgba(0,0,0,0.7);"></div>').join('')}
                     </div>
@@ -180,12 +165,11 @@
 
             ${reserveHtml}
         </div>
-        <!-- Lattiavarjo koneen alla -->
         <div style="position:absolute; bottom:-120px; left:-150px; right:-150px; height:200px; background:radial-gradient(ellipse at center, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.7) 40%, transparent 80%); z-index:0; pointer-events:none;"></div>
         `;
     };
 
-    // 4. ÄÄRETÖN TAUSTA & KORJATUT LAUDAN RAJAT (BUG 1)
+    // 4. ÄÄRETÖN TAUSTA & KORJATUT LAUDAN RAJAT
     window.renderBoard = function() {
         const board = document.getElementById('corkboard-surface');
         if (!board || !window.currentCourse) return;
@@ -193,12 +177,9 @@
         let totalHoles = window.currentCourse.pars.length; 
         let cols = Math.min(9, totalHoles); 
         let rows = Math.ceil(totalHoles / cols);
-        
         let rightXPanel = window.getRightXPanel ? window.getRightXPanel() : 2000;
-        
         let corkW = rightXPanel + 400;
         let corkH = Math.max((rows * 1010) + 200, 2500);
-        
         let totalW = corkW + 2500; 
         let totalH = corkH + 2000; 
         
@@ -207,18 +188,11 @@
         board.style.background = 'transparent';
         
         let html = ``;
-        
-        // Luodaan ÄÄRETÖN seinä ja lattia taustalle, jotta harmaata ei voi koskaan näkyä vaikka kamera lentäisi kauas
         html += `<div style="position:fixed; left:-5000px; right:-5000px; top:-5000px; bottom: 30vh; background: #cbd5e1; z-index:-10;"></div>`;
         html += `<div style="position:fixed; left:-5000px; right:-5000px; bottom:-5000px; height: 5000px; background: #475569; z-index:-10; border-top: 20px solid #334155; box-shadow: inset 0 25px 40px rgba(0,0,0,0.5);"></div>`;
-        
-        // Varmistuksena vielä lokaalit taustat laudan taakse
         html += `<div style="position:absolute; left:-2000px; top:-2000px; width:10000px; height:${corkH + 2150}px; background: #cbd5e1; z-index:0;"></div>`;
         html += `<div style="position:absolute; left:-2000px; top:${corkH + 150}px; width:10000px; height:5000px; background: #475569; z-index:0; border-top: 20px solid #334155; box-shadow: inset 0 25px 40px rgba(0,0,0,0.5);"></div>`;
-        
-        // ILMOITUSTAULU
         html += `<div style="position:absolute; left:50px; top:50px; width:${corkW}px; height:${corkH}px; background-color: #e2e8f0; background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px); background-size: 12px 12px; border: 35px solid #5c4033; border-top-color: #7b4e35; border-left-color: #7b4e35; border-bottom-color: #3e2723; border-right-color: #3e2723; border-radius: 12px; z-index:1; box-shadow: 15px 25px 50px rgba(0,0,0,0.7);"></div>`;
-        
         html += `<div id="board-binder-wrapper" style="position:absolute; left:80px; top:120px; z-index:10; width:500px;"></div>`;
         html += `<div id="board-receipt-wrapper" style="position:absolute; left:100px; top:1200px; z-index:10; width:450px;"></div>`;
         
@@ -243,7 +217,6 @@
         }
         html += `</div>`;
         
-        // KAUPAN SIJOITUS LATTIALLE (Siirretty alemmas jättimäisen koon vuoksi)
         let shopX = corkW + 250;
         let shopY = corkH + 150 - 1500; 
         html += `<div id="board-shop-wrapper" style="position:absolute; left:${shopX}px; top:${shopY}px; z-index:10; width:1100px;"></div>`;
@@ -255,19 +228,19 @@
         if(window.renderShopOnBoard) window.renderShopOnBoard();
     };
 
-    // 5. KAMERAN RAJOJEN JA KAUPPAZOOMAUKSEN PÄIVITYS JÄTTIKONETTA VARTEN
+    // 5. KAMERAN RAJOJEN JA KAUPPAZOOMAUKSEN PÄIVITYS
     window.applyBounds = function() {
         let boardEl = document.getElementById('corkboard-surface');
         if(!boardEl) return;
         
         let rightXPanel = window.getRightXPanel ? window.getRightXPanel() : 2000;
         let corkW = rightXPanel + 400;
-        let boardW = corkW + 2000; // Laajennettu tila kameralle
+        let boardW = corkW + 2000; 
         
         let totalHoles = window.currentCourse ? window.currentCourse.pars.length : 18; 
         let cols = Math.min(9, totalHoles); 
         let rows = Math.ceil(totalHoles / cols);
-        let boardH = Math.max((rows * 1010) + 200, 2500) + 800; // Laajennettu tila alaspäin
+        let boardH = Math.max((rows * 1010) + 200, 2500) + 800; 
         
         let minX = window.innerWidth - boardW * window.camTarget.scale - 1200;
         let maxX = 1200;
@@ -281,7 +254,7 @@
     };
 
     window.zoomToShop = function() { 
-        let tScale = Math.min(0.60, window.innerWidth / 1250); // Zoomataan vähän kauemmas jotta iso kone mahtuu
+        let tScale = Math.min(0.60, window.innerWidth / 1250); 
         let wrapper = document.getElementById('board-shop-wrapper');
         let tY = 50; let tX = 50;
         if(wrapper) {
