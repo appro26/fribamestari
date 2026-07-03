@@ -33,6 +33,31 @@ const getRandomPen = () => penColors[Math.floor(Math.random() * penColors.length
 const pseudoRandom = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
 
 // ==============================================
+// ELÄINTEN GRAFIIKAT JA SOLVAUKSET
+// ==============================================
+const doodleSVGs = [
+    "M 20 80 Q 20 60 40 60 L 45 40 L 50 60 L 60 30 L 65 60 L 75 40 L 80 80 Z M 30 70 L 32 70 M 15 75 L 20 80 M 85 75 L 80 80", 
+    "M 20 80 L 20 40 L 30 20 L 40 40 L 60 40 L 70 20 L 80 40 L 80 80 Z M 35 55 L 37 55 M 65 55 L 63 55 M 45 65 L 55 65 L 50 72 Z",
+    "M 20 80 C 20 30 80 30 80 80 Z M 20 40 C 10 40 10 20 25 30 M 80 40 C 90 40 90 20 75 30 M 40 55 L 42 55 M 60 55 L 58 55",
+    "M 50 80 C 20 80 20 30 50 30 C 80 30 80 80 50 80 Z M 40 55 L 60 55 L 50 70 Z M 35 45 L 40 48 M 65 45 L 60 48"
+];
+
+const insults = [
+    "[Pelaaja], v*ttu mikä heitto, ootko sä koskaan edes pitänyt kiekkoa kädessä?",
+    "[Pelaaja] p*rkele, mummonikin puttaa paremmin.",
+    "S**tanan sirkkeli [Pelaaja], puut tykkää susta enemmän ku sun omat vanhemmat.",
+    "Ei h*lvetti [Pelaaja], jopa Jeesus itkee ton sun tekniikan takia.",
+    "P*ska veto [Pelaaja]. Sun draivi on lyhyempi ku mun kärsivällisyys.",
+    "V*tun hieno lay-up [Pelaaja]! Ai se olikin sun maksimidraivi?",
+    "P*rkeleen rystykääntö [Pelaaja], kiekko lensi enemmän taakse ku eteen.",
+    "Miten sä [Pelaaja] v*ttu onnistut missaamaan kahdesta metristä?",
+    "H*lvetin hieno puuosuma [Pelaaja]! Tähtäsitkö tahallaan vai ootko vaan sysip*ska?",
+    "P*rkele [Pelaaja], sun rystyheitto näyttää ku yrittäisit heittää pesukonetta.",
+    "V*tun grippilokki [Pelaaja]! Ota se käsi irti siitä muovista ajoissa.",
+    "P*ska putti, p*ska pelaaja. Yksinkertaista, eikö vain [Pelaaja]?"
+];
+
+// ==============================================
 // VAPAA KAMERA
 // ==============================================
 let boardState = { scale: 1, x: 0, y: 0 };
@@ -105,22 +130,6 @@ if(vp) {
         if (!isRendering) { isRendering = true; requestAnimationFrame(window.applyBoardTransform); }
     }, {passive: true});
 }
-
-// SWIPE TO CLOSE (Kansiolle)
-let swipeStartX = 0; let swipeStartY = 0; let swipeContentEl = null; let isValidSwipeToClose = false;
-document.addEventListener('DOMContentLoaded', () => {
-    const handles = document.querySelectorAll('.binder-swipe-handle');
-    handles.forEach(handle => {
-        handle.addEventListener('touchstart', e => { swipeStartY = e.touches[0].clientY; swipeStartX = e.touches[0].clientX; swipeContentEl = handle; isValidSwipeToClose = true; }, {passive:true});
-        handle.addEventListener('touchend', e => {
-            if (swipeStartY > 0 && swipeContentEl && isValidSwipeToClose) {
-                let diffY = e.changedTouches[0].clientY - swipeStartY; let diffX = Math.abs(e.changedTouches[0].clientX - swipeStartX);
-                if (diffY > 100 && diffY > diffX * 2) { if(el('shopModal')) el('shopModal').style.display = 'none'; window.pendingShopPurchase = null; }
-            }
-            swipeStartY = 0; swipeContentEl = null;
-        }, {passive:true});
-    });
-});
 
 // ==============================================
 // KORTTIMOOTTORI (PELUUMAKSUT: 2/4/6 P)
@@ -452,7 +461,7 @@ window.forceDiscard = function(cId) {
                 let nextShopAll = JSON.parse(JSON.stringify(activeHole.shop || {}));
                 if (nextShopAll[myName]) {
                     const sIdx = nextShopAll[myName].findIndex(i => i && i.id === pId);
-                    if (sIdx !== -1) nextShopAll[myName][sIdx] = null; // Jätetään tyhjäksi kauppaan
+                    if (sIdx !== -1) nextShopAll[myName][sIdx] = null;
                 }
                 update(ref(db, 'gameState/activeHole/shop'), nextShopAll);
             }
@@ -474,7 +483,7 @@ window.reserveShopItem = function(idStr) {
     let nextShopAll = JSON.parse(JSON.stringify(activeHole.shop || {}));
     if (nextShopAll[myName]) {
         const sIdx = nextShopAll[myName].findIndex(i => i && i.id === idStr);
-        if (sIdx !== -1) nextShopAll[myName][sIdx] = null; // Automaattiin jää tyhjä jousi
+        if (sIdx !== -1) nextShopAll[myName][sIdx] = null;
     }
     update(ref(db), { 'gameState/players': nextPlayers, 'gameState/activeHole/shop': nextShopAll });
     window.showAppleToast('Kortti varattu', '🔒');
@@ -518,7 +527,7 @@ window.buyShopItem = function(idStr, priceVal, isReservation) {
     } else {
         if (nextShopAll[myName]) {
             const sIdx = nextShopAll[myName].findIndex(i => i && i.id === idStr);
-            if (sIdx !== -1) nextShopAll[myName][sIdx] = null; // Poistetaan automaatista
+            if (sIdx !== -1) nextShopAll[myName][sIdx] = null;
         }
     }
 
@@ -550,7 +559,6 @@ window.renderShop = function(shopArray, resArray, myPoints) {
     let actRes = (resArray || []).filter(Boolean);
     let levels = [3, 2, 1]; // T3 ylin, T1 alin
 
-    // Varaukset
     if(actRes.length > 0) {
         shelvesHtml += `<div class="vending-shelf" style="border-bottom:4px solid #ef4444;">`;
         actRes.forEach(rId => {
@@ -683,7 +691,7 @@ window.isFlipping = false;
 window.flippedCards = new Set();
 
 window.initNativeCarousel = function() {
-    // Dummy funktio joka estää virheilmoituksen. Karuselli on nyt lukittu yhteen korttiin kerrallaan!
+    // Tyhjä turvafunktio, jotta vanhat koodikutsut eivät anna undefined erroria.
 };
 
 window.flipCard = function(index) {
@@ -749,8 +757,7 @@ window.renderCarousel = function() {
 window.openCardDetail = function(cId, mode) {
     const me = (allPlayers || []).find(p => p && p.name === myName);
     window.flippedCards = new Set();
-    window.carouselCards = [cId]; // Näytetään VAKIONA vain yksi kortti kerrallaan! Ei sekavaa selaamista tai järjestyksen vaihtumista.
-    
+    window.carouselCards = [cId]; 
     window.carouselCurrentMode = mode;
     window.carouselCurrentIndex = 0;
     
@@ -776,7 +783,6 @@ window.openCardDetail = function(cId, mode) {
             btnHtml += `<button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'}" ${!canAfford ? 'disabled' : ''} style="font-size:1.2rem; padding:20px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cDef.id}', ${cDef.price}, false)">OSTA (${cDef.price} P)</button>`;
         }
     }
-    // SULJE-nappi renderöidään TÄÄLLÄ (joten poistettu HTML:stä tuplana näkymisen estämiseksi)
     btnHtml += `<button class="btn btn-secondary glass-card" style="margin-top:15px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE</button>`;
     el('cardDetailActionArea').innerHTML = btnHtml;
 };
