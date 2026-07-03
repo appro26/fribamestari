@@ -1,9 +1,7 @@
-// Kääritään koodi suojakuoreen (IIFE), jotta vältytään "already declared" -virheiltä!
+// Kääritään koodi suojakuoreen (IIFE)
 (function() {
     
-    // ==========================================
-    // 1. LAITTEISTOKIIHDYTYS JA TYYLIKORJAUKSET
-    // ==========================================
+    // 1. TYYLIKORJAUKSET (HUOM! Poistettu GPU-pakotus, joka rikkoi kuvan)
     let styleFix = document.getElementById('patch-styles');
     if(!styleFix) {
         styleFix = document.createElement('style');
@@ -11,28 +9,21 @@
         document.head.appendChild(styleFix);
     }
     styleFix.innerHTML = `
-        /* Estetään taustan hajoaminen ja PAKOTETAAN GPU-kiihdytys laudan piirtoon (Poistaa lagia!) */
+        /* Estetään taustan hajoaminen, muttei pakoteta GPU:ta liian tiukille */
         body { background-color: #cbd5e1 !important; overflow: hidden; }
-        #corkboard-surface { 
-            will-change: transform; 
-            transform: translateZ(0); 
-            backface-visibility: hidden; 
-        }
         
-        /* Tehdään tilaa "Sulje kortti" napille karusellin alle */
         #cardDetailModal { padding-bottom: 120px !important; justify-content: flex-start !important; padding-top: 5vh !important; }
-        
-        /* Muotoillaan suljenappi nätiksi ja kiinteäksi alareunaan */
         .fixed-close-btn { bottom: 20px !important; width: 90% !important; max-width: 400px !important; border-radius: 16px !important; padding: 18px !important; font-size: 1.3rem !important; box-shadow: 0 10px 25px rgba(0,0,0,0.6) !important; }
     `;
 
-    // ==========================================
-    // 2. KAMERAN MOOTTORI (1:1 Sormiseuranta ilman viivettä)
-    // ==========================================
-    window.camCurrent = { x: 0, y: 0, scale: 1 };
-    let renderPending = false;
+    // 2. KORJATAAN APPLYBOUNDS, jotta vanha silmukka ei kaadu (Korjaa Rivi 48 virheen)
+    window.camCurrent = window.camCurrent || { x: 0, y: 0, scale: 1 };
+    window.camTarget = window.camTarget || { x: 0, y: 0, scale: 1 };
 
-    window.applyBounds = function(target) {
+    window.applyBounds = function(customTarget) {
+        // Jos kutsutaan ilman parametreja (kuten vanha silmukka tekee), käytetään window.camTarget
+        let target = customTarget || window.camTarget; 
+        
         let boardEl = document.getElementById('corkboard-surface');
         if(!boardEl) return target;
         
@@ -58,16 +49,7 @@
         return target;
     };
 
-    window.applyTransform = function() {
-        let boardEl = document.getElementById('corkboard-surface');
-        if(boardEl) {
-            // Välitön, tarkka päivitys ilman pyöristyksiä
-            boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
-        }
-        renderPending = false;
-    };
-
-    // TUHOTAAN VANHAT LAGIVIIVEELLISET KOSKETUSTAPAHTUMAT KLOONAAMALLA VIEWPORT
+    // 3. KOSKETUSOHJAUS: Lisätään inertia/momentum (liukuu pehmeästi kun sormen nostaa)
     let oldVp = document.getElementById('corkboard-viewport');
     if (oldVp) {
         let vp = oldVp.cloneNode(true);
@@ -78,11 +60,46 @@
         let initialPinchDist = 0;
         let pinchCenterBoard = { x: 0, y: 0 };
         
+        // Liukumuuttujat
+        let velX = 0;
+        let velY = 0;
+        let momentumFrame = null;
+        let lastMoveTime = 0;
+
+        function applyMomentum() {
+            if (isDraggingBoard) return; // Jos sormi koskee taas, lopetetaan liuku
+            
+            window.camTarget.x += velX;
+            window.camTarget.y += velY;
+            
+            // Kitka - hidastaa vauhtia joka framella
+            velX *= 0.92;
+            velY *= 0.92;
+            
+            window.applyBounds(window.camTarget);
+            
+            // Pakotetaan ruutu seuraamaan heti mukana
+            window.camCurrent.x = window.camTarget.x;
+            window.camCurrent.y = window.camTarget.y;
+            
+            let boardEl = document.getElementById('corkboard-surface');
+            if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
+            
+            if (Math.abs(velX) > 0.5 || Math.abs(velY) > 0.5) {
+                momentumFrame = requestAnimationFrame(applyMomentum);
+            }
+        }
+
         vp.addEventListener('touchstart', e => {
-            if(window.animFrame) { cancelAnimationFrame(window.animFrame); window.animFrame = null; }
+            if (momentumFrame) cancelAnimationFrame(momentumFrame);
+            if (window.animFrame) cancelAnimationFrame(window.animFrame);
+            
+            velX = 0; velY = 0; // Nollataan vauhti
+            
             if(e.touches.length === 1) {
                 isDraggingBoard = true;
                 lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                lastMoveTime = performance.now();
             } else if (e.touches.length === 2) {
                 isDraggingBoard = true;
                 initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
@@ -99,15 +116,28 @@
             if(!isDraggingBoard) return;
             e.preventDefault(); 
             
-            let nextCam = { ...window.camCurrent };
-
+            let now = performance.now();
+            
             if(e.touches.length === 1 && lastTouch) {
-                // Välitön ja suora 1:1 siirto sormen mukana (Ei lerppiä = Ei lagia)
-                nextCam.x += (e.touches[0].clientX - lastTouch.x);
-                nextCam.y += (e.touches[0].clientY - lastTouch.y);
+                let dx = e.touches[0].clientX - lastTouch.x;
+                let dy = e.touches[0].clientY - lastTouch.y;
+                
+                window.camTarget.x += dx;
+                window.camTarget.y += dy;
+                
+                // Päivitetään ruutu välittömästi ilman viivettä
+                window.camCurrent.x = window.camTarget.x;
+                window.camCurrent.y = window.camTarget.y;
+                
+                // Tallennetaan heittoliikkeen vauhti (keskiarvostus tekee siitä tasaisemman)
+                velX = (velX * 0.4) + (dx * 0.6);
+                velY = (velY * 0.4) + (dy * 0.6);
+                
                 lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                lastMoveTime = now;
             } else if (e.touches.length === 2) {
-                // Välitön zoomaus
+                velX = 0; velY = 0;
+                
                 let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                 let scaleDelta = dist / initialPinchDist;
                 
@@ -118,18 +148,21 @@
                 let screenCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
                 let screenCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                 
-                nextCam.scale = newScale;
-                nextCam.x = screenCX - pinchCenterBoard.x * newScale;
-                nextCam.y = screenCY - pinchCenterBoard.y * newScale;
+                window.camTarget.scale = newScale;
+                window.camTarget.x = screenCX - pinchCenterBoard.x * newScale;
+                window.camTarget.y = screenCY - pinchCenterBoard.y * newScale;
+                
+                window.camCurrent.x = window.camTarget.x;
+                window.camCurrent.y = window.camTarget.y;
+                window.camCurrent.scale = window.camTarget.scale;
                 
                 initialPinchDist = dist;
             }
 
-            window.camCurrent = window.applyBounds(nextCam);
-            
-            if(!renderPending) {
-                renderPending = true;
-                requestAnimationFrame(window.applyTransform);
+            window.applyBounds(window.camTarget);
+            let boardEl = document.getElementById('corkboard-surface');
+            if(boardEl) {
+                boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
             }
         }, {passive: false});
 
@@ -137,13 +170,19 @@
             if(e.touches.length === 0) {
                 isDraggingBoard = false;
                 lastTouch = null;
+                
+                // Käynnistetään liuku (momentum)
+                if (Math.abs(velX) > 1 || Math.abs(velY) > 1) {
+                    momentumFrame = requestAnimationFrame(applyMomentum);
+                }
             } else if (e.touches.length === 1) {
                 lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                velX = 0; velY = 0;
             }
         }, {passive: true});
     }
 
-    // NAPPIEN ELOKUVAMAINEN ANIMATIO
+    // Nappien sulava animointi
     window.animFrame = null;
     window.animateCameraTo = function(tX, tY, tScale) {
         if(window.animFrame) cancelAnimationFrame(window.animFrame);
@@ -163,10 +202,11 @@
             window.camCurrent.x = sX + (tX - sX) * ease;
             window.camCurrent.y = sY + (tY - sY) * ease;
             window.camCurrent.scale = sScale + (tScale - sScale) * ease;
+            window.camTarget = {...window.camCurrent}; // Pidetään kohde synkassa
             
-            if(!renderPending) {
-                renderPending = true;
-                window.applyTransform();
+            let boardEl = document.getElementById('corkboard-surface');
+            if(boardEl) {
+                boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
             }
             if(p < 1) window.animFrame = requestAnimationFrame(step);
         }
@@ -187,7 +227,7 @@
     };
 
     // ==========================================
-    // 3. AIEMMAT KORJAUKSET (Kortit, Kauppa ja Lauta)
+    // 4. KORTIT, KAUPPA JA LAUDAN RENDERÖINTI
     // ==========================================
     window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
         if (!cDef) return '';
