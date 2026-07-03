@@ -658,3 +658,123 @@ window.updateAdminPlayerList = function() {
 };
 
 window.gmAdjustScore = function(pName, amount) {
+    let nextPlayers = JSON.parse(JSON.stringify(window.allPlayers)).filter(Boolean);
+    let p = nextPlayers.find(x => x && x.name === pName);
+    if(p) {
+        p.score = Math.max(0, (parseInt(p.score) || 0) + amount);
+        window.update(window.ref(window.db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) });
+        window.logScore("GM", amount, `Muokkasi pelaajan ${pName} pisteitä`);
+    }
+};
+
+window.gmKickPlayer = function(pName) {
+    if(confirm(`Haluatko varmasti potkia pelaajan ${pName} ulos?`)) {
+        let nextPlayers = JSON.parse(JSON.stringify(window.allPlayers)).filter(p => p && p.name !== pName);
+        
+        let nextShop = {};
+        if(window.activeHole && window.activeHole.shop) {
+            nextShop = JSON.parse(JSON.stringify(window.activeHole.shop));
+            delete nextShop[pName];
+        }
+        
+        window.update(window.ref(window.db), { 
+            'gameState/players': window.cleanFirebaseData(nextPlayers),
+            'gameState/activeHole/shop': window.cleanFirebaseData(nextShop)
+        });
+        window.logEvent(`GM potki pelaajan ${pName} ulos pelistä.`);
+    }
+};
+
+// ==============================================
+// KORTTIEN JA KAUPAN GENEROINTIFUNKTIOT
+// ==============================================
+window.getGlobalLockedFamilies = function(playersObj, activeHoleObj) {
+    let locked = new Set();
+    let allP = playersObj || window.allPlayers || [];
+    allP.forEach(p => {
+        if(!p) return;
+        let cArr = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
+        cArr.forEach(cId => {
+            let cDef = window.allCards.find(c => c && c.id === cId);
+            if(cDef) locked.add(cDef.family);
+        });
+        let rArr = p.reservations ? (Array.isArray(p.reservations) ? p.reservations : Object.values(p.reservations)) : [];
+        rArr.forEach(cId => {
+            let cDef = window.allCards.find(c => c && c.id === cId);
+            if(cDef) locked.add(cDef.family);
+        });
+    });
+    
+    if(activeHoleObj && activeHoleObj.shop) {
+        Object.values(activeHoleObj.shop).forEach(shopArr => {
+            if(!shopArr) return;
+            shopArr.forEach(item => {
+                if(item && item.family) locked.add(item.family);
+            });
+        });
+    }
+    return locked;
+};
+
+window.drawSpecificCard = function(type, level, lockedSet) {
+    let pool = window.allCards.filter(c => c.type === type && c.level === level && !lockedSet.has(c.family));
+    if(pool.length === 0) pool = window.allCards.filter(c => c.type === type && c.level === level);
+    if(pool.length === 0) return null;
+    let drawn = pool[Math.floor(Math.random() * pool.length)];
+    lockedSet.add(drawn.family);
+    return drawn.id;
+};
+
+window.generatePersonalShop = function(globalLockedSet) {
+    let shopCards = [];
+    let ls = globalLockedSet ? new Set(globalLockedSet) : new Set();
+    let t3Id = window.drawSpecificCard(Math.random() < 0.5 ? 'sabotage' : 'buff', 3, ls);
+    let t2Id = window.drawSpecificCard(Math.random() < 0.5 ? 'sabotage' : 'buff', 2, ls);
+    let t1Id1 = window.drawSpecificCard('sabotage', 1, ls);
+    let t1Id2 = window.drawSpecificCard('buff', 1, ls);
+    
+    [t3Id, null, t2Id, null, t1Id1, t1Id2].forEach(id => {
+        if(id) {
+            let def = window.allCards.find(c => c.id === id);
+            shopCards.push(def || null);
+        } else {
+            shopCards.push(null);
+        }
+    });
+    return shopCards;
+};
+
+window.openTargetModal = function(cId) {
+    let cDef = window.allCards.find(c => c.id === cId);
+    if(!cDef) return;
+    window.pendingCardPlay = { id: cId, cost: typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cId) : (cDef.level === 3 ? 6 : (cDef.level === 2 ? 4 : 2)), def: cDef };
+    el('targetCardName').innerText = cDef.n;
+    let html = '';
+    
+    if (cDef.type === 'buff') {
+        html += `<button class="btn btn-success" style="margin-bottom:10px; padding:20px; font-size:1.2rem;" onclick="window.executeCardPlay('${window.myName}')">KÄYTÄ ITSEESI</button>`;
+    } else {
+        html += `<button class="btn btn-danger" style="margin-bottom:15px; padding:20px; font-size:1.2rem; box-shadow: 0 4px 15px rgba(220,38,38,0.5);" onclick="window.executeCardPlay('KAIKKI VASTUSTAJAT')">KAIKKI VASTUSTAJAT</button>`;
+        (window.allPlayers || []).forEach(p => {
+            if (p && p.name !== window.myName) {
+                html += `<button class="btn btn-warning" style="margin-bottom:10px; padding:15px; font-size:1.1rem; color:#000;" onclick="window.executeCardPlay('${p.name}')">Kohde: ${p.name}</button>`;
+            }
+        });
+    }
+    el('targetPlayerList').innerHTML = html;
+    window.showModalSafe('targetModal');
+};
+
+window.getCardPlayCost = function(cId) {
+    let cDef = window.allCards.find(c => c.id === cId);
+    if(!cDef) return 0;
+    return cDef.level === 3 ? 6 : (cDef.level === 2 ? 4 : 2);
+};
+
+window.getCardSortWeight = function(cIdStr) {
+    let def = window.allCards.find(c => c.id === cIdStr);
+    if(!def) return 999;
+    let typeWeight = def.type === 'sabotage' ? 0 : 100;
+    let lvlWeight = (3 - def.level) * 10;
+    return typeWeight + lvlWeight;
+};
