@@ -14,7 +14,7 @@
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=182" />
+    <link rel="stylesheet" href="style.css?v=183" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <style>
@@ -74,7 +74,6 @@
             display: flex;
             flex-direction: column;
         }
-        /* Sisäinen LED-valaistus reunoilla */
         .vending-machine::before {
             content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 6px;
             background: rgba(56, 189, 248, 0.6); box-shadow: 0 0 15px #38bdf8; z-index: 2;
@@ -83,7 +82,6 @@
             content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: 6px;
             background: rgba(56, 189, 248, 0.6); box-shadow: 0 0 15px #38bdf8; z-index: 2;
         }
-        /* Lasiheijastus */
         .vending-glass {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: linear-gradient(105deg, rgba(255,255,255,0) 25%, rgba(255,255,255,0.15) 35%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0) 60%);
@@ -102,7 +100,6 @@
         .vending-slot {
             position: relative; width: 45%; display: flex; flex-direction: column; align-items: center; z-index: 5;
         }
-        /* Kierrejousi */
         .vending-coil {
             position: absolute; bottom: 10px; width: 120%; height: 35px;
             background: repeating-linear-gradient(90deg, transparent, transparent 15px, #bdc3c7 15px, #bdc3c7 20px);
@@ -119,7 +116,6 @@
             font-weight: 900; font-size: 1rem; margin-top: 15px; z-index: 15;
             box-shadow: 0 0 10px rgba(34,197,94,0.5); text-align: center;
         }
-        /* Ulostuloluukku */
         .vending-push-door {
             background: linear-gradient(to bottom, #111, #222);
             border: 4px solid #000; border-top: 6px solid #0a0a0a;
@@ -157,7 +153,6 @@
         }
         .dashboard-btn.accent { background: var(--primary); color: #fff; border-color: #059669; }
         
-        /* Pysyvä SULJE-nappi modaalien päälle */
         .fixed-close-btn {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             background: #ef4444; color: #fff; border: 2px solid #fff; border-radius: 30px;
@@ -168,7 +163,38 @@
         .cards-grid-2 {
             display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; box-sizing: border-box;
         }
+        .binder-content {
+            width: 100% !important; max-width: 100vw !important; box-sizing: border-box !important;
+            padding-right: 15px !important; padding-left: 5px !important; overflow-x: hidden !important;
+        }
     </style>
+
+    <script>
+      window.onerror = function(msg, url, line) { alert("Virhe: " + msg + " (Rivi: " + line + ")"); };
+      
+      window.showModalSafe = function(id, displayType) {
+          var el = document.getElementById(id);
+          if(el) {
+              el.style.display = displayType || 'flex';
+              history.pushState({ fribaApp: true }, '');
+          }
+      };
+
+      window.addEventListener('popstate', function(e) {
+          var modals = ['cardDetailModal', 'targetModal', 'scoreModal', 'receiptModal', 'zoomModal', 'handLimitModal', 'shopModal', 'settingsModal', 'courseModal', 'rulesModal'];
+          var closedAny = false;
+          for (var i = 0; i < modals.length; i++) {
+              var m = document.getElementById(modals[i]);
+              if (m && m.style.display !== 'none' && m.style.display !== '') {
+                  m.style.display = 'none';
+                  closedAny = true;
+                  if (modals[i] === 'shopModal') window.pendingShopPurchase = null;
+                  break; 
+              }
+          }
+          if (closedAny) { history.pushState({ fribaApp: true }, ''); }
+      });
+    </script>
 </head>
 <body class="player-mode">
 
@@ -176,6 +202,16 @@
     <button id="rulesToggleBtn" onclick="window.showModalSafe('rulesModal')" style="position:fixed; top:15px; right:75px; z-index:8500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; font-size:1.6rem; cursor:pointer; color:#111;">📖</button>
     
     <div id="notificationContainer"></div> 
+
+    <div id="handLimitModal" class="winner-overlay" style="z-index: 10005;" onclick="if(event.target === this) { this.style.display='none'; }">
+        <div class="torn-paper" style="text-align:center;">
+            <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
+            <div style="font-size:4rem; margin-bottom:10px;">⚠️</div>
+            <h1 style="font-size:2rem; margin-bottom:10px; font-weight:900; color:var(--danger);">LIIKAA KORTTEJA</h1>
+            <p style="font-size:1.15rem; font-weight:700; margin-bottom:25px; line-height:1.4;">Käsiraja on ylittynyt (<span id="handLimitCount" style="font-weight:900; font-size:1.3rem;"></span>).</p>
+            <div id="handLimitCards" style="display:flex; flex-direction:column; gap:10px; text-align:left; max-height:60vh; overflow-y:auto; padding-bottom:20px;"></div>
+        </div>
+    </div>
 
     <div class="container" id="lobbyContainer">
         <div id="identityCard" class="torn-paper" style="text-align: center; margin-top:50px;">
@@ -245,11 +281,17 @@
                     <button class="close-modal-btn" onclick="document.getElementById('courseModal').style.display='none'">&times;</button>
                 </div>
                 <div class="glass-card" style="padding:20px; border-radius:12px; background:rgba(255,255,255,0.1); color:#fff;">
+                    <label style="font-weight:bold; margin-bottom:5px; display:block;">Radan nimi:</label>
+                    <input type="text" id="newCourseName" placeholder="Esim. Mukkula" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); margin-bottom:15px;">
+                    
                     <label style="font-weight:bold; margin-bottom:5px; display:block;">Väylien määrä:</label>
                     <input type="number" id="newCourseHoles" value="18" min="1" max="36" oninput="if(window.renderParInputs) window.renderParInputs()" style="background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); margin-bottom:20px;">
+                    
                     <label style="font-weight:bold; margin-bottom:10px; display:block; color:var(--warning);">Määritä väylien Par-tulokset:</label>
                     <div id="newCourseParsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 8px; max-height: 250px; overflow-y: auto; margin-bottom:15px; padding-right:5px;"></div>
+                    
                     <button class="btn btn-success" style="margin-top:15px; padding:18px; font-size:1.1rem;" onclick="if(window.startCustomCourse) window.startCustomCourse()">ALOITA PELI</button>
+                    <button class="btn btn-secondary" style="margin-top:15px; color:#000;" onclick="document.getElementById('courseModal').style.display='none'">PERUUTA</button>
                 </div>
             </div>
         </div>
@@ -257,7 +299,7 @@
 
     <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
-            <div style="width:100%; max-width:500px; margin: 0 auto;">
+            <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
                     <h1 style="color:#fff; font-size:2rem; font-weight:900;">⚙️ ASETUKSET</h1>
                     <button class="close-modal-btn" onclick="document.getElementById('settingsModal').style.display='none'">&times;</button>
@@ -265,6 +307,16 @@
 
                 <button class="btn btn-secondary" onclick="location.reload()" style="font-size:1.1rem; margin-bottom:25px; padding:18px;">🔄 PÄIVITÄ SIVU (RELOAD)</button>
 
+                <h2 style="color:#cbd5e1; margin-top:20px; font-size:1.1rem;">Rata & Väylät (GM)</h2>
+                <div class="glass-card" style="padding:20px; border-radius:12px; margin-bottom:25px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
+                    <div style="display:flex; gap:10px; margin-bottom: 15px;">
+                        <select id="gmSetCurrentHole" style="margin:0; padding:15px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); flex:1; font-size:1.1rem;"></select>
+                        <button class="btn btn-warning" style="width:auto; padding:0 20px; font-size:1.1rem;" onclick="if(window.gmChangeHole) window.gmChangeHole()">SIIRRY</button>
+                    </div>
+                    <button class="btn btn-danger" style="padding:15px; font-size:1.1rem;" onclick="if(window.gmRemoveCurrentHole) window.gmRemoveCurrentHole()">🗑️ POISTA NYKYINEN VÄYLÄ</button>
+                    <button class="btn btn-secondary" style="margin-top: 15px; padding:15px; color:#000; font-size:1.1rem;" onclick="if(window.cancelCourse) { window.cancelCourse(); document.getElementById('settingsModal').style.display='none'; }">🛑 LOPETA KOKO RATA</button>
+                </div>
+                
                 <h2 style="color:#cbd5e1; font-size:1.1rem;">Peliasetukset (GM)</h2>
                 <div class="glass-card" style="padding:20px; border-radius:12px; margin-bottom:25px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
@@ -286,7 +338,10 @@
                     <button class="btn btn-primary" style="padding:16px; margin-top:15px; font-size:1.1rem;" onclick="if(window.saveGameSettings) window.saveGameSettings();">TALLENNA ASETUKSET</button>
                 </div>
 
-                <h2 style="color:#cbd5e1; font-size:1.1rem;">Pisteloki (Tulot & Menot)</h2>
+                <h2 style="color:#cbd5e1; font-size:1.1rem;">Muokkaa Pelaajia (GM)</h2>
+                <div id="adminPlayerList"></div>
+
+                <h2 style="color:#cbd5e1; font-size:1.1rem; margin-top:20px;">Pisteloki (Tulot & Menot)</h2>
                 <div id="adminScoreLog" class="log-box" style="margin-bottom:20px;"></div>
 
                 <button class="btn btn-danger" style="margin-top: 40px; padding:20px; font-size:1.2rem;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI (WIPE)</button>
@@ -342,7 +397,7 @@
     <div id="targetModal" class="winner-overlay" style="z-index: 10001;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="card glass-card" style="width: 100%; max-width: 400px; border: 4px solid var(--danger);">
             <h2 style="color:var(--text-main);">Valitse sabotaasin kohde</h2>
-            <p id="targetCardName" style="color: var(--danger); font-weight: 900; margin-bottom: 20px; font-size: 1.5rem; text-align:center; text-transform:uppercase;"></p>
+            <p id="targetCardName" style="color: var(--danger); font-weight: 900; margin-bottom: 20px; font-size: 1.5rem; text-align:center; text-transform:uppercase; line-height:1.2;"></p>
             <div id="targetPlayerList" style="margin-bottom: 20px;"></div>
             <button class="btn btn-secondary glass-card" onclick="document.getElementById('targetModal').style.display='none'">PERUUTA</button>
         </div>
@@ -365,14 +420,18 @@
         </div>
     </div>
 
-    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px;" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="zoomModal" class="winner-overlay" style="z-index: 10500;" onclick="if(event.target === this) { this.style.display='none'; }">
+        <div id="zoomModalContent"></div>
+    </div>
+
+    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; gap:10px; overflow:hidden;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container"></div>
         <div style="text-align:center; color:rgba(255,255,255,0.9); font-size:0.9rem; font-weight:900; text-transform:uppercase; margin-bottom:5px; margin-top:-20px;">👆 KÄÄNNÄ KORTTI KOSKETTAMALLA 👆</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:340px; display:flex; flex-direction:column; gap:10px; min-height: 120px;"></div>
         <button class="btn" style="width:100%; max-width:340px; background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:16px; margin-top:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE TARKASTELU</button>
     </div>
 
-    <script src="tasks.js?v=182"></script>
-    <script type="module" src="script.js?v=182"></script>
+    <script src="tasks.js?v=183"></script>
+    <script type="module" src="script.js?v=183"></script>
 </body>
 </html>
