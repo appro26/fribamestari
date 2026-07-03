@@ -109,6 +109,7 @@ window.animateCameraTo = function(tX, tY, tScale, duration=350) {
         boardState.scale = sScale + (tScale - sScale) * ease;
         
         window.applyBoardTransform();
+        
         if (p < 1) {
             camAnim = requestAnimationFrame(step);
         } else {
@@ -138,6 +139,7 @@ window.zoomToCurrentHole = function() {
     window.zoomToHole(currentHoleIndex); 
 };
 
+// Touch-liikkuminen
 const vp = el('corkboard-viewport');
 if(vp) {
     vp.addEventListener('touchstart', e => {
@@ -368,9 +370,6 @@ window.showEventCard = function(cId, target, by) {
     el('cardDetailActionArea').innerHTML = targetStr + `<button class="btn btn-secondary glass-card" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE</button>`;
     
     window.showModalSafe('cardDetailModal');
-    setTimeout(() => { 
-        if(window.initNativeCarousel) window.initNativeCarousel(); 
-    }, 100);
 };
 
 window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
@@ -441,7 +440,6 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                 let encodedBy = pc.by ? pc.by.replace(/"/g, '&quot;') : '';
                 let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {d: pc.cardDesc};
-                
                 let safeCardName = pc.cardName ? pc.cardName.split(' (')[0] : '';
                 
                 html += `
@@ -681,7 +679,7 @@ window.renderReceipt = function() {
 };
 
 // ==============================================
-// KORTTIEN PELAAMINEN, UPGRADE JA TARKASTELU
+// KORTTIEN PELAAMINEN, UPGRADE JA HÄVITYS
 // ==============================================
 window.openTargetModal = function(cardId) {
     const cardDef = window.allCards.find(c => c && c.id === cardId);
@@ -707,6 +705,7 @@ window.openTargetModal = function(cardId) {
     }
     
     let opponents = (allPlayers || []).filter(p => p && p.name !== myName);
+    
     if (opponents.length === 1) { 
         window.executeCardPlay(opponents[0].name); 
         return; 
@@ -747,7 +746,6 @@ window.executeCardPlay = function(targetName) {
         if (card.cost > 0) {
             me.score -= card.cost;
             window.logScore(myName, -card.cost, `Pelasi kortin: ${card.def.n}`);
-            window.showAppleToast(`-${card.cost} P (Pelattu)`, '💸');
         }
     }
     
@@ -808,7 +806,7 @@ window.upgradeCard = function(cId) {
     update(ref(db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) });
     
     window.logScore(myName, -cost, `Päivitti kortin tasolle ${nextDef.level}`);
-    window.showAppleToast(`Päivitetty! (-${cost} P)`, '✨');
+    if(window.showAppleToast) window.showAppleToast(`Päivitetty! (-${cost} P)`, '✨');
     
     if(document.getElementById('cardDetailModal').style.display !== 'none') {
         window.openCardDetail(nextDef.id, window.carouselCurrentMode);
@@ -832,7 +830,7 @@ window.forceDiscard = function(cId) {
         me.score = (parseInt(me.score) || 0) + sellReward; 
         
         window.logScore(myName, sellReward, `Myi kortin kädestä`);
-        window.showAppleToast(`+${sellReward} P (Myyty)`, '💰'); 
+        if(window.showAppleToast) window.showAppleToast(`+${sellReward} P (Myyty)`, '💰'); 
     }
     
     if (window.pendingShopPurchase) {
@@ -903,7 +901,7 @@ window.reserveShopItem = function(idStr) {
         'gameState/players': window.cleanFirebaseData(nextPlayers), 
         'gameState/activeHole/shop': window.cleanFirebaseData(nextShopAll) 
     });
-    window.showAppleToast('Kortti varattu', '🔒');
+    if(window.showAppleToast) window.showAppleToast('Kortti varattu', '🔒');
 };
 
 window.cancelReservation = function(idStr) {
@@ -927,7 +925,7 @@ window.cancelReservation = function(idStr) {
             'gameState/players': window.cleanFirebaseData(nextPlayers), 
             'gameState/activeHole/shop': window.cleanFirebaseData(nextShopAll) 
         });
-        window.showAppleToast('Varaus peruttu', '🔓');
+        if(window.showAppleToast) window.showAppleToast('Varaus peruttu', '🔓');
     }
 };
 
@@ -998,7 +996,6 @@ window.closeShopModal = function() {
 };
 
 window.switchShopTab = function(tab) {
-    const modalEl = document.querySelector('#shopModal .shop-binder-modal');
     if (tab === 'buy') {
         window.pendingShopPurchase = null; 
         el('shopBuyArea').style.display = 'block'; 
@@ -1046,11 +1043,10 @@ window.renderShop = function(shopArray, resArray, myPoints) {
                             <div class="card-type-tag">TASO ${item.level}</div>
                             <h3 style="font-size:1rem; margin-top:5px; line-height:1.1;">${item.n.split(' (')[0]}</h3>
                             <p style="font-size:0.65rem; line-height:1.1; overflow-y:auto;">${item.d}</p>
-                            <div style="text-align:center; font-weight:900; font-size:0.7rem; color:#111; margin-top:auto; padding-top:5px;">🔄 KÄÄNNÄ</div>
                         </div>
                         <div class="vending-coil"></div>
                         <div class="vending-price-tag">${item.price} P</div>
-                        <div style="display:flex; flex-direction:column; gap:5px; margin-top:5px; width:140px; transform:scale(0.9);">
+                        <div style="display:flex; gap:5px; margin-top:5px; width:140px; transform:scale(0.9);">
                             <button class="vending-btn-buy" ${!canAfford?'disabled':''} onclick="window.buyShopItem('${item.id}', ${item.price}, false)">OSTA</button>
                             ${!isResFull ? `<button class="vending-btn-reserve" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
                         </div>
@@ -1171,12 +1167,43 @@ window.showHandLimitModal = function(cards) {
     window.showModalSafe('handLimitModal');
 };
 
-//==============================================
+// ==============================================
 // TURVALLINEN KARUSELLI (Ei sekoita järjestystä)
-//==============================================
+// ==============================================
 window.isFlipping = false;
 window.flippedCards = new Set();
-window.initNativeCarousel = function() {};
+
+window.initNativeCarousel = function() {
+    // Selaus on korjattu ja palautettu!
+    const container = el('cardCarousel');
+    if(!container) return;
+    
+    container.addEventListener('scroll', () => { 
+        requestAnimationFrame(() => {
+            const cards = Array.from(container.querySelectorAll('.carousel-card-wrapper'));
+            const scrollLeft = container.scrollLeft; 
+            const centerOffset = (container.clientWidth || window.innerWidth) / 2; 
+            const cardWidth = 320; 
+            const paddingLeft = centerOffset - (cardWidth / 2); 
+            
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
+                const diff = ((paddingLeft + (i * cardWidth) + (cardWidth / 2) - scrollLeft) - centerOffset) / 160; 
+                card.style.transform = `translate3d(${diff * -40}px, ${Math.abs(diff) * 20}px, ${Math.abs(diff) * -150}px) rotateZ(${diff * 5}deg) scale(${Math.max(0.85, 1 - Math.abs(diff) * 0.15)})`;
+                card.style.zIndex = 100 - Math.floor(Math.abs(diff)*10);
+                
+                // Päivitetään aktiivinen indeksi
+                if(Math.abs(diff) < 0.5 && window.carouselCurrentIndex !== i) {
+                    window.carouselCurrentIndex = i;
+                    // Napit päivittyvät automaattisesti jos mode on sell tai shop
+                    if(window.carouselCurrentMode === 'sell' || window.carouselCurrentMode === 'shop' || window.carouselCurrentMode === 'shop_res') {
+                        window.renderCarouselActionButtons();
+                    }
+                }
+            }
+        });
+    }, {passive: true});
+};
 
 window.flipCard = function(index) {
     if(window.isFlipping) return;
@@ -1210,7 +1237,6 @@ window.renderCarousel = function() {
         let flippedClass = window.flippedCards.has(cId) ? 'flipped' : '';
         let playCost = window.getCardPlayCost(cId);
         
-        // Etsitään KAIKKI tämän korttiperheen tasot kääntöpuolta varten
         let familyCards = window.allCards.filter(c => c.family === cDef.family).sort((a,b) => a.level - b.level);
         let levelsHtml = '';
         
@@ -1233,7 +1259,7 @@ window.renderCarousel = function() {
             </div>`;
         
         html += `
-            <div class="carousel-card-wrapper" style="transform:none; position:relative; margin:0 auto;" data-id="${cId}" onclick="window.flipCard(${i})">
+            <div class="carousel-card-wrapper" data-id="${cId}" onclick="window.flipCard(${i})">
                 <div class="card-3d-inner ${flippedClass}" id="card3d-inner-${i}">
                     <div class="card-face card-front ${typeClass}">
                         <div style="text-align:left; display:flex; flex-direction:column; height:100%; position:relative; z-index:20;">
@@ -1253,15 +1279,13 @@ window.renderCarousel = function() {
     container.innerHTML = html;
 };
 
-window.openCardDetail = function(cId, mode) {
+// Erillinen funktio nappien renderöintiin, jotta karusellia rullattaessa napit päivittyvät oikeaan korttiin
+window.renderCarouselActionButtons = function() {
+    let mode = window.carouselCurrentMode;
+    let cId = window.carouselCards[window.carouselCurrentIndex];
+    if(!cId) return;
+    
     const me = (allPlayers || []).find(p => p && p.name === myName);
-    window.flippedCards = new Set(); 
-    window.carouselCards = [cId]; 
-    window.carouselCurrentMode = mode; 
-    
-    window.renderCarousel(); 
-    window.showModalSafe('cardDetailModal');
-    
     let btnHtml = '';
     
     if (mode === 'sell') {
@@ -1272,7 +1296,6 @@ window.openCardDetail = function(cId, mode) {
             let canPlay = me.score >= playCost && !isLocked;
             let sellReward = cDef.level === 3 ? 4 : (cDef.level === 2 ? 2 : 1);
             
-            // UPGRADE NAPPI ON TÄSSÄ TOIMINTOPINOSSA YLIMPÄNÄ
             if (cDef.nextId && cDef.upgradeDesc) {
                 let upgCost = cDef.level === 1 ? 3 : 5;
                 let canUpg = me.score >= upgCost;
@@ -1292,14 +1315,49 @@ window.openCardDetail = function(cId, mode) {
         }
     }
     
-    // TÄMÄ ON AINOA SULJE NAPPI
-    btnHtml += `<button class="btn btn-secondary glass-card" style="width:100%; padding:15px; font-weight:bold; background:rgba(255,255,255,0.2); color:#fff; border:2px solid #fff;" onclick="document.getElementById('cardDetailModal').style.display='none'">❌ SULJE TARKASTELU</button>`;
+    btnHtml += `<button class="btn btn-secondary glass-card" style="width:100%; padding:15px; font-weight:bold; background:rgba(255,255,255,0.2); color:#fff; border:2px solid #fff;" onclick="document.getElementById('cardDetailModal').style.display='none'">❌ SULJE NÄKYMÄ</button>`;
     
     el('cardDetailActionArea').innerHTML = btnHtml;
 };
 
+window.openCardDetail = function(cId, mode) {
+    const me = (allPlayers || []).find(p => p && p.name === myName);
+    window.flippedCards = new Set(); 
+    
+    // SELATTAVUUS ON PALAUTETTU TÄSSÄ! 
+    if (mode === 'sell') {
+        window.carouselCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
+        window.carouselCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
+    } else if (mode === 'shop') {
+        let shopCards = activeHole && activeHole.shop && activeHole.shop[myName] ? activeHole.shop[myName] : [];
+        window.carouselCards = shopCards.filter(Boolean).map(c => c.id);
+    } else if (mode === 'shop_res') {
+        window.carouselCards = me && me.reservations ? (Array.isArray(me.reservations) ? me.reservations : Object.values(me.reservations)).filter(Boolean) : [];
+    } else {
+        window.carouselCards = [cId]; 
+    }
+    
+    window.carouselCurrentMode = mode; 
+    window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
+    if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
+    
+    window.renderCarousel(); 
+    window.showModalSafe('cardDetailModal');
+    window.renderCarouselActionButtons();
+    
+    setTimeout(() => {
+        window.initNativeCarousel();
+        const container = el('cardCarousel');
+        if(container) { 
+            container.scrollLeft = (window.carouselCurrentIndex * 320); 
+            // Laukaistaan forceCarouselLayoutUpdate kerran manuaalisesti
+            container.dispatchEvent(new Event('scroll'));
+        }
+    }, 50);
+};
+
 // ==============================================
-// SCORE SYÖTTÖ, TALOUS JA VETO (Full Automation)
+// SCORE SYÖTTÖ, TALOUS JA VETO
 // ==============================================
 window.changeScore = function(safeId, par, delta) {
     let input = el(`scoreInput_${safeId}`); 
@@ -1539,7 +1597,7 @@ window.submitScores = function() {
 };
 
 // ==============================================
-// GM-TOIMINNOT JA REAALIAIKASEURANTA
+// GM-TOIMINNOT JA ASETUKSET
 // ==============================================
 window.startMeilahti = function() {
     let nextCourse = { name: "Meilahti", pars: Array(16).fill(3) };
@@ -1563,7 +1621,8 @@ window.startMeilahti = function() {
         shop: personalizedShop, 
         playedCards: {}, 
         timestamp: Date.now(), 
-        color: getRandomColor() 
+        color: getRandomColor(),
+        penColor: getRandomPen()
     };
     
     update(ref(db, 'gameState'), window.cleanFirebaseData({ 
@@ -1592,6 +1651,7 @@ window.startCustomCourse = function() {
     for(let i=1; i<=(parseInt(el('newCourseHoles').value)||18); i++) { 
         pars.push(parseInt(el(`parInput_${i}`).value)||3); 
     }
+    
     let nextCourse = { name: el('newCourseName').value.trim() || "Oma Rata", pars: pars };
     let nextPlayers = (allPlayers||[]).filter(Boolean).map(p => { 
         return { ...p, score: 3, dgScore: 0, cards: [], reservations: [], upgradedThisHole: [] }; 
@@ -1613,7 +1673,8 @@ window.startCustomCourse = function() {
         shop: personalizedShop, 
         playedCards: {}, 
         timestamp: Date.now(), 
-        color: getRandomColor() 
+        color: getRandomColor(),
+        penColor: getRandomPen()
     };
     
     set(ref(db, 'gameState'), window.cleanFirebaseData({ 
@@ -1626,20 +1687,21 @@ window.startCustomCourse = function() {
     el('courseModal').style.display='none';
 };
 
-window.cancelCourse = function() { 
-    if (confirm("Lopetetaanko nykyinen rata?")) { 
+window.cancelCourse = function() {
+    if (confirm("Haluatko varmasti lopettaa nykyisen radan? Pelaajat säilyttävät rahansa ja korttinsa.")) {
+        let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(Boolean);
         update(ref(db, 'gameState'), window.cleanFirebaseData({ 
             course: null, 
             activeHole: null, 
             currentHoleIndex: 1, 
-            players: allPlayers, 
+            players: nextPlayers, 
             history: [] 
-        })); 
-    } 
+        }));
+    }
 };
 
 window.resetGame = function() { 
-    if (confirm("Nollataanko peli?")) { 
+    if (confirm("Nollaa peli?")) { 
         set(ref(db, 'gameState'), { players: [], currentHoleIndex: 1, course: null }).then(() => { 
             localStorage.clear(); 
             location.reload(); 
@@ -1657,14 +1719,14 @@ window.saveGameSettings = function() {
         ptsPassive: parseInt(el('gmSetPtsPassive').value) || 2 
     };
     update(ref(db), { 'gameState/settings': nextSettings }); 
-    window.showAppleToast("Asetukset tallennettu", "✅");
+    if(window.showAppleToast) window.showAppleToast("Asetukset tallennettu", "✅");
 };
 
 window.gmChangeHole = function() { 
     let sel = el('gmSetCurrentHole'); 
     if(!sel) return; 
     let nextH = parseInt(sel.value); 
-    if(!nextH) return;
+    if(!nextH) return; 
     update(ref(db), { 'gameState/currentHoleIndex': nextH }); 
     el('settingsModal').style.display='none'; 
 };
@@ -1676,13 +1738,7 @@ window.gmRemoveCurrentHole = function() {
         if(nextHistory.length >= currentHoleIndex) { 
             nextHistory = nextHistory.slice(0, currentHoleIndex - 1); 
         }
-        let nextActiveHole = { 
-            rule: window.holeRules[0], 
-            shop: {}, 
-            playedCards: {}, 
-            timestamp: Date.now(), 
-            color: getRandomColor() 
-        };
+        let nextActiveHole = { rule: window.holeRules[0], shop: {}, playedCards: {}, timestamp: Date.now(), color: getRandomColor(), penColor: getRandomPen() };
         allPlayers.forEach(p => { 
             nextActiveHole.shop[p.name] = window.generatePersonalShop(window.getGlobalLockedFamilies(allPlayers, null)); 
         });
@@ -1697,7 +1753,7 @@ window.gmRemoveCurrentHole = function() {
 };
 
 window.gmAddPlayer = function() {
-    let n = el('gmNewPlayerName').value.trim(); 
+    let n = el('gmNewPlayerName').value.trim();
     if(!n) return;
     if(allPlayers.find(p => p && p.name === n)) { alert("Pelaaja on jo olemassa!"); return; }
     
@@ -1706,7 +1762,7 @@ window.gmAddPlayer = function() {
     
     update(ref(db), {'gameState/players': window.cleanFirebaseData(nextPlayers)});
     el('gmNewPlayerName').value = ''; 
-    window.showAppleToast('Pelaaja lisätty', '✅');
+    if(window.showAppleToast) window.showAppleToast('Pelaaja lisätty', '✅');
 };
 
 window.updateAdminPlayerList = function() {
@@ -1743,7 +1799,7 @@ window.gmAdjustScore = function(pName, amount) {
 };
 
 window.gmKickPlayer = function(pName) { 
-    if(confirm(`Potki ${pName}?`)) { 
+    if(confirm(`Haluatko potkia pelaajan ${pName}?`)) { 
         let nextPlayers = JSON.parse(JSON.stringify(allPlayers)).filter(p => p && p.name !== pName); 
         update(ref(db), {'gameState/players': window.cleanFirebaseData(nextPlayers)}); 
     } 
@@ -1815,9 +1871,9 @@ onValue(ref(db, 'gameState'), (snap) => {
             window.closeShopModal(); 
         }
         currentCourse = null; 
-        el('lobbyContainer').style.display = 'block'; 
-        el('corkboard-viewport').style.display = 'none'; 
-        el('pocketContainer').style.display = 'none'; 
+        if(el('lobbyContainer')) el('lobbyContainer').style.display = 'block'; 
+        if(el('corkboard-viewport')) el('corkboard-viewport').style.display = 'none'; 
+        if(el('pocketContainer')) el('pocketContainer').style.display = 'none'; 
         return;
     }
 
@@ -1833,20 +1889,21 @@ onValue(ref(db, 'gameState'), (snap) => {
         localStorage.removeItem('friba_name'); 
         window.closeShopModal(); 
     }
+    
     window.updateIdentityUI();
     
     if (myName) {
         if (!currentCourse) {
-            el('lobbyContainer').style.display = 'block'; 
-            el('gameSetupArea').style.display = 'block'; 
-            el('corkboard-viewport').style.display = 'none'; 
-            el('pocketContainer').style.display = 'none';
+            if(el('lobbyContainer')) el('lobbyContainer').style.display = 'block'; 
+            if(el('gameSetupArea')) el('gameSetupArea').style.display = 'block'; 
+            if(el('corkboard-viewport')) el('corkboard-viewport').style.display = 'none'; 
+            if(el('pocketContainer')) el('pocketContainer').style.display = 'none';
         } else {
-            el('lobbyContainer').style.display = 'none'; 
-            el('corkboard-viewport').style.display = 'block'; 
-            el('pocketContainer').style.display = 'flex';
+            if(el('lobbyContainer')) el('lobbyContainer').style.display = 'none'; 
+            if(el('corkboard-viewport')) el('corkboard-viewport').style.display = 'block'; 
+            if(el('pocketContainer')) el('pocketContainer').style.display = 'flex';
             
-            let sel = el('gmSetCurrentHole'); 
+            let sel = el('gmSetCurrentHole');
             if(sel) { 
                 sel.innerHTML = ''; 
                 for(let i=1; i<=currentCourse.pars.length; i++) { 
@@ -1873,10 +1930,10 @@ onValue(ref(db, 'gameState'), (snap) => {
             }
         }
     } else {
-        el('lobbyContainer').style.display = 'block'; 
-        el('gameSetupArea').style.display = 'none'; 
-        el('corkboard-viewport').style.display = 'none'; 
-        el('pocketContainer').style.display = 'none';
+        if(el('lobbyContainer')) el('lobbyContainer').style.display = 'block'; 
+        if(el('gameSetupArea')) el('gameSetupArea').style.display = 'none'; 
+        if(el('corkboard-viewport')) el('corkboard-viewport').style.display = 'none'; 
+        if(el('pocketContainer')) el('pocketContainer').style.display = 'none';
     }
 
     window.renderBoard(); 
@@ -1885,6 +1942,8 @@ onValue(ref(db, 'gameState'), (snap) => {
     if (myName && currentCourse) {
         const me = allPlayers.find(p => p && p.name === myName);
         if (me) {
+            let currentPoints = parseInt(me.score, 10) || 0;
+            
             if (typeof window.myLastHoleIndex === 'undefined' || window.myLastHoleIndex !== currentHoleIndex) {
                 window.myLastHoleIndex = currentHoleIndex; 
                 setTimeout(() => { if(window.zoomToHole) window.zoomToHole(currentHoleIndex); }, 600);
@@ -1893,13 +1952,14 @@ onValue(ref(db, 'gameState'), (snap) => {
             window.renderShop(activeHole && activeHole.shop ? activeHole.shop[myName] : [], me.reservations, me.score || 0);
             
             let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
+            
             if (window.gameSettings.handLimitEnabled && myCards.length > (window.gameSettings.handLimit||6)) { 
                 window.showHandLimitModal(myCards); 
             } else { 
                 if(el('handLimitModal')) el('handLimitModal').style.display = 'none'; 
             }
             
-            el('myResPointsBtn').innerText = `${me.score || 0} P`; 
+            if(el('myResPointsBtn')) el('myResPointsBtn').innerText = `${me.score || 0} P`; 
             if(el('shopModalWallet')) el('shopModalWallet').innerText = `${me.score || 0} P`; 
             if(el('handCountBadge')) el('handCountBadge').innerText = `${myCards.length}/${window.gameSettings.handLimit||6}`; 
         }
