@@ -9,14 +9,12 @@ const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Jaetaan Firebase-funktiot ikkunaan (window), jotta game.js voi käyttää niitä vapaasti
+// Jaetaan Firebase-funktiot ikkunaan (window)
 window.db = db;
 window.ref = ref;
 window.set = set;
 window.push = push;
 window.update = update;
-
-const el = id => document.getElementById(id);
 
 // Varmistetaan globaalit muuttujat
 window.myName = localStorage.getItem('friba_name') || null;
@@ -26,6 +24,12 @@ window.currentCourse = null;
 window.currentHoleIndex = 1;
 window.gameHistory = []; 
 window.pendingShopPurchase = null;
+
+// KORJAUS: Asetetaan oletusasetukset, jotta sovellus ei kaadu jos Firebase-dataa ei vielä ole
+window.gameSettings = { handLimitEnabled: true, handLimit: 6, ptsWin: 3, ptsTask: 2, ptsPassive: 2 };
+
+// KORJAUS: Määritellään väylien aloitus-X-koordinaatti, jotta automaatti ja kuitti eivät mene kansion päälle
+window.startXHoles = 1000;
 
 // =============================================
 // REAALIAIKAINEN DATABASE KUUNTELIJA
@@ -37,16 +41,20 @@ onValue(ref(db, 'gameState'), (snap) => {
             window.myName = null; 
             localStorage.removeItem('friba_name'); 
             if(window.updateIdentityUI) window.updateIdentityUI(); 
-            if(el('cardDetailModal')) el('cardDetailModal').style.display = 'none'; 
+            if(document.getElementById('cardDetailModal')) document.getElementById('cardDetailModal').style.display = 'none'; 
         }
         window.currentCourse = null; 
-        if(el('lobbyContainer')) el('lobbyContainer').style.display = 'block'; 
-        if(el('corkboard-viewport')) el('corkboard-viewport').style.display = 'none'; 
-        if(el('pocketContainer')) el('pocketContainer').style.display = 'none'; 
+        if(document.getElementById('lobbyContainer')) document.getElementById('lobbyContainer').style.display = 'block'; 
+        if(document.getElementById('corkboard-viewport')) document.getElementById('corkboard-viewport').style.display = 'none'; 
+        if(document.getElementById('pocketContainer')) document.getElementById('pocketContainer').style.display = 'none'; 
         return;
     }
 
-    if(data.settings) window.gameSettings = data.settings;
+    // Päivitetään asetukset Firebasesta, mutta yhdistetään ne oletuksiin
+    if(data.settings) {
+        window.gameSettings = { ...window.gameSettings, ...data.settings };
+    }
+
     window.gameHistory = data.history ? (Array.isArray(data.history) ? data.history : Object.values(data.history)) : [];
     window.allPlayers = data.players ? (Array.isArray(data.players) ? data.players : Object.values(data.players)) : [];
     window.activeHole = data.activeHole || null; 
@@ -57,7 +65,7 @@ onValue(ref(db, 'gameState'), (snap) => {
     if (window.myName && !window.allPlayers.find(p => p && p.name === window.myName)) { 
         window.myName = null; 
         localStorage.removeItem('friba_name'); 
-        if(el('cardDetailModal')) el('cardDetailModal').style.display = 'none'; 
+        if(document.getElementById('cardDetailModal')) document.getElementById('cardDetailModal').style.display = 'none'; 
     }
     
     if(window.updateIdentityUI) window.updateIdentityUI();
@@ -65,17 +73,17 @@ onValue(ref(db, 'gameState'), (snap) => {
     // Ohjataan näkymä joko aulaan tai varsinaiselle ilmoitustaululle
     if (window.myName) {
         if (!window.currentCourse) {
-            if(el('lobbyContainer')) el('lobbyContainer').style.display = 'block'; 
-            if(el('gameSetupArea')) el('gameSetupArea').style.display = 'block'; 
-            if(el('corkboard-viewport')) el('corkboard-viewport').style.display = 'none'; 
-            if(el('pocketContainer')) el('pocketContainer').style.display = 'none';
+            if(document.getElementById('lobbyContainer')) document.getElementById('lobbyContainer').style.display = 'block'; 
+            if(document.getElementById('gameSetupArea')) document.getElementById('gameSetupArea').style.display = 'block'; 
+            if(document.getElementById('corkboard-viewport')) document.getElementById('corkboard-viewport').style.display = 'none'; 
+            if(document.getElementById('pocketContainer')) document.getElementById('pocketContainer').style.display = 'none';
         } else {
-            if(el('lobbyContainer')) el('lobbyContainer').style.display = 'none'; 
-            if(el('corkboard-viewport')) el('corkboard-viewport').style.display = 'block'; 
-            if(el('pocketContainer')) el('pocketContainer').style.display = 'flex';
+            if(document.getElementById('lobbyContainer')) document.getElementById('lobbyContainer').style.display = 'none'; 
+            if(document.getElementById('corkboard-viewport')) document.getElementById('corkboard-viewport').style.display = 'block'; 
+            if(document.getElementById('pocketContainer')) document.getElementById('pocketContainer').style.display = 'flex';
             
             // GM Asetusten päivitys
-            let sel = el('gmSetCurrentHole');
+            let sel = document.getElementById('gmSetCurrentHole');
             if(sel) { 
                 sel.innerHTML = ''; 
                 for(let i=1; i<=window.currentCourse.pars.length; i++) { 
@@ -89,7 +97,7 @@ onValue(ref(db, 'gameState'), (snap) => {
                 Object.values(data.eventLog).reverse().slice(0,20).forEach(l => { 
                     eLogHtml += `<div style="font-size:0.85rem; padding:4px 0; border-bottom:1px solid #444;">[${l.time}] ${l.msg}</div>`; 
                 });
-                if(el('adminEventLog')) el('adminEventLog').innerHTML = eLogHtml;
+                if(document.getElementById('adminEventLog')) document.getElementById('adminEventLog').innerHTML = eLogHtml;
             }
             if (data.scoreLog) {
                 let sLogHtml = ''; 
@@ -98,14 +106,14 @@ onValue(ref(db, 'gameState'), (snap) => {
                     let sign = l.delta > 0 ? '+' : '';
                     sLogHtml += `<div style="font-size:0.85rem; padding:4px 0; border-bottom:1px solid #444; display:flex; justify-content:space-between;"><span>[${l.time}] ${l.playerName}</span><span style="color:${c}; font-weight:bold;">${sign}${l.delta} P</span></div><div style="font-size:0.75rem; color:#888;">${l.msg}</div>`; 
                 });
-                if(el('adminScoreLog')) el('adminScoreLog').innerHTML = sLogHtml;
+                if(document.getElementById('adminScoreLog')) document.getElementById('adminScoreLog').innerHTML = sLogHtml;
             }
         }
     } else {
-        if(el('lobbyContainer')) el('lobbyContainer').style.display = 'block'; 
-        if(el('gameSetupArea')) el('gameSetupArea').style.display = 'none'; 
-        if(el('corkboard-viewport')) el('corkboard-viewport').style.display = 'none'; 
-        if(el('pocketContainer')) el('pocketContainer').style.display = 'none';
+        if(document.getElementById('lobbyContainer')) document.getElementById('lobbyContainer').style.display = 'block'; 
+        if(document.getElementById('gameSetupArea')) document.getElementById('gameSetupArea').style.display = 'none'; 
+        if(document.getElementById('corkboard-viewport')) document.getElementById('corkboard-viewport').style.display = 'none'; 
+        if(document.getElementById('pocketContainer')) document.getElementById('pocketContainer').style.display = 'none';
     }
 
     // Piirretään koko ilmoitustaulu uusiksi datan pohjalta
@@ -124,15 +132,17 @@ onValue(ref(db, 'gameState'), (snap) => {
             let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
             
             // Käsirajan varoitus
-            if (window.gameSettings.handLimitEnabled && myCards.length > (window.gameSettings.handLimit||6)) { 
+            if (window.gameSettings && window.gameSettings.handLimitEnabled && myCards.length > (window.gameSettings.handLimit||6)) { 
                 if(window.showHandLimitModal) window.showHandLimitModal(myCards); 
             } else { 
-                if(el('handLimitModal')) el('handLimitModal').style.display = 'none'; 
+                if(document.getElementById('handLimitModal')) document.getElementById('handLimitModal').style.display = 'none'; 
             }
             
             // Päivitä alapalkin napit
-            if(el('myResPointsBtn')) el('myResPointsBtn').innerText = `${me.score || 0} P`; 
-            if(el('handCountBadge')) el('handCountBadge').innerText = `${myCards.length}/${window.gameSettings.handLimit||6}`; 
+            if(document.getElementById('myResPointsBtn')) document.getElementById('myResPointsBtn').innerText = `${me.score || 0} P`;
+            if(window.gameSettings) {
+                if(document.getElementById('handCountBadge')) document.getElementById('handCountBadge').innerText = `${myCards.length}/${window.gameSettings.handLimit||6}`; 
+            }
         }
     }
 });
