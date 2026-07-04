@@ -4,36 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Fribamestari</title>
-    <link rel="stylesheet" href="style.css?v=205">
+    <link rel="stylesheet" href="style.css?v=210">
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="corkboard-bg" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; background-color: #e2e8f0; background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px); background-size: 12px 12px;"></div>
+    <!-- ASETUKSET NAPPI (Palautettu!) -->
+    <div id="settingsBtn" onclick="document.getElementById('settingsModal').style.display='flex'">⚙️</div>
 
-    <div id="views-container" style="position:relative; z-index:10; width:100%; height:calc(100% - 85px);">
+    <!-- Yhteinen tausta -->
+    <div id="corkboard-bg"></div>
+
+    <!-- NÄKYMÄT (Välilehdet) -->
+    <div id="views-container">
         
+        <!-- 1. TULOKSET -->
         <div id="view-results" class="app-view hidden">
             <div id="board-receipt-wrapper" class="view-wrapper" style="margin-top: 20px;"></div>
         </div>
 
+        <!-- 2. LASKELMA -->
         <div id="view-calculator" class="app-view hidden">
             <div id="calc-wrapper" class="view-wrapper" style="margin-top: 20px;"></div>
         </div>
 
+        <!-- 3. OMAT KORTIT -->
         <div id="view-cards" class="app-view hidden">
             <div id="board-binder-wrapper" class="view-wrapper" style="margin-top: 20px;"></div>
         </div>
 
+        <!-- 4. KAUPPA -->
         <div id="view-shop" class="app-view hidden">
             <div id="board-shop-wrapper" class="view-wrapper" style="margin-top: 20px; padding-bottom: 50px;"></div>
         </div>
 
+        <!-- 5. VÄYLÄ (Oletus) -->
         <div id="view-hole" class="app-view active">
             <div id="holes-grid" class="view-wrapper" style="margin-top: 20px;"></div>
         </div>
 
     </div>
 
+    <!-- ALAVALIKKO -->
     <nav id="bottom-nav">
         <div class="nav-item" onclick="window.switchView('view-results')">
             <div class="nav-icon">🧾</div>
@@ -56,6 +67,17 @@
             <span>Väylä</span>
         </div>
     </nav>
+
+    <!-- MODAALIT -->
+    
+    <!-- ASETUKSET MODAALI (Palautettu!) -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px; text-align:center;">
+            <h2 style="font-family:'Kalam', cursive; font-size:2.5rem; margin-bottom:20px;">Asetukset</h2>
+            <button class="btn btn-danger" style="width:100%; padding:20px; font-size:1.5rem; font-weight:900; margin-bottom:15px;" onclick="window.resetGame()">NOLLAA PELI</button>
+            <button class="btn btn-secondary" style="width:100%; padding:15px; font-size:1.2rem;" onclick="document.getElementById('settingsModal').style.display='none'">SULJE</button>
+        </div>
+    </div>
 
     <div id="cardDetailModal" class="modal-overlay">
         <div class="carousel-container" id="cardCarousel"></div>
@@ -104,18 +126,10 @@
     <div id="appleToast" class="apple-toast"><span id="appleToastIcon"></span><span id="appleToastText"></span></div>
     <div id="notificationContainer"></div>
 
-    <script src="tasks.js?v=205"></script>
-    <script type="module" src="script.js?v=205"></script>
-    <script src="game.js?v=205"></script>
-    <script src="ui.js?v=205"></script>
-    <script src="camera.js?v=205"></script>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-            .then(r => console.log('SW rekisteröity'))
-            .catch(e => console.error('SW virhe:', e));
-        }
-    </script>
+    <script src="tasks.js?v=210"></script>
+    <script type="module" src="script.js?v=210"></script>
+    <script src="game.js?v=210"></script>
+    <script src="ui.js?v=210"></script>
+    <script src="camera.js?v=210"></script>
 </body>
 </html>
