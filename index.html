@@ -11,8 +11,8 @@
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- Päivitetty versio v=198 pakottamaan välimuistin tyhjennys -->
-    <link rel="stylesheet" href="style.css?v=198" />
+    <!-- Päivitetty versio v=199 pakottamaan välimuistin tyhjennys -->
+    <link rel="stylesheet" href="style.css?v=199" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <style>
@@ -42,50 +42,50 @@
         }
 
         /* =========================================
-           FYYSISTEN KORTTIEN 3D & REALISTINEN DESIGN
+           FYYSISTEN KORTTIEN 3D & REALISTINEN DESIGN (JÄTTIKOKO)
            ========================================= */
         .physical-card {
-            width: 220px; height: 330px; /* Huomattavasti isompi koko */
-            border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
-            box-shadow: 4px 10px 25px rgba(0,0,0,0.7), inset 0 0 10px rgba(255,255,255,0.5); 
+            width: 240px; height: 380px; /* Erittäin suuri peruskoko, skaalataan ui.js puolella */
+            border-radius: 16px; overflow: hidden; display: flex; flex-direction: column;
+            box-shadow: 6px 12px 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(255,255,255,0.6); 
             position: relative; background: #fff; flex-shrink: 0;
             transform-style: preserve-3d;
         }
-        /* Tason mukaiset 3D-kehykset ja hohto */
-        .tier-1 { border: 8px solid #cd7f32; box-shadow: 0 0 20px rgba(205,127,50,0.6), inset 0 0 15px rgba(255,255,255,0.4); } /* Pronssi */
-        .tier-2 { border: 8px solid #94a3b8; box-shadow: 0 0 20px rgba(148,163,184,0.6), inset 0 0 15px rgba(255,255,255,0.6); } /* Hopea */
-        .tier-3 { border: 8px solid #eab308; box-shadow: 0 0 35px rgba(234, 179, 8, 0.9), inset 0 0 20px rgba(255,255,255,0.8); } /* Kulta */
+        /* PAKSUT Tason mukaiset 3D-kehykset ja hohto */
+        .tier-1 { border: 12px solid #b45309; box-shadow: 0 0 25px rgba(180, 83, 9, 0.8), inset 0 0 15px rgba(255,255,255,0.4); } /* Pronssi */
+        .tier-2 { border: 12px solid #94a3b8; box-shadow: 0 0 25px rgba(148, 163, 184, 0.8), inset 0 0 15px rgba(255,255,255,0.6); } /* Hopea */
+        .tier-3 { border: 12px solid #fbbf24; box-shadow: 0 0 40px rgba(251, 191, 36, 1), inset 0 0 20px rgba(255,255,255,0.9); } /* Kulta */
 
         .card-header {
-            padding: 12px 14px; font-weight: 900; font-size: 0.95rem; display: flex; 
+            padding: 15px 16px; font-weight: 900; font-size: 1.1rem; display: flex; 
             justify-content: space-between; align-items: center; text-transform: uppercase;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 1.5px; z-index: 2;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 2px; z-index: 2;
         }
-        /* Selkeä värikoodaus */
-        .card-header.sabotage { background: linear-gradient(180deg, #b91c1c, #7f1d1d); color: #fff; border-bottom: 4px solid #450a0a;}
-        .card-header.buff { background: linear-gradient(180deg, #15803d, #14532d); color: #fff; border-bottom: 4px solid #052e16;}
+        /* Selkeä värikoodaus otsikoissa */
+        .card-header.sabotage { background: linear-gradient(180deg, #991b1b, #7f1d1d); color: #fff; border-bottom: 5px solid #450a0a;}
+        .card-header.buff { background: linear-gradient(180deg, #166534, #14532d); color: #fff; border-bottom: 5px solid #052e16;}
         
         .card-body {
-            flex: 1; padding: 15px 12px; display: flex; flex-direction: column; 
+            flex: 1; padding: 15px; display: flex; flex-direction: column; 
             align-items: center; text-align: center; background: #fff; z-index: 1;
         }
         .card-body.sabotage { background: radial-gradient(circle at top, #fff5f5, #fca5a5); }
         .card-body.buff { background: radial-gradient(circle at top, #f0fdf4, #86efac); }
         
         .play-cost-badge {
-            background: linear-gradient(to bottom, #111, #000); color: #fff; font-weight: 900; font-size: 1.1rem;
-            padding: 6px 14px; border-radius: 8px; border: 2px solid #fff;
+            background: linear-gradient(to bottom, #111, #000); color: #fff; font-weight: 900; font-size: 1.3rem;
+            padding: 6px 16px; border-radius: 8px; border: 3px solid #fff;
             width: fit-content; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.6);
         }
         
         /* Massiivinen, selkeä teksti */
         .card-title { 
-            font-size: 1.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 12px; 
+            font-size: 1.7rem; font-weight: 900; line-height: 1.1; margin-bottom: 12px; 
             color: #000; font-family: 'Inter', sans-serif; word-wrap: break-word; hyphens: auto;
             text-shadow: 0 1px 1px rgba(255,255,255,0.8);
         }
         .card-desc { 
-            font-size: 1.15rem; font-weight: 800; line-height: 1.35; color: #1e293b; 
+            font-size: 1.3rem; font-weight: 800; line-height: 1.35; color: #1e293b; 
             flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
 
@@ -116,46 +116,59 @@
         }
 
         /* =========================================
-           APPLE-TYYLINEN ALAPALKKI (Ei korkeusmuutoksia)
+           APPLE-TYYLINEN ALAPALKKI (Kiinteä muoto, isot lätkät)
            ========================================= */
         .modern-bottom-nav {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 95%; max-width: 500px;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 40px;
+            width: 95%; max-width: 500px; height: 85px;
+            background: rgba(20, 25, 40, 0.95); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 25px;
             display: flex; justify-content: space-around; align-items: center;
-            padding: 12px 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); z-index: 9000;
+            padding: 0 5px; box-shadow: 0 20px 40px rgba(0,0,0,0.8); z-index: 9000;
         }
         .nav-item {
-            display: flex; flex-direction: column; align-items: center; color: #64748b; background: none; border: none;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; background: none; border: none;
             font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; position: relative; transition: all 0.2s;
-            flex: 1; padding: 5px 0;
+            flex: 1; height: 100%;
         }
         .nav-item:active { transform: scale(0.9); }
-        .nav-item .icon { font-size: 1.6rem; margin-bottom: 5px; display: block; transition: all 0.2s; filter: grayscale(100%); opacity: 0.6; }
+        .nav-item .icon { font-size: 1.8rem; margin-bottom: 5px; display: block; transition: all 0.2s; filter: grayscale(100%); opacity: 0.5; }
         
-        .nav-item.accent { color: #fff; }
-        .nav-item.accent .icon { filter: grayscale(0%); opacity: 1; transform: translateY(-3px) scale(1.15); text-shadow: 0 0 15px rgba(255,255,255,0.5); }
+        .nav-item.accent { color: #fff; background: rgba(255,255,255,0.05); border-radius: 20px; margin: 5px 2px;}
+        .nav-item.accent .icon { filter: grayscale(0%); opacity: 1; text-shadow: 0 0 15px rgba(255,255,255,0.4); }
         
-        .nav-item .badge { position: absolute; top: -5px; right: 10px; background: var(--danger); color: white; border-radius: 10px; padding: 3px 6px; font-size: 0.65rem; border: 2px solid #0f172a; font-weight:900;}
-        .nav-item .badge.money { background: var(--warning); color: #000; }
+        .nav-item .badge { position: absolute; top: 8px; right: 8px; background: var(--danger); color: white; border-radius: 12px; padding: 4px 8px; font-size: 0.75rem; border: 2px solid #0f172a; font-weight:900; z-index:10;}
+        .nav-item .badge.money { background: var(--warning); color: #000; font-size: 0.9rem; padding: 5px 10px; right: 0px; top: 5px;}
         
-        /* Korjattu Sulje-nappi (ei enää fixed jotta ei mene päälle) */
+        /* Tulokset lätkä */
+        #navScoreSummary { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; color: #fff; background: var(--danger); padding: 3px 8px; border-radius: 8px; font-weight: 900; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+
+        /* Korjattu Sulje-nappi */
         .fixed-close-btn { position: relative; margin-top: 20px; width: 100%; max-width: 400px; background: #ef4444; color: #fff; border: 2px solid #fff; border-radius: 30px; padding: 15px; font-weight: 900; font-size: 1.2rem; box-shadow: 0 5px 15px rgba(0,0,0,0.6); text-transform: uppercase; cursor: pointer; flex-shrink: 0;}
 
-        /* Apple-tyylinen läpikuultava ilmoitus */
+        /* UUSI APPLE-TYYLINEN ILMOITUS (Monirivinen, läpikuultava) */
         .apple-toast { 
             position: fixed; top: -200px; left: 50%; transform: translateX(-50%); 
-            background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            color: #fff; padding: 18px 25px; border-radius: 25px; font-size: 1.15rem; font-weight: 800; 
-            display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 100000; 
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            color: #fff; padding: 20px 25px; border-radius: 20px; font-size: 1.2rem; font-weight: 800; 
+            display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 100000; 
             transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2);
-            width: 90%; max-width: 400px; text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.15);
+            width: 90%; max-width: 450px; text-align: center;
         }
         .apple-toast.show { top: 40px; }
-        .toast-details { font-size: 0.9rem; font-weight: 600; color: #cbd5e1; }
-        
+        .toast-details { font-size: 0.95rem; font-weight: 600; color: #94a3b8; width: 100%; text-align: left; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; margin-top: 5px; }
+
+        /* =========================================
+           UUSI MODERNI ASETUSVALIKKO (APPLE STYLE)
+           ========================================= */
+        .apple-settings-group { background: #fff; border-radius: 12px; overflow: hidden; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .apple-setting-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #e2e8f0; background: #fff; }
+        .apple-setting-row:last-child { border-bottom: none; }
+        .apple-setting-label { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+        .apple-setting-input { width: 80px; padding: 8px; border-radius: 8px; border: 2px solid #cbd5e1; font-size: 1.1rem; font-weight: 900; text-align: center; background: #f8fafc; color: #0f172a; }
+        .apple-settings-title { font-size: 0.9rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; padding-left: 10px; letter-spacing: 1px; }
+
         .carousel-card-wrapper .physical-card { margin: 0 auto; box-shadow: none; }
     </style>
 
@@ -193,10 +206,11 @@
 </head>
 <body class="player-mode">
 
+    <!-- UUSI APPLE-TYYLINEN ILMOITUS -->
     <div id="appleToast" class="apple-toast">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <span id="appleToastIcon" style="font-size: 1.5rem;">✨</span>
-            <span id="appleToastText">Ilmoitus</span>
+        <div style="display:flex; align-items:center; gap:10px; width: 100%; justify-content: center;">
+            <span id="appleToastIcon" style="font-size: 1.8rem;">✨</span>
+            <span id="appleToastText" style="font-size: 1.4rem;">Ilmoitus</span>
         </div>
         <div id="appleToastDetails" class="toast-details"></div>
     </div>
@@ -251,10 +265,9 @@
             </div>
         </div>
 
-        <!-- KAUPPA REALISTISELLA HUONE-TAUSTALLA -->
-        <div id="view-shop" class="app-view" style="background: linear-gradient(to bottom, #1e293b, #020617); perspective: 1000px;">
-            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 350px; background: radial-gradient(ellipse at top, #334155, #0f172a); border-top: 10px solid #000; z-index: 0; transform: rotateX(60deg) scale(1.5); transform-origin: top; box-shadow: inset 0 50px 50px rgba(0,0,0,0.8);"></div>
-            <div class="scale-wrapper" id="shop-scale-wrapper" style="margin-top: 20px; z-index: 10; filter: drop-shadow(0 30px 40px rgba(0,0,0,0.9));">
+        <div id="view-shop" class="app-view" style="background: linear-gradient(to bottom, #0f172a, #020617); perspective: 1000px;">
+            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 350px; background: radial-gradient(ellipse at top, #1e293b, #020617); border-top: 10px solid #000; z-index: 0; transform: rotateX(70deg) scale(1.5); transform-origin: top; box-shadow: inset 0 50px 50px rgba(0,0,0,0.9);"></div>
+            <div class="scale-wrapper" id="shop-scale-wrapper" style="margin-top: 20px; z-index: 10;">
                 <div id="board-shop-wrapper"></div>
             </div>
         </div>
@@ -270,33 +283,107 @@
 
     </div>
 
-    <!-- UUSI MODERNISOITU APPLE-ALAPALKKI UUSILLA IKONEILLA -->
+    <!-- UUSI MODERNISOITU APPLE-ALAPALKKI IKONEILLA -->
     <div class="modern-bottom-nav" id="pocketContainer" style="display:none;">
         <button class="nav-item" onclick="window.switchView('view-receipt')">
             <span class="icon">🧾</span>
-            <span id="navScoreSummary" style="font-size: 0.65rem; color: #fff; background: var(--danger); padding: 2px 6px; border-radius: 6px; margin-bottom: 2px;">TULOKSET</span>
+            <span style="margin-top:2px;">TULOKSET</span>
+            <span id="navScoreSummary">TULOS: E</span>
         </button>
         <button class="nav-item" onclick="window.switchView('view-payslip')">
             <span class="icon">💰</span>
-            <span>PALKKA</span>
+            <span style="margin-top:2px;">PALKKA</span>
         </button>
         <button class="nav-item" onclick="window.switchView('view-binder')">
             <span class="badge" id="handCountBadge">0/6</span>
             <span class="icon">🃏</span>
-            <span>KORTIT</span>
+            <span style="margin-top:2px;">KORTIT</span>
         </button>
         <button class="nav-item" onclick="window.switchView('view-shop')">
             <span class="badge money" id="myResPointsBtn">0 P</span>
             <span class="icon">🏪</span>
-            <span>KAUPPA</span>
+            <span style="margin-top:2px;">KAUPPA</span>
         </button>
         <button class="nav-item accent" onclick="window.switchView('view-hole')">
             <span class="icon">📍</span>
-            <span>VÄYLÄ</span>
+            <span style="margin-top:2px;">VÄYLÄ</span>
         </button>
     </div>
 
-    <!-- Modaalit -->
+    <!-- MODERNISOITU ASETUSVALIKKO -->
+    <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
+        <div class="scrollable-modal-content">
+            <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h1 style="color:#fff; font-size:2rem; font-weight:900;">⚙️ ASETUKSET</h1>
+                    <button class="close-modal-btn" onclick="document.getElementById('settingsModal').style.display='none'">&times;</button>
+                </div>
+
+                <div class="apple-settings-title">Pelin Hallinta</div>
+                <div class="apple-settings-group">
+                    <div class="apple-setting-row" style="background:#f8fafc;">
+                        <span class="apple-setting-label" style="color:#ef4444;">Nollaa Koko Peli</span>
+                        <button class="btn btn-danger" style="width:auto; padding:8px 15px; font-size:0.9rem; margin:0;" onclick="if(window.resetGame) { window.resetGame(); }">WIPE</button>
+                    </div>
+                    <div class="apple-setting-row" style="background:#f8fafc;">
+                        <span class="apple-setting-label">Päivitä Selain</span>
+                        <button class="btn btn-secondary" style="width:auto; padding:8px 15px; font-size:0.9rem; margin:0; border:2px solid #ccc;" onclick="location.reload()">RELOAD</button>
+                    </div>
+                </div>
+
+                <div class="apple-settings-title">Pisteet & Säännöt (GM)</div>
+                <div class="apple-settings-group">
+                    <div class="apple-setting-row">
+                        <span class="apple-setting-label">Palkka (Perus)</span>
+                        <input type="number" id="gmSetPtsPassive" class="apple-setting-input" value="2">
+                    </div>
+                    <div class="apple-setting-row">
+                        <span class="apple-setting-label">Palkinto Voitosta</span>
+                        <input type="number" id="gmSetPtsWin" class="apple-setting-input" value="3">
+                    </div>
+                    <div class="apple-setting-row">
+                        <span class="apple-setting-label">Palkinto Tehtävästä</span>
+                        <input type="number" id="gmSetPtsTask" class="apple-setting-input" value="2">
+                    </div>
+                    <div class="apple-setting-row">
+                        <span class="apple-setting-label">Max. Käsiraja</span>
+                        <input type="number" id="gmSetLimitCount" class="apple-setting-input" value="6">
+                    </div>
+                    <div class="apple-setting-row" style="justify-content:center; padding: 10px;">
+                        <button class="btn btn-primary" style="padding:12px; font-size:1.1rem; width:100%; border-radius:8px;" onclick="if(window.saveGameSettings) window.saveGameSettings();">TALLENNA SÄÄNNÖT</button>
+                    </div>
+                </div>
+
+                <div class="apple-settings-title">Pelaajien Hallinta (GM)</div>
+                <div class="apple-settings-group">
+                    <div class="apple-setting-row" style="padding: 10px 15px;">
+                        <input type="text" id="gmNewPlayerName" placeholder="Uusi pelaaja..." style="flex:1; padding:10px; border-radius:8px; border:2px solid #cbd5e1; margin-right:10px; font-size:1rem; font-weight:bold;">
+                        <button class="btn btn-success" style="width:auto; padding:10px 15px; margin:0; border-radius:8px;" onclick="if(window.gmAddPlayer) window.gmAddPlayer()">LISÄÄ</button>
+                    </div>
+                    <div id="adminPlayerList"></div>
+                </div>
+
+                <div class="apple-settings-title">Radan Hallinta (GM)</div>
+                <div class="apple-settings-group">
+                    <div class="apple-setting-row">
+                        <select id="gmSetCurrentHole" style="flex:1; padding:10px; border-radius:8px; border:2px solid #cbd5e1; font-size:1rem; font-weight:bold; margin-right:10px;"></select>
+                        <button class="btn btn-warning" style="width:auto; padding:10px 15px; margin:0; border-radius:8px;" onclick="if(window.gmChangeHole) window.gmChangeHole()">SIIRRY</button>
+                    </div>
+                    <div class="apple-setting-row">
+                        <span class="apple-setting-label">Poista Nykyinen Väylä</span>
+                        <button class="btn btn-danger" style="width:auto; padding:8px 15px; font-size:0.9rem; margin:0;" onclick="if(window.gmRemoveCurrentHole) window.gmRemoveCurrentHole()">POISTA</button>
+                    </div>
+                    <div class="apple-setting-row">
+                        <span class="apple-setting-label">Lopeta Rata</span>
+                        <button class="btn btn-secondary" style="width:auto; padding:8px 15px; font-size:0.9rem; margin:0; border:2px solid #ccc;" onclick="if(window.cancelCourse) { window.cancelCourse(); document.getElementById('settingsModal').style.display='none'; }">LOPETA</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Muut modaalit ennallaan -->
     <div id="rulesModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:30px;">
@@ -340,66 +427,6 @@
         </div>
     </div>
 
-    <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
-        <div class="scrollable-modal-content">
-            <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-                    <h1 style="color:#fff; font-size:2rem; font-weight:900;">⚙️ ASETUKSET</h1>
-                    <button class="close-modal-btn" onclick="document.getElementById('settingsModal').style.display='none'">&times;</button>
-                </div>
-
-                <button class="btn btn-secondary" onclick="location.reload()" style="font-size:1.1rem; margin-bottom:25px; padding:18px;">🔄 PÄIVITÄ SIVU (RELOAD)</button>
-
-                <h2 style="color:#cbd5e1; font-size:1.1rem;">Rata & Väylät (GM)</h2>
-                <div class="glass-card" style="padding:20px; border-radius:12px; margin-bottom:25px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
-                    <div style="display:flex; gap:10px; margin-bottom: 15px;">
-                        <select id="gmSetCurrentHole" style="margin:0; padding:15px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); flex:1; font-size:1.1rem;"></select>
-                        <button class="btn btn-warning" style="width:auto; padding:0 20px; font-size:1.1rem;" onclick="if(window.gmChangeHole) window.gmChangeHole()">SIIRRY</button>
-                    </div>
-                    <button class="btn btn-danger" style="padding:15px; font-size:1.1rem;" onclick="if(window.gmRemoveCurrentHole) window.gmRemoveCurrentHole()">🗑️ POISTA NYKYINEN VÄYLÄ</button>
-                    <button class="btn btn-secondary" style="margin-top: 15px; padding:15px; color:#000; font-size:1.1rem;" onclick="if(window.cancelCourse) { window.cancelCourse(); document.getElementById('settingsModal').style.display='none'; }">🛑 LOPETA KOKO RATA</button>
-                </div>
-                
-                <h2 style="color:#cbd5e1; font-size:1.1rem;">Pelaajat (GM)</h2>
-                <div class="glass-card" style="padding:20px; border-radius:12px; margin-bottom:25px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
-                    <div style="display:flex; gap:10px; margin-bottom:15px;">
-                        <input type="text" id="gmNewPlayerName" placeholder="Uusi pelaaja..." style="flex:1; padding:12px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.3); margin:0;">
-                        <button class="btn btn-success" style="width:auto; margin:0; padding:0 20px; font-weight:bold;" onclick="if(window.gmAddPlayer) window.gmAddPlayer()">➕ LISÄÄ</button>
-                    </div>
-                    <div id="adminPlayerList"></div>
-                </div>
-
-                <h2 style="color:#cbd5e1; font-size:1.1rem;">Peliasetukset (GM)</h2>
-                <div class="glass-card" style="padding:20px; border-radius:12px; margin-bottom:25px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2);">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
-                        <span style="font-weight:800; font-size:1.1rem;">Maksimikortit kädessä:</span>
-                        <input type="number" id="gmSetLimitCount" value="6" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff;">
-                    </div>
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
-                        <span style="font-weight:800; font-size:1.1rem;">Rahaa Voitosta:</span>
-                        <input type="number" id="gmSetPtsWin" value="3" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff;">
-                    </div>
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
-                        <span style="font-weight:800; font-size:1.1rem;">Rahaa Tehtävästä:</span>
-                        <input type="number" id="gmSetPtsTask" value="2" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff;">
-                    </div>
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#fff;">
-                        <span style="font-weight:800; font-size:1.1rem;">Passiivinen Tulo:</span>
-                        <input type="number" id="gmSetPtsPassive" value="2" style="width:80px; padding:12px; margin:0; background:rgba(0,0,0,0.3); color:#fff;">
-                    </div>
-                    <button class="btn btn-primary" style="padding:16px; margin-top:15px; font-size:1.1rem;" onclick="if(window.saveGameSettings) window.saveGameSettings();">TALLENNA ASETUKSET</button>
-                </div>
-
-                <h2 style="color:#cbd5e1; font-size:1.1rem; margin-top:20px;">Talousloki</h2>
-                <div id="adminScoreLog" class="log-box" style="margin-bottom:20px;"></div>
-                <h2 style="color:#cbd5e1; font-size:1.1rem;">Tapahtumaloki</h2>
-                <div id="adminEventLog" class="log-box" style="margin-bottom:15px;"></div>
-
-                <button class="btn btn-danger" style="margin-top: 40px; padding:20px; font-size:1.2rem;" onclick="if(window.resetGame) { window.resetGame(); }">NOLLAA KOKO PELI (WIPE)</button>
-            </div>
-        </div>
-    </div>
-
     <div id="targetModal" class="winner-overlay" style="z-index: 10001;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="card glass-card" style="width: 100%; max-width: 400px; border: 4px solid var(--danger);">
             <h2 style="color:var(--text-main);">Valitse sabotaasin kohde</h2>
@@ -437,10 +464,10 @@
         <button class="fixed-close-btn" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE KORTTI</button>
     </div>
 
-    <script src="tasks.js?v=198"></script>
-    <script type="module" src="script.js?v=198"></script>
-    <script src="game.js?v=198"></script>
-    <script src="ui.js?v=198"></script>
+    <script src="tasks.js?v=199"></script>
+    <script type="module" src="script.js?v=199"></script>
+    <script src="game.js?v=199"></script>
+    <script src="ui.js?v=199"></script>
     
     <script>
         if ('serviceWorker' in navigator) {
