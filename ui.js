@@ -32,10 +32,10 @@ window.applyViewScales = function() {
     
     let shopWrapper = el('shop-scale-wrapper');
     if(shopWrapper) {
-        let shopScale = Math.min(1.0, w / 650);
-        let maxHScale = (h - 180) / 1000; 
+        let shopScale = Math.min(1.0, w / 750); // Kauppa on nyt leveämpi
+        let maxHScale = (h - 180) / 1150; // Kauppa on myös korkeampi
         shopScale = Math.min(shopScale, maxHScale);
-        if(shopScale < 0.35) shopScale = 0.35;
+        if(shopScale < 0.3) shopScale = 0.3;
         shopWrapper.style.transform = `scale(${shopScale})`;
     }
     
@@ -83,9 +83,9 @@ window.showEventCard = function(cId, target, by) {
     let targetStr = '';
     if (target) {
         targetStr = `
-            <div style="background:var(--danger); color:#fff; padding:15px; border-radius:8px; font-weight:900; font-size:1.2rem; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.4); margin-bottom:10px;">
-                SUORITTAJA:<br><span style="font-size:1.8rem; font-family:'Kalam', cursive;">${target}</span>
-                <div style="font-size:0.85rem; margin-top:5px; opacity:0.9;">(Määrääjä: ${by})</div>
+            <div style="background:var(--danger); color:#fff; padding:15px; border-radius:12px; font-weight:900; font-size:1.4rem; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.6); margin-bottom:10px;">
+                SUORITTAJA:<br><span style="font-size:2rem; font-family:'Kalam', cursive;">${target}</span>
+                <div style="font-size:1rem; margin-top:5px; opacity:0.9;">(Määrääjä: ${by})</div>
             </div>`;
     }
     
@@ -97,11 +97,33 @@ window.showEventCard = function(cId, target, by) {
 window.showAppleToast = function(msg, icon = '✨') { 
     const toast = el('appleToast'); 
     if(!toast) return; 
+    
     el('appleToastIcon').innerText = icon; 
     el('appleToastText').innerText = msg; 
+    
+    let detailsEl = el('appleToastDetails');
+    if (detailsEl && detailsEl.innerText) {
+        let rawText = detailsEl.innerText;
+        if (rawText.includes(':') && !rawText.includes('Tarkista')) {
+            // Tehdään tuloserittelystä siisti Apple-tyylinen lista
+            let formattedHtml = rawText.split(', ').map(part => {
+                let kv = part.split(': ');
+                if(kv.length === 2) {
+                    let valColor = kv[1].includes('-') ? '#fca5a5' : '#86efac';
+                    return `<div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.1);"><span style="color:#cbd5e1;">${kv[0]}</span><span style="color:${valColor}; font-weight:900;">${kv[1]}</span></div>`;
+                }
+                return `<div style="padding:5px 0;">${part}</div>`;
+            }).join('');
+            detailsEl.innerHTML = formattedHtml;
+        }
+        detailsEl.style.display = 'block';
+    } else if (detailsEl) {
+        detailsEl.style.display = 'none';
+    }
+
     toast.classList.add('show'); 
     if (navigator.vibrate) navigator.vibrate(150);
-    setTimeout(() => { toast.classList.remove('show'); }, 3000); 
+    setTimeout(() => { toast.classList.remove('show'); }, 4000); 
 };
 
 window.showNotification = function(message, type = 'info') { 
@@ -116,7 +138,7 @@ window.showNotification = function(message, type = 'info') {
 };
 
 // ==============================================
-// KORTIN GENEROINTI
+// KORTIN GENEROINTI (JÄTTIKOKO)
 // ==============================================
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
     if (!cDef) return '';
@@ -127,9 +149,10 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '',
     let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cDef.id) : (cDef.level === 3 ? 6 : (cDef.level === 2 ? 4 : 2));
     let lockedStyle = isLocked ? 'opacity: 0.5; filter: grayscale(50%);' : '';
     
-    let dimensions = isCarousel ? 'width: 100%; height: 100%; box-sizing: border-box; display:flex; flex-direction:column;' : 'width: 190px; height: 290px;';
-    let titleSize = isCarousel ? 'font-size: 1.8rem;' : '';
-    let descSize = isCarousel ? 'font-size: 1.1rem; flex: 1;' : '';
+    // Peruskoko kortille on nyt massiivinen 240x380px! Sitä skaalataan CSS:llä alemmas.
+    let dimensions = isCarousel ? 'width: 100%; height: 100%; box-sizing: border-box; display:flex; flex-direction:column;' : 'width: 240px; height: 380px;';
+    let titleSize = isCarousel ? 'font-size: 2.2rem;' : '';
+    let descSize = isCarousel ? 'font-size: 1.5rem; flex: 1;' : '';
     
     return `
     <div class="physical-card ${typeClass}" style="${lockedStyle} ${dimensions} margin: 0 auto;">
@@ -148,7 +171,6 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '',
 // ==============================================
 // VÄYLÄN (KOTI) RENDERÖINTI & NAVIGOINTI
 // ==============================================
-
 window.updateHoleNav = function() {
     if (!window.currentCourse) return;
     let hIndex = window.viewedHoleIndex || window.currentHoleIndex || 1;
@@ -234,14 +256,14 @@ window.renderHoleView = function(hIndex, isCurrent) {
         let bTxt = hData.rule.type === 'bounty' ? `🏆 TEHTÄVÄ` : '🎲 VÄYLÄSÄÄNTÖ';
         let bgCol = hData.color || '#fef08a';
         let ruleLen = hData.rule.d ? hData.rule.d.length : 0;
-        let pSize = ruleLen > 80 ? '0.95rem' : '1.15rem';
+        let pSize = ruleLen > 80 ? '1.05rem' : '1.25rem';
         let pLh = ruleLen > 80 ? '1.25' : '1.4';
 
         html += `
         <div class="post-it-note" style="background:${bgCol}; transform: rotate(${rot2}deg); margin-bottom: 30px; width: 90%; max-width: 340px;" onclick="event.stopPropagation(); window.showZoomModal(this.outerHTML)">
-            <div style="font-weight:900; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; color:#666;">📌 ${bTxt}</div>
-            <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; color:#111;">${hData.rule.n}</div>
-            <div style="font-size: ${pSize}; line-height: ${pLh}; font-weight:700; color:#222;">${hData.rule.d}</div>
+            <div style="font-weight:900; font-size:0.95rem; margin-bottom:8px; text-transform:uppercase; color:#666;">📌 ${bTxt}</div>
+            <div style="font-size:1.8rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; color:#111;">${hData.rule.n}</div>
+            <div style="font-size: ${pSize}; line-height: ${pLh}; font-weight:800; color:#222;">${hData.rule.d}</div>
         </div>`;
     }
 
@@ -262,13 +284,13 @@ window.renderHoleView = function(hIndex, isCurrent) {
                 let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
                 
-                let extraHtml = `<div style="background:rgba(0,0,0,0.8); color:#fff; padding:6px; border-radius:4px; font-size:0.75rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(Käyttäjä: ${pc.by})</span></div>`;
+                let extraHtml = `<div style="background:rgba(0,0,0,0.8); color:#fff; padding:8px; border-radius:6px; font-size:0.9rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(Käyttäjä: ${pc.by})</span></div>`;
                 let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml);
 
                 html += `
                 <div class="pinned-card-container" style="transform: rotate(${cRot}deg); cursor:pointer;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div class="pushpin" style="left: ${pinLeft}%; z-index:20;"></div>
-                    <div style="transform: scale(0.85); transform-origin: top center;">
+                    <div style="transform: scale(0.65); transform-origin: top center; margin-bottom: -130px;">
                         ${fullCardHtml}
                     </div>
                 </div>`;
@@ -291,8 +313,8 @@ window.renderHoleView = function(hIndex, isCurrent) {
                 let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 
                 html += `
-                <div style="background:rgba(0,0,0,0.05); padding:8px; border-radius:6px; font-size:0.85rem; border-left: 5px solid ${typeColor}; cursor:pointer;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
-                    <b style="font-size:1rem;">${typeIcon} ${pc.cardName}</b><br>
+                <div style="background:rgba(0,0,0,0.05); padding:10px; border-radius:6px; font-size:0.95rem; border-left: 5px solid ${typeColor}; cursor:pointer;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
+                    <b style="font-size:1.1rem;">${typeIcon} ${pc.cardName}</b><br>
                     <span style="color:#555;">Käyttäjä: <b>${pc.by}</b> ➡️ Kohde: <b style="color:${typeColor};">${pc.target}</b></span>
                 </div>`;
             });
@@ -329,7 +351,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
         <div class="player-row-paper">
             <span class="paper-name" style="font-size:1.5rem;">${p.name}</span>
             <div style="display:flex; align-items:center; gap: 10px;">
-                <span style="font-size:1.1rem; color:var(--warning); font-weight:900;">${displayScore}</span>
+                <span style="font-size:1.2rem; color:var(--warning); font-weight:900;">${displayScore}</span>
                 <div class="score-display-paper" style="width:auto !important; min-width:38px; height:38px !important; font-size:1.3rem !important; margin-left:auto; padding:0 5px;">${scoreHTML}</div>
             </div>
         </div>`;
@@ -347,9 +369,9 @@ window.renderHoleView = function(hIndex, isCurrent) {
             myBreakdown.summary.split(', ').forEach(part => {
                 let kv = part.split(': ');
                 if(kv.length === 2) { 
-                    rowsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #cbd5e1; padding:6px 0;"><span style="color:#475569;">${kv[0]}</span><span style="font-weight:900; color:#1e293b; font-size:1.1rem;">${kv[1]}</span></div>`; 
+                    rowsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #cbd5e1; padding:8px 0;"><span style="color:#475569;">${kv[0]}</span><span style="font-weight:900; color:#1e293b; font-size:1.2rem;">${kv[1]}</span></div>`; 
                 } else { 
-                    rowsHtml += `<div style="padding:6px 0; color:#475569; font-weight:bold;">${part}</div>`; 
+                    rowsHtml += `<div style="padding:8px 0; color:#475569; font-weight:bold;">${part}</div>`; 
                 }
             });
         } else { 
@@ -359,16 +381,16 @@ window.renderHoleView = function(hIndex, isCurrent) {
         html += `
         <div class="payslip-paper" style="background:#fff; border:1px solid #cbd5e1; border-radius:2px; transform: rotate(-0.5deg); margin-bottom: 20px; width: 95%; max-width: 360px; padding: 25px; box-shadow: 5px 15px 30px rgba(0,0,0,0.3); z-index:30; position:relative; font-family:'Courier Prime', monospace;">
             <div style="border-bottom: 3px dashed #1e293b; padding-bottom: 10px; margin-bottom: 12px; text-align:center;">
-                <div style="font-weight:900; font-size:1.5rem; color:#1e293b; letter-spacing:1px; text-transform:uppercase;">Palkkalaskelma</div>
-                <div style="font-size:0.9rem; color:#64748b; margin-top:4px; font-weight:bold;">Kausi: Väylä ${hIndex}</div>
+                <div style="font-weight:900; font-size:1.6rem; color:#1e293b; letter-spacing:1px; text-transform:uppercase;">Palkkalaskelma</div>
+                <div style="font-size:1rem; color:#64748b; margin-top:4px; font-weight:bold;">Kausi: Väylä ${hIndex}</div>
             </div>
-            <div style="margin-bottom:15px; font-size:1.1rem; color:#1e293b;">
+            <div style="margin-bottom:15px; font-size:1.2rem; color:#1e293b;">
                 <span style="font-weight:900;">Työntekijä:</span> ${window.myName.toUpperCase()}
             </div>
-            <div style="font-size:1rem; margin-bottom:20px; border-top:2px solid #94a3b8; padding-top:10px;">${rowsHtml}</div>
+            <div style="font-size:1.1rem; margin-bottom:20px; border-top:2px solid #94a3b8; padding-top:10px;">${rowsHtml}</div>
             <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:15px; border-radius:6px; border:3px solid ${deltaColor};">
-                <span style="font-weight:900; font-size:1.1rem; color:#334155;">NETTOPALKKA</span>
-                <span style="font-weight:900; font-size:1.8rem; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
+                <span style="font-weight:900; font-size:1.2rem; color:#334155;">NETTOPALKKA</span>
+                <span style="font-weight:900; font-size:2rem; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
             </div>
         </div>`;
     }
@@ -378,7 +400,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
 };
 
 // ==============================================
-// PALKKALASKELMA NÄKYMÄ
+// PALKKALASKELMA NÄKYMÄ (Erillinen välilehti)
 // ==============================================
 window.renderPayslipView = function(hIndex) {
     let container = el('payslip-content');
@@ -389,10 +411,10 @@ window.renderPayslipView = function(hIndex) {
 
     if (window.currentHoleIndex === 1 && !window.gameHistory[0]) {
         container.innerHTML = `
-        <div style="background:#fff; padding:30px; border-radius:8px; border:2px dashed #94a3b8; text-align:center; box-shadow:0 10px 20px rgba(0,0,0,0.3); width: 90%; max-width: 350px;">
-            <div style="font-size:3rem; margin-bottom:10px;">⏳</div>
-            <h2 style="color:#334155; font-size:1.3rem; font-weight:900;">Palkkaa ei ole vielä jaettu</h2>
-            <p style="color:#64748b; font-weight:bold;">Ensimmäinen palkkalaskelma ilmestyy tähän, kun väylä 1 on valmis.</p>
+        <div style="background:#fff; padding:30px; border-radius:12px; border:3px dashed #94a3b8; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.3); width: 90%; max-width: 400px; margin-top:20px;">
+            <div style="font-size:4rem; margin-bottom:15px;">⏳</div>
+            <h2 style="color:#334155; font-size:1.5rem; font-weight:900;">Palkkaa ei ole vielä jaettu</h2>
+            <p style="color:#64748b; font-weight:bold; font-size:1.1rem; margin-top:10px;">Ensimmäinen palkkalaskelma ilmestyy tähän, kun väylä 1 on valmis.</p>
         </div>`;
         return;
     }
@@ -412,28 +434,28 @@ window.renderPayslipView = function(hIndex) {
         myBreakdown.summary.split(', ').forEach(part => {
             let kv = part.split(': ');
             if(kv.length === 2) { 
-                rowsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #cbd5e1; padding:8px 0;"><span style="color:#475569;">${kv[0]}</span><span style="font-weight:900; color:#1e293b; font-size:1.1rem;">${kv[1]}</span></div>`; 
+                rowsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #cbd5e1; padding:10px 0;"><span style="color:#475569;">${kv[0]}</span><span style="font-weight:900; color:#1e293b; font-size:1.3rem;">${kv[1]}</span></div>`; 
             } else { 
-                rowsHtml += `<div style="padding:8px 0; color:#475569; font-weight:bold;">${part}</div>`; 
+                rowsHtml += `<div style="padding:10px 0; color:#475569; font-weight:bold;">${part}</div>`; 
             }
         });
     } else { 
-        rowsHtml += `<div style="padding:15px 0; color:#475569; text-align:center; font-style:italic; font-weight:bold;">Ei tapahtumia tällä jaksolla.</div>`; 
+        rowsHtml += `<div style="padding:20px 0; color:#475569; text-align:center; font-style:italic; font-weight:bold; font-size:1.1rem;">Ei tapahtumia tällä jaksolla.</div>`; 
     }
 
     container.innerHTML = `
-    <div class="payslip-paper" style="background:#fff; border:1px solid #cbd5e1; border-radius:2px; transform: rotate(-0.5deg); margin-top: 20px; margin-bottom: 40px; width: 95%; max-width: 380px; padding: 25px; box-shadow: 5px 15px 30px rgba(0,0,0,0.4); z-index:30; position:relative; font-family:'Courier Prime', monospace;">
-        <div style="border-bottom: 3px dashed #1e293b; padding-bottom: 12px; margin-bottom: 15px; text-align:center;">
-            <div style="font-weight:900; font-size:1.8rem; color:#1e293b; letter-spacing:2px; text-transform:uppercase;">Palkkalaskelma</div>
-            <div style="font-size:1rem; color:#64748b; margin-top:6px; font-weight:bold;">Kausi: Väylä ${viewIndex}</div>
+    <div class="payslip-paper" style="background:#fff; border:1px solid #cbd5e1; border-radius:4px; transform: rotate(-1deg); margin-top: 30px; margin-bottom: 50px; width: 95%; max-width: 450px; padding: 35px; box-shadow: 10px 25px 50px rgba(0,0,0,0.5); z-index:30; position:relative; font-family:'Courier Prime', monospace;">
+        <div style="border-bottom: 4px dashed #1e293b; padding-bottom: 15px; margin-bottom: 20px; text-align:center;">
+            <div style="font-weight:900; font-size:2.2rem; color:#1e293b; letter-spacing:2px; text-transform:uppercase;">Palkkalaskelma</div>
+            <div style="font-size:1.1rem; color:#64748b; margin-top:8px; font-weight:bold;">Kausi: Väylä ${viewIndex}</div>
         </div>
-        <div style="margin-bottom:15px; font-size:1.1rem; color:#1e293b;">
+        <div style="margin-bottom:20px; font-size:1.3rem; color:#1e293b;">
             <span style="font-weight:900;">Työntekijä:</span> ${window.myName.toUpperCase()}
         </div>
-        <div style="font-size:1rem; margin-bottom:20px; border-top:2px solid #94a3b8; padding-top:10px;">${rowsHtml}</div>
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:15px; border-radius:6px; border:3px solid ${deltaColor};">
-            <span style="font-weight:900; font-size:1.3rem; color:#334155;">NETTOPALKKA</span>
-            <span style="font-weight:900; font-size:2rem; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
+        <div style="font-size:1.2rem; margin-bottom:30px; border-top:3px solid #94a3b8; padding-top:15px;">${rowsHtml}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:20px; border-radius:8px; border:4px solid ${deltaColor};">
+            <span style="font-weight:900; font-size:1.4rem; color:#334155;">NETTOPALKKA</span>
+            <span style="font-weight:900; font-size:2.5rem; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
         </div>
     </div>`;
 };
@@ -453,17 +475,17 @@ window.renderBinderOnBoard = function() {
 
     let cardsHtml = '';
     if(myCards.length === 0) {
-        cardsHtml = '<p style="color:#555; font-size:1.4rem; text-align:center; padding:50px; font-weight:bold; grid-column: 1 / -1;">Kansiosi on tyhjä.</p>';
+        cardsHtml = '<p style="color:#555; font-size:1.8rem; text-align:center; padding:50px; font-weight:bold; grid-column: 1 / -1;">Kansiosi on tyhjä.</p>';
     } else {
         myCards.forEach((cId) => {
             let cDef = window.allCards.find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.85rem; color:#111; margin-top:auto; padding-top:10px;">🔄 KATSO TASOT / PELAA</div>`;
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:1rem; color:#111; margin-top:auto; padding-top:10px;">🔄 KATSO TASOT / PELAA</div>`;
             let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
 
             cardsHtml += `
-            <div class="plastic-sleeve" style="cursor:pointer; transform: scale(0.95); transform-origin: top center; margin-bottom:-20px; z-index: 10;" onclick="window.openCardDetail('${cId}', 'sell')">
+            <div class="plastic-sleeve" style="cursor:pointer; transform: scale(0.85); transform-origin: top center; margin-bottom:-50px; z-index: 10;" onclick="window.openCardDetail('${cId}', 'sell')">
                 ${fullCardHtml}
             </div>`;
         });
@@ -472,12 +494,12 @@ window.renderBinderOnBoard = function() {
     wrapper.innerHTML = `
     <div class="board-binder" style="width: 500px; min-height: 800px; padding-top: 20px; padding-bottom: 20px; background: radial-gradient(circle at center, #3e2723 0%, #211412 100%); margin: 0 auto;">
         <div class="binder-spine" style="position: absolute; top: 0; bottom: 0; left: 0; z-index: 30; width: 40px; background: linear-gradient(to right, #111, #222, #111); display:flex; flex-direction:column; justify-content:space-evenly; align-items:center;">
-            <div class="binder-ring" style="margin-top: 50px;"></div>
-            <div class="binder-ring"></div>
-            <div class="binder-ring" style="margin-bottom: 50px;"></div>
+            <div class="binder-ring" style="margin-top: 50px; width:30px; height:20px; border-radius:20px; background:#e2e8f0; box-shadow:2px 4px 8px #000, inset 0 2px 5px #fff; margin-left:20px;"></div>
+            <div class="binder-ring" style="width:30px; height:20px; border-radius:20px; background:#e2e8f0; box-shadow:2px 4px 8px #000, inset 0 2px 5px #fff; margin-left:20px;"></div>
+            <div class="binder-ring" style="margin-bottom: 50px; width:30px; height:20px; border-radius:20px; background:#e2e8f0; box-shadow:2px 4px 8px #000, inset 0 2px 5px #fff; margin-left:20px;"></div>
         </div>
         <div class="binder-page" style="margin-left: 35px; margin-right: 15px; padding: 25px; border-radius: 4px 12px 12px 4px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1), 5px 5px 15px rgba(0,0,0,0.6);">
-            <h2 style="color:#111; font-size:2rem; margin-bottom:20px; font-family:'Kalam', cursive; border-bottom:3px dashed #ccc; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
+            <h2 style="color:#111; font-size:2.5rem; margin-bottom:20px; font-family:'Kalam', cursive; border-bottom:4px dashed #ccc; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%;">
                 ${cardsHtml}
             </div>
@@ -486,7 +508,7 @@ window.renderBinderOnBoard = function() {
 };
 
 // ==============================================
-// VÄLIPALA-AUTOMAATTI (KAUPPA)
+// VÄLIPALA-AUTOMAATTI (KAUPPA) - ULTIMATE 3D REALISM
 // ==============================================
 window.renderShopOnBoard = function() {
     let wrapper = document.getElementById('board-shop-wrapper');
@@ -501,9 +523,10 @@ window.renderShopOnBoard = function() {
     let levels = [3, 2, 1]; 
 
     levels.forEach(lvl => {
-        shelvesHtml += `<div style="display:flex; justify-content:space-around; align-items:flex-end; padding-bottom:15px; border-bottom: 15px solid #0f172a; position:relative; height: 240px; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.7)); box-shadow: inset 0 -10px 20px rgba(0,0,0,0.8);">`;
+        shelvesHtml += `<div style="display:flex; justify-content:space-around; align-items:flex-end; padding-bottom:20px; border-bottom: 20px solid #0f172a; position:relative; height: 280px; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.8)); box-shadow: inset 0 -15px 30px rgba(0,0,0,0.9);">`;
         
-        shelvesHtml += `<div style="position:absolute; bottom:55px; left:0; width:100%; height:40px; background:repeating-linear-gradient(90deg, transparent, transparent 20px, #64748b 20px, #64748b 28px); z-index:1; opacity:0.8; filter:drop-shadow(0 10px 10px #000);"></div>`;
+        // Automaatin 3D-spiraalit (isommat)
+        shelvesHtml += `<div style="position:absolute; bottom:60px; left:0; width:100%; height:45px; background:repeating-linear-gradient(90deg, transparent, transparent 25px, #94a3b8 25px, #94a3b8 35px); z-index:1; opacity:0.9; filter:drop-shadow(0 10px 10px #000);"></div>`;
 
         let shelfItems = (shopArray || []).filter(c => c === null || c.level === lvl);
         
@@ -512,30 +535,33 @@ window.renderShopOnBoard = function() {
             if (item) {
                 const canAfford = myPoints >= item.price;
                 let isResFull = actRes.length >= 2;
-                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.9rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:1rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
                 let fullCardHtml = window.generateCardHTML(item, false, extraHtml, false);
                 
                 shelvesHtml += `
                     <div style="position:relative; width:45%; display:flex; flex-direction:column; align-items:center; z-index:10;">
-                        <div style="transform: scale(0.65); transform-origin: bottom center; cursor:pointer; width:190px; margin-bottom:-55px;" onclick="window.openCardDetail('${item.id}', 'shop')">
+                        <!-- Skaalataan isot kortit sopiviksi hyllylle -->
+                        <div style="transform: scale(0.55); transform-origin: bottom center; cursor:pointer; width:240px; margin-bottom:-85px;" onclick="window.openCardDetail('${item.id}', 'shop')">
                             ${fullCardHtml}
                         </div>
                         
-                        <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 4px 12px; border-radius: 6px; border: 3px solid #22c55e; font-weight: 900; font-size: 1.2rem; margin-top: 5px; box-shadow: 0 0 10px rgba(34,197,94,0.6); z-index: 15;">${item.price} P</div>
+                        <!-- Automaatin LED-hintalappu -->
+                        <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 6px; border: 3px solid #22c55e; font-weight: 900; font-size: 1.4rem; margin-top: 10px; box-shadow: 0 0 15px rgba(34,197,94,0.8); z-index: 15;">${item.price} P</div>
                         
-                        <div style="display:flex; gap:8px; margin-top:12px; width:100%; justify-content:center; position: relative; z-index: 100;">
-                            <button class="btn btn-success" ${!canAfford?'disabled':''} style="padding:10px; font-size:0.9rem; font-weight:900; margin:0; box-shadow: 0 4px 8px rgba(0,0,0,0.8);" onclick="window.buyShopItem('${item.id}', ${item.price}, false)">OSTA</button>
-                            ${!isResFull ? `<button class="btn btn-primary" style="padding:10px; font-size:0.9rem; font-weight:900; margin:0; box-shadow: 0 4px 8px rgba(0,0,0,0.8);" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
+                        <!-- Napit lukittu z-indexillä ettei jää piiloon -->
+                        <div style="display:flex; gap:10px; margin-top:15px; width:100%; justify-content:center; position: relative; z-index: 100;">
+                            <button class="btn btn-success" ${!canAfford?'disabled':''} style="padding:12px; font-size:1rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8);" onclick="window.buyShopItem('${item.id}', ${item.price}, false)">OSTA</button>
+                            ${!isResFull ? `<button class="btn btn-primary" style="padding:12px; font-size:1rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8);" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
                         </div>
                     </div>
                 `;
             } else {
                 shelvesHtml += `
                     <div style="position:relative; width:45%; display:flex; flex-direction:column; align-items:center; z-index:10;">
-                        <div style="width:190px; height:290px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:12px; border:6px dashed #333; transform: scale(0.65); transform-origin: bottom center; margin-bottom:-55px;">
-                            <div style="color:#666; font-weight:900; font-size:3rem; letter-spacing:4px; transform:rotate(-45deg);">TYHJÄ</div>
+                        <div style="width:240px; height:380px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:16px; border:8px dashed #333; transform: scale(0.55); transform-origin: bottom center; margin-bottom:-85px;">
+                            <div style="color:#666; font-weight:900; font-size:3.5rem; letter-spacing:4px; transform:rotate(-45deg);">TYHJÄ</div>
                         </div>
-                        <div style="background: #000; color: #555; font-family: 'Courier Prime', monospace; padding: 4px 12px; border-radius: 6px; border: 3px solid #444; font-weight: 900; font-size: 1.2rem; margin-top: 5px;">---</div>
+                        <div style="background: #000; color: #555; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 6px; border: 3px solid #444; font-weight: 900; font-size: 1.4rem; margin-top: 10px;">---</div>
                     </div>
                 `;
             }
@@ -546,27 +572,27 @@ window.renderShopOnBoard = function() {
     let reserveHtml = '';
     if(actRes.length > 0) {
         reserveHtml += `
-        <div style="margin-top:30px; background: rgba(0,0,0,0.6); border: 3px dashed #475569; border-radius: 12px; padding: 20px;">
-            <div style="color:#94a3b8; font-weight:900; text-align:center; margin-bottom:15px; font-size:1.1rem; text-transform:uppercase; letter-spacing:2px;">Varatut Tuotteet</div>
+        <div style="margin-top:35px; background: rgba(0,0,0,0.6); border: 4px dashed #475569; border-radius: 12px; padding: 25px;">
+            <div style="color:#94a3b8; font-weight:900; text-align:center; margin-bottom:20px; font-size:1.3rem; text-transform:uppercase; letter-spacing:3px;">Varatut Tuotteet</div>
             <div style="display:flex; justify-content:space-around; width:100%; gap:20px;">`;
             
         actRes.forEach(rId => {
             let resItem = window.allCards.find(c => c.id === rId);
             if(!resItem) return;
             const canAfford = myPoints >= resItem.price;
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.85rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:1rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
             let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml, false);
             
             reserveHtml += `
                 <div style="width:45%; display:flex; flex-direction:column; align-items:center;">
-                    <div style="transform: scale(0.65); margin-bottom:-65px; transform-origin: top center; cursor:pointer; width:190px; position:relative;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
-                        <div style="position:absolute; top:-25px; right:-25px; background:#eab308; color:#000; padding:12px 18px; font-weight:900; font-size: 1.3rem; border-radius:10px; z-index:30; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.6);">🔒 VARATTU</div>
+                    <div style="transform: scale(0.60); margin-bottom:-75px; transform-origin: top center; cursor:pointer; width:240px; position:relative;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
+                        <div style="position:absolute; top:-30px; right:-30px; background:#fbbf24; color:#000; padding:15px 20px; font-weight:900; font-size: 1.5rem; border-radius:12px; z-index:30; border: 5px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.8);">🔒 VARATTU</div>
                         ${fullCardHtml}
                     </div>
-                    <div style="background: #000; color: #eab308; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 6px; border: 3px solid #eab308; font-weight: 900; font-size: 1.3rem; margin-top: 10px; text-align: center; margin-bottom:12px; box-shadow: 0 0 10px rgba(234,179,8,0.5);">${resItem.price} P</div>
-                    <div style="display:flex; gap:8px; width:100%; justify-content:center; position: relative; z-index: 100;">
-                        <button class="btn btn-success" ${!canAfford?'disabled':''} style="padding:10px; font-size:0.9rem; font-weight:900; margin:0; box-shadow: 0 4px 8px rgba(0,0,0,0.8);" onclick="window.buyShopItem('${resItem.id}', ${resItem.price}, true)">LUNASTA</button>
-                        <button class="btn btn-danger" style="padding:10px; font-size:0.9rem; font-weight:900; margin:0; box-shadow: 0 4px 8px rgba(0,0,0,0.8);" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
+                    <div style="background: #000; color: #fbbf24; font-family: 'Courier Prime', monospace; padding: 8px 18px; border-radius: 6px; border: 3px solid #fbbf24; font-weight: 900; font-size: 1.5rem; margin-top: 15px; text-align: center; margin-bottom:15px; box-shadow: 0 0 15px rgba(251,191,36,0.6);">${resItem.price} P</div>
+                    <div style="display:flex; gap:10px; width:100%; justify-content:center; position: relative; z-index: 100;">
+                        <button class="btn btn-success" ${!canAfford?'disabled':''} style="padding:12px; font-size:1rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8);" onclick="window.buyShopItem('${resItem.id}', ${resItem.price}, true)">LUNASTA</button>
+                        <button class="btn btn-danger" style="padding:12px; font-size:1rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8);" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
                     </div>
                 </div>
             `;
@@ -575,34 +601,41 @@ window.renderShopOnBoard = function() {
     }
 
     wrapper.innerHTML = `
-    <div style="position: relative; width: 650px; background: #111827; border: 20px solid #020617; border-bottom: 50px solid #000; border-radius: 16px 16px 0 0; padding: 25px; box-shadow: 20px 35px 60px rgba(0,0,0,0.9), inset 0 0 30px rgba(255,255,255,0.05); display: flex; flex-direction: column; z-index:20; margin: 0 auto;">
+    <!-- KOMPAKTI LATTIA-AUTOMAATTI -->
+    <div style="position: relative; width: 700px; background: #111827; border: 25px solid #020617; border-bottom: 60px solid #000; border-radius: 20px 20px 0 0; padding: 30px; box-shadow: 25px 40px 80px rgba(0,0,0,0.9), inset 0 0 40px rgba(255,255,255,0.05); display: flex; flex-direction: column; z-index:20; margin: 0 auto;">
         
-        <div style="background: linear-gradient(135deg, #000, #111); padding: 20px; border-radius: 10px; border: 5px solid #222; display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px; box-shadow: inset 0 0 25px rgba(239,68,68,0.25);">
-            <div style="display:flex; align-items:center; gap: 20px;">
-                <div style="font-size:3.5rem; text-shadow: 0 0 15px rgba(255,255,255,0.6);">🥨</div>
-                <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:2.8rem; letter-spacing: 3px; text-shadow: 0 0 15px #ef4444;">FRIBAMART SNACKS</div>
+        <!-- Yläosan valokyltti -->
+        <div style="background: linear-gradient(135deg, #000, #111); padding: 25px; border-radius: 12px; border: 6px solid #222; display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px; box-shadow: inset 0 0 30px rgba(239,68,68,0.25);">
+            <div style="display:flex; align-items:center; gap: 25px;">
+                <div style="font-size:4rem; text-shadow: 0 0 20px rgba(255,255,255,0.6);">🥨</div>
+                <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:3.2rem; letter-spacing: 4px; text-shadow: 0 0 20px #ef4444;">FRIBAMART SNACKS</div>
             </div>
-            <div style="background: #000; padding: 12px 18px; border-radius: 8px; border: 3px solid #333;">
-                <div style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:2rem; font-weight:900; text-shadow: 0 0 12px #22c55e;">${myPoints} P</div>
+            <div style="background: #000; padding: 15px 25px; border-radius: 10px; border: 4px solid #333;">
+                <div style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:2.5rem; font-weight:900; text-shadow: 0 0 15px #22c55e;">${myPoints} P</div>
             </div>
         </div>
 
-        <div style="background: #020617; border-radius: 10px; border: 12px solid #0f172a; padding: 15px 15px 0 15px; position:relative; box-shadow: inset 0 15px 40px #000;">
+        <!-- Lasikaappi jossa 3 hyllyä (T3, T2, T1) -->
+        <div style="background: #020617; border-radius: 12px; border: 15px solid #0f172a; padding: 20px 20px 0 20px; position:relative; box-shadow: inset 0 20px 50px #000;">
+            <!-- Lasiheijastus -->
             <div style="position:absolute; top:0; left:-20%; width:150%; height:100%; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.08) 50%, transparent 55%); pointer-events:none; z-index:40;"></div>
             ${shelvesHtml}
         </div>
 
-        <div style="height: 180px; margin-top: 30px; display:flex; gap:30px;">
-            <div style="width: 180px; background: #000; border-radius: 10px; border: 5px solid #1e293b; padding: 15px; display:flex; flex-direction:column; align-items:center; box-shadow: inset 0 0 15px rgba(0,0,0,0.9);">
-                <div style="width: 100%; height: 35px; background: #0f172a; border: 3px solid #334155; margin-bottom: 15px; color:#22c55e; font-family:'Courier Prime', monospace; font-weight:bold; font-size:1.3rem; text-align:right; padding-right:8px; line-height:29px; box-shadow: inset 0 0 10px #000;">12.00</div>
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width:100%;">
-                    ${Array(9).fill('<div style="background: #334155; height:22px; border-radius:5px; border-bottom:4px solid #0f172a;"></div>').join('')}
+        <!-- Alapaneeli: Numpad ja PUSH-luukku -->
+        <div style="height: 200px; margin-top: 40px; display:flex; gap:35px;">
+            <!-- Numpad & Kolikkopesä -->
+            <div style="width: 200px; background: #000; border-radius: 12px; border: 6px solid #1e293b; padding: 20px; display:flex; flex-direction:column; align-items:center; box-shadow: inset 0 0 20px rgba(0,0,0,0.9);">
+                <div style="width: 100%; height: 40px; background: #0f172a; border: 3px solid #334155; margin-bottom: 20px; color:#22c55e; font-family:'Courier Prime', monospace; font-weight:bold; font-size:1.5rem; text-align:right; padding-right:10px; line-height:34px; box-shadow: inset 0 0 15px #000;">12.00</div>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width:100%;">
+                    ${Array(9).fill('<div style="background: #334155; height:25px; border-radius:6px; border-bottom:5px solid #0f172a;"></div>').join('')}
                 </div>
             </div>
             
-            <div style="flex: 1; background: #000; border-radius: 10px; border: 8px solid #111; position:relative; box-shadow: inset 0 30px 40px #000;">
-                <div style="position:absolute; top:0; left:0; right:0; height: 100px; background: #1a1a1a; border-bottom: 4px solid #000; display:flex; justify-content:center; align-items:center; transform-origin: top; transform: rotateX(-15deg);">
-                    <span style="color:#444; font-weight:900; font-size:2.8rem; letter-spacing:15px; text-shadow:-2px -2px 0 #000;">PUSH</span>
+            <!-- PUSH Luukku -->
+            <div style="flex: 1; background: #000; border-radius: 12px; border: 10px solid #111; position:relative; box-shadow: inset 0 40px 50px #000;">
+                <div style="position:absolute; top:0; left:0; right:0; height: 110px; background: #1a1a1a; border-bottom: 5px solid #000; display:flex; justify-content:center; align-items:center; transform-origin: top; transform: rotateX(-15deg);">
+                    <span style="color:#444; font-weight:900; font-size:3.5rem; letter-spacing:15px; text-shadow:-2px -2px 0 #000;">PUSH</span>
                 </div>
             </div>
         </div>
@@ -610,6 +643,30 @@ window.renderShopOnBoard = function() {
         ${reserveHtml}
     </div>
     `;
+};
+
+// ==============================================
+// GM PELAAJIEN HALLINTA (APPLE ASETUSVALIKKO)
+// ==============================================
+window.updateAdminPlayerList = function() {
+    let container = el('adminPlayerList'); if(!container) return; 
+    let html = '';
+    (window.allPlayers || []).forEach(p => {
+        if(!p) return;
+        html += `
+        <div class="apple-setting-row" style="flex-direction:column; align-items:stretch; gap:15px; padding: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                <div style="font-weight:900; color:#1e293b; font-size:1.5rem;">${p.name}</div>
+                <div style="font-size:1.8rem; font-weight:900; color:var(--warning); background:#1e293b; padding:8px 20px; border-radius:12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${p.score || 0} P</div>
+            </div>
+            <div style="display:flex; gap:10px; width:100%;">
+                <button class="btn btn-warning" style="flex:1; padding:12px; font-size:1.2rem; font-weight:900; color:#000; border-radius:10px; margin:0;" onclick="window.gmAdjustScore('${p.name}', 1)">+1 P</button>
+                <button class="btn btn-warning" style="flex:1; padding:12px; font-size:1.2rem; font-weight:900; color:#000; border-radius:10px; margin:0;" onclick="window.gmAdjustScore('${p.name}', -1)">-1 P</button>
+                <button class="btn btn-danger" style="flex:1; padding:12px; font-size:1.1rem; font-weight:bold; border-radius:10px; margin:0;" onclick="window.gmKickPlayer('${p.name}')">POTKI</button>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
 };
 
 window.renderReceiptOnBoard = function() {
@@ -748,13 +805,13 @@ window.renderCarousel = function() {
         
         let backHtml = `
             <div style="background:#1e293b; border:4px solid #475569; width:100%; height:100%; border-radius:12px; display:flex; flex-direction:column; padding:15px; box-sizing:border-box; color:#fff;">
-                <div style="font-size:1.1rem; font-weight:900; color:var(--warning); margin-bottom:15px; text-transform:uppercase; text-align:center; border-bottom:2px dashed #475569; padding-bottom:10px;">${cDef.n.split(' (')[0]}</div>
+                <div style="font-size:1.4rem; font-weight:900; color:var(--warning); margin-bottom:15px; text-transform:uppercase; text-align:center; border-bottom:2px dashed #475569; padding-bottom:10px;">${cDef.n.split(' (')[0]}</div>
                 <ul class="card-levels-list" style="flex:1; overflow-y:auto; list-style-type:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px;">
                     ${levelsHtml}
                 </ul>
             </div>`;
         
-        let extraHtml = `<div style="text-align:center; font-weight:900; color:#111; margin-top:auto; padding-bottom:10px; font-size:0.8rem;">🔄 KÄÄNNÄ (KATSO KAIKKI TASOT)</div>`;
+        let extraHtml = `<div style="text-align:center; font-weight:900; color:#111; margin-top:auto; padding-bottom:10px; font-size:1rem;">🔄 KÄÄNNÄ (KATSO KAIKKI TASOT)</div>`;
         let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml, true);
 
         html += `
