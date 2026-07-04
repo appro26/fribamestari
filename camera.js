@@ -2,61 +2,8 @@
 // KAMERAN OHJAUS, ZOOM JA KOSKETUS (camera.js)
 // ==============================================
 
-window.camTarget = { x: 0, y: 0, scale: 1 };
 window.camCurrent = { x: 0, y: 0, scale: 1 };
-
-let isDraggingBoard = false;
-let lastTouch = null;
-let initialPinchDist = 0;
-let pinchCenterBoard = { x: 0, y: 0 };
-let isCameraLoopRunning = false;
-
-// Rajojen laskenta, ettei pelaaja eksy ulos alueelta
-function applyBounds() {
-    let boardEl = document.getElementById('corkboard-surface');
-    if(!boardEl) return;
-    
-    let boardW = parseInt(boardEl.style.width) || 3000;
-    let boardH = parseInt(boardEl.style.height) || 4000;
-    
-    // Rajat (jätetään n. 200px joustovaraa reunoille)
-    let minX = window.innerWidth - boardW * window.camTarget.scale - 200;
-    let maxX = 200;
-    let minY = window.innerHeight - boardH * window.camTarget.scale - 200;
-    let maxY = 200;
-
-    if (window.camTarget.x < minX) window.camTarget.x = minX;
-    if (window.camTarget.x > maxX) window.camTarget.x = maxX;
-    if (window.camTarget.y < minY) window.camTarget.y = minY;
-    if (window.camTarget.y > maxY) window.camTarget.y = maxY;
-}
-
-// Jatkuva animaatiosilmukka tekee kaikesta liikkeestä super-sulavaa
-function cameraLoop() {
-    applyBounds();
-    
-    // Lerp-kaava (0.15 määrittää liikkeen "kuminauhamaisuuden" ja sulavuuden)
-    window.camCurrent.x += (window.camTarget.x - window.camCurrent.x) * 0.15;
-    window.camCurrent.y += (window.camTarget.y - window.camCurrent.y) * 0.15;
-    window.camCurrent.scale += (window.camTarget.scale - window.camCurrent.scale) * 0.15;
-
-    let boardEl = document.getElementById('corkboard-surface');
-    if(boardEl) {
-        // Pyöristetään kymmenesosiin suorituskyvyn takaamiseksi
-        let pX = window.camCurrent.x.toFixed(1);
-        let pY = window.camCurrent.y.toFixed(1);
-        let pS = window.camCurrent.scale.toFixed(3);
-        boardEl.style.transform = `translate3d(${pX}px, ${pY}px, 0) scale(${pS})`;
-    }
-    
-    requestAnimationFrame(cameraLoop);
-}
-
-window.animateCameraTo = function(tX, tY, tScale) {
-    window.camTarget.x = tX;
-    window.camTarget.y = tY;
-    window.camTarget.scale = tScale;
-};
+window.camTarget = { x: 0, y: 0, scale: 1 };
 
 window.getRightXPanel = function() {
     if(!window.currentCourse || !window.currentCourse.pars) return 2000;
@@ -65,8 +12,62 @@ window.getRightXPanel = function() {
     return startX + (cols * 380) + ((cols - 1) * 80) + 150;
 };
 
-// --- KAMERAN KOHDISTUKSET NAPPEIHIN ---
+window.applyBounds = function(customTarget) {
+    let target = customTarget || window.camTarget; 
+    let boardEl = document.getElementById('corkboard-surface');
+    if(!boardEl) return target;
+    
+    let rightXPanel = window.getRightXPanel();
+    let corkW = rightXPanel + 400;
+    let boardW = corkW + 1500; 
+    
+    let totalHoles = (window.currentCourse && window.currentCourse.pars) ? window.currentCourse.pars.length : 18; 
+    let cols = Math.min(9, totalHoles); 
+    let rows = Math.ceil(totalHoles / cols);
+    let boardH = Math.max((rows * 1010) + 200, 2500) + 800; 
+    
+    let minX = window.innerWidth - boardW * target.scale - 1000;
+    let maxX = 1000;
+    let minY = window.innerHeight - boardH * target.scale - 1000;
+    let maxY = 1000;
 
+    if (target.x < minX) target.x = minX;
+    if (target.x > maxX) target.x = maxX;
+    if (target.y < minY) target.y = minY;
+    if (target.y > maxY) target.y = maxY;
+    
+    return target;
+};
+
+window.animFrame = null;
+window.animateCameraTo = function(tX, tY, tScale) {
+    if(window.animFrame) cancelAnimationFrame(window.animFrame);
+    let sX = window.camCurrent.x, sY = window.camCurrent.y, sScale = window.camCurrent.scale;
+    
+    let target = window.applyBounds({x: tX, y: tY, scale: tScale});
+    tX = target.x; tY = target.y; tScale = target.scale;
+
+    let startTime = performance.now();
+    let duration = 350; 
+    
+    function step(time) {
+        let p = (time - startTime) / duration;
+        if(p > 1) p = 1;
+        let ease = 1 - Math.pow(1 - p, 3); 
+        
+        window.camCurrent.x = sX + (tX - sX) * ease;
+        window.camCurrent.y = sY + (tY - sY) * ease;
+        window.camCurrent.scale = sScale + (tScale - sScale) * ease;
+        window.camTarget = {...window.camCurrent}; 
+        
+        let boardEl = document.getElementById('corkboard-surface');
+        if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
+        if(p < 1) window.animFrame = requestAnimationFrame(step);
+    }
+    window.animFrame = requestAnimationFrame(step);
+};
+
+// --- KAMERAN KOHDISTUKSET NAPPEIHIN ---
 window.zoomToHole = function(hIndex) {
     if(!window.currentCourse || !window.currentCourse.pars) return;
     let cols = Math.min(9, window.currentCourse.pars.length);
@@ -113,85 +114,122 @@ window.zoomToReceipt = function() {
 };
 
 window.zoomToShop = function() { 
-    let tScale = Math.min(0.85, window.innerWidth / 800);
     let wrapper = document.getElementById('board-shop-wrapper');
     let tY = 50; let tX = 50;
+    let shopPhysicalWidth = 650; 
+    
+    let tScale = window.innerWidth / (shopPhysicalWidth + 30); 
+    if (tScale > 1.4) tScale = 1.4; 
+    
     if(wrapper) {
         let wX = parseInt(wrapper.style.left) || 0;
         let wY = parseInt(wrapper.style.top) || 0;
-        tX = (window.innerWidth - 750 * tScale) / 2 - wX * tScale; 
-        tY = 100 - wY * tScale; 
+        tX = (window.innerWidth - shopPhysicalWidth * tScale) / 2 - wX * tScale; 
+        tY = 40 - wY * tScale; 
     }
     window.animateCameraTo(tX, tY, tScale);
 };
 
-// --- KOSKETUSNÄYTÖN OHJAUS ---
-
+// --- KOSKETUSNÄYTÖN OHJAUS JA MOMENTUM ---
 document.addEventListener('DOMContentLoaded', () => {
-    if(!isCameraLoopRunning) {
-        cameraLoop();
-        isCameraLoopRunning = true;
-    }
-
     const vp = document.getElementById('corkboard-viewport');
-    if(vp) {
-        vp.addEventListener('touchstart', e => {
-            if(e.touches.length === 1) {
-                isDraggingBoard = true;
-                lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            } else if (e.touches.length === 2) {
-                isDraggingBoard = true;
-                initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                
-                // Lasketaan sormien keskipiste ruudulla
-                let screenCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                let screenCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-                
-                // Määritetään fyysinen piste laudalla, jonka täytyy pysyä sormien välissä
-                pinchCenterBoard = {
-                    x: (screenCX - window.camTarget.x) / window.camTarget.scale,
-                    y: (screenCY - window.camTarget.y) / window.camTarget.scale
-                };
-            }
-        }, {passive: false});
+    if(!vp) return;
 
-        vp.addEventListener('touchmove', e => {
-            if(!isDraggingBoard) return;
-            e.preventDefault(); 
-            
-            if(e.touches.length === 1 && lastTouch) {
-                // Suora panorointi yhden sormen vetoliikkeellä
-                window.camTarget.x += (e.touches[0].clientX - lastTouch.x);
-                window.camTarget.y += (e.touches[0].clientY - lastTouch.y);
-                lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            } else if (e.touches.length === 2) {
-                // Kahden sormen zoomaus sidottuna kiinteään ankkuripisteeseen
-                let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                let scaleDelta = dist / initialPinchDist;
-                
-                let newScale = window.camTarget.scale * scaleDelta;
-                if(newScale < 0.2) newScale = 0.2;
-                if(newScale > 2.5) newScale = 2.5;
-                
-                let screenCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-                let screenCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-                
-                window.camTarget.scale = newScale;
-                window.camTarget.x = screenCX - pinchCenterBoard.x * newScale;
-                window.camTarget.y = screenCY - pinchCenterBoard.y * newScale;
-                
-                initialPinchDist = dist;
-            }
-        }, {passive: false});
+    let isDraggingBoard = false;
+    let lastTouch = null;
+    let initialPinchDist = 0;
+    let pinchCenterBoard = { x: 0, y: 0 };
+    
+    let velX = 0; let velY = 0;
+    let momentumFrame = null;
 
-        vp.addEventListener('touchend', e => {
-            if(e.touches.length === 0) {
-                isDraggingBoard = false;
-                lastTouch = null;
-            } else if (e.touches.length === 1) {
-                // Palautetaan vetotila, jos toinen sormi nousee kesken zoomin
-                lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            }
-        }, {passive: true});
+    function applyMomentum() {
+        if (isDraggingBoard) return; 
+        window.camTarget.x += velX;
+        window.camTarget.y += velY;
+        
+        velX *= 0.90; 
+        velY *= 0.90;
+        
+        window.applyBounds(window.camTarget);
+        window.camCurrent.x = window.camTarget.x;
+        window.camCurrent.y = window.camTarget.y;
+        
+        let boardEl = document.getElementById('corkboard-surface');
+        if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
+        
+        if (Math.abs(velX) > 0.5 || Math.abs(velY) > 0.5) {
+            momentumFrame = requestAnimationFrame(applyMomentum);
+        }
     }
+
+    vp.addEventListener('touchstart', e => {
+        if (momentumFrame) cancelAnimationFrame(momentumFrame);
+        if (window.animFrame) cancelAnimationFrame(window.animFrame);
+        
+        vp.classList.add('is-dragging'); 
+        velX = 0; velY = 0; 
+        
+        if(e.touches.length === 1) {
+            isDraggingBoard = true;
+            lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else if (e.touches.length === 2) {
+            isDraggingBoard = true;
+            initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            let screenCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            let screenCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            pinchCenterBoard = { x: (screenCX - window.camCurrent.x) / window.camCurrent.scale, y: (screenCY - window.camCurrent.y) / window.camCurrent.scale };
+        }
+    }, {passive: false});
+
+    vp.addEventListener('touchmove', e => {
+        if(!isDraggingBoard) return;
+        e.preventDefault(); 
+        
+        let nextCam = { ...window.camCurrent };
+
+        if(e.touches.length === 1 && lastTouch) {
+            let dx = e.touches[0].clientX - lastTouch.x;
+            let dy = e.touches[0].clientY - lastTouch.y;
+            
+            window.camTarget.x += dx; window.camTarget.y += dy;
+            nextCam.x = window.camTarget.x; nextCam.y = window.camTarget.y;
+            
+            velX = (velX * 0.4) + (dx * 0.6); velY = (velY * 0.4) + (dy * 0.6);
+            lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else if (e.touches.length === 2) {
+            velX = 0; velY = 0;
+            let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            let scaleDelta = dist / initialPinchDist;
+            
+            let newScale = window.camCurrent.scale * scaleDelta;
+            if(newScale < 0.15) newScale = 0.15; if(newScale > 3.0) newScale = 3.0;
+            
+            let screenCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            let screenCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            
+            window.camTarget.scale = newScale;
+            window.camTarget.x = screenCX - pinchCenterBoard.x * newScale;
+            window.camTarget.y = screenCY - pinchCenterBoard.y * newScale;
+            
+            nextCam.x = window.camTarget.x; nextCam.y = window.camTarget.y; nextCam.scale = window.camTarget.scale;
+            initialPinchDist = dist;
+        }
+
+        window.camCurrent = window.applyBounds(nextCam);
+        let boardEl = document.getElementById('corkboard-surface');
+        if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
+    }, {passive: false});
+
+    vp.addEventListener('touchend', e => {
+        if(e.touches.length === 0) {
+            isDraggingBoard = false;
+            lastTouch = null;
+            vp.classList.remove('is-dragging');
+            if (Math.abs(velX) > 1 || Math.abs(velY) > 1) momentumFrame = requestAnimationFrame(applyMomentum);
+        } else if (e.touches.length === 1) {
+            lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            velX = 0; velY = 0;
+        }
+    }, {passive: true});
 });
