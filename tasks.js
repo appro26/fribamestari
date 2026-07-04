@@ -2,7 +2,7 @@ window.allCards = [];
 window.holeRules = [];
 
 // ==========================================
-// ELÄINTEN GRAFIIKAT JA SOLVAUKSET
+// ELÄINTEN GRAFIIKAT JA SOLVAUKSET (80 kpl)
 // ==========================================
 const doodleSVGs = [
     "M 20 80 Q 20 60 40 60 L 45 40 L 50 60 L 60 30 L 65 60 L 75 40 L 80 80 Z M 30 70 L 32 70 M 15 75 L 20 80 M 85 75 L 80 80", 
@@ -23,7 +23,75 @@ const insults = [
     "H*lvetin hieno puuosuma [Pelaaja]! Tähtäsitkö tahallaan vai ootko vaan sysip*ska?",
     "P*rkele [Pelaaja], sun rystyheitto näyttää ku yrittäisit heittää pesukonetta.",
     "V*tun grippilokki [Pelaaja]! Ota se käsi irti siitä muovista ajoissa.",
-    "P*ska putti, p*ska pelaaja. Yksinkertaista, eikö vain [Pelaaja]?"
+    "P*ska putti, p*ska pelaaja. Yksinkertaista, eikö vain [Pelaaja]?",
+    "Ootko sä [Pelaaja] sokea vai muuten vaan sysip*ska?",
+    "Toi sun putti [Pelaaja] on löysempi ku keitetty makaroni.",
+    "Mitä v*ttua [Pelaaja]? Näyttää ku yrittäisit tappaa jonku oravan tolla kiekolla.",
+    "Pelaatko sä [Pelaaja] golfia vai ootko vaan raivaamassa metsää?",
+    "S**tana [Pelaaja], mun sokea tätikin heittää suorempaan.",
+    "V*tun nyssykkä [Pelaaja], ota se hame pois päältä ja heitä!",
+    "Onko sulla [Pelaaja] nakit silmillä vai miks et osu tohon katiskaan?",
+    "Miten voi ihminen olla noin p*ska [Pelaaja]? Kysyn vaan.",
+    "Heitä p*rkele kovempaa [Pelaaja], toi ei menis ees märkään paperiin läpi.",
+    "Hieno heitto [Pelaaja]... jos oisit yrittäny osua tohon p*rkeleen kiveen.",
+    "V*ttu sä oot [Pelaaja] hidas, heitä jo ennen ku me kaikki kuollaan vanhuuteen.",
+    "Sä [Pelaaja] heität ku pikkutyttö, jolta on viety tikkari.",
+    "Lopeta se itkeminen [Pelaaja] ja heitä se v*tun kiekko pönttöön.",
+    "P*rkele [Pelaaja], sä et osuis edes ladon seinään sisäpuolelta.",
+    "Säikähditkö sä [Pelaaja] omaa varjoos vai miks toi heitto lähti tohon suuntaan?",
+    "Toi sun [Pelaaja] draivi on vitsi, ja vielä ihan v*tun huono sellainen.",
+    "Mee [Pelaaja] kotiin kasvaan, toi sun tekniikka on sieltä syvimmältä ja poikittain.",
+    "V*ttu mikä antsa [Pelaaja]! Pelaatko sä bumerangilla vai friballa?",
+    "Onneks olkoon [Pelaaja], löysit taas väylän ainoan p*rkeleen puun.",
+    "Sä [Pelaaja] puttaat ku sulla ois molemmat kädet poikki.",
+    "Hienosti rullas [Pelaaja]... suoraan v*tun puskaan.",
+    "Sä oot [Pelaaja] elävä todiste siitä, että friba ei sovi kaikille.",
+    "Anna se kiekko mulle [Pelaaja], sä vaan häpäiset lajin.",
+    "V*ttu sun heitot on yhtä sekaisin ku sun elämäs [Pelaaja].",
+    "P*rkele [Pelaaja], mäkin heitän vasurilla paremmin ku sä sun vahvimmalla.",
+    "Oot sä [Pelaaja] ihan v*tun varma että laitoit silmälasit päähän aamulla?",
+    "Toi oli [Pelaaja] ehkä v*ttumaisin heitto mitä oon ikinä nähny.",
+    "Sun [Pelaaja] rystyheitto on ku hidastettu junaonnettomuus.",
+    "V*ttu herää [Pelaaja], sä oot radalla etkä missään p*rkeleen piknikillä.",
+    "Miten helvetissä sä [Pelaaja] pystyt heittämään joka v*tun kerta outtiin?",
+    "Ei saatana [Pelaaja], jopa mun koira hakis ton kiekon nopeemmin.",
+    "Sä [Pelaaja] oot yhtä hyödyllinen radalla ku v*tun jarrupalat kottikärryissä.",
+    "Heitä [Pelaaja] se kiekko äläkä vaan silittele sitä v*tun muovia.",
+    "Toi [Pelaaja] oli niin p*ska heitto että mun sieluun sattuu.",
+    "S**tanan alokas [Pelaaja], eikö äiti opettanu miten sitä kiekkoa pidetään?",
+    "V*tun surkeeta [Pelaaja]. Ei mulla muuta.",
+    "Sä [Pelaaja] heität ku oisit just vetäny litran viinaa.",
+    "P*rkele [Pelaaja], sä et osuis koriin vaikka se ois kymmenen metriä leveä.",
+    "Mitä sä [Pelaaja] mietit? Toi veto oli ihan v*tun älyvapaa.",
+    "Sun [Pelaaja] draivi muistuttaa mua mun exästä: lähtee kovaa mut menee ihan väärään suuntaan.",
+    "Ootsä [Pelaaja] v*ttu tosissas? Toi ei kantanu ees kymmentä metriä.",
+    "Kuka s**tana sulle antoi luvan tulla radalle [Pelaaja]?",
+    "P*skaa. Ihan puhdasta p*skaa [Pelaaja].",
+    "Sä [Pelaaja] oot kyllä radan heikoin v*tun lenkki.",
+    "Mee [Pelaaja] kotiin itkemään, sun peli on ohi.",
+    "V*tun hyrrä [Pelaaja], heitä suoraan äläkä pyöri siinä.",
+    "S**tana [Pelaaja] lopeta se puiden halaaminen ja pysy väylällä.",
+    "Toi sun [Pelaaja] putti on huonompi vitsi ku mun palkkanauha.",
+    "Sä [Pelaaja] oot yhtä tarkka ku v*tun haulikko pimeässä.",
+    "Mee roskiin [Pelaaja], toi sun heitto kuuluu sinne.",
+    "V*tun hieno ob-heitto [Pelaaja], sä oot luonnonystävä.",
+    "P*rkele [Pelaaja], jopa tuuli nauraa tolle sun kiekon lennolle.",
+    "Sun [Pelaaja] pelikirja on varmaan kirjotettu v*tun vessapaperille.",
+    "Ei s**tana [Pelaaja], ota bägistä toinen kiekko, toi eka on selvästi rikki.",
+    "V*ttu sä [Pelaaja] et osuis ees maapalloon jos hyppäisit lentokoneesta.",
+    "Sä [Pelaaja] heität pahemmin outtiin ku mun elämänvalinnat.",
+    "P*rkele [Pelaaja], sä oot pelkkä hidaste tällä radalla.",
+    "Miten vitussa sä [Pelaaja] sait tosta asennosta noin pask*n heiton aikaseks?",
+    "Sun [Pelaaja] grip-lockit on legendaarisia, s**tana.",
+    "Ootsä [Pelaaja] varma ettet haluu vaihtaa lajia vaikka v*tun kuulantyöntöön?",
+    "Toi [Pelaaja] oli niin sysip*ska heitto että mun tekee mieli oksentaa.",
+    "V*ttu sä [Pelaaja] oot onneton tolla puttigriinillä.",
+    "S**tana [Pelaaja] sun kiekko näyttää ku se haluais itsemurhan.",
+    "Mee [Pelaaja] nurkkaan häpeemään ton heiton jälkeen.",
+    "P*rkele [Pelaaja], sä oot yhtä hyödyllinen ku reikä kondomissa.",
+    "V*ttu [Pelaaja], sä pelaat ku oisit vetäny silmät kiinni koko rundin.",
+    "Toi sun [Pelaaja] tekniikka on v*tun loukkaus Isaac Newtonia kohtaan.",
+    "Lopeta [Pelaaja] se räpeltäminen ja heitä ku mies s**tana."
 ];
 
 // ==========================================
@@ -218,6 +286,7 @@ const familyDefs = [
     },
 
     // --- KATEGORIA C: TALOUS / TULOS ---
+    // (Piste-sakot 69, 70, 71 on poistettu toiveiden mukaisesti)
     {
         family: "deny_income", name: "Tulojen eväys", type: "sabotage",
         levels: [
@@ -229,7 +298,7 @@ const familyDefs = [
 
     // --- KATEGORIA D: EDUT & PELASTUKSET ---
     {
-        family: "mulligan_throw", name: "Mulligan (Heitot)", type: "buff",
+        family: "mulligan_throw", name: "Mulligan (Heitot)", type: "buff", isExpensive: true,
         levels: [
             { lvl: 1, d: "Uusi 1 epäonnistunut lähestymisheitto rangaistuksetta." },
             { lvl: 2, d: "Uusi 1 avausheitto tiiltä rangaistuksetta." },
@@ -245,7 +314,7 @@ const familyDefs = [
         ]
     },
     {
-        family: "move_lie", name: "Siirto", type: "buff",
+        family: "move_lie", name: "Siirto", type: "buff", isExpensive: true,
         levels: [
             { lvl: 1, d: "Siirrä omaa kiekkoasi rangaistuksetta +2 metriä mihin tahansa suuntaan." },
             { lvl: 2, d: "Siirrä omaa kiekkoasi rangaistuksetta +5 metriä mihin tahansa suuntaan." },
@@ -253,7 +322,7 @@ const familyDefs = [
         ]
     },
     {
-        family: "cancel_sabo", name: "Kumous", type: "buff",
+        family: "cancel_sabo", name: "Kumous", type: "buff", isExpensive: true,
         levels: [
             { lvl: 1, d: "Peruuta sinuun kohdistettu Tason 1 sabotaasi automaattisesti.", mech: "cancel_1" },
             { lvl: 2, d: "Peruuta sinuun kohdistettu Tason 1 tai 2 sabotaasi automaattisesti.", mech: "cancel_2" },
@@ -261,11 +330,11 @@ const familyDefs = [
         ]
     },
     {
-        family: "happy_mulligan", name: "Best Shot", type: "buff",
+        family: "happy_mulligan", name: "Best Shot", type: "buff", isExpensive: true,
         levels: [
-            { lvl: 1, d: "Saat heittää yhden heiton kahteen kertaan ja jatkaa paremmasta." },
-            { lvl: 2, d: "Saat heittää kaksi eri heittoa kahteen kertaan ja jatkaa paremmasta." },
-            { lvl: 3, d: "Saat heittää kolme eri heittoa kahteen kertaan ja jatkaa paremmasta." }
+            { lvl: 1, d: "Saat heittää yhden heiton kahteen kertaan ja jatkaa paremmasta tuloksesta." },
+            { lvl: 2, d: "Saat tehdä saman BEST SHOT -edun kaksi kertaa tällä väylällä." },
+            { lvl: 3, d: "Saat tehdä saman BEST SHOT -edun kolme kertaa tällä väylällä." }
         ]
     },
 
@@ -301,7 +370,7 @@ const familyDefs = [
         ]
     },
     {
-        family: "early_start", name: "Varaslähtö", type: "buff",
+        family: "early_start", name: "Varaslähtö", type: "buff", isExpensive: true,
         levels: [
             { lvl: 2, d: "Saat aloittaa tämän väylän 5 metriä tiipadin etupuolelta." },
             { lvl: 3, d: "Saat aloittaa tämän väylän 10 metriä tiipadin etupuolelta." }
@@ -312,7 +381,6 @@ const familyDefs = [
 // ==========================================
 // RAKENNETAAN window.allCards ARRAY
 // ==========================================
-// Hinnat on nyt synkronoitu: Osto ja pelaaminen maksavat saman verran
 const baseCostT1 = 2;
 const baseCostT2 = 4;
 const baseCostT3 = 6;
@@ -328,7 +396,7 @@ familyDefs.forEach(fam => {
         if(lvDef.lvl === 2) p = baseCostT2;
         if(lvDef.lvl === 3) p = baseCostT3;
 
-        // Kallistetaan määritetyt korttiperheet
+        // Kallistetaan määritetyt korttiperheet (+2P)
         if (fam.isExpensive) {
             p += expensiveBump;
         }
@@ -339,11 +407,7 @@ familyDefs.forEach(fam => {
 
         if (nextLvlDef) {
             nextIdStr = `${fam.family}_t${nextLvlDef.lvl}`;
-            let nextP = baseCostT2;
-            if(nextLvlDef.lvl === 3) nextP = baseCostT3;
-            if(fam.isExpensive) nextP += expensiveBump;
-            
-            // Upgrade maksaa uuden tason ja nykyisen tason erotuksen + pienen vaivan (esim. vakio 3 tai 5)
+            // Päivitys maksaa periaatteessa erotuksen tai vakiokorotuksen. Määritellään se simppelisti:
             let uCost = (lvDef.lvl === 1) ? 3 : 5;
             upgradeText = `Päivitys Tasolle ${nextLvlDef.lvl} (Hinta: ${uCost} P): ${nextLvlDef.d}`;
         }
@@ -359,7 +423,7 @@ familyDefs.forEach(fam => {
             nextId: nextIdStr,
             tier: "normal", 
             type: fam.type,
-            price: p, // TÄMÄ MÄÄRITTÄÄ NYT KAIKEN HINNAN!
+            price: p, // TÄMÄ MÄÄRITTÄÄ NYT KAIKEN HINNAN (Kauppa ja Peluu)
             mech: lvDef.mech || null
         });
     });
@@ -368,7 +432,7 @@ familyDefs.forEach(fam => {
 window.getCardPlayCost = function(cId) {
     let cDef = window.allCards.find(c => c.id === cId);
     if(!cDef) return 0;
-    return cDef.price; // Yhdistetty peluu- ja ostohinta
+    return cDef.price; 
 };
 
 // ==========================================
@@ -394,18 +458,12 @@ window.holeRules = [
     // Säilytetyt bountyt
     { type: "bounty", n: "Tarkka-ampuja", d: "Pelaaja, kenen avausheitto on lähimpänä koria, voittaa tehtävän." },
     { type: "bounty", n: "Pelastaja", d: "Ensimmäinen pelaaja, joka tekee onnistuneen pitkän putin (C2), voittaa." },
-    { type: "bounty", n: "Birdie-jahti", d: "Jokainen pelaaja, joka heittää tälle väylälle Birdien, voittaa tehtävän." },
-    { type: "bounty", n: "Kiekkotaituri", d: "Pelaaja, joka tekee komeimman flex-heiton (S-kurvin) avauksessa, voittaa." },
-    { type: "bounty", n: "Nyssykkä", d: "Pelaaja, kenen avausheitto on lyhin (mutta pysyy pelialueella), voittaa." },
+    { type: "bounty", n: "Puu-magneetti", d: "Pelaaja, jolla on eniten puuosumia tällä väylällä, MUTTA joka pelaa väylän silti Par-tulokseen tai paremmin, voittaa." },
     
-    // Muokattu puuosuma
-    { type: "bounty", n: "Puu-magneetti", d: "Pelaaja, jolla on eniten puuosumia, MUTTA joka pelaa väylän Par-tulokseen tai paremmin, voittaa." },
-
     // Uudet luovat bountyt
     { type: "bounty", n: "Pituusputti", d: "Pelaaja, joka puttaa kaikkein pisimmältä sisään (yli 5m), voittaa tehtävän." },
     { type: "bounty", n: "Grip-lock Pelastus", d: "Pelaaja, joka heittää ilmiselvän gripparin tai epäonnistuneen avauksen, mutta pelastaa silti parin, voittaa." },
-    { type: "bounty", n: "Bogie-vapaa", d: "Kaikki pelaajat, jotka pelaavat Par-tuloksen tai paremman, saavat palkkion." },
+    { type: "bounty", n: "Kakkosen Kuningas", d: "Pelaaja, jonka toinen heitto on väylän pisin ja tarkin, voittaa." },
     { type: "bounty", n: "Parkkeeraaja", d: "Pelaaja, jonka avausheitto jää alle 3 metrin päähän korista, voittaa." },
-    { type: "bounty", n: "Tolppa-apina", d: "Ensimmäinen pelaaja, joka osuu putatessa rautoihin menemättä sisään, voittaa säälinapin." },
-    { type: "bounty", n: "Kakkosen Kuningas", d: "Pelaaja, jonka toinen heitto on väylän pisin ja tarkin, voittaa." }
+    { type: "bounty", n: "Tolppa-apina", d: "Ensimmäinen pelaaja, joka osuu putatessa rautoihin menemättä sisään, voittaa säälinapin." }
 ];
