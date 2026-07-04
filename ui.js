@@ -1,5 +1,5 @@
 // ==============================================
-// KÄYTTÖLIITTYMÄ, NÄKYMÄT JA MODAALIT (ui.js)
+// KÄYTTÖLIITTYMÄN RENDERÖINTI JA MODAALIT (ui.js)
 // ==============================================
 
 var el = id => document.getElementById(id);
@@ -23,17 +23,73 @@ window.pseudoRandom = (seed) => {
     return x - Math.floor(x); 
 };
 
-// --- PELILAUDAN PÄÄPÄIVITYS (SYNKKAA SPA-NÄKYMÄT) ---
-window.renderBoard = function() {
-    // Kutsutaan aina kaikkien näkymien päivitys, jotta data pysyy reaaliaikaisena taustalla
-    window.renderHoleView();
-    window.renderResultsView();
-    window.renderCardsView();
-    window.renderShopView();
-    window.renderCalculatorView();
+// ==============================================
+// ILMOITUKSET JA IKKUNAT
+// ==============================================
+window.showModalSafe = function(id, displayType) {
+    let elModal = document.getElementById(id); 
+    if(elModal) { 
+        elModal.style.display = displayType || 'flex'; 
+        history.pushState({ fribaApp: true }, ''); 
+    } 
 };
 
-// --- KORTTIEN HTML-GENERAATTORI (ALKUPERÄINEN ULKOASU) ---
+window.showZoomModal = function(html) {
+    el('zoomModalContent').innerHTML = html;
+    let child = el('zoomModalContent').firstElementChild;
+    if(child) {
+        child.style.position = 'relative'; 
+        child.style.margin = '0 auto'; 
+        child.style.transform = 'none';
+        child.style.width = '100%'; 
+        child.style.maxWidth = '90vw';
+    }
+    el('zoomModalContent').style.transform = `scale(${Math.min(1.1, (window.innerWidth * 0.95) / 300)})`;
+    window.showModalSafe('zoomModal');
+};
+
+window.showEventCard = function(cId, target, by) {
+    window.carouselCards = [cId];
+    window.carouselCurrentMode = 'event';
+    window.carouselCurrentIndex = 0;
+    window.renderCarousel();
+    
+    let targetStr = '';
+    if (target) {
+        targetStr = `
+            <div style="background:var(--danger); color:#fff; padding:15px; border-radius:8px; font-weight:900; font-size:1.2rem; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.4); margin-bottom:10px;">
+                SUORITTAJA:<br><span style="font-size:1.8rem; font-family:'Kalam', cursive;">${target}</span>
+                <div style="font-size:0.85rem; margin-top:5px; opacity:0.9;">(Määrääjä: ${by})</div>
+            </div>`;
+    }
+    
+    el('cardDetailActionArea').innerHTML = targetStr;
+    window.showModalSafe('cardDetailModal');
+    setTimeout(() => { if(window.initNativeCarousel) window.initNativeCarousel(); }, 100);
+};
+
+window.showAppleToast = function(msg, icon = '✨') { 
+    const toast = el('appleToast'); 
+    if(!toast) return; 
+    el('appleToastIcon').innerText = icon; 
+    el('appleToastText').innerText = msg; 
+    toast.classList.add('show'); 
+    setTimeout(() => { toast.classList.remove('show'); }, 2000); 
+};
+
+window.showNotification = function(message, type = 'info') { 
+    const container = el('notificationContainer'); 
+    if(!container) return; 
+    const toast = document.createElement('div'); 
+    toast.className = `notification ${type}`; 
+    toast.innerHTML = `<span>${message}</span>`; 
+    container.appendChild(toast); 
+    setTimeout(() => { toast.remove(); }, 6000); 
+};
+
+// ==============================================
+// KORTIN GENEROINTI (VISUAALINEN POHJA)
+// ==============================================
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
     if (!cDef) return '';
     let typeClass = `tier-${cDef.level || 1}`;
@@ -41,149 +97,193 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '',
     let typeName = cDef.type === 'buff' ? 'buff' : 'sabotage';
     let safeCardName = cDef.n ? cDef.n.split(' (')[0] : '';
     
-    let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cDef.id) : (cDef.level === 3 ? 6 : (cDef.level === 2 ? 4 : 2));
-    let lockedStyle = isLocked ? 'opacity: 0.5; filter: grayscale(50%);' : '';
+    let playCost = 0;
+    if (typeof window.getCardPlayCost === 'function') {
+        playCost = window.getCardPlayCost(cDef.id);
+    } else {
+        playCost = cDef.level === 3 ? 6 : (cDef.level === 2 ? 4 : 2);
+    }
     
-    // Karusellissa käytetään 100% tilaa, hyllyssä ja laudalla alkuperäiset kiinteät mitat
-    let dimensions = isCarousel ? 'width: 100%; height: 100%; box-sizing: border-box; display:flex; flex-direction:column;' : 'width: 175px; height: 260px;';
-    let titleSize = isCarousel ? 'font-size: 1.5rem;' : '';
-    let descSize = isCarousel ? 'font-size: 1rem; flex: 1;' : '';
+    let lockedStyle = isLocked ? 'opacity: 0.5; filter: grayscale(50%);' : '';
+    let heightStyle = isCarousel ? 'height: 100%; min-height:350px;' : '';
     
     return `
-    <div class="physical-card ${typeClass}" style="${lockedStyle} ${dimensions} margin: 0 auto; box-shadow: 0 10px 20px rgba(0,0,0,0.4);">
+    <div class="physical-card ${typeClass}" style="${lockedStyle} ${heightStyle}">
         <div class="card-header ${typeName}">
             <span>${typeIcon} ${cDef.type === 'buff' ? 'HELPOTUS' : 'SABOTAASI'}</span><span>TASO ${cDef.level || 1}</span>
         </div>
-        <div class="card-body ${typeName}" style="justify-content: flex-start; flex: 1; display:flex; flex-direction:column;">
+        <div class="card-body ${typeName}">
             <div class="play-cost-badge">MAKSU: ${playCost} P</div>
-            <h3 class="card-title" style="${titleSize}">${safeCardName}</h3>
-            <p class="card-desc" style="${descSize}">${cDef.d}</p>
+            <h3 class="card-title">${safeCardName}</h3>
+            <p class="card-desc">${cDef.d}</p>
             ${extraBottomHtml}
         </div>
     </div>`;
 };
 
-// ALKUPERÄINEN VÄYLÄKORTTIEN LOGIIKKA
+// ==============================================
+// VÄYLÄSOLUJEN RENDERÖINTI
+// ==============================================
 window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
-    let html = `<div class="hole-cell" style="width: 100%; max-width: 380px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 20px;">`;
+    let clickAttr = `onclick="window.zoomToHole(${hIndex})" style="cursor:pointer;"`;
+    let html = `<div class="hole-cell" ${clickAttr}>`;
     let par = window.currentCourse && window.currentCourse.pars ? (window.currentCourse.pars[hIndex - 1] || 3) : 3;
     
-    let rot1 = (window.pseudoRandom(hIndex * 1.1) * 4 - 2).toFixed(1);
-    let rot2 = (window.pseudoRandom(hIndex * 2.2) * 4 - 2).toFixed(1);
+    let rot1 = (window.pseudoRandom(hIndex * 1.1) * 6 - 3).toFixed(1);
+    let rot2 = (window.pseudoRandom(hIndex * 2.2) * 6 - 3).toFixed(1);
+    let rot3 = (window.pseudoRandom(hIndex * 3.3) * 6 - 3).toFixed(1);
 
-    html += `
-    <div class="index-card" style="transform: rotate(${rot1}deg); position: relative; width: 100%; box-sizing: border-box;">
-        <div class="banner-subtitle">${window.currentCourse ? window.currentCourse.name : ''}</div>
-        <div class="banner-title">VÄYLÄ <span>${hIndex}</span></div>
-        <div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>
-    </div>`;
+    let activeStyle = isActive ? `z-index: 25;` : `z-index: 5;`;
+    html += `<div class="index-card" style="transform: rotate(${rot1}deg); position: relative; ${activeStyle}">`;
+    html += `<div class="banner-subtitle">${window.currentCourse ? window.currentCourse.name : ''}</div><div class="banner-title">VÄYLÄ <span>${hIndex}</span></div><div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>`;
+    
+    if (isActive && hData.penColor) {
+        html += `<div class="pen-container" onclick="event.stopPropagation(); window.openScoreModal();"><div class="pen-string"></div><div class="pen-body" style="background: linear-gradient(to right, ${hData.penColor.c1}, ${hData.penColor.c2}, ${hData.penColor.c1});"><span class="pen-text">MERKKAA</span></div></div>`;
+    }
+    html += `</div>`;
 
     if (hData.rule) {
         let bTxt = hData.rule.type === 'bounty' ? `🏆 TEHTÄVÄ` : '🎲 VÄYLÄSÄÄNTÖ';
         let bgCol = hData.color || '#fef08a';
+        let ruleLen = hData.rule.d ? hData.rule.d.length : 0;
+        let pSize = ruleLen > 80 ? '0.95rem' : '1.15rem';
+        let pLh = ruleLen > 80 ? '1.25' : '1.4';
+
         html += `
-        <div class="post-it-note" style="background:${bgCol}; transform: rotate(${rot2}deg); width: 100%; box-sizing: border-box;" onclick="window.showZoomModal(this.outerHTML)">
+        <div class="post-it-note" style="background:${bgCol}; transform: rotate(${rot2}deg);" onclick="event.stopPropagation(); window.showZoomModal(this.outerHTML)">
             <div style="font-weight:900; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; color:#666;">📌 ${bTxt}</div>
             <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; color:#111;">${hData.rule.n}</div>
-            <div style="font-size: 1.15rem; line-height: 1.4; font-weight:700; color:#222;">${hData.rule.d}</div>
+            <div style="font-size: ${pSize}; line-height: ${pLh}; font-weight:700; color:#222;">${hData.rule.d}</div>
         </div>`;
     }
 
-    let playedCards = hData.playedCards ? Object.values(hData.playedCards).filter(Boolean) : [];
+    let playedCards = [];
+    if (hData.playedCards) { playedCards = Object.values(hData.playedCards).filter(Boolean); }
+    
     if(playedCards.length > 0) {
-        html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; gap:15px; margin-top: 10px;">`;
-        playedCards.forEach((pc, idx) => {
-            if (pc.target === window.myName || pc.target === 'KAIKKI VASTUSTAJAT' || isHistory) {
-                let cRot = (window.pseudoRandom((hIndex + idx) * 4.4) * 6 - 3).toFixed(1); 
+        let myCards = []; let otherCards = [];
+        playedCards.forEach(pc => { if (pc.target === window.myName || pc.target === 'KAIKKI VASTUSTAJAT') { myCards.push(pc); } else { otherCards.push(pc); } });
+
+        if (myCards.length > 0) {
+            html += `<div style="width: 100%; max-width:360px; margin-bottom: 15px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px;">`;
+            myCards.forEach((pc, idx) => {
+                let cRot = (window.pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
                 let pinLeft = 50 + (Math.floor(window.pseudoRandom((hIndex + idx) * 5.5) * 20) - 10);
+                let encodedBy = pc.by ? pc.by.replace(/"/g, '&quot;') : '';
+                let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
                 
-                let extraHtml = `<div style="background:rgba(0,0,0,0.8); color:#fff; padding:6px; border-radius:4px; font-size:0.75rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : pc.target}<br><span style="font-weight:normal; color:#ccc;">(Käyttäjä: ${pc.by})</span></div>`;
+                let extraHtml = `<div style="background:rgba(0,0,0,0.8); color:#fff; padding:6px; border-radius:4px; font-size:0.75rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(Käyttäjä: ${pc.by})</span></div>`;
                 let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml);
 
                 html += `
-                <div class="pinned-card-container" style="transform: rotate(${cRot}deg); margin: 0 auto;" onclick="window.showEventCard('${pc.cardId}', '${pc.target}', '${pc.by}')">
+                <div class="pinned-card-container" style="transform: rotate(${cRot}deg);" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div class="pushpin" style="left: ${pinLeft}%;"></div>
                     ${fullCardHtml}
                 </div>`;
-            }
-        });
-        html += `</div>`;
+            });
+            html += `</div>`;
+        }
+
+        if (otherCards.length > 0) {
+            let pRot = (window.pseudoRandom(hIndex * 1.5) * 4 - 2).toFixed(1);
+            html += `
+                <div style="width: 100%; max-width:300px; margin-top: 15px; margin-bottom: 15px; position:relative; background:var(--paper-bg); padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); border-radius:2px; transform: rotate(${pRot}deg);">
+                    <div class="tape tape-top" style="--rot:-2deg;"></div>
+                    <h2 style="color:var(--text-main); font-size:0.95rem; margin-bottom:10px; border-bottom:2px dashed #ccc; padding-bottom:5px; font-family:'Kalam', cursive; text-align:center;">PELITAPAHTUMAT</h2>
+                    <div style="display:flex; flex-direction:column; gap:6px;">`;
+            
+            otherCards.forEach((pc) => {
+                let typeIcon = pc.type === 'buff' ? '🛡️' : '💥';
+                let typeColor = pc.type === 'buff' ? 'var(--info)' : 'var(--danger)';
+                let encodedBy = pc.by ? pc.by.replace(/"/g, '&quot;') : '';
+                let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
+                
+                html += `
+                <div style="background:rgba(0,0,0,0.05); padding:6px; border-radius:4px; font-size:0.75rem; border-left: 4px solid ${typeColor}; cursor:pointer;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
+                    <b style="font-size:0.85rem;">${typeIcon} ${pc.cardName}</b><br>
+                    <span style="color:#555;">Käyttäjä: <b>${pc.by}</b> ➡️ Kohde: <b style="color:${typeColor};">${pc.target}</b></span>
+                </div>`;
+            });
+            html += `</div></div>`;
+        }
     }
 
+    let playersToRender = hData.players || window.allPlayers;
+    let sortedPlayers = [...playersToRender].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
+    
+    html += `
+    <div class="score-spiral-note" style="transform: rotate(${rot3}deg);">
+        <div class="pin pin-blue" style="top: 15px; right: 20px;"></div>
+        <div class="pin pin-red" style="bottom: 25px; right: 15px;"></div>
+        <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:1.6rem; text-decoration:underline;">🏆 Tulos</h2>`;
+    
+    let renderScoreDots = (strokes, p_par) => {
+        if(!strokes) return '-';
+        let diff = strokes - p_par;
+        let cClass = diff === 0 ? 'even' : (diff < 0 ? 'green' : 'red');
+        if (diff < -1) cClass = 'blue'; 
+        return `<span class="receipt-circle ${cClass}">${strokes}</span>`;
+    };
+
+    sortedPlayers.forEach((p) => {
+        let strokes = isHistory && hData.holeResults ? hData.holeResults[p.name] : null;
+        let scoreHTML = renderScoreDots(strokes, par);
+        let displayScore = (p.name === window.myName) ? `${p.score || 0} P` : `?? P`;
+        
+        html += `
+        <div class="player-row-paper">
+            <span class="paper-name" style="font-size:1.4rem;">${p.name}</span>
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <span style="font-size:1rem; color:var(--warning); font-weight:900;">${displayScore}</span>
+                <div class="score-display-paper" style="width:auto !important; min-width:34px; height:34px !important; font-size:1.2rem !important; margin-left:auto; padding:0 5px;">${scoreHTML}</div>
+            </div>
+        </div>`;
+    });
+    html += `</div>`;
+    
+    if (isHistory && window.myName && hData.pointBreakdowns && hData.pointBreakdowns[window.myName]) {
+        let myBreakdown = hData.pointBreakdowns[window.myName];
+        let deltaColor = myBreakdown.delta >= 0 ? '#16a34a' : '#dc2626';
+        let sign = myBreakdown.delta > 0 ? '+' : '';
+        let rowsHtml = '';
+        if (myBreakdown.summary && myBreakdown.summary !== "Ei tuloja tai menoja.") {
+            myBreakdown.summary.split(', ').forEach(part => {
+                let kv = part.split(': ');
+                if(kv.length === 2) { rowsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #cbd5e1; padding:6px 0;"><span style="color:#475569;">${kv[0]}</span><span style="font-weight:700; color:#1e293b;">${kv[1]}</span></div>`; } 
+                else { rowsHtml += `<div style="padding:6px 0; color:#475569;">${part}</div>`; }
+            });
+        } else { rowsHtml += `<div style="padding:6px 0; color:#475569; text-align:center; font-style:italic;">Ei tapahtumia tällä jaksolla.</div>`; }
+
+        html += `
+        <div class="payslip-paper" style="background:#fff; border:1px solid #cbd5e1; border-radius:2px; transform: rotate(-0.5deg); margin-top: 25px; margin-bottom: 20px; width: 100%; max-width: 340px; padding: 20px; box-shadow: 2px 4px 12px rgba(0,0,0,0.15); z-index:30; position:relative; font-family:'Courier Prime', monospace;">
+            <div style="border-bottom: 2px dashed #1e293b; padding-bottom: 8px; margin-bottom: 12px; text-align:center;">
+                <div style="font-weight:900; font-size:1.4rem; color:#1e293b; letter-spacing:1px; text-transform:uppercase;">Palkkalaskelma</div>
+                <div style="font-size:0.85rem; color:#64748b; margin-top:4px;">Kausi: Väylä ${hIndex}</div>
+            </div>
+            <div style="margin-bottom:12px; font-size:0.95rem; color:#1e293b;">
+                <span style="font-weight:bold;">Työntekijä:</span> ${window.myName.toUpperCase()}
+            </div>
+            <div style="font-size:0.85rem; margin-bottom:15px; border-top:1px solid #94a3b8; padding-top:8px;">${rowsHtml}</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:10px; border-radius:4px; border:2px solid ${deltaColor};"><span style="font-weight:800; font-size:1.1rem; color:#334155;">NETTOPALKKA</span><span style="font-weight:900; font-size:1.5rem; color:${deltaColor};">${sign}${myBreakdown.delta} P</span></div>
+        </div>`;
+    }
     html += `</div>`;
     return html;
 };
 
-// --- NÄKYMÄ 5: VÄYLÄ (NYKYINEN TILANNE) ---
-window.renderHoleView = function() {
-    let target = el('holes-grid');
-    if(!target) return;
-    
-    if (window.currentHoleIndex > (window.currentCourse ? window.currentCourse.pars.length : 18)) {
-        let sortedPlayers = [...window.allPlayers].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
-        let winner = sortedPlayers[0] || {name: "Tuntematon"};
-        target.innerHTML = `
-        <div style="display:flex; justify-content:center; align-items:center; min-height:400px; width:100%;">
-            <div style="transform:rotate(-2deg); background:#fff; padding:40px; box-shadow:15px 30px 60px rgba(0,0,0,0.4); border:4px solid #ccc; text-align:center; max-width:400px; width:90%; border-radius:8px; position:relative;">
-                <div class="tape tape-top" style="width:200px; top:-15px; height:35px;"></div>
-                <h1 style="font-family:'Kalam', cursive; font-size:4rem; color:var(--primary); margin-bottom:15px;">🏆 MESTARI!</h1>
-                <h2 style="font-size:1.8rem; margin-bottom:10px; color:#555;">VOITTAJA:</h2>
-                <div style="font-size:3.5rem; font-weight:900; color:var(--ink-blue); font-family:'Kalam', cursive;">${winner.name}</div>
-            </div>
-        </div>`;
-    } else if (window.activeHole) {
-        target.innerHTML = window.getHoleCellHTML({ rule: window.activeHole.rule, playedCards: window.activeHole.playedCards, color: window.activeHole.color, penColor: window.activeHole.penColor, players: window.allPlayers }, window.currentHoleIndex, true, false);
-    }
-};
-
-// --- NÄKYMÄ 2: LASKELMA ---
-window.renderCalculatorView = function() {
-    let target = el('calc-wrapper');
-    if(!target || !window.allPlayers) return;
-    
-    let par = window.currentCourse && window.currentCourse.pars ? (window.currentCourse.pars[window.currentHoleIndex - 1] || 3) : 3;
-    let html = `
-    <div class="score-spiral-note" style="width: 100%; max-width: 420px; margin: 0 auto; position:relative; box-sizing: border-box; transform:none;">
-        <div class="pin pin-blue" style="top: 15px; right: 20px;"></div>
-        <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:2rem; text-decoration:underline; text-align:center; margin-bottom:5px;">VÄYLÄ ${window.currentHoleIndex}</h2>
-        <p style="text-align:center; margin-bottom:20px; font-weight:bold; color:#666;">PAR ${par}</p>
-        <div id="scoreInputsContainer" style="display:flex; flex-direction:column; gap:12px;"></div>
-    </div>`;
-    
-    setTimeout(() => {
-        let container = el('scoreInputsContainer');
-        if(!container) return;
-        let inputsHtml = '';
-        window.allPlayers.forEach((p, i) => {
-            if(!p) return;
-            let safeId = "player_calc_" + i;
-            inputsHtml += `
-            <div class="player-row-paper" style="padding: 10px 0;">
-                <span class="paper-name" style="font-size:1.3rem;">${p.name}</span>
-                <div class="score-controls-paper" style="display:flex; align-items:center; gap:10px; margin-left:auto;">
-                    <button class="btn-score-paper" onclick="window.changeScore('${safeId}', ${par}, -1)">-</button>
-                    <div id="scoreDisplay_${safeId}" class="score-display-paper" style="font-size:1.2rem; font-weight:bold;">${par}</div>
-                    <button class="btn-score-paper" onclick="window.changeScore('${safeId}', ${par}, 1)">+</button>
-                    <input type="hidden" class="score-input-data" data-name="${p.name}" id="scoreInput_${safeId}" value="${par}" />
-                </div>
-            </div>`;
-        });
-        container.innerHTML = inputsHtml;
-    }, 20);
-
-    html += `<button class="btn btn-success" style="width:100%; max-width:420px; display:block; margin:20px auto 0 auto; padding:20px; font-size:1.3rem; font-weight:900; box-shadow:0 6px 15px rgba(0,0,0,0.3);" onclick="window.openScoreModal()">🎯 MERKKAA JA TALLENNA TULOS</button>`;
-    target.innerHTML = html;
-};
-
-// --- NÄKYMÄ 3: OMAT KORTIT (ALKUPERÄINEN KANSIO) ---
+// ==============================================
+// TAULUN KIINTEÄT ELEMENTIT (Kansio, Automaatti, Kuitit)
+// ==============================================
 window.renderBinderOnBoard = function() {
     let wrapper = el('board-binder-wrapper');
     if(!wrapper) return;
     let me = (window.allPlayers || []).find(p => p && p.name === window.myName);
     let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     
-    if (typeof window.getCardSortWeight === 'function') myCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
+    if (typeof window.getCardSortWeight === 'function') {
+        myCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
+    }
 
     let cardsHtml = '';
     if(myCards.length === 0) {
@@ -194,26 +294,31 @@ window.renderBinderOnBoard = function() {
             if(!cDef) return; 
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
             let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.75rem; color:#111; margin-top:auto; padding-top:10px;">🔄 KATSO TASOT / PELAA</div>`;
-            cardsHtml += `<div class="plastic-sleeve" style="cursor:pointer;" onclick="window.openCardDetail('${cId}', 'sell')">${window.generateCardHTML(cDef, isLocked, extraHtml)}</div>`;
+            let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml);
+
+            cardsHtml += `
+            <div class="plastic-sleeve" style="cursor:pointer;" onclick="window.openCardDetail('${cId}', 'sell')">
+                ${fullCardHtml}
+            </div>`;
         });
     }
 
     wrapper.innerHTML = `
-    <div class="board-binder" style="width: 100%; max-width: 500px; margin: 0 auto; min-height: auto; position:relative; box-shadow: 0 15px 35px rgba(0,0,0,0.5); background: radial-gradient(circle at center, #3e2723 0%, #211412 100%); padding-bottom:30px;">
+    <div class="board-binder" style="width: 500px; min-height: 800px; padding-top: 20px; padding-bottom: 20px; background: radial-gradient(circle at center, #3e2723 0%, #211412 100%);">
         <div class="binder-spine" style="position: absolute; top: 0; bottom: 0; left: 0; z-index: 30; width: 40px; background: linear-gradient(to right, #111, #222, #111); display:flex; flex-direction:column; justify-content:space-evenly; align-items:center;">
-            <div class="binder-ring" style="margin-top: 30px;"></div><div class="binder-ring"></div><div class="binder-ring" style="margin-bottom: 30px;"></div>
+            <div class="binder-ring" style="margin-top: 50px;"></div>
+            <div class="binder-ring"></div>
+            <div class="binder-ring" style="margin-bottom: 50px;"></div>
         </div>
-        <div class="binder-page" style="margin-left: 35px; margin-right: 15px; padding: 20px; border-radius: 4px 12px 12px 4px; background:#fafafa;">
-            <h2 style="color:#111; font-size:1.8rem; margin-bottom:20px; font-family:'Kalam', cursive; border-bottom:3px dashed #ccc; padding-bottom:10px; text-align:center;">KANSIO</h2>
+        <div class="binder-page" style="margin-left: 35px; margin-right: 15px; padding: 25px; border-radius: 4px 12px 12px 4px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1), 5px 5px 15px rgba(0,0,0,0.6);">
+            <h2 style="color:#111; font-size:2rem; margin-bottom:20px; font-family:'Kalam', cursive; border-bottom:3px dashed #ccc; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%;">
                 ${cardsHtml}
             </div>
         </div>
     </div>`;
 };
-window.renderCardsView = function() { window.renderBinderOnBoard(); };
 
-// --- NÄKYMÄ 4: KAUPPA (ALKUPERÄINEN FOTOREALISTINEN JÄTTIAUTOMAATTI) ---
 window.renderShopOnBoard = function() {
     let wrapper = el('board-shop-wrapper');
     if(!wrapper) return;
@@ -227,7 +332,7 @@ window.renderShopOnBoard = function() {
     let levels = [3, 2, 1]; 
 
     levels.forEach(lvl => {
-        shelvesHtml += `<div style="display:flex; justify-content:space-around; padding: 35px 0; border-bottom: 18px solid #0f172a; box-shadow: inset 0 -25px 40px rgba(0,0,0,0.95); position:relative; margin-bottom: 30px; background: linear-gradient(to bottom, #1e293b, #020617); border-radius: 6px;">`;
+        shelvesHtml += `<div style="display:flex; justify-content:space-around; padding: 20px 0 30px 0; border-bottom: 12px solid #0f172a; box-shadow: inset 0 -15px 20px rgba(0,0,0,0.9); position:relative; margin-bottom: 25px; background: linear-gradient(to bottom, #334155, #0f172a); border-radius: 4px;">`;
         let shelfItems = (shopArray || []).filter(c => c === null || c.level === lvl);
         
         for(let i=0; i<2; i++) {
@@ -235,30 +340,30 @@ window.renderShopOnBoard = function() {
             if (item) {
                 const canAfford = myPoints >= item.price;
                 let isResFull = actRes.length >= 2;
-                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.85rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
-                let fullCardHtml = window.generateCardHTML(item, false, extraHtml, false);
+                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.75rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+                let fullCardHtml = window.generateCardHTML(item, false, extraHtml);
                 
                 shelvesHtml += `
-                    <div style="position:relative; width:38%; display:flex; flex-direction:column; align-items:center; z-index:10;">
-                        <div style="transform: scale(1.25); cursor:pointer; width:175px; margin-bottom: 35px; transform-origin: bottom center;" onclick="window.openCardDetail('${item.id}', 'shop')">
+                    <div style="position:relative; width:30%; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                        <div style="transform: scale(0.95); cursor:pointer; width:175px;" onclick="window.openCardDetail('${item.id}', 'shop')">
                             ${fullCardHtml}
                         </div>
-                        <div style="background: repeating-linear-gradient(90deg, transparent, transparent 15px, #94a3b8 15px, #64748b 22px); height: 50px; width: 140%; position: absolute; bottom: 100px; filter: drop-shadow(0 20px 15px #000); z-index: 8; opacity: 0.9;"></div>
-                        <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 10px 25px; border-radius: 8px; border: 4px solid #22c55e; font-weight: 900; font-size: 1.8rem; margin-top: 15px; z-index: 15; box-shadow: 0 0 20px rgba(34,197,94,0.6); text-align: center; margin-bottom: 15px;">${item.price} P</div>
-                        <div style="display:flex; flex-direction:column; gap:12px; margin-top:5px; width:100%; max-width:200px;">
-                            <button class="btn btn-success" ${!canAfford?'disabled':''} style="padding:18px; font-size:1.4rem; font-weight:900;" onclick="window.buyShopItem('${item.id}', ${item.price}, false)">OSTA</button>
-                            ${!isResFull ? `<button class="btn btn-primary" style="padding:12px; font-size:1.2rem; font-weight:900;" onclick="window.reserveShopItem('${item.id}')">VARAA KORTTI</button>` : ''}
+                        <div style="background: repeating-linear-gradient(90deg, transparent, transparent 15px, #94a3b8 15px, #94a3b8 22px); height: 40px; width: 120%; position: absolute; bottom: 50px; filter: drop-shadow(0 8px 5px #000); z-index: 8; opacity: 0.8;"></div>
+                        <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 4px; border: 3px solid #22c55e; font-weight: 900; font-size: 1.3rem; margin-top: 15px; z-index: 15; box-shadow: 0 0 10px rgba(34,197,94,0.5); text-align: center; margin-bottom: 15px;">${item.price} P</div>
+                        <div style="display:flex; flex-direction:column; gap:8px; margin-top:5px; width:160px;">
+                            <button class="vending-btn-buy" ${!canAfford?'disabled':''} onclick="window.buyShopItem('${item.id}', ${item.price}, false)">OSTA</button>
+                            ${!isResFull ? `<button class="vending-btn-reserve" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
                         </div>
                     </div>
                 `;
             } else {
                 shelvesHtml += `
-                    <div style="position:relative; width:38%; display:flex; flex-direction:column; align-items:center; z-index:10;">
-                        <div style="width:175px; height:260px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); border-radius:12px; border:4px dashed #333; transform: scale(1.25); margin-bottom: 35px; transform-origin: bottom center;">
-                            <div style="color:#444; font-weight:900; font-size:2rem; letter-spacing:4px; transform:rotate(-45deg);">TYHJÄ</div>
+                    <div style="position:relative; width:30%; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                        <div style="width:175px; height:260px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); border-radius:8px; border:2px dashed #444;">
+                            <div style="color:#555; font-weight:900; font-size:1.5rem; letter-spacing:2px;">TYHJÄ</div>
                         </div>
-                        <div style="background: repeating-linear-gradient(90deg, transparent, transparent 15px, #94a3b8 15px, #64748b 22px); height: 50px; width: 140%; position: absolute; bottom: 100px; filter: drop-shadow(0 20px 15px #000); z-index: 8; opacity: 0.9;"></div>
-                        <div style="background: #000; color: #444; font-family: 'Courier Prime', monospace; padding: 10px 25px; border-radius: 8px; border: 4px solid #444; font-weight: 900; font-size: 1.8rem; margin-top: 15px; z-index: 15; text-align: center; margin-bottom: 15px;">---</div>
+                        <div style="background: repeating-linear-gradient(90deg, transparent, transparent 15px, #94a3b8 15px, #94a3b8 22px); height: 40px; width: 120%; position: absolute; bottom: 50px; filter: drop-shadow(0 8px 5px #000); z-index: 8; opacity: 0.8;"></div>
+                        <div style="background: #000; color: #444; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 4px; border: 3px solid #444; font-weight: 900; font-size: 1.3rem; margin-top: 15px; z-index: 15; text-align: center; margin-bottom: 15px;">---</div>
                     </div>
                 `;
             }
@@ -268,24 +373,24 @@ window.renderShopOnBoard = function() {
 
     let reserveHtml = '';
     if(actRes.length > 0) {
-        reserveHtml += `<div style="margin-top:50px; border-top: 6px dashed #334155; padding-top: 40px;"><div style="display:flex; justify-content:space-around; width:100%; gap:20px;">`;
+        reserveHtml += `<div style="margin-top:30px;"><div style="display:flex; justify-content:space-around; width:100%; gap:20px;">`;
         actRes.forEach(rId => {
             let resItem = window.allCards.find(c => c.id === rId);
             if(!resItem) return;
             const canAfford = myPoints >= resItem.price;
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.85rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
-            let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml, false);
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.75rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+            let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml);
             
             reserveHtml += `
-                <div style="position:relative; width:45%; display:flex; flex-direction:column; align-items:center; background: rgba(0,0,0,0.4); padding: 30px; border-radius: 16px; border: 3px solid #334155; box-shadow: inset 0 10px 20px #000;">
-                    <div style="transform: scale(1.15); margin:0 auto; cursor:pointer; width:175px;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
-                        <div style="position:absolute; top:-20px; right:-20px; background:#eab308; color:#000; padding:10px 15px; font-weight:900; font-size: 1.2rem; border-radius:12px; z-index:30; box-shadow:0 5px 20px rgba(0,0,0,0.8); border: 3px solid #fff;">🔒 VARATTU</div>
+                <div style="position:relative; width:48%; display:flex; flex-direction:column; align-items:center;">
+                    <div style="transform: scale(0.9); margin:0 auto; cursor:pointer; width:175px;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
+                        <div style="position:absolute; top:-10px; right:-10px; background:#eab308; color:#000; padding:5px 10px; font-weight:900; border-radius:8px; z-index:30; box-shadow:0 2px 10px rgba(0,0,0,0.5);">🔒 VARATTU</div>
                         ${fullCardHtml}
                     </div>
-                    <div style="background: #000; color: #eab308; font-family: 'Courier Prime', monospace; padding: 10px 25px; border-radius: 8px; border: 4px solid #eab308; font-weight: 900; font-size: 1.8rem; margin-top: 30px; z-index: 15; text-align: center; box-shadow: 0 0 15px rgba(234,179,8,0.4);">${resItem.price} P</div>
-                    <div style="display:flex; gap:15px; margin-top:20px; width:100%; justify-content: center;">
-                        <button class="btn btn-success" ${!canAfford?'disabled':''} style="padding:15px 25px; font-size:1.2rem; font-weight:900;" onclick="window.buyShopItem('${resItem.id}', ${resItem.price}, true)">LUNASTA</button>
-                        <button class="btn btn-danger" style="padding:15px 25px; font-size:1.2rem; font-weight:900;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
+                    <div style="background: #000; color: #eab308; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 4px; border: 3px solid #eab308; font-weight: 900; font-size: 1.3rem; margin-top: 10px; z-index: 15; text-align: center;">${resItem.price} P</div>
+                    <div style="display:flex; gap:5px; margin-top:10px; width:160px; margin:0 auto;">
+                        <button class="vending-btn-buy" ${!canAfford?'disabled':''} onclick="window.buyShopItem('${resItem.id}', ${resItem.price}, true)">LUNASTA</button>
+                        <button class="vending-btn-reserve" style="background:#ef4444; border-color:#991b1b; box-shadow:0 4px 0 #991b1b;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
                     </div>
                 </div>
             `;
@@ -293,35 +398,46 @@ window.renderShopOnBoard = function() {
         reserveHtml += `</div></div>`;
     }
 
-    // Alkuperäinen 1100px leveä upea automaatti, joka nyt mahtuu ruudulle skaalautuen
     wrapper.innerHTML = `
-    <div style="position: relative; width: 100%; max-width: 1100px; margin: 0 auto; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #020617 100%); border: 20px solid #000; border-bottom: 100px solid #050505; border-radius: 30px 30px 10px 10px; box-shadow: 0 30px 70px rgba(0,0,0,0.8), inset 25px 25px 80px rgba(255,255,255,0.06); padding: 50px 40px; display: flex; flex-direction: column; z-index:20; box-sizing:border-box;">
-        <div style="background: linear-gradient(to bottom, #000, #111); padding: 30px 50px; border-radius: 20px; border: 8px solid #222; border-bottom: 12px solid #000; display:flex; justify-content:space-between; align-items:center; margin-bottom: 60px; box-shadow: inset 0 0 50px rgba(239,68,68,0.25);">
-            <div style="display:flex; align-items:center; gap: 25px;">
-                <div style="width: 25px; height: 25px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 30px #22c55e;"></div>
-                <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:3.5rem; text-shadow: 0 0 30px #ef4444; letter-spacing: 5px;">FRIBAMART</div>
-            </div>
-            <div style="background: #000; padding: 15px 35px; border-radius: 12px; border: 4px inset #333;">
-                <div style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:3rem; font-weight:900;">${myPoints} P</div>
-            </div>
+    <div style="position: relative; width: 750px; background: linear-gradient(to right, #0f172a, #1e293b, #0f172a); border: 12px solid #020617; border-bottom: 50px solid #000; border-radius: 20px 20px 4px 4px; box-shadow: 40px 50px 80px rgba(0,0,0,0.9), inset 0 0 30px #000; padding: 30px 25px; display: flex; flex-direction: column; z-index:20;">
+        
+        <!-- Header -->
+        <div style="background: #000; padding: 20px 30px; border-radius: 12px; border: 5px solid #222; display:flex; justify-content:space-between; align-items:center; margin-bottom: 40px; box-shadow: inset 0 0 20px rgba(239,68,68,0.15);">
+            <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:2.8rem; text-shadow: 0 0 20px #ef4444, 0 0 5px #fff; letter-spacing: 2px;">FRIBAMART 🎰</div>
+            <div style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:2.2rem; font-weight:900; text-shadow: 0 0 15px #22c55e;">${myPoints} P</div>
         </div>
-        <div style="background: #020617; border-radius: 20px; border: 16px solid #050505; padding: 40px; position:relative;">
+
+        <!-- Glass Area -->
+        <div style="background: #020617; border-radius: 12px; border: 8px solid #000; box-shadow: inset 0 20px 50px #000, inset 0 0 15px rgba(56,189,248,0.1); position:relative; padding: 25px; overflow:hidden;">
+            <!-- Glass reflection -->
+            <div style="position:absolute; top:0; left:-50%; width:200%; height:100%; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.08) 50%, transparent 55%); pointer-events:none; z-index:40;"></div>
             ${shelvesHtml}
         </div>
-        <div style="height: 320px; margin-top: 60px; display:flex; gap:40px; align-items:flex-start; flex-wrap:wrap;">
-            <div style="flex: 1; min-width: 250px; background: #050505; border-radius: 20px; border: 10px solid #111; height: 250px; position:relative; display:flex; justify-content:center; align-items:center;">
-                <span style="color:#1e293b; font-weight:900; font-size:3rem; letter-spacing:15px;">PUSH</span>
+
+        <!-- Dispenser & Controls -->
+        <div style="height: 250px; margin-top: 40px; display:flex; gap:40px;">
+            <!-- Dispenser flap -->
+            <div style="flex: 1; background: #000; border-radius: 12px; border: 6px solid #111; box-shadow: inset 0 30px 40px #000; position:relative;">
+                <div style="position:absolute; top:0; left:0; right:0; height: 90px; background: #1a1a1a; border-bottom: 3px solid #000; transform-origin: top; transform: rotateX(-20deg); box-shadow: 0 10px 15px rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center;">
+                    <span style="color:#333; font-weight:900; font-size:1.8rem; letter-spacing:6px; text-shadow: -1px -1px 0 #000;">PUSH</span>
+                </div>
             </div>
-            <div style="width: 240px; background: #0a0a0a; border-radius: 20px; border: 8px solid #000; padding: 30px; display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
-                ${Array(12).fill('<div style="background: #222; height:35px; border-radius:8px; border-bottom:5px solid #000;"></div>').join('')}
+            
+            <!-- Keypad/Coin slot -->
+            <div style="width: 160px; background: #111; border-radius: 12px; border: 5px solid #000; padding: 20px; display:flex; flex-direction:column; align-items:center; box-shadow: inset 0 0 15px rgba(0,0,0,0.8);">
+                <div style="width: 25px; height: 70px; background: #000; border-radius: 15px; border: 3px solid #333; margin-bottom: 25px; box-shadow: inset 0 10px 15px #000;"></div>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width:100%;">
+                    ${Array(9).fill('<div style="background:#0a0a0a; height:25px; border-radius:5px; border-bottom:4px solid #000; box-shadow: 0 2px 4px rgba(0,0,0,0.5);"></div>').join('')}
+                </div>
             </div>
         </div>
-        ${reserveHtml}
-    </div>`;
-};
-window.renderShopView = function() { window.renderShopOnBoard(); };
 
-// --- NÄKYMÄ 1: TULOKSET (REAAALIAIKAINEN KUITTI) ---
+    </div>
+    <!-- Floor Shadow -->
+    <div style="position:absolute; bottom:-60px; left:-50px; right:-50px; height:80px; background:radial-gradient(ellipse at center, rgba(0,0,0,0.9) 0%, transparent 70%); z-index:0; pointer-events:none;"></div>
+    `;
+};
+
 window.renderReceiptOnBoard = function() {
     let wrapper = el('board-receipt-wrapper');
     if(!wrapper) return;
@@ -331,13 +447,13 @@ window.renderReceiptOnBoard = function() {
         let html = ``; 
         [...window.allPlayers].filter(p=>p).sort((a,b) => (a.dgScore||0) - (b.dgScore||0)).forEach(p => { 
             let scoreStr = p.dgScore > 0 ? `+${p.dgScore}` : (p.dgScore === 0 ? 'E' : p.dgScore);
-            html += `<div style="display:flex; justify-content:space-between; font-size:1.8rem; font-weight:900; margin-bottom:8px;"><span>${p.name.substring(0, 12)}</span><span style="color:var(--ink-blue);">${scoreStr}</span></div>`; 
+            html += `<div style="display:flex; justify-content:space-between; font-size:1.8rem; font-weight:900; margin-bottom:8px;"><span>${p.name.substring(0, 12)}</span><span>${scoreStr}</span></div>`; 
         }); 
         return html; 
     };
 
     let html = `
-    <div class="board-receipt-paper" style="position:relative; width: 100%; max-width: 450px; margin: 0 auto; box-sizing:border-box;">
+    <div class="board-receipt-paper" style="position:relative; transform: rotate(-1deg); box-shadow: 10px 20px 40px rgba(0,0,0,0.6);">
         <div class="tape tape-top" style="width: 180px; top: -15px;"></div>
         <div style="font-size:2.5rem; font-weight:900; margin-bottom:30px; text-align:center; border-bottom:4px solid #111; padding-bottom:10px;">TULOSSEURANTA</div>`;
     
@@ -356,22 +472,86 @@ window.renderReceiptOnBoard = function() {
         } 
     }
     
-    html += `<div style="margin-top:40px; border-top: 4px dashed #111; padding-top:20px; background:#f8fafc; padding:20px; border-radius:8px; border:2px solid #111;"><h3 style="text-align:center; font-size:1.8rem; margin-bottom:20px; font-family:'Kalam';">KOKONAISTILANNE</h3>${generateTotals()}</div></div>`;
+    html += `<div style="margin-top:40px; border-top: 4px dashed #111; padding-top:20px; background:#f8fafc; padding:20px; border-radius:8px; border:2px solid #111;"><h3 style="text-align:center; font-size:1.8rem; margin-bottom:20px;">KOKONAISTILANNE</h3>${generateTotals()}</div></div>`;
     wrapper.innerHTML = html;
 };
-window.renderResultsView = function() { window.renderReceiptOnBoard(); };
 
-
-// --- MODAALIT JA KARUSELLIT (SÄILYTETTY TÄYSIN ENNALLAAN) ---
-
-window.showModalSafe = function(id, displayType) {
-    let elModal = document.getElementById(id); 
-    if(elModal) { 
-        elModal.style.display = displayType || 'flex'; 
-        history.pushState({ fribaApp: true }, ''); 
-    } 
+window.renderBoard = function() {
+    const board = el('corkboard-surface');
+    if (!board || !window.currentCourse) return;
+    
+    let totalHoles = window.currentCourse.pars.length; 
+    let cols = Math.min(9, totalHoles); 
+    let rows = Math.ceil(totalHoles / cols);
+    
+    let rightXPanel = window.getRightXPanel ? window.getRightXPanel() : 2000;
+    
+    let corkW = rightXPanel + 400;
+    let corkH = Math.max((rows * 1010) + 200, 2500);
+    let totalW = corkW + 1200; 
+    let totalH = corkH + 600; 
+    
+    board.style.width = `${totalW}px`;
+    board.style.height = `${totalH}px`;
+    board.style.background = 'transparent';
+    board.style.border = 'none';
+    board.style.padding = '0';
+    
+    let html = ``;
+    
+    // HUONEEN SEINÄ JA LATTIA
+    html += `<div style="position:absolute; left:0; top:0; width:${totalW}px; height:${corkH + 150}px; background: #cbd5e1; z-index:0;"></div>`;
+    html += `<div style="position:absolute; left:0; top:${corkH + 150}px; width:${totalW}px; height:${totalH - (corkH + 150)}px; background: #475569; z-index:0; border-top: 15px solid #334155; box-shadow: inset 0 20px 30px rgba(0,0,0,0.4);"></div>`;
+    
+    // ILMOITUSTAULU
+    html += `<div style="position:absolute; left:50px; top:50px; width:${corkW}px; height:${corkH}px; background-color: #e2e8f0; background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px); background-size: 12px 12px; border: 35px solid #5c4033; border-top-color: #7b4e35; border-left-color: #7b4e35; border-bottom-color: #3e2723; border-right-color: #3e2723; border-radius: 12px; z-index:1; box-shadow: 15px 25px 50px rgba(0,0,0,0.7);"></div>`;
+    
+    // KANSIO (Taulun päällä)
+    html += `<div id="board-binder-wrapper" style="position:absolute; left:80px; top:120px; z-index:10; width:500px;"></div>`;
+    
+    // KUITTI (Taulun päällä kansion alapuolella)
+    html += `<div id="board-receipt-wrapper" style="position:absolute; left:100px; top:1200px; z-index:10; width:450px;"></div>`;
+    
+    let startXHolesVal = window.startXHoles || 1000;
+    html += `<div id="holes-grid" style="display:grid; grid-template-columns:repeat(${cols}, 380px); gap:60px 80px; position:absolute; left:${startXHolesVal + 50}px; top:150px; z-index:5;">`;
+    window.gameHistory.forEach((h, index) => { html += window.getHoleCellHTML(h, index + 1, false, true); });
+    
+    if (window.currentHoleIndex > totalHoles) {
+        let sortedPlayers = [...window.allPlayers].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
+        let winner = sortedPlayers[0] || {name: "Tuntematon", dgScore: 0, score: 0};
+        html += `
+        <div style="grid-column: 1 / -1; display:flex; justify-content:center; align-items:center; height:600px;">
+            <div style="transform:rotate(-3deg); background:#fff; padding:60px; box-shadow:15px 30px 60px rgba(0,0,0,0.6); border:4px solid #ccc; z-index:100; text-align:center; min-width:450px; border-radius:8px; position:relative;">
+                <div class="tape tape-top" style="width:200px; top:-15px; height:35px;"></div>
+                <h1 style="font-family:'Kalam', cursive; font-size:5rem; color:var(--primary); margin-bottom:15px; line-height:1;">🏆 MESTARI!</h1>
+                <h2 style="font-size:2rem; margin-bottom:10px; color:#555;">VOITTAJA (Pienin tulos):</h2>
+                <div style="font-size:4.5rem; font-weight:900; color:var(--ink-blue); margin-bottom:30px; font-family:'Kalam', cursive;">${winner.name}</div>
+                <div style="background:#f1f5f9; padding:30px; border-radius:16px; border:3px dashed #94a3b8;">
+                    <p style="font-size:2.5rem; font-weight:900; color:#16a34a; margin-bottom:15px;">Lopullinen tulos: ${winner.dgScore > 0 ? '+' : ''}${winner.dgScore}</p>
+                    <p style="font-size:1.5rem; font-weight:800; color:var(--warning);">Säästetyt pelimerkit: ${winner.score} P</p>
+                </div>
+            </div>
+        </div>`;
+    } else if (window.activeHole) { 
+        html += window.getHoleCellHTML({ rule: window.activeHole.rule, playedCards: window.activeHole.playedCards, color: window.activeHole.color, penColor: window.activeHole.penColor, players: window.allPlayers }, window.currentHoleIndex, true, false); 
+    }
+    html += `</div>`;
+    
+    // KAUPPA (Taulun ulkopuolella lattialla)
+    let shopX = corkW + 150;
+    let shopY = corkH + 150 - 950; // Seisoo tarkasti lattialinjalla
+    html += `<div id="board-shop-wrapper" style="position:absolute; left:${shopX}px; top:${shopY}px; z-index:10; width:750px;"></div>`;
+    
+    board.innerHTML = html;
+    
+    window.renderBinderOnBoard();
+    window.renderReceiptOnBoard();
+    window.renderShopOnBoard();
 };
 
+// ==============================================
+// KARUSELLI (Kortin tarkastelu / pelaaminen)
+// ==============================================
 window.isFlipping = false;
 window.flippedCards = new Set();
 
@@ -509,7 +689,9 @@ window.openCardDetail = function(cId, mode) {
     
     if (mode === 'sell') {
         window.carouselCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
-        if (typeof window.getCardSortWeight === 'function') { window.carouselCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b)); }
+        if (typeof window.getCardSortWeight === 'function') {
+            window.carouselCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
+        }
     } else if (mode === 'shop') {
         let shopCards = window.activeHole && window.activeHole.shop && window.activeHole.shop[window.myName] ? window.activeHole.shop[window.myName] : [];
         window.carouselCards = shopCards.filter(Boolean).map(c => c.id);
@@ -537,13 +719,18 @@ window.openCardDetail = function(cId, mode) {
     }, 50);
 };
 
+// ==============================================
+// SCORE SYÖTTÖ MODAALI JA KÄSIRAJA VAROITUS
+// ==============================================
 window.showHandLimitModal = function(cards) {
     if(!el('handLimitModal')) return;
     let limit = window.gameSettings ? (window.gameSettings.handLimit || 6) : 6;
     el('handLimitCount').innerText = `${cards.length} / ${limit}`;
     let html = '';
     
-    if (typeof window.getCardSortWeight === 'function') { cards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b)); }
+    if (typeof window.getCardSortWeight === 'function') {
+        cards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
+    }
     
     cards.forEach(cId => {
         const cDef = window.allCards.find(c => c && c.id === cId);
@@ -558,6 +745,7 @@ window.showHandLimitModal = function(cards) {
             <button class="btn btn-danger" style="width:auto; padding:10px 15px; font-size:0.85rem; margin:0;" onclick="window.forceDiscard('${cId}')">♻️ MYY (+${sellReward} P)</button>
         </div>`;
     });
+    
     el('handLimitCards').innerHTML = html; 
     window.showModalSafe('handLimitModal');
 };
@@ -604,23 +792,4 @@ window.openScoreModal = function() {
     el('scoreInputsContainer').innerHTML = html; 
     el('taskWinnerContainer').innerHTML = taskCheckboxes; 
     window.showModalSafe('scoreModal');
-};
-
-window.showAppleToast = function(msg, icon = '✨') { 
-    const toast = el('appleToast'); 
-    if(!toast) return; 
-    el('appleToastIcon').innerText = icon; 
-    el('appleToastText').innerText = msg; 
-    toast.classList.add('show'); 
-    setTimeout(() => { toast.classList.remove('show'); }, 2000); 
-};
-
-window.showNotification = function(message, type = 'info') { 
-    const container = el('notificationContainer'); 
-    if(!container) return; 
-    const toast = document.createElement('div'); 
-    toast.className = `notification ${type}`; 
-    toast.innerHTML = `<span>${message}</span>`; 
-    container.appendChild(toast); 
-    setTimeout(() => { toast.remove(); }, 6000); 
 };
