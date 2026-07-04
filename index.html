@@ -11,12 +11,13 @@
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="style.css?v=197" />
+    <!-- Päivitetty versio v=198 pakottamaan välimuistin tyhjennys -->
+    <link rel="stylesheet" href="style.css?v=198" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <style>
         /* =========================================
-           UUSI NÄKYMÄ-RAKENNE (Erilliset ruudut)
+           NÄKYMÄ-RAKENNE
            ========================================= */
         .cork-bg {
             background-color: #cbd5e1;
@@ -41,50 +42,52 @@
         }
 
         /* =========================================
-           FYYSISTEN KORTTIEN PARANNETTU DESIGN (Isommat & Selkeämmät)
+           FYYSISTEN KORTTIEN 3D & REALISTINEN DESIGN
            ========================================= */
         .physical-card {
-            width: 190px; height: 290px; /* Isompi koko tekstille */
+            width: 220px; height: 330px; /* Huomattavasti isompi koko */
             border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
-            box-shadow: 4px 8px 20px rgba(0,0,0,0.6); position: relative;
-            background: #fff; flex-shrink: 0;
+            box-shadow: 4px 10px 25px rgba(0,0,0,0.7), inset 0 0 10px rgba(255,255,255,0.5); 
+            position: relative; background: #fff; flex-shrink: 0;
+            transform-style: preserve-3d;
         }
+        /* Tason mukaiset 3D-kehykset ja hohto */
+        .tier-1 { border: 8px solid #cd7f32; box-shadow: 0 0 20px rgba(205,127,50,0.6), inset 0 0 15px rgba(255,255,255,0.4); } /* Pronssi */
+        .tier-2 { border: 8px solid #94a3b8; box-shadow: 0 0 20px rgba(148,163,184,0.6), inset 0 0 15px rgba(255,255,255,0.6); } /* Hopea */
+        .tier-3 { border: 8px solid #eab308; box-shadow: 0 0 35px rgba(234, 179, 8, 0.9), inset 0 0 20px rgba(255,255,255,0.8); } /* Kulta */
+
         .card-header {
-            padding: 10px 12px; font-weight: 900; font-size: 0.9rem; display: flex; 
+            padding: 12px 14px; font-weight: 900; font-size: 0.95rem; display: flex; 
             justify-content: space-between; align-items: center; text-transform: uppercase;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.6); letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8); letter-spacing: 1.5px; z-index: 2;
         }
-        /* Selkeä värikoodaus: Sabotaasi = Punainen, Helpotus = Vihreä */
-        .card-header.sabotage { background: linear-gradient(135deg, #991b1b, #dc2626); color: #fff; border-bottom: 3px solid #7f1d1d;}
-        .card-header.buff { background: linear-gradient(135deg, #166534, #22c55e); color: #fff; border-bottom: 3px solid #14532d;}
+        /* Selkeä värikoodaus */
+        .card-header.sabotage { background: linear-gradient(180deg, #b91c1c, #7f1d1d); color: #fff; border-bottom: 4px solid #450a0a;}
+        .card-header.buff { background: linear-gradient(180deg, #15803d, #14532d); color: #fff; border-bottom: 4px solid #052e16;}
         
         .card-body {
-            flex: 1; padding: 12px 10px; display: flex; flex-direction: column; 
-            align-items: center; text-align: center; background: #fff;
+            flex: 1; padding: 15px 12px; display: flex; flex-direction: column; 
+            align-items: center; text-align: center; background: #fff; z-index: 1;
         }
-        .card-body.sabotage { background: radial-gradient(circle at top, #fff5f5, #fee2e2); }
-        .card-body.buff { background: radial-gradient(circle at top, #f0fdf4, #dcfce7); }
+        .card-body.sabotage { background: radial-gradient(circle at top, #fff5f5, #fca5a5); }
+        .card-body.buff { background: radial-gradient(circle at top, #f0fdf4, #86efac); }
         
         .play-cost-badge {
-            background: #111; color: #fff; font-weight: 900; font-size: 0.9rem;
-            padding: 5px 12px; border-radius: 6px; border: 2px solid #fff;
-            width: fit-content; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            background: linear-gradient(to bottom, #111, #000); color: #fff; font-weight: 900; font-size: 1.1rem;
+            padding: 6px 14px; border-radius: 8px; border: 2px solid #fff;
+            width: fit-content; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.6);
         }
         
-        /* Suurempi, selkeämpi teksti ilman katkeilua */
+        /* Massiivinen, selkeä teksti */
         .card-title { 
-            font-size: 1.3rem; font-weight: 900; line-height: 1.1; margin-bottom: 8px; 
-            color: #111; font-family: 'Inter', sans-serif; word-wrap: break-word; hyphens: auto;
+            font-size: 1.5rem; font-weight: 900; line-height: 1.1; margin-bottom: 12px; 
+            color: #000; font-family: 'Inter', sans-serif; word-wrap: break-word; hyphens: auto;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.8);
         }
         .card-desc { 
-            font-size: 1rem; font-weight: 800; line-height: 1.3; color: #1e293b; 
+            font-size: 1.15rem; font-weight: 800; line-height: 1.35; color: #1e293b; 
             flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
-
-        /* Tasojen paksut ja näyttävät hohtavat kehykset */
-        .tier-1 { border: 6px solid #cd7f32; box-shadow: 0 0 15px rgba(205,127,50,0.5); } /* Pronssi */
-        .tier-2 { border: 6px solid #94a3b8; box-shadow: 0 0 15px rgba(148,163,184,0.5); } /* Hopea */
-        .tier-3 { border: 6px solid #eab308; box-shadow: 0 0 25px rgba(234, 179, 8, 0.8); } /* Kulta */
 
         /* =========================================
            TAULULLE PIIRRETTÄVÄT ELEMENTIT (CSS)
@@ -102,7 +105,6 @@
         
         .board-receipt-paper { width: 500px; background: #fff; padding: 40px; box-shadow: 5px 15px 30px rgba(0,0,0,0.5); font-family: 'Courier Prime', monospace; border-top: 10px solid #cbd5e1; margin: 0 auto; }
 
-        /* Pieni ilmoitustaulu väylää varten */
         .mini-corkboard {
             background-color: #e2e8f0;
             background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px);
@@ -114,26 +116,28 @@
         }
 
         /* =========================================
-           UUSI MODERNI ALAPALKKI
+           APPLE-TYYLINEN ALAPALKKI (Ei korkeusmuutoksia)
            ========================================= */
         .modern-bottom-nav {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 98%; max-width: 600px;
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 30px;
+            width: 95%; max-width: 500px;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 40px;
             display: flex; justify-content: space-around; align-items: center;
-            padding: 10px 5px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); z-index: 9000;
+            padding: 12px 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); z-index: 9000;
         }
         .nav-item {
-            display: flex; flex-direction: column; align-items: center; color: #94a3b8; background: none; border: none;
-            font-size: 0.6rem; font-weight: 900; text-transform: uppercase; cursor: pointer; position: relative; transition: transform 0.1s;
-            flex: 1;
+            display: flex; flex-direction: column; align-items: center; color: #64748b; background: none; border: none;
+            font-size: 0.65rem; font-weight: 800; text-transform: uppercase; cursor: pointer; position: relative; transition: all 0.2s;
+            flex: 1; padding: 5px 0;
         }
         .nav-item:active { transform: scale(0.9); }
-        .nav-item .icon { font-size: 1.5rem; margin-bottom: 4px; display: block; }
-        .nav-item.accent { background: linear-gradient(135deg, var(--primary), #047857); color: #fff; border-radius: 20px; padding: 10px 4px; box-shadow: 0 6px 15px rgba(16,185,129,0.4); }
-        .nav-item.accent .icon { font-size: 1.7rem; }
-        .nav-item .badge { position: absolute; top: -5px; right: 5px; background: var(--danger); color: white; border-radius: 10px; padding: 3px 6px; font-size: 0.65rem; border: 2px solid #0f172a; font-weight:900;}
+        .nav-item .icon { font-size: 1.6rem; margin-bottom: 5px; display: block; transition: all 0.2s; filter: grayscale(100%); opacity: 0.6; }
+        
+        .nav-item.accent { color: #fff; }
+        .nav-item.accent .icon { filter: grayscale(0%); opacity: 1; transform: translateY(-3px) scale(1.15); text-shadow: 0 0 15px rgba(255,255,255,0.5); }
+        
+        .nav-item .badge { position: absolute; top: -5px; right: 10px; background: var(--danger); color: white; border-radius: 10px; padding: 3px 6px; font-size: 0.65rem; border: 2px solid #0f172a; font-weight:900;}
         .nav-item .badge.money { background: var(--warning); color: #000; }
         
         /* Korjattu Sulje-nappi (ei enää fixed jotta ei mene päälle) */
@@ -142,7 +146,7 @@
         /* Apple-tyylinen läpikuultava ilmoitus */
         .apple-toast { 
             position: fixed; top: -200px; left: 50%; transform: translateX(-50%); 
-            background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
             color: #fff; padding: 18px 25px; border-radius: 25px; font-size: 1.15rem; font-weight: 800; 
             display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 100000; 
             transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
@@ -247,10 +251,10 @@
             </div>
         </div>
 
-        <!-- KAUPPA HUONE-TAUSTALLA -->
+        <!-- KAUPPA REALISTISELLA HUONE-TAUSTALLA -->
         <div id="view-shop" class="app-view" style="background: linear-gradient(to bottom, #1e293b, #020617); perspective: 1000px;">
-            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 350px; background: radial-gradient(ellipse at top, #334155, #0f172a); border-top: 10px solid #000; z-index: 0; transform: rotateX(60deg) scale(1.5); transform-origin: top;"></div>
-            <div class="scale-wrapper" id="shop-scale-wrapper" style="margin-top: 20px; z-index: 10; filter: drop-shadow(0 30px 40px rgba(0,0,0,0.8));">
+            <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 350px; background: radial-gradient(ellipse at top, #334155, #0f172a); border-top: 10px solid #000; z-index: 0; transform: rotateX(60deg) scale(1.5); transform-origin: top; box-shadow: inset 0 50px 50px rgba(0,0,0,0.8);"></div>
+            <div class="scale-wrapper" id="shop-scale-wrapper" style="margin-top: 20px; z-index: 10; filter: drop-shadow(0 30px 40px rgba(0,0,0,0.9));">
                 <div id="board-shop-wrapper"></div>
             </div>
         </div>
@@ -266,7 +270,7 @@
 
     </div>
 
-    <!-- ALAPALKKI -->
+    <!-- UUSI MODERNISOITU APPLE-ALAPALKKI UUSILLA IKONEILLA -->
     <div class="modern-bottom-nav" id="pocketContainer" style="display:none;">
         <button class="nav-item" onclick="window.switchView('view-receipt')">
             <span class="icon">🧾</span>
@@ -278,12 +282,12 @@
         </button>
         <button class="nav-item" onclick="window.switchView('view-binder')">
             <span class="badge" id="handCountBadge">0/6</span>
-            <span class="icon">📂</span>
+            <span class="icon">🃏</span>
             <span>KORTIT</span>
         </button>
         <button class="nav-item" onclick="window.switchView('view-shop')">
             <span class="badge money" id="myResPointsBtn">0 P</span>
-            <span class="icon">🍫</span>
+            <span class="icon">🏪</span>
             <span>KAUPPA</span>
         </button>
         <button class="nav-item accent" onclick="window.switchView('view-hole')">
@@ -433,10 +437,10 @@
         <button class="fixed-close-btn" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE KORTTI</button>
     </div>
 
-    <script src="tasks.js?v=197"></script>
-    <script type="module" src="script.js?v=197"></script>
-    <script src="game.js?v=197"></script>
-    <script src="ui.js?v=197"></script>
+    <script src="tasks.js?v=198"></script>
+    <script type="module" src="script.js?v=198"></script>
+    <script src="game.js?v=198"></script>
+    <script src="ui.js?v=198"></script>
     
     <script>
         if ('serviceWorker' in navigator) {
