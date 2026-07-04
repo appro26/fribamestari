@@ -4,32 +4,6 @@
 
 var el = id => document.getElementById(id);
 
-// GPU-optimoinnit ja staattinen tausta (yhdistetty patches.js-tiedostosta)
-document.addEventListener('DOMContentLoaded', () => {
-    let styleFix = document.getElementById('patch-styles');
-    if(!styleFix) {
-        styleFix = document.createElement('style');
-        styleFix.id = 'patch-styles';
-        document.head.appendChild(styleFix);
-    }
-    styleFix.innerHTML = `
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #cbd5e1; overflow: hidden; touch-action: none; overscroll-behavior: none; }
-        #corkboard-viewport { width: 100vw; height: 100vh; position: absolute; top:0; left:0; z-index: 5; touch-action: none; }
-        #corkboard-surface { transform-origin: 0 0; border: none !important; background: transparent !important; }
-        .is-dragging * { pointer-events: none !important; }
-        #cardDetailModal { padding-bottom: 120px !important; justify-content: flex-start !important; padding-top: 5vh !important; }
-        .fixed-close-btn { bottom: 20px !important; width: 90% !important; max-width: 400px !important; border-radius: 16px !important; padding: 18px !important; font-size: 1.3rem !important; box-shadow: 0 10px 25px rgba(0,0,0,0.6) !important; }
-    `;
-
-    let roomBg = document.getElementById('fixed-room-bg');
-    if(!roomBg) {
-        roomBg = document.createElement('div');
-        roomBg.id = 'fixed-room-bg';
-        document.body.insertBefore(roomBg, document.body.firstChild);
-    }
-    roomBg.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; background: linear-gradient(to bottom, #cbd5e1 55%, #334155 55%, #1e293b 100%); pointer-events:none;";
-});
-
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
 window.getRandomColor = () => postItColors[Math.floor(Math.random() * postItColors.length)];
 
@@ -48,6 +22,25 @@ window.pseudoRandom = (seed) => {
     let x = Math.sin(seed) * 10000; 
     return x - Math.floor(x); 
 };
+
+// ==============================================
+// SKAALAUS JA NÄKYMIEN HALLINTA
+// ==============================================
+window.applyViewScales = function() {
+    let w = window.innerWidth;
+    
+    let shopWrapper = el('shop-scale-wrapper');
+    if(shopWrapper) shopWrapper.style.transform = `scale(${Math.min(1.0, w / 680)})`;
+    
+    let binderWrapper = el('binder-scale-wrapper');
+    if(binderWrapper) binderWrapper.style.transform = `scale(${Math.min(1.0, w / 550)})`;
+    
+    let receiptWrapper = el('receipt-scale-wrapper');
+    if(receiptWrapper) receiptWrapper.style.transform = `scale(${Math.min(1.0, w / 520)})`;
+};
+window.addEventListener('resize', window.applyViewScales);
+
+window.viewedHoleIndex = null;
 
 // ==============================================
 // ILMOITUKSET JA IKKUNAT
@@ -114,7 +107,7 @@ window.showNotification = function(message, type = 'info') {
 };
 
 // ==============================================
-// KORTIN GENEROINTI (VISUAALINEN POHJA)
+// KORTIN GENEROINTI
 // ==============================================
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
     if (!cDef) return '';
@@ -144,26 +137,92 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '',
 };
 
 // ==============================================
-// VÄYLÄSOLUJEN RENDERÖINTI
+// VÄYLÄN (KOTI) RENDERÖINTI & NAVIGOINTI
 // ==============================================
-window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
-    let clickAttr = `onclick="window.zoomToHole(${hIndex})" style="cursor:pointer;"`;
-    let html = `<div class="hole-cell" ${clickAttr}>`;
-    let par = window.currentCourse && window.currentCourse.pars ? (window.currentCourse.pars[hIndex - 1] || 3) : 3;
+
+window.updateHoleNav = function() {
+    if (!window.currentCourse) return;
+    let hIndex = window.viewedHoleIndex || window.currentHoleIndex || 1;
+    let total = window.currentCourse.pars ? window.currentCourse.pars.length : 18;
+    let isCurrent = (hIndex === window.currentHoleIndex);
     
+    let titleEl = el('hole-nav-title');
+    if(titleEl) {
+        if(window.currentHoleIndex > total) {
+            titleEl.innerHTML = `VÄYLÄ ${hIndex} (HISTORIA)`;
+        } else {
+            titleEl.innerHTML = isCurrent ? `<span style="color:var(--primary);">VÄYLÄ ${hIndex} (NYT)</span>` : `VÄYLÄ ${hIndex} (HISTORIA)`;
+        }
+    }
+    
+    window.renderHoleView(hIndex, isCurrent);
+    window.renderPayslipView(hIndex);
+};
+
+window.prevHoleView = function() {
+    let hIndex = window.viewedHoleIndex || window.currentHoleIndex || 1;
+    if(hIndex > 1) {
+        window.viewedHoleIndex = hIndex - 1;
+        window.updateHoleNav();
+    }
+};
+
+window.nextHoleView = function() {
+    let hIndex = window.viewedHoleIndex || window.currentHoleIndex || 1;
+    let max = window.currentCourse && window.currentCourse.pars ? window.currentCourse.pars.length : 18;
+    let limit = Math.min(window.currentHoleIndex, max);
+    
+    // Jos peli on ohi, currentHoleIndex on total+1, eli voidaan mennä tappiin asti.
+    if (window.currentHoleIndex > max) limit = max;
+
+    if(hIndex < limit) {
+        window.viewedHoleIndex = hIndex + 1;
+        window.updateHoleNav();
+    }
+};
+
+window.renderHoleView = function(hIndex, isCurrent) {
+    let container = el('hole-content');
+    if(!container) return;
+    
+    let totalHoles = window.currentCourse && window.currentCourse.pars ? window.currentCourse.pars.length : 18;
+    
+    // GAME OVER RUUTU
+    if (window.currentHoleIndex > totalHoles && isCurrent && hIndex > totalHoles) {
+        let sortedPlayers = [...window.allPlayers].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
+        let winner = sortedPlayers[0] || {name: "Tuntematon", dgScore: 0, score: 0};
+        container.innerHTML = `
+        <div style="display:flex; justify-content:center; align-items:center; height:600px; width:100%;">
+            <div style="transform:rotate(-3deg); background:#fff; padding:40px 20px; box-shadow:15px 30px 60px rgba(0,0,0,0.6); border:4px solid #ccc; z-index:100; text-align:center; width:90%; max-width:400px; border-radius:8px; position:relative;">
+                <div class="tape tape-top" style="width:150px; top:-15px; height:25px;"></div>
+                <h1 style="font-family:'Kalam', cursive; font-size:4rem; color:var(--primary); margin-bottom:15px; line-height:1;">🏆 MESTARI!</h1>
+                <h2 style="font-size:1.5rem; margin-bottom:10px; color:#555;">VOITTAJA:</h2>
+                <div style="font-size:3.5rem; font-weight:900; color:var(--ink-blue); margin-bottom:20px; font-family:'Kalam', cursive; overflow-wrap:break-word;">${winner.name}</div>
+            </div>
+        </div>`;
+        return;
+    }
+
+    let hData = isCurrent ? window.activeHole : window.gameHistory[hIndex - 1];
+    if(!hData) { container.innerHTML = '<p>Väylän tietoja ei löydy.</p>'; return; }
+
+    let par = window.currentCourse && window.currentCourse.pars ? (window.currentCourse.pars[hIndex - 1] || 3) : 3;
     let rot1 = (window.pseudoRandom(hIndex * 1.1) * 6 - 3).toFixed(1);
     let rot2 = (window.pseudoRandom(hIndex * 2.2) * 6 - 3).toFixed(1);
     let rot3 = (window.pseudoRandom(hIndex * 3.3) * 6 - 3).toFixed(1);
 
-    let activeStyle = isActive ? `z-index: 25;` : `z-index: 5;`;
-    html += `<div class="index-card" style="transform: rotate(${rot1}deg); position: relative; ${activeStyle}">`;
+    let html = ``;
+
+    // 1. INFO KORTTI
+    html += `<div class="index-card" style="transform: rotate(${rot1}deg); position: relative; margin-bottom: 30px; width: 90%; max-width: 320px;">`;
     html += `<div class="banner-subtitle">${window.currentCourse ? window.currentCourse.name : ''}</div><div class="banner-title">VÄYLÄ <span>${hIndex}</span></div><div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>`;
     
-    if (isActive && hData.penColor) {
+    if (isCurrent && hData.penColor) {
         html += `<div class="pen-container" onclick="event.stopPropagation(); window.openScoreModal();"><div class="pen-string"></div><div class="pen-body" style="background: linear-gradient(to right, ${hData.penColor.c1}, ${hData.penColor.c2}, ${hData.penColor.c1});"><span class="pen-text">MERKKAA</span></div></div>`;
     }
     html += `</div>`;
 
+    // 2. VÄYLÄSÄÄNTÖ
     if (hData.rule) {
         let bTxt = hData.rule.type === 'bounty' ? `🏆 TEHTÄVÄ` : '🎲 VÄYLÄSÄÄNTÖ';
         let bgCol = hData.color || '#fef08a';
@@ -172,13 +231,14 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         let pLh = ruleLen > 80 ? '1.25' : '1.4';
 
         html += `
-        <div class="post-it-note" style="background:${bgCol}; transform: rotate(${rot2}deg);" onclick="event.stopPropagation(); window.showZoomModal(this.outerHTML)">
+        <div class="post-it-note" style="background:${bgCol}; transform: rotate(${rot2}deg); margin-bottom: 30px; width: 90%; max-width: 340px;" onclick="event.stopPropagation(); window.showZoomModal(this.outerHTML)">
             <div style="font-weight:900; font-size:0.85rem; margin-bottom:8px; text-transform:uppercase; color:#666;">📌 ${bTxt}</div>
             <div style="font-size:1.6rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; color:#111;">${hData.rule.n}</div>
             <div style="font-size: ${pSize}; line-height: ${pLh}; font-weight:700; color:#222;">${hData.rule.d}</div>
         </div>`;
     }
 
+    // 3. PELATUT KORTIT
     let playedCards = [];
     if (hData.playedCards) { playedCards = Object.values(hData.playedCards).filter(Boolean); }
     
@@ -187,7 +247,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         playedCards.forEach(pc => { if (pc.target === window.myName || pc.target === 'KAIKKI VASTUSTAJAT') { myCards.push(pc); } else { otherCards.push(pc); } });
 
         if (myCards.length > 0) {
-            html += `<div style="width: 100%; max-width:360px; margin-bottom: 15px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px;">`;
+            html += `<div style="width: 100%; max-width:380px; margin-bottom: 20px; display:flex; flex-wrap:wrap; justify-content:center; gap:15px; padding: 10px;">`;
             myCards.forEach((pc, idx) => {
                 let cRot = (window.pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
                 let pinLeft = 50 + (Math.floor(window.pseudoRandom((hIndex + idx) * 5.5) * 20) - 10);
@@ -199,7 +259,7 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                 let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml);
 
                 html += `
-                <div class="pinned-card-container" style="transform: rotate(${cRot}deg);" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
+                <div class="pinned-card-container" style="transform: rotate(${cRot}deg); cursor:pointer;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div class="pushpin" style="left: ${pinLeft}%;"></div>
                     ${fullCardHtml}
                 </div>`;
@@ -210,10 +270,10 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         if (otherCards.length > 0) {
             let pRot = (window.pseudoRandom(hIndex * 1.5) * 4 - 2).toFixed(1);
             html += `
-                <div style="width: 100%; max-width:300px; margin-top: 15px; margin-bottom: 15px; position:relative; background:var(--paper-bg); padding:10px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); border-radius:2px; transform: rotate(${pRot}deg);">
+                <div style="width: 90%; max-width:340px; margin-bottom: 30px; position:relative; background:var(--paper-bg); padding:15px; box-shadow: 2px 4px 10px rgba(0,0,0,0.2); border-radius:2px; transform: rotate(${pRot}deg);">
                     <div class="tape tape-top" style="--rot:-2deg;"></div>
-                    <h2 style="color:var(--text-main); font-size:0.95rem; margin-bottom:10px; border-bottom:2px dashed #ccc; padding-bottom:5px; font-family:'Kalam', cursive; text-align:center;">PELITAPAHTUMAT</h2>
-                    <div style="display:flex; flex-direction:column; gap:6px;">`;
+                    <h2 style="color:var(--text-main); font-size:1.1rem; margin-bottom:10px; border-bottom:2px dashed #ccc; padding-bottom:5px; font-family:'Kalam', cursive; text-align:center;">MUIDEN TAPAHTUMAT</h2>
+                    <div style="display:flex; flex-direction:column; gap:8px;">`;
             
             otherCards.forEach((pc) => {
                 let typeIcon = pc.type === 'buff' ? '🛡️' : '💥';
@@ -222,8 +282,8 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
                 let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 
                 html += `
-                <div style="background:rgba(0,0,0,0.05); padding:6px; border-radius:4px; font-size:0.75rem; border-left: 4px solid ${typeColor}; cursor:pointer;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
-                    <b style="font-size:0.85rem;">${typeIcon} ${pc.cardName}</b><br>
+                <div style="background:rgba(0,0,0,0.05); padding:8px; border-radius:6px; font-size:0.85rem; border-left: 5px solid ${typeColor}; cursor:pointer;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
+                    <b style="font-size:1rem;">${typeIcon} ${pc.cardName}</b><br>
                     <span style="color:#555;">Käyttäjä: <b>${pc.by}</b> ➡️ Kohde: <b style="color:${typeColor};">${pc.target}</b></span>
                 </div>`;
             });
@@ -231,14 +291,15 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
         }
     }
 
+    // 4. TULOSLAPPU
     let playersToRender = hData.players || window.allPlayers;
     let sortedPlayers = [...playersToRender].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
     
     html += `
-    <div class="score-spiral-note" style="transform: rotate(${rot3}deg);">
+    <div class="score-spiral-note" style="transform: rotate(${rot3}deg); margin-bottom: 40px; width: 95%; max-width: 360px;">
         <div class="pin pin-blue" style="top: 15px; right: 20px;"></div>
         <div class="pin pin-red" style="bottom: 25px; right: 15px;"></div>
-        <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:1.6rem; text-decoration:underline;">🏆 Tulos</h2>`;
+        <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:1.8rem; text-decoration:underline;">🏆 Tulos</h2>`;
     
     let renderScoreDots = (strokes, p_par) => {
         if(!strokes) return '-';
@@ -249,50 +310,85 @@ window.getHoleCellHTML = function(hData, hIndex, isActive, isHistory) {
     };
 
     sortedPlayers.forEach((p) => {
-        let strokes = isHistory && hData.holeResults ? hData.holeResults[p.name] : null;
+        let strokes = !isCurrent && hData.holeResults ? hData.holeResults[p.name] : null;
         let scoreHTML = renderScoreDots(strokes, par);
         let displayScore = (p.name === window.myName) ? `${p.score || 0} P` : `?? P`;
         
+        // Historiassa näytetään todelliset talousluvut kyseiseltä hetkeltä
+        if (!isCurrent) displayScore = `${p.score || 0} P`;
+        
         html += `
         <div class="player-row-paper">
-            <span class="paper-name" style="font-size:1.4rem;">${p.name}</span>
+            <span class="paper-name" style="font-size:1.5rem;">${p.name}</span>
             <div style="display:flex; align-items:center; gap: 10px;">
-                <span style="font-size:1rem; color:var(--warning); font-weight:900;">${displayScore}</span>
-                <div class="score-display-paper" style="width:auto !important; min-width:34px; height:34px !important; font-size:1.2rem !important; margin-left:auto; padding:0 5px;">${scoreHTML}</div>
+                <span style="font-size:1.1rem; color:var(--warning); font-weight:900;">${displayScore}</span>
+                <div class="score-display-paper" style="width:auto !important; min-width:38px; height:38px !important; font-size:1.3rem !important; margin-left:auto; padding:0 5px;">${scoreHTML}</div>
             </div>
         </div>`;
     });
     html += `</div>`;
-    
-    if (isHistory && window.myName && hData.pointBreakdowns && hData.pointBreakdowns[window.myName]) {
-        let myBreakdown = hData.pointBreakdowns[window.myName];
-        let deltaColor = myBreakdown.delta >= 0 ? '#16a34a' : '#dc2626';
-        let sign = myBreakdown.delta > 0 ? '+' : '';
-        let rowsHtml = '';
-        if (myBreakdown.summary && myBreakdown.summary !== "Ei tuloja tai menoja.") {
-            myBreakdown.summary.split(', ').forEach(part => {
-                let kv = part.split(': ');
-                if(kv.length === 2) { rowsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #cbd5e1; padding:6px 0;"><span style="color:#475569;">${kv[0]}</span><span style="font-weight:700; color:#1e293b;">${kv[1]}</span></div>`; } 
-                else { rowsHtml += `<div style="padding:6px 0; color:#475569;">${part}</div>`; }
-            });
-        } else { rowsHtml += `<div style="padding:6px 0; color:#475569; text-align:center; font-style:italic;">Ei tapahtumia tällä jaksolla.</div>`; }
 
-        html += `
-        <div class="payslip-paper" style="background:#fff; border:1px solid #cbd5e1; border-radius:2px; transform: rotate(-0.5deg); margin-top: 25px; margin-bottom: 20px; width: 100%; max-width: 340px; padding: 20px; box-shadow: 2px 4px 12px rgba(0,0,0,0.15); z-index:30; position:relative; font-family:'Courier Prime', monospace;">
-            <div style="border-bottom: 2px dashed #1e293b; padding-bottom: 8px; margin-bottom: 12px; text-align:center;">
-                <div style="font-weight:900; font-size:1.4rem; color:#1e293b; letter-spacing:1px; text-transform:uppercase;">Palkkalaskelma</div>
-                <div style="font-size:0.85rem; color:#64748b; margin-top:4px;">Kausi: Väylä ${hIndex}</div>
-            </div>
-            <div style="margin-bottom:12px; font-size:0.95rem; color:#1e293b;">
-                <span style="font-weight:bold;">Työntekijä:</span> ${window.myName.toUpperCase()}
-            </div>
-            <div style="font-size:0.85rem; margin-bottom:15px; border-top:1px solid #94a3b8; padding-top:8px;">${rowsHtml}</div>
-            <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:10px; border-radius:4px; border:2px solid ${deltaColor};"><span style="font-weight:800; font-size:1.1rem; color:#334155;">NETTOPALKKA</span><span style="font-weight:900; font-size:1.5rem; color:${deltaColor};">${sign}${myBreakdown.delta} P</span></div>
-        </div>`;
-    }
-    html += `</div>`;
-    return html;
+    container.innerHTML = html;
 };
+
+// ==============================================
+// PALKKALASKELMA NÄKYMÄ
+// ==============================================
+window.renderPayslipView = function(hIndex) {
+    let container = el('payslip-content');
+    if(!container) return;
+
+    if (hIndex === window.currentHoleIndex) {
+        container.innerHTML = `
+        <div style="background:#fff; padding:30px; border-radius:8px; border:2px dashed #94a3b8; text-align:center; box-shadow:0 10px 20px rgba(0,0,0,0.3); width: 90%; max-width: 350px;">
+            <div style="font-size:3rem; margin-bottom:10px;">⏳</div>
+            <h2 style="color:#334155; font-size:1.3rem; font-weight:900;">Palkkaa ei ole vielä jaettu</h2>
+            <p style="color:#64748b; font-weight:bold;">Väylän ${hIndex} palkkalaskelma ilmestyy tähän, kun väylän tulokset on tallennettu.</p>
+        </div>`;
+        return;
+    }
+
+    let hData = window.gameHistory[hIndex - 1];
+    if (!hData || !hData.pointBreakdowns || !hData.pointBreakdowns[window.myName]) {
+        container.innerHTML = `<p style="color:#fff; font-weight:bold; font-size:1.2rem;">Palkkatietoja ei löytynyt väylältä ${hIndex}.</p>`;
+        return;
+    }
+
+    let myBreakdown = hData.pointBreakdowns[window.myName];
+    let deltaColor = myBreakdown.delta >= 0 ? '#16a34a' : '#dc2626';
+    let sign = myBreakdown.delta > 0 ? '+' : '';
+    let rowsHtml = '';
+    
+    if (myBreakdown.summary && myBreakdown.summary !== "Ei tuloja tai menoja.") {
+        myBreakdown.summary.split(', ').forEach(part => {
+            let kv = part.split(': ');
+            if(kv.length === 2) { 
+                rowsHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px dashed #cbd5e1; padding:8px 0;"><span style="color:#475569;">${kv[0]}</span><span style="font-weight:900; color:#1e293b; font-size:1.1rem;">${kv[1]}</span></div>`; 
+            } else { 
+                rowsHtml += `<div style="padding:8px 0; color:#475569; font-weight:bold;">${part}</div>`; 
+            }
+        });
+    } else { 
+        rowsHtml += `<div style="padding:15px 0; color:#475569; text-align:center; font-style:italic; font-weight:bold;">Ei tapahtumia tällä jaksolla.</div>`; 
+    }
+
+    container.innerHTML = `
+    <div class="payslip-paper" style="background:#fff; border:1px solid #cbd5e1; border-radius:2px; transform: rotate(-0.5deg); margin-top: 20px; margin-bottom: 40px; width: 95%; max-width: 380px; padding: 25px; box-shadow: 5px 15px 30px rgba(0,0,0,0.4); z-index:30; position:relative; font-family:'Courier Prime', monospace;">
+        <div style="border-bottom: 3px dashed #1e293b; padding-bottom: 12px; margin-bottom: 15px; text-align:center;">
+            <div style="font-weight:900; font-size:1.8rem; color:#1e293b; letter-spacing:2px; text-transform:uppercase;">Palkkalaskelma</div>
+            <div style="font-size:1rem; color:#64748b; margin-top:6px; font-weight:bold;">Kausi: Väylä ${hIndex}</div>
+        </div>
+        <div style="margin-bottom:15px; font-size:1.1rem; color:#1e293b;">
+            <span style="font-weight:900;">Työntekijä:</span> ${window.myName.toUpperCase()}
+        </div>
+        <div style="font-size:1rem; margin-bottom:20px; border-top:2px solid #94a3b8; padding-top:10px;">${rowsHtml}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#f1f5f9; padding:15px; border-radius:6px; border:3px solid ${deltaColor};">
+            <span style="font-weight:900; font-size:1.3rem; color:#334155;">NETTOPALKKA</span>
+            <span style="font-weight:900; font-size:2rem; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
+        </div>
+    </div>`;
+};
+
 
 // ==============================================
 // TAULUN KIINTEÄT ELEMENTIT (Kansio, Automaatti, Kuitit)
@@ -468,21 +564,21 @@ window.renderReceiptOnBoard = function() {
     };
 
     let html = `
-    <div class="board-receipt-paper" style="position:relative; transform: rotate(-1deg); box-shadow: 10px 20px 40px rgba(0,0,0,0.6);">
+    <div class="board-receipt-paper" style="position:relative; box-shadow: 10px 20px 40px rgba(0,0,0,0.6); border-radius: 4px; padding-bottom: 80px;">
         <div class="tape tape-top" style="width: 180px; top: -15px;"></div>
-        <div style="font-size:2.5rem; font-weight:900; margin-bottom:30px; text-align:center; border-bottom:4px solid #111; padding-bottom:10px;">TULOSSEURANTA</div>`;
+        <div style="font-size:2.8rem; font-weight:900; margin-bottom:30px; text-align:center; border-bottom:4px solid #111; padding-bottom:10px;">TULOSSEURANTA</div>`;
     
     for(let i=0; i<window.gameHistory.length; i++) { 
         let h = window.gameHistory[i]; 
         let par = window.currentCourse.pars ? (window.currentCourse.pars[i] || 3) : 3; 
-        html += `<div style="font-size:1.3rem; font-weight:bold; border-bottom:1px solid #ddd; margin-top:15px; padding-bottom:5px;">Väylä ${i+1} <span style="color:#666; font-weight:normal;">(PAR ${par})</span></div>`; 
+        html += `<div style="font-size:1.4rem; font-weight:bold; border-bottom:1px solid #ddd; margin-top:15px; padding-bottom:5px;">Väylä ${i+1} <span style="color:#666; font-weight:normal;">(PAR ${par})</span></div>`; 
         if(h.holeResults) { 
             for(let pName in h.holeResults) { 
                 let strokes = h.holeResults[pName]; 
                 let diff = strokes - par;
                 let cClass = diff === 0 ? 'even' : (diff < 0 ? 'green' : 'red'); 
                 if (diff < -1) cClass = 'blue'; 
-                html += `<div style="display:flex; justify-content:space-between; font-size:1.2rem; padding: 6px 0; align-items:center;"><span>${pName.substring(0, 12)}</span><span class="receipt-circle ${cClass}">${strokes}</span></div>`; 
+                html += `<div style="display:flex; justify-content:space-between; font-size:1.3rem; padding: 8px 0; align-items:center;"><span>${pName.substring(0, 12)}</span><span class="receipt-circle ${cClass}" style="width:34px; height:34px; font-size:1.3rem;">${strokes}</span></div>`; 
             } 
         } 
     }
@@ -491,60 +587,30 @@ window.renderReceiptOnBoard = function() {
     wrapper.innerHTML = html;
 };
 
+// ==============================================
+// PÄÄ-PÄIVITYS (RENDER BOARD)
+// ==============================================
 window.renderBoard = function() {
-    const board = document.getElementById('corkboard-surface');
-    if (!board || !window.currentCourse) return;
+    if (!window.currentCourse) return;
     
-    // BUGIKORJAUS TÄSSÄ: Jos .pars puuttuu (esim. vanhan version takia), ei kaaduta!
-    let totalHoles = window.currentCourse.pars ? window.currentCourse.pars.length : 18; 
-    let cols = Math.min(9, totalHoles); 
-    let rows = Math.ceil(totalHoles / cols);
-    let rightXPanel = window.getRightXPanel ? window.getRightXPanel() : 2000;
-    let corkW = rightXPanel + 400;
-    let corkH = Math.max((rows * 1010) + 200, 2500);
-    
-    let totalW = corkW + 1500; 
-    let totalH = corkH + 1500; 
-    
-    board.style.width = `${totalW}px`;
-    board.style.height = `${totalH}px`;
-    board.style.background = 'transparent';
-    
-    let html = ``;
-    html += `<div style="position:absolute; left:50px; top:50px; width:${corkW}px; height:${corkH}px; background-color: #e2e8f0; background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px); background-size: 12px 12px; border: 35px solid #5c4033; border-top-color: #7b4e35; border-left-color: #7b4e35; border-bottom-color: #3e2723; border-right-color: #3e2723; border-radius: 12px; z-index:1; box-shadow: 15px 25px 50px rgba(0,0,0,0.7);"></div>`;
-    html += `<div id="board-binder-wrapper" style="position:absolute; left:80px; top:120px; z-index:10; width:500px;"></div>`;
-    html += `<div id="board-receipt-wrapper" style="position:absolute; left:100px; top:1200px; z-index:10; width:450px;"></div>`;
-    
-    let startXHolesVal = window.startXHoles || 1000;
-    html += `<div id="holes-grid" style="display:grid; grid-template-columns:repeat(${cols}, 380px); gap:60px 80px; position:absolute; left:${startXHolesVal + 50}px; top:150px; z-index:5;">`;
-    window.gameHistory.forEach((h, index) => { html += window.getHoleCellHTML(h, index + 1, false, true); });
-    
-    if (window.currentHoleIndex > totalHoles) {
-        let sortedPlayers = [...window.allPlayers].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
-        let winner = sortedPlayers[0] || {name: "Tuntematon", dgScore: 0, score: 0};
-        html += `
-        <div style="grid-column: 1 / -1; display:flex; justify-content:center; align-items:center; height:600px;">
-            <div style="transform:rotate(-3deg); background:#fff; padding:60px; box-shadow:15px 30px 60px rgba(0,0,0,0.6); border:4px solid #ccc; z-index:100; text-align:center; min-width:450px; border-radius:8px; position:relative;">
-                <div class="tape tape-top" style="width:200px; top:-15px; height:35px;"></div>
-                <h1 style="font-family:'Kalam', cursive; font-size:5rem; color:var(--primary); margin-bottom:15px; line-height:1;">🏆 MESTARI!</h1>
-                <h2 style="font-size:2rem; margin-bottom:10px; color:#555;">VOITTAJA:</h2>
-                <div style="font-size:4.5rem; font-weight:900; color:var(--ink-blue); margin-bottom:30px; font-family:'Kalam', cursive;">${winner.name}</div>
-            </div>
-        </div>`;
-    } else if (window.activeHole) { 
-        html += window.getHoleCellHTML({ rule: window.activeHole.rule, playedCards: window.activeHole.playedCards, color: window.activeHole.color, penColor: window.activeHole.penColor, players: window.allPlayers }, window.currentHoleIndex, true, false); 
+    // Tarkistetaan, että katsottava väylä ei jää jumiin menneisyyteen kun uusi alkaa
+    if (!window.viewedHoleIndex || window.viewedHoleIndex > window.currentHoleIndex) {
+        window.viewedHoleIndex = window.currentHoleIndex;
     }
-    html += `</div>`;
-    
-    let shopX = corkW + 150;
-    let shopY = corkH + 150 - 1000; 
-    html += `<div id="board-shop-wrapper" style="position:absolute; left:${shopX}px; top:${shopY}px; z-index:10; width:650px;"></div>`;
-    
-    board.innerHTML = html;
-    
-    if(window.renderBinderOnBoard) window.renderBinderOnBoard();
-    if(window.renderReceiptOnBoard) window.renderReceiptOnBoard();
-    if(window.renderShopOnBoard) window.renderShopOnBoard();
+
+    window.applyViewScales();
+    window.updateHoleNav();
+    window.renderBinderOnBoard();
+    window.renderShopOnBoard();
+    window.renderReceiptOnBoard();
+
+    // Päivitetään alapalkin "TULOKSET" lätkään pelaajan oikea DgScore
+    let me = (window.allPlayers || []).find(p => p && p.name === window.myName);
+    if(me) {
+        let totalDg = me.dgScore > 0 ? '+' + me.dgScore : (me.dgScore === 0 ? 'E' : me.dgScore);
+        let navScoreSummary = el('navScoreSummary');
+        if(navScoreSummary) navScoreSummary.innerText = `TULOS: ${totalDg}`;
+    }
 };
 
 // ==============================================
