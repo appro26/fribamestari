@@ -50,6 +50,64 @@ window.claimIdentity = function() {
 };
 
 // ==============================================
+// GLOBAALIN PAKAN HALLINTA (UUSI)
+// ==============================================
+window.createFullDeck = function() {
+    let deck = window.allCards.map(c => c.id);
+    // Fisher-Yates sekoitus
+    for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    return deck;
+};
+
+window.drawFromDeck = function(deckArr, type, level) {
+    if (!deckArr || deckArr.length === 0) {
+        deckArr.push(...window.createFullDeck());
+    }
+
+    let idx = deckArr.findIndex(cId => {
+        let def = window.allCards.find(c => c.id === cId);
+        if (!def) return false;
+        let typeMatch = type ? def.type === type : true;
+        let levelMatch = level ? def.level === level : true;
+        return typeMatch && levelMatch;
+    });
+
+    if (idx !== -1) {
+        return deckArr.splice(idx, 1)[0];
+    } else {
+        // Jos täydellistä osumaa ei löydy (esim. kaikki T3 sabotaasit on jo pelissä),
+        // otetaan ensimmäinen, joka täsmää edes tyyppiin.
+        let fallbackIdx = deckArr.findIndex(cId => {
+            let def = window.allCards.find(c => c.id === cId);
+            if (!def) return false;
+            return type ? def.type === type : true;
+        });
+        if (fallbackIdx !== -1) {
+            return deckArr.splice(fallbackIdx, 1)[0];
+        }
+        // Jos ei sitäkään, otetaan pakan ylin kortti.
+        return deckArr.shift();
+    }
+};
+
+window.generatePersonalShop = function(deckArr) {
+    let shopCards = [];
+    // 2x Taso 3, 2x Taso 2, 2x Taso 1 (Yhteisestä pakasta)
+    shopCards.push(window.drawFromDeck(deckArr, null, 3));
+    shopCards.push(window.drawFromDeck(deckArr, null, 3));
+    shopCards.push(window.drawFromDeck(deckArr, null, 2));
+    shopCards.push(window.drawFromDeck(deckArr, null, 2));
+    shopCards.push(window.drawFromDeck(deckArr, null, 1));
+    shopCards.push(window.drawFromDeck(deckArr, null, 1));
+    
+    return shopCards.map(id => window.allCards.find(c => c.id === id) || null);
+};
+
+
+// ==============================================
 // TULOSTEN LASKENTA JA PELIN EDISTYMINEN
 // ==============================================
 
@@ -145,12 +203,17 @@ window.submitScores = function() {
     }
 
     let minStrokes = 999; 
+    let maxStrokes = -1;
     for (let key in playerResults) { 
         if (playerResults[key].strokes < minStrokes) minStrokes = playerResults[key].strokes; 
+        if (playerResults[key].strokes > maxStrokes) maxStrokes = playerResults[key].strokes;
     }
+    
     let holeWinners = []; 
+    let holeLosers = [];
     for (let key in playerResults) { 
         if (playerResults[key].strokes === minStrokes) holeWinners.push(key); 
+        if (playerResults[key].strokes === maxStrokes) holeLosers.push(key);
     }
 
     let nextPlayers = JSON.parse(JSON.stringify(window.allPlayers)).filter(Boolean);
@@ -158,8 +221,10 @@ window.submitScores = function() {
     let ptsTask = window.gameSettings.ptsTask || 2; 
     let ptsPassive = window.gameSettings.ptsPassive || 2; 
     let limit = window.gameSettings.handLimit || 6;
-    let globalLocked = window.getGlobalLockedFamilies(nextPlayers, window.activeHole);
     let holePointBreakdowns = {};
+    
+    // Haetaan olemassa oleva yhteinen pakka, tai luodaan uusi
+    let currentDeck = window.activeHole && window.activeHole.deck ? [...window.activeHole.deck] : window.createFullDeck();
 
     nextPlayers.forEach(p => {
         let res = playerResults[p.name]; 
@@ -177,7 +242,11 @@ window.submitScores = function() {
         
         if (!res.denyPassive) { currentPoints += ptsPassive; breakdown.push(`Palkka: +${ptsPassive} P`); }
         if (holeWinners.includes(p.name) && !res.denyWin) { currentPoints += ptsWin; breakdown.push(`Voitto: +${ptsWin} P`); }
-        if (res.taskWon && !res.denyTask) { currentPoints += ptsTask; breakdown.push(`Tehtävä: +${ptsTask} P`); }
+        if (res.taskWon && !res.denyTask) { 
+            let actualTaskPts = res.tripleTask ? ptsTask * 3 : ptsTask;
+            currentPoints += actualTaskPts; 
+            breakdown.push(`Tehtävä: +${actualTaskPts} P`); 
+        }
         if (res.moneyMod !== 0) { currentPoints += res.moneyMod; breakdown.push(`Kortit: ${res.moneyMod > 0 ? '+' : ''}${res.moneyMod} P`); }
 
         p.score = Math.max(0, currentPoints); 
@@ -191,37 +260,41 @@ window.submitScores = function() {
         p.cards = p.cards.filter(Boolean);
         
         if (!res.denyDraw) {
-            if (p.cards.length < limit) { 
-                let sId = window.drawSpecificCard('sabotage', 2, globalLocked); 
-                if (sId) p.cards.push(sId); 
+            let cardsToDraw = [{type: 'sabotage'}, {type: 'buff'}];
+            
+            // Väylän häviäjä saa yhden lisäkortin (arvalla kumpi vain)
+            if (holeLosers.includes(p.name)) {
+                cardsToDraw.push({type: null});
             }
-            if (p.cards.length < limit) { 
-                let bId = window.drawSpecificCard('buff', 2, globalLocked); 
-                if (bId) p.cards.push(bId); 
+            
+            // Muut bonusnostot korteista
+            for (let i = 0; i < res.drawMod; i++) {
+                cardsToDraw.push({type: null});
             }
-            if (res.drawMod > 0) {
-                for (let k = 0; k < res.drawMod; k++) { 
-                    if (p.cards.length < limit) { 
-                        let rId = window.drawSpecificCard(Math.random()<0.5?'sabotage':'buff', 2, globalLocked); 
-                        if(rId) p.cards.push(rId); 
-                    } 
+            
+            cardsToDraw.forEach(drawReq => {
+                if (p.cards.length < limit) {
+                    let drawnId = window.drawFromDeck(currentDeck, drawReq.type, null);
+                    if (drawnId) p.cards.push(drawnId);
                 }
-            }
+            });
         }
+    });
+
+    let nextShop = {};
+    nextPlayers.forEach(p => { 
+        nextShop[p.name] = window.generatePersonalShop(currentDeck); 
     });
 
     let nextActiveHole = { 
         rule: window.holeRules[Math.floor(Math.random() * window.holeRules.length)], 
-        shop: {}, 
+        shop: nextShop, 
         playedCards: {}, 
         timestamp: Date.now(), 
         color: window.getRandomColor(), 
-        penColor: window.getRandomPen() 
+        penColor: window.getRandomPen(),
+        deck: currentDeck // Siirretään jäljellä oleva pakka seuraavalle väylälle!
     };
-    
-    nextPlayers.forEach(p => { 
-        nextActiveHole.shop[p.name] = window.generatePersonalShop(globalLocked); 
-    });
     
     let nextHistory = JSON.parse(JSON.stringify(window.gameHistory || []));
     let holeStrokes = {}; 
@@ -255,6 +328,7 @@ window.executeCardPlay = function(targetName) {
     
     const card = window.pendingCardPlay; 
     const timestamp = Date.now();
+    let nextDeck = window.activeHole && window.activeHole.deck ? [...window.activeHole.deck] : [];
     
     if(el('targetModal')) el('targetModal').style.display = 'none'; 
     if(el('cardDetailModal')) el('cardDetailModal').style.display = 'none'; 
@@ -267,13 +341,15 @@ window.executeCardPlay = function(targetName) {
         me.cards = me.cards.filter(Boolean);
         let actualIndex = me.cards.indexOf(card.id);
         if (actualIndex !== -1) {
-            me.cards.splice(actualIndex, 1); 
+            let removedCard = me.cards.splice(actualIndex, 1)[0]; 
+            nextDeck.push(removedCard); // Palautetaan pakan pohjalle!
         }
         
-        if (card.cost > 0) {
-            me.score -= card.cost;
-            window.logScore(window.myName, -card.cost, `Pelasi kortin: ${card.def.n}`);
-            if(window.showAppleToast) window.showAppleToast(`-${card.cost} P (Pelattu)`, '💸');
+        let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(card.id) : card.cost;
+        if (playCost > 0) {
+            me.score -= playCost;
+            window.logScore(window.myName, -playCost, `Pelasi kortin: ${card.def.n}`);
+            if(window.showAppleToast) window.showAppleToast(`-${playCost} P (Pelattu)`, '💸');
         }
     }
     
@@ -293,11 +369,11 @@ window.executeCardPlay = function(targetName) {
     
     window.update(window.ref(window.db), { 
         'gameState/players': window.cleanFirebaseData(nextPlayers), 
-        'gameState/activeHole/playedCards': window.cleanFirebaseData(pCards) 
+        'gameState/activeHole/playedCards': window.cleanFirebaseData(pCards),
+        'gameState/activeHole/deck': nextDeck
     });
     
-    window.logEvent(`${window.myName} pelasi kortin ${card.def.n} kohteelle ${targetName}. Maksoi ${card.cost} P.`);
-    if(window.showNotification) window.showNotification(`🃏 Pelasit kortin: ${card.def.n}`, card.def.type === 'buff' ? 'info' : 'debuff');
+    window.logEvent(`${window.myName} pelasi kortin ${card.def.n} kohteelle ${targetName}.`);
 };
 
 window.upgradeCard = function(cId) {
@@ -308,24 +384,27 @@ window.upgradeCard = function(cId) {
     if (!nextDef) return;
     
     let cost = (cDef.level === 1) ? 3 : 5;
-    
+    let nextDeck = window.activeHole && window.activeHole.deck ? [...window.activeHole.deck] : [];
     let nextPlayers = JSON.parse(JSON.stringify(window.allPlayers)).filter(Boolean);
     const me = nextPlayers.find(p => p.name === window.myName);
     
     if(me.score < cost) { alert("Ei tarpeeksi P-rahaa päivitykseen!"); return; }
     
     me.score -= cost;
-    
     me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards);
     let idx = me.cards.indexOf(cId);
     if(idx !== -1) { 
         me.cards[idx] = nextDef.id; 
+        nextDeck.push(cId); // Vanha kortti pakan pohjalle
     }
     
     if(!me.upgradedThisHole) me.upgradedThisHole = [];
     me.upgradedThisHole.push(nextDef.id);
     
-    window.update(window.ref(window.db), { 'gameState/players': window.cleanFirebaseData(nextPlayers) });
+    window.update(window.ref(window.db), { 
+        'gameState/players': window.cleanFirebaseData(nextPlayers),
+        'gameState/activeHole/deck': nextDeck
+    });
     
     window.logScore(window.myName, -cost, `Päivitti kortin tasolle ${nextDef.level}`);
     if(window.showAppleToast) window.showAppleToast(`Päivitetty! (-${cost} P)`, '✨');
@@ -341,13 +420,16 @@ window.forceDiscard = function(cId) {
     if(!me) return;
     
     let cDef = window.allCards.find(c => c.id === cId);
+    let nextDeck = window.activeHole && window.activeHole.deck ? [...window.activeHole.deck] : [];
     
     me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards);
     me.cards = me.cards.filter(Boolean);
     let idx = me.cards.indexOf(cId);
     
     if(idx !== -1) {
-        me.cards.splice(idx, 1);
+        let removedCard = me.cards.splice(idx, 1)[0];
+        nextDeck.push(removedCard); // Myyty kortti palaa pakkaan
+        
         let sellReward = cDef.level === 3 ? 4 : (cDef.level === 2 ? 2 : 1);
         me.score = (parseInt(me.score) || 0) + sellReward; 
         
@@ -380,7 +462,10 @@ window.forceDiscard = function(cId) {
                 window.update(window.ref(window.db, 'gameState/activeHole/shop'), window.cleanFirebaseData(nextShopAll));
             }
 
-            window.update(window.ref(window.db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
+            window.update(window.ref(window.db), {
+                'gameState/players': window.cleanFirebaseData(nextPlayers),
+                'gameState/activeHole/deck': nextDeck
+            });
             window.pendingShopPurchase = null; 
             
             if(window.showNotification) window.showNotification(`🛒 Ostit edun!`, 'warning');
@@ -392,7 +477,10 @@ window.forceDiscard = function(cId) {
         }
     }
     
-    window.set(window.ref(window.db, 'gameState/players'), window.cleanFirebaseData(nextPlayers));
+    window.update(window.ref(window.db), {
+        'gameState/players': window.cleanFirebaseData(nextPlayers),
+        'gameState/activeHole/deck': nextDeck
+    });
     if(el('cardDetailModal')) el('cardDetailModal').style.display='none';
 };
 
@@ -514,16 +602,15 @@ window.startMeilahti = function() {
         return { ...p, score: 3, dgScore: 0, cards: [], reservations: [], upgradedThisHole: [] }; 
     });
     
-    let globalLocked = new Set();
+    let initialDeck = window.createFullDeck();
+    
     nextPlayers.forEach(p => { 
-        let sId = window.drawSpecificCard('sabotage', 1, globalLocked); 
-        let bId = window.drawSpecificCard('buff', 1, globalLocked); 
-        if(sId) p.cards.push(sId); 
-        if(bId) p.cards.push(bId); 
+        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', null)); 
+        p.cards.push(window.drawFromDeck(initialDeck, 'buff', null)); 
     });
     
     let personalizedShop = {}; 
-    nextPlayers.forEach(p => { personalizedShop[p.name] = window.generatePersonalShop(globalLocked); });
+    nextPlayers.forEach(p => { personalizedShop[p.name] = window.generatePersonalShop(initialDeck); });
     
     let nextActiveHole = { 
         rule: window.holeRules[Math.floor(Math.random() * window.holeRules.length)], 
@@ -531,7 +618,8 @@ window.startMeilahti = function() {
         playedCards: {}, 
         timestamp: Date.now(), 
         color: window.getRandomColor(),
-        penColor: window.getRandomPen()
+        penColor: window.getRandomPen(),
+        deck: initialDeck
     };
     
     window.update(window.ref(window.db, 'gameState'), window.cleanFirebaseData({ 
@@ -560,19 +648,19 @@ window.startCustomCourse = function() {
         return { ...p, score: 3, dgScore: 0, cards: [], reservations: [], upgradedThisHole: [] }; 
     });
     
-    let globalLocked = new Set();
+    let initialDeck = window.createFullDeck();
+    
     nextPlayers.forEach(p => { 
-        let sId = window.drawSpecificCard('sabotage', 1, globalLocked); 
-        let bId = window.drawSpecificCard('buff', 1, globalLocked); 
-        if(sId) p.cards.push(sId); if(bId) p.cards.push(bId); 
+        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', null)); 
+        p.cards.push(window.drawFromDeck(initialDeck, 'buff', null)); 
     });
     
     let personalizedShop = {}; 
-    nextPlayers.forEach(p => { personalizedShop[p.name] = window.generatePersonalShop(globalLocked); });
+    nextPlayers.forEach(p => { personalizedShop[p.name] = window.generatePersonalShop(initialDeck); });
     
     let nextActiveHole = { 
         rule: window.holeRules[0], shop: personalizedShop, playedCards: {}, 
-        timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen()
+        timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen(), deck: initialDeck
     };
     
     window.set(window.ref(window.db, 'gameState'), window.cleanFirebaseData({ 
@@ -619,8 +707,10 @@ window.gmRemoveCurrentHole = function() {
         let nextH = Math.max(1, window.currentHoleIndex - 1); 
         let nextHistory = JSON.parse(JSON.stringify(window.gameHistory || []));
         if(nextHistory.length >= window.currentHoleIndex) { nextHistory = nextHistory.slice(0, window.currentHoleIndex - 1); }
-        let nextActiveHole = { rule: window.holeRules[0], shop: {}, playedCards: {}, timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen() };
-        window.allPlayers.forEach(p => { nextActiveHole.shop[p.name] = window.generatePersonalShop(window.getGlobalLockedFamilies(window.allPlayers, null)); });
+        
+        let initialDeck = window.createFullDeck(); // Palautus tilanteessa luodaan puhdas pakka varmuuden vuoksi
+        let nextActiveHole = { rule: window.holeRules[0], shop: {}, playedCards: {}, timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen(), deck: initialDeck };
+        window.allPlayers.forEach(p => { nextActiveHole.shop[p.name] = window.generatePersonalShop(initialDeck); });
         
         window.update(window.ref(window.db), window.cleanFirebaseData({ 
             'gameState/currentHoleIndex': nextH, 'gameState/history': nextHistory, 'gameState/activeHole': nextActiveHole 
@@ -637,24 +727,6 @@ window.gmAddPlayer = function() {
     window.update(window.ref(window.db), {'gameState/players': window.cleanFirebaseData(nextPlayers)});
     el('gmNewPlayerName').value = ''; 
     if(window.showAppleToast) window.showAppleToast('Pelaaja lisätty', '✅');
-};
-
-window.updateAdminPlayerList = function() {
-    let container = el('adminPlayerList'); if(!container) return; let html = '';
-    window.allPlayers.forEach(p => {
-        html += `
-        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:15px; margin-bottom:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);">
-            <div style="font-weight:900; color:#fff; font-size:1.2rem; flex:1;">${p.name}<br><span style="color:var(--warning); font-size:1.5rem;">${p.score || 0} P</span></div>
-            <div style="display:flex; flex-direction:column; gap:5px;">
-                <div style="display:flex; gap:5px;">
-                    <button class="btn btn-warning" style="padding:10px; font-size:1rem; margin:0; flex:1; font-weight:900;" onclick="window.gmAdjustScore('${p.name}', 1)">+1 P</button>
-                    <button class="btn btn-warning" style="padding:10px; font-size:1rem; margin:0; flex:1; font-weight:900;" onclick="window.gmAdjustScore('${p.name}', -1)">-1 P</button>
-                </div>
-                <button class="btn btn-danger" style="padding:10px; font-size:0.9rem; margin:0; font-weight:bold;" onclick="window.gmKickPlayer('${p.name}')">POTKI ULOS</button>
-            </div>
-        </div>`;
-    });
-    container.innerHTML = html;
 };
 
 window.gmAdjustScore = function(pName, amount) {
@@ -683,98 +755,4 @@ window.gmKickPlayer = function(pName) {
         });
         window.logEvent(`GM potki pelaajan ${pName} ulos pelistä.`);
     }
-};
-
-// ==============================================
-// KORTTIEN JA KAUPAN GENEROINTIFUNKTIOT
-// ==============================================
-window.getGlobalLockedFamilies = function(playersObj, activeHoleObj) {
-    let locked = new Set();
-    let allP = playersObj || window.allPlayers || [];
-    allP.forEach(p => {
-        if(!p) return;
-        let cArr = p.cards ? (Array.isArray(p.cards) ? p.cards : Object.values(p.cards)) : [];
-        cArr.forEach(cId => {
-            let cDef = window.allCards.find(c => c && c.id === cId);
-            if(cDef) locked.add(cDef.family);
-        });
-        let rArr = p.reservations ? (Array.isArray(p.reservations) ? p.reservations : Object.values(p.reservations)) : [];
-        rArr.forEach(cId => {
-            let cDef = window.allCards.find(c => c && c.id === cId);
-            if(cDef) locked.add(cDef.family);
-        });
-    });
-    
-    if(activeHoleObj && activeHoleObj.shop) {
-        Object.values(activeHoleObj.shop).forEach(shopArr => {
-            if(!shopArr) return;
-            shopArr.forEach(item => {
-                if(item && item.family) locked.add(item.family);
-            });
-        });
-    }
-    return locked;
-};
-
-window.drawSpecificCard = function(type, level, lockedSet) {
-    let pool = window.allCards.filter(c => c.type === type && c.level === level && !lockedSet.has(c.family));
-    if(pool.length === 0) pool = window.allCards.filter(c => c.type === type && c.level === level);
-    if(pool.length === 0) return null;
-    let drawn = pool[Math.floor(Math.random() * pool.length)];
-    lockedSet.add(drawn.family);
-    return drawn.id;
-};
-
-window.generatePersonalShop = function(globalLockedSet) {
-    let shopCards = [];
-    let ls = globalLockedSet ? new Set(globalLockedSet) : new Set();
-    let t3Id = window.drawSpecificCard(Math.random() < 0.5 ? 'sabotage' : 'buff', 3, ls);
-    let t2Id = window.drawSpecificCard(Math.random() < 0.5 ? 'sabotage' : 'buff', 2, ls);
-    let t1Id1 = window.drawSpecificCard('sabotage', 1, ls);
-    let t1Id2 = window.drawSpecificCard('buff', 1, ls);
-    
-    [t3Id, null, t2Id, null, t1Id1, t1Id2].forEach(id => {
-        if(id) {
-            let def = window.allCards.find(c => c.id === id);
-            shopCards.push(def || null);
-        } else {
-            shopCards.push(null);
-        }
-    });
-    return shopCards;
-};
-
-window.openTargetModal = function(cId) {
-    let cDef = window.allCards.find(c => c.id === cId);
-    if(!cDef) return;
-    window.pendingCardPlay = { id: cId, cost: typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cId) : (cDef.level === 3 ? 6 : (cDef.level === 2 ? 4 : 2)), def: cDef };
-    el('targetCardName').innerText = cDef.n;
-    let html = '';
-    
-    if (cDef.type === 'buff') {
-        html += `<button class="btn btn-success" style="margin-bottom:10px; padding:20px; font-size:1.2rem;" onclick="window.executeCardPlay('${window.myName}')">KÄYTÄ ITSEESI</button>`;
-    } else {
-        html += `<button class="btn btn-danger" style="margin-bottom:15px; padding:20px; font-size:1.2rem; box-shadow: 0 4px 15px rgba(220,38,38,0.5);" onclick="window.executeCardPlay('KAIKKI VASTUSTAJAT')">KAIKKI VASTUSTAJAT</button>`;
-        (window.allPlayers || []).forEach(p => {
-            if (p && p.name !== window.myName) {
-                html += `<button class="btn btn-warning" style="margin-bottom:10px; padding:15px; font-size:1.1rem; color:#000;" onclick="window.executeCardPlay('${p.name}')">Kohde: ${p.name}</button>`;
-            }
-        });
-    }
-    el('targetPlayerList').innerHTML = html;
-    window.showModalSafe('targetModal');
-};
-
-window.getCardPlayCost = function(cId) {
-    let cDef = window.allCards.find(c => c.id === cId);
-    if(!cDef) return 0;
-    return cDef.level === 3 ? 6 : (cDef.level === 2 ? 4 : 2);
-};
-
-window.getCardSortWeight = function(cIdStr) {
-    let def = window.allCards.find(c => c.id === cIdStr);
-    if(!def) return 999;
-    let typeWeight = def.type === 'sabotage' ? 0 : 100;
-    let lvlWeight = (3 - def.level) * 10;
-    return typeWeight + lvlWeight;
 };
