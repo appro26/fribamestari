@@ -50,11 +50,10 @@ window.claimIdentity = function() {
 };
 
 // ==============================================
-// GLOBAALIN PAKAN HALLINTA (UUSI)
+// GLOBAALIN PAKAN HALLINTA
 // ==============================================
 window.createFullDeck = function() {
     let deck = window.allCards.map(c => c.id);
-    // Fisher-Yates sekoitus
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -78,8 +77,6 @@ window.drawFromDeck = function(deckArr, type, level) {
     if (idx !== -1) {
         return deckArr.splice(idx, 1)[0];
     } else {
-        // Jos täydellistä osumaa ei löydy (esim. kaikki T3 sabotaasit on jo pelissä),
-        // otetaan ensimmäinen, joka täsmää edes tyyppiin.
         let fallbackIdx = deckArr.findIndex(cId => {
             let def = window.allCards.find(c => c.id === cId);
             if (!def) return false;
@@ -88,14 +85,12 @@ window.drawFromDeck = function(deckArr, type, level) {
         if (fallbackIdx !== -1) {
             return deckArr.splice(fallbackIdx, 1)[0];
         }
-        // Jos ei sitäkään, otetaan pakan ylin kortti.
         return deckArr.shift();
     }
 };
 
 window.generatePersonalShop = function(deckArr) {
     let shopCards = [];
-    // 2x Taso 3, 2x Taso 2, 2x Taso 1 (Yhteisestä pakasta)
     shopCards.push(window.drawFromDeck(deckArr, null, 3));
     shopCards.push(window.drawFromDeck(deckArr, null, 3));
     shopCards.push(window.drawFromDeck(deckArr, null, 2));
@@ -106,11 +101,21 @@ window.generatePersonalShop = function(deckArr) {
     return shopCards.map(id => window.allCards.find(c => c.id === id) || null);
 };
 
+window.getCardPlayCost = function(cId) {
+    let cDef = window.allCards.find(c => c.id === cId);
+    if(!cDef) return 0;
+    
+    // Tarkista onko hinta yliajettu asetuksista
+    if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[cId] !== undefined) {
+        return window.gameSettings.cardPrices[cId];
+    }
+    return cDef.price; 
+};
+
 
 // ==============================================
 // TULOSTEN LASKENTA JA PELIN EDISTYMINEN
 // ==============================================
-
 window.submitScores = function() {
     let par = window.currentCourse.pars[window.currentHoleIndex - 1] || 3;
     let playerResults = {};
@@ -180,9 +185,6 @@ window.submitScores = function() {
         pRes.moneyMod = 0; pRes.drawMod = 0; pRes.denyPassive = false; pRes.denyWin = false; pRes.denyTask = false; pRes.denyDraw = false; pRes.tripleTask = false;
 
         pEff.sabotages.forEach(s => {
-            if (s.mech === 'score_+1') pRes.strokes += 1;
-            if (s.mech === 'score_+2') pRes.strokes += 2;
-            if (s.mech === 'score_+3') pRes.strokes += 3;
             if (s.mech === 'deny_passive') pRes.denyPassive = true;
             if (s.mech === 'deny_win') { pRes.denyPassive = true; pRes.denyWin = true; }
             if (s.mech === 'deny_all_income') { pRes.denyPassive = true; pRes.denyWin = true; pRes.denyTask = true; }
@@ -190,9 +192,6 @@ window.submitScores = function() {
         });
 
         pEff.buffs.forEach(b => {
-            if (b.mech === 'score_-1') pRes.strokes -= 1;
-            if (b.mech === 'score_-2') pRes.strokes -= 2;
-            if (b.mech === 'score_-3') pRes.strokes -= 3;
             if (b.mech === 'money_+1') pRes.moneyMod += 1;
             if (b.mech === 'money_+2_draw') { pRes.moneyMod += 2; pRes.drawMod += 1; }
             if (b.mech === 'money_+3_shield') { pRes.moneyMod += 3; pRes.drawMod += 1; }
@@ -204,9 +203,11 @@ window.submitScores = function() {
 
     let minStrokes = 999; 
     let maxStrokes = -1;
+    let allBirdie = true;
     for (let key in playerResults) { 
         if (playerResults[key].strokes < minStrokes) minStrokes = playerResults[key].strokes; 
         if (playerResults[key].strokes > maxStrokes) maxStrokes = playerResults[key].strokes;
+        if (playerResults[key].strokes >= par) allBirdie = false;
     }
     
     let holeWinners = []; 
@@ -215,15 +216,21 @@ window.submitScores = function() {
         if (playerResults[key].strokes === minStrokes) holeWinners.push(key); 
         if (playerResults[key].strokes === maxStrokes) holeLosers.push(key);
     }
+    let isTie = holeWinners.length > 1;
 
     let nextPlayers = JSON.parse(JSON.stringify(window.allPlayers)).filter(Boolean);
-    let ptsWin = window.gameSettings.ptsWin || 3; 
-    let ptsTask = window.gameSettings.ptsTask || 2; 
-    let ptsPassive = window.gameSettings.ptsPassive || 2; 
-    let limit = window.gameSettings.handLimit || 6;
-    let holePointBreakdowns = {};
     
-    // Haetaan olemassa oleva yhteinen pakka, tai luodaan uusi
+    // Asetusten muuttujat
+    let ptsWin = window.gameSettings.ptsWin !== undefined ? window.gameSettings.ptsWin : 3; 
+    let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 2; 
+    let ptsPassive = window.gameSettings.ptsPassive !== undefined ? window.gameSettings.ptsPassive : 2; 
+    let ptsTie = window.gameSettings.ptsTie || 0;
+    let ptsAllBirdie = window.gameSettings.ptsAllBirdie || 0;
+    let drawBase = window.gameSettings.drawBase !== undefined ? window.gameSettings.drawBase : 2;
+    let drawLoser = window.gameSettings.drawLoser !== undefined ? window.gameSettings.drawLoser : 1;
+    let limit = window.gameSettings.handLimit || 6;
+    
+    let holePointBreakdowns = {};
     let currentDeck = window.activeHole && window.activeHole.deck ? [...window.activeHole.deck] : window.createFullDeck();
 
     nextPlayers.forEach(p => {
@@ -240,14 +247,31 @@ window.submitScores = function() {
             breakdown.push(`Varaukset: -${p.reservations.length} P`); 
         }
         
-        if (!res.denyPassive) { currentPoints += ptsPassive; breakdown.push(`Palkka: +${ptsPassive} P`); }
-        if (holeWinners.includes(p.name) && !res.denyWin) { currentPoints += ptsWin; breakdown.push(`Voitto: +${ptsWin} P`); }
+        if (!res.denyPassive && ptsPassive > 0) { 
+            currentPoints += ptsPassive; 
+            breakdown.push(`Palkka: +${ptsPassive} P`); 
+        }
+        if (holeWinners.includes(p.name) && !res.denyWin) { 
+            if (isTie && ptsTie > 0) {
+                currentPoints += ptsTie; breakdown.push(`Tasapeli: +${ptsTie} P`);
+            } else if (!isTie && ptsWin > 0) {
+                currentPoints += ptsWin; breakdown.push(`Voitto: +${ptsWin} P`); 
+            } else if (isTie && ptsWin > 0 && ptsTie === 0) {
+                currentPoints += ptsWin; breakdown.push(`Jaettu Voitto: +${ptsWin} P`); 
+            }
+        }
+        if (allBirdie && ptsAllBirdie > 0 && !res.denyWin) {
+            currentPoints += ptsAllBirdie; breakdown.push(`Kaikki Birdie: +${ptsAllBirdie} P`);
+        }
         if (res.taskWon && !res.denyTask) { 
             let actualTaskPts = res.tripleTask ? ptsTask * 3 : ptsTask;
             currentPoints += actualTaskPts; 
             breakdown.push(`Tehtävä: +${actualTaskPts} P`); 
         }
-        if (res.moneyMod !== 0) { currentPoints += res.moneyMod; breakdown.push(`Kortit: ${res.moneyMod > 0 ? '+' : ''}${res.moneyMod} P`); }
+        if (res.moneyMod !== 0) { 
+            currentPoints += res.moneyMod; 
+            breakdown.push(`Korttiedut: ${res.moneyMod > 0 ? '+' : ''}${res.moneyMod} P`); 
+        }
 
         p.score = Math.max(0, currentPoints); 
         p.lastHoleSummary = breakdown.join(", "); 
@@ -259,15 +283,25 @@ window.submitScores = function() {
         p.cards = Array.isArray(p.cards) ? p.cards : Object.values(p.cards || {}); 
         p.cards = p.cards.filter(Boolean);
         
+        // Pelaajan korttinostot asetusten mukaan
         if (!res.denyDraw) {
-            let cardsToDraw = [{type: 'sabotage'}, {type: 'buff'}];
+            let cardsToDraw = [];
             
-            // Väylän häviäjä saa yhden lisäkortin (arvalla kumpi vain)
-            if (holeLosers.includes(p.name)) {
-                cardsToDraw.push({type: null});
+            // Perusnostot
+            for (let i = 0; i < drawBase; i++) {
+                if (i === 0) cardsToDraw.push({type: 'sabotage'});
+                else if (i === 1) cardsToDraw.push({type: 'buff'});
+                else cardsToDraw.push({type: null}); // Loput arvalla
             }
             
-            // Muut bonusnostot korteista
+            // Häviäjän lisäkortit (jos ei tullut kaikkien tasapeliä)
+            if (holeLosers.includes(p.name) && holeLosers.length < nextPlayers.length) {
+                for (let i = 0; i < drawLoser; i++) {
+                    cardsToDraw.push({type: null});
+                }
+            }
+            
+            // Korttiefektien tuomat lisänostot
             for (let i = 0; i < res.drawMod; i++) {
                 cardsToDraw.push({type: null});
             }
@@ -293,7 +327,7 @@ window.submitScores = function() {
         timestamp: Date.now(), 
         color: window.getRandomColor(), 
         penColor: window.getRandomPen(),
-        deck: currentDeck // Siirretään jäljellä oleva pakka seuraavalle väylälle!
+        deck: currentDeck
     };
     
     let nextHistory = JSON.parse(JSON.stringify(window.gameHistory || []));
@@ -342,7 +376,7 @@ window.executeCardPlay = function(targetName) {
         let actualIndex = me.cards.indexOf(card.id);
         if (actualIndex !== -1) {
             let removedCard = me.cards.splice(actualIndex, 1)[0]; 
-            nextDeck.push(removedCard); // Palautetaan pakan pohjalle!
+            nextDeck.push(removedCard); // Palautetaan poistopakkaan!
         }
         
         let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(card.id) : card.cost;
@@ -395,7 +429,7 @@ window.upgradeCard = function(cId) {
     let idx = me.cards.indexOf(cId);
     if(idx !== -1) { 
         me.cards[idx] = nextDef.id; 
-        nextDeck.push(cId); // Vanha kortti pakan pohjalle
+        nextDeck.push(cId); 
     }
     
     if(!me.upgradedThisHole) me.upgradedThisHole = [];
@@ -428,7 +462,7 @@ window.forceDiscard = function(cId) {
     
     if(idx !== -1) {
         let removedCard = me.cards.splice(idx, 1)[0];
-        nextDeck.push(removedCard); // Myyty kortti palaa pakkaan
+        nextDeck.push(removedCard); 
         
         let sellReward = cDef.level === 3 ? 4 : (cDef.level === 2 ? 2 : 1);
         me.score = (parseInt(me.score) || 0) + sellReward; 
@@ -688,9 +722,16 @@ window.resetGame = function() {
 
 window.saveGameSettings = function() {
     let nextSettings = { 
-        handLimitEnabled: true, handLimit: parseInt(el('gmSetLimitCount').value) || 6, 
-        ptsWin: parseInt(el('gmSetPtsWin').value) || 3, ptsTask: parseInt(el('gmSetPtsTask').value) || 2, 
-        ptsLose: 0, ptsPassive: parseInt(el('gmSetPtsPassive').value) || 2 
+        handLimitEnabled: true, 
+        handLimit: parseInt(el('gmSetLimitCount').value) || 6, 
+        ptsWin: parseInt(el('gmSetPtsWin').value) || 3, 
+        ptsTask: parseInt(el('gmSetPtsTask').value) || 2, 
+        ptsPassive: parseInt(el('gmSetPtsPassive').value) || 2,
+        ptsTie: parseInt(el('gmSetPtsTie').value) || 0,
+        ptsAllBirdie: parseInt(el('gmSetPtsAllBirdie').value) || 0,
+        drawBase: parseInt(el('gmSetDrawBase').value) || 2,
+        drawLoser: parseInt(el('gmSetDrawLoser').value) || 1,
+        cardPrices: (window.gameSettings && window.gameSettings.cardPrices) ? window.gameSettings.cardPrices : {}
     };
     window.update(window.ref(window.db), { 'gameState/settings': nextSettings }); 
     if(window.showAppleToast) window.showAppleToast("Asetukset tallennettu", "✅");
@@ -708,7 +749,7 @@ window.gmRemoveCurrentHole = function() {
         let nextHistory = JSON.parse(JSON.stringify(window.gameHistory || []));
         if(nextHistory.length >= window.currentHoleIndex) { nextHistory = nextHistory.slice(0, window.currentHoleIndex - 1); }
         
-        let initialDeck = window.createFullDeck(); // Palautus tilanteessa luodaan puhdas pakka varmuuden vuoksi
+        let initialDeck = window.createFullDeck(); 
         let nextActiveHole = { rule: window.holeRules[0], shop: {}, playedCards: {}, timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen(), deck: initialDeck };
         window.allPlayers.forEach(p => { nextActiveHole.shop[p.name] = window.generatePersonalShop(initialDeck); });
         
