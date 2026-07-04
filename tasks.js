@@ -29,11 +29,10 @@ const insults = [
 // ==========================================
 // KORTTIPERHEET (CONCEPT LOCKING & UPGRADES)
 // ==========================================
-// T1 hinta: 3P | T2 hinta: 7P | T3 hinta: 15P (Nämä ovat kauppahintoja, upgreidaus maksaa 3P tai 5P)
 const familyDefs = [
     // --- KATEGORIA A: FYYSISET SABOTAASIT ---
     {
-        family: "weak_hand", name: "Heikompi käsi", type: "sabotage",
+        family: "weak_hand", name: "Heikompi käsi", type: "sabotage", isExpensive: true,
         levels: [
             { lvl: 1, d: "Kohteen on suoritettava SEURAAVA HEITTO kokonaan heikommalla kädellään." },
             { lvl: 2, d: "Kohteen on pelattava KOKO VÄYLÄ (pl. alle 10m putit) heikommalla kädellään." },
@@ -57,7 +56,7 @@ const familyDefs = [
         ]
     },
     {
-        family: "knee", name: "Polvelta", type: "sabotage",
+        family: "knee", name: "Polvelta", type: "sabotage", isExpensive: true,
         levels: [
             { lvl: 1, d: "SEURAAVA HEITTO vähintään toinen polvi maassa." },
             { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) vähintään toinen polvi maassa." },
@@ -65,7 +64,7 @@ const familyDefs = [
         ]
     },
     {
-        family: "sitting", name: "Istualtaan", type: "sabotage",
+        family: "sitting", name: "Istualtaan", type: "sabotage", isExpensive: true,
         levels: [
             { lvl: 1, d: "SEURAAVA HEITTO istualtaan, pylly tukevasti maassa." },
             { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) istualtaan." },
@@ -89,7 +88,7 @@ const familyDefs = [
         ]
     },
     {
-        family: "overhead", name: "Pystyheitto", type: "sabotage",
+        family: "overhead", name: "Pystyheitto", type: "sabotage", isExpensive: true,
         levels: [
             { lvl: 1, d: "SEURAAVA HEITTO on heitettävä upsinä, tomahawkina tai thumberina." },
             { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) on heitettävä pystyheitolla." },
@@ -121,7 +120,7 @@ const familyDefs = [
         ]
     },
     {
-        family: "reverse_spin", name: "Vastakierre", type: "sabotage",
+        family: "reverse_spin", name: "Vastakierre", type: "sabotage", isExpensive: true,
         levels: [
             { lvl: 1, d: "SEURAAVA HEITTO: Kiekon on pyörittävä väärään suuntaan (esim. kämmenkiekko rystyllä)." },
             { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Kiekon on pyörittävä väärään suuntaan." },
@@ -129,7 +128,7 @@ const familyDefs = [
         ]
     },
     {
-        family: "no_thumb", name: "Peukalokielto", type: "sabotage",
+        family: "no_thumb", name: "Peukalokielto", type: "sabotage", isExpensive: true,
         levels: [
             { lvl: 1, d: "SEURAAVA HEITTO: Peukalo ei saa koskea kiekon kanteen." },
             { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Peukalo ei saa koskea kanteen." },
@@ -145,7 +144,7 @@ const familyDefs = [
         ]
     },
     {
-        family: "pizza_grip", name: "Pizza-grippi", type: "sabotage",
+        family: "pizza_grip", name: "Pizza-grippi", type: "sabotage", isExpensive: true,
         levels: [
             { lvl: 1, d: "SEURAAVA HEITTO: Kiekkoa pidetään molemmin käsin kiinni ja heitetään alakautta." },
             { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit): Heitettävä Pizza-gripillä alakautta." },
@@ -153,11 +152,10 @@ const familyDefs = [
         ]
     },
     {
-        family: "fore_roller", name: "Fore-Rolleri", type: "sabotage",
+        family: "fore_roller", name: "Fore-Rolleri", type: "sabotage", isExpensive: true,
         levels: [
             { lvl: 1, d: "SEURAAVA HEITTO on osuttava maahan ja rullattava eteenpäin kämmenpuolelta." },
             { lvl: 2, d: "KOKO VÄYLÄ (pl. C1-putit) on heitettävä fore-rollerina." }
-            // Tasoa 3 ei ole.
         ]
     },
     {
@@ -203,7 +201,7 @@ const familyDefs = [
 
     // --- KATEGORIA B: ERIKOISSABOTAASIT ---
     {
-        family: "turbo_putt", name: "Turboputti", type: "sabotage",
+        family: "turbo_putt", name: "Turboputti", type: "sabotage", isExpensive: true,
         levels: [
             { lvl: 1, d: "Kohteen SEURAAVA PUTTI on heitettävä turboputtina." },
             { lvl: 2, d: "Kohteen KAIKKI C1 & C2 alueen putit tällä väylällä on heitettävä turboputtina." },
@@ -211,7 +209,7 @@ const familyDefs = [
         ]
     },
     {
-        family: "c2_max", name: "C2 Täysiä", type: "sabotage",
+        family: "c2_max", name: "C2 Täysiä", type: "sabotage", isExpensive: true,
         levels: [
             { lvl: 1, d: "Kohteen seuraava 10-20m (C2) heitto on vedettävä 100% maksimiteholla." },
             { lvl: 2, d: "Kohteen KAIKKI 10-20m heitot tällä väylällä on vedettävä 100% teholla." },
@@ -220,14 +218,6 @@ const familyDefs = [
     },
 
     // --- KATEGORIA C: TALOUS / TULOS ---
-    {
-        family: "score_penalty", name: "Sakkoryöppy", type: "sabotage",
-        levels: [
-            { lvl: 1, d: "Lisää automaattisesti +1 HEITTO kohteen väylätulokseen.", mech: "score_+1" },
-            { lvl: 2, d: "Lisää automaattisesti +2 HEITTOA kohteen väylätulokseen.", mech: "score_+2" },
-            { lvl: 3, d: "Lisää automaattisesti +3 HEITTOA kohteen väylätulokseen.", mech: "score_+3" }
-        ]
-    },
     {
         family: "deny_income", name: "Tulojen eväys", type: "sabotage",
         levels: [
@@ -271,11 +261,11 @@ const familyDefs = [
         ]
     },
     {
-        family: "happy_mulligan", name: "Happy Mulligan", type: "buff",
+        family: "happy_mulligan", name: "Best Shot", type: "buff",
         levels: [
-            { lvl: 1, d: "Uusi epäonnistunut heitto ja saat +1 P hyvän mielen bonuksen.", mech: "money_+1" },
-            { lvl: 2, d: "Uusi heitto. Saat +2 P bonuksen JA nostat heti uuden kortin pakasta.", mech: "money_+2_draw" },
-            { lvl: 3, d: "Uusi heitto. Saat +3 P, kortin JA Turvakilven seuraavalle väylälle.", mech: "money_+3_shield" }
+            { lvl: 1, d: "Saat heittää yhden heiton kahteen kertaan ja jatkaa paremmasta." },
+            { lvl: 2, d: "Saat heittää kaksi eri heittoa kahteen kertaan ja jatkaa paremmasta." },
+            { lvl: 3, d: "Saat heittää kolme eri heittoa kahteen kertaan ja jatkaa paremmasta." }
         ]
     },
 
@@ -322,11 +312,11 @@ const familyDefs = [
 // ==========================================
 // RAKENNETAAN window.allCards ARRAY
 // ==========================================
-const upgCostT1toT2 = 3;
-const upgCostT2toT3 = 5;
-const shopPriceT1 = 3;
-const shopPriceT2 = 7;
-const shopPriceT3 = 15;
+// Hinnat on nyt synkronoitu: Osto ja pelaaminen maksavat saman verran
+const baseCostT1 = 2;
+const baseCostT2 = 4;
+const baseCostT3 = 6;
+const expensiveBump = 2; // +2 P kalliimmat kortit
 
 familyDefs.forEach(fam => {
     let maxLvl = Math.max(...fam.levels.map(l => l.lvl));
@@ -334,19 +324,27 @@ familyDefs.forEach(fam => {
     fam.levels.forEach((lvDef, index) => {
         let cardId = `${fam.family}_t${lvDef.lvl}`;
         
-        // Hinta kaupassa
-        let p = shopPriceT1;
-        if(lvDef.lvl === 2) p = shopPriceT2;
-        if(lvDef.lvl === 3) p = shopPriceT3;
+        let p = baseCostT1;
+        if(lvDef.lvl === 2) p = baseCostT2;
+        if(lvDef.lvl === 3) p = baseCostT3;
 
-        // Etsitään seuraava taso, jos on
+        // Kallistetaan määritetyt korttiperheet
+        if (fam.isExpensive) {
+            p += expensiveBump;
+        }
+
         let nextLvlDef = fam.levels.find(l => l.lvl === lvDef.lvl + 1);
         let upgradeText = "";
         let nextIdStr = null;
 
         if (nextLvlDef) {
             nextIdStr = `${fam.family}_t${nextLvlDef.lvl}`;
-            let uCost = (lvDef.lvl === 1) ? upgCostT1toT2 : upgCostT2toT3;
+            let nextP = baseCostT2;
+            if(nextLvlDef.lvl === 3) nextP = baseCostT3;
+            if(fam.isExpensive) nextP += expensiveBump;
+            
+            // Upgrade maksaa uuden tason ja nykyisen tason erotuksen + pienen vaivan (esim. vakio 3 tai 5)
+            let uCost = (lvDef.lvl === 1) ? 3 : 5;
             upgradeText = `Päivitys Tasolle ${nextLvlDef.lvl} (Hinta: ${uCost} P): ${nextLvlDef.d}`;
         }
 
@@ -359,48 +357,55 @@ familyDefs.forEach(fam => {
             maxLevel: maxLvl,
             upgradeDesc: upgradeText,
             nextId: nextIdStr,
-            tier: "normal", // Voi käyttää CSS väreissä
+            tier: "normal", 
             type: fam.type,
-            price: p,
+            price: p, // TÄMÄ MÄÄRITTÄÄ NYT KAIKEN HINNAN!
             mech: lvDef.mech || null
         });
     });
 });
 
+window.getCardPlayCost = function(cId) {
+    let cDef = window.allCards.find(c => c.id === cId);
+    if(!cDef) return 0;
+    return cDef.price; // Yhdistetty peluu- ja ostohinta
+};
+
 // ==========================================
-// LAATUTARKISTETUT VÄYLÄSÄÄNNÖT & TEHTÄVÄT (30 kpl)
+// LAATUTARKISTETUT VÄYLÄSÄÄNNÖT & TEHTÄVÄT
 // ==========================================
 window.holeRules = [
+    // Säilytetyt alkuperäiset
     { type: "rule", n: "Putteriväylä", d: "Koko väylä on pelattava pelkillä puttereilla (mukaan lukien avaus)." },
-    { type: "rule", n: "Kämmen-avaus", d: "Kaikkien on avattava tämä väylä kämmenheitolla (fore)." },
-    { type: "rule", n: "Rysty-avaus", d: "Kaikkien on avattava tämä väylä rystyheitolla." },
-    { type: "rule", n: "Paikaltaan", d: "Avausheitossa ei saa käyttää vauhtiaskeleita." },
-    { type: "rule", n: "Väärä käsi (Putit)", d: "Kaikki C1-alueen putit on heitettävä heikommalla kädellä." },
-    { type: "rule", n: "Pystyheitto-avaus", d: "Avausheitto on pakko suorittaa pystyheittona (upsi/tomahawk/thumber)." },
     { type: "rule", n: "Midariväylä", d: "Avaus ja lähestymiset on pakko heittää midareilla." },
-    { type: "rule", n: "Ei saattoa", d: "Avausheitossa käden on pysähdyttävä irrotukseen." },
-    { type: "rule", n: "Polvelta", d: "Kaikkien on heitettävä ensimmäinen lähestymisheitto polvelta." },
-    { type: "rule", n: "Yhden jalan putti", d: "Kaikki alle 10m putit on suoritettava yhdellä jalalla tasapainoillen." },
-    { type: "rule", n: "Ei hypytystä", d: "Steppi- ja hyppyputit ovat ankarasti kielletty tällä väylällä." },
     { type: "rule", n: "Haaraputti-pakko", d: "Kaikki putit on suoritettava haaraputtina." },
-    { type: "rule", n: "Vain alivakain", d: "Väylä on pelattava bägisi alivakaimmalla kiekolla." },
     { type: "rule", n: "Vain vakain", d: "Väylä on pelattava bägisi vakaimmalla kiekolla." },
-    { type: "rule", n: "Selin koriin", d: "Jokainen joutuu heittämään yhden heiton selin koria kohti." },
-    { type: "rule", n: "Kenkä pois", d: "Avausheitto heitetään ilman toista kenkää." },
-    { type: "rule", n: "Hiljaisuus", d: "Tällä väylällä ei saa puhua sanaakaan. Puhumisesta +1 tulokseen." },
-    { type: "rule", n: "Maksimidraiveri", d: "Kaikki (myös putit) on heitettävä nopeimmalla kiekolla." },
     
-    // Bountyt (Palkkiotehtävät)
+    // Uudet luovat säännöt
+    { type: "rule", n: "Äänetön Griini", d: "C1-alueella (10m korista) ei saa puhua sanaakaan. Puhumisesta +1 tulokseen." },
+    { type: "rule", n: "Vasuri-avaus", d: "Kaikkien on pakko heittää avausheitto heikommalla kädellään." },
+    { type: "rule", n: "Sokkoputti", d: "Jokaisen pelaajan ensimmäinen putti on suoritettava silmät kiinni." },
+    { type: "rule", n: "Kiekko-ruletti", d: "Nosta bägistäsi sokkona satunnainen kiekko ja avaa väylä sillä." },
+    { type: "rule", n: "Rolleri-pakko", d: "Avausheitto on pakko heittää rollerina (kiekon osuttava maahan pystyssä)." },
+    { type: "rule", n: "Ei vauhtia", d: "Kaikki heitot koko väylällä on suoritettava täysin paikaltaan." },
+    { type: "rule", n: "Kiekkopoika", d: "Huonoimman avauksen heittänyt joutuu hakemaan muiden kiekot koria kohti käveltäessä." },
+    { type: "rule", n: "Tuplaputit", d: "Jos ensimmäinen putti ei mene sisään, saat heti yrittää toisella kiekolla uudestaan." },
+
+    // Säilytetyt bountyt
     { type: "bounty", n: "Tarkka-ampuja", d: "Pelaaja, kenen avausheitto on lähimpänä koria, voittaa tehtävän." },
-    { type: "bounty", n: "Pituuslyönti", d: "Pelaaja, kenen avausheitto on pisimmällä (ilman OB:ta), voittaa tehtävän." },
     { type: "bounty", n: "Pelastaja", d: "Ensimmäinen pelaaja, joka tekee onnistuneen pitkän putin (C2), voittaa." },
-    { type: "bounty", n: "Puu-magneetti", d: "Pelaaja, joka osuu ensimmäisenä puuhun (ilman OB:ta), voittaa." },
-    { type: "bounty", n: "Rolleri-kuningas", d: "Pelaaja, kenen heittämä rolleri vierii pisimmälle, voittaa tehtävän." },
-    { type: "bounty", n: "Pikagolf", d: "Pelaaja, joka suorittaa väylän nopeimmin alusta loppuun, voittaa." },
-    { type: "bounty", n: "Metsuri", d: "Ensimmäinen pelaaja, joka heittää kiekkonsa pahaan puskaan, saa lohdutuspalkkion." },
     { type: "bounty", n: "Birdie-jahti", d: "Jokainen pelaaja, joka heittää tälle väylälle Birdien, voittaa tehtävän." },
-    { type: "bounty", n: "Kuoleman putti", d: "Ensimmäinen pelaaja, joka uskaltaa hakea yli 15m puttia (ja osuu edes rautoihin), voittaa." },
     { type: "bounty", n: "Kiekkotaituri", d: "Pelaaja, joka tekee komeimman flex-heiton (S-kurvin) avauksessa, voittaa." },
     { type: "bounty", n: "Nyssykkä", d: "Pelaaja, kenen avausheitto on lyhin (mutta pysyy pelialueella), voittaa." },
-    { type: "bounty", n: "Koriin kilahtaa", d: "Ensimmäinen pelaaja, joka puttaa ensimmäisellä yrittämällä sisään, voittaa." }
+    
+    // Muokattu puuosuma
+    { type: "bounty", n: "Puu-magneetti", d: "Pelaaja, jolla on eniten puuosumia, MUTTA joka pelaa väylän Par-tulokseen tai paremmin, voittaa." },
+
+    // Uudet luovat bountyt
+    { type: "bounty", n: "Pituusputti", d: "Pelaaja, joka puttaa kaikkein pisimmältä sisään (yli 5m), voittaa tehtävän." },
+    { type: "bounty", n: "Grip-lock Pelastus", d: "Pelaaja, joka heittää ilmiselvän gripparin tai epäonnistuneen avauksen, mutta pelastaa silti parin, voittaa." },
+    { type: "bounty", n: "Bogie-vapaa", d: "Kaikki pelaajat, jotka pelaavat Par-tuloksen tai paremman, saavat palkkion." },
+    { type: "bounty", n: "Parkkeeraaja", d: "Pelaaja, jonka avausheitto jää alle 3 metrin päähän korista, voittaa." },
+    { type: "bounty", n: "Tolppa-apina", d: "Ensimmäinen pelaaja, joka osuu putatessa rautoihin menemättä sisään, voittaa säälinapin." },
+    { type: "bounty", n: "Kakkosen Kuningas", d: "Pelaaja, jonka toinen heitto on väylän pisin ja tarkin, voittaa." }
 ];
