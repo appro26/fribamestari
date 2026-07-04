@@ -384,7 +384,7 @@ window.forceDiscard = function(cId) {
             window.pendingShopPurchase = null; 
             
             if(window.showNotification) window.showNotification(`🛒 Ostit edun!`, 'warning');
-            if(window.zoomToShop) window.zoomToShop();
+            if(window.switchView) window.switchView('view-shop');
             if(el('cardDetailModal')) el('cardDetailModal').style.display='none';
             return;
         } else { 
@@ -464,7 +464,7 @@ window.buyShopItem = function(idStr, priceVal, isReservation) {
         window.pendingShopPurchase = { id: idStr, name: nameStr, price: priceVal, isRes: isReservation };
         
         if(el('cardDetailModal')) el('cardDetailModal').style.display='none';
-        if(window.zoomToBinder) window.zoomToBinder(); 
+        if(window.switchView) window.switchView('view-binder'); 
         if(window.showNotification) window.showNotification("⚠️ KÄSI TÄYNNÄ! Myy jokin kortti alta tehdäksesi tilaa ostolle.", "warning");
         return;
     }
@@ -496,13 +496,13 @@ window.buyShopItem = function(idStr, priceVal, isReservation) {
     });
     
     if(window.showNotification) window.showNotification(`🛒 Ostit edun!`, 'warning');
-    if(window.zoomToShop) window.zoomToShop();
+    if(window.switchView) window.switchView('view-shop');
     if(el('cardDetailModal')) el('cardDetailModal').style.display='none';
 };
 
 window.cancelShopPurchase = function() {
     window.pendingShopPurchase = null;
-    if(window.zoomToShop) window.zoomToShop(); 
+    if(window.switchView) window.switchView('view-shop'); 
 };
 
 // ==============================================
