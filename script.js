@@ -120,12 +120,54 @@ onValue(ref(db, 'gameState'), (snap) => {
     if (window.myName && window.currentCourse) {
         const me = window.allPlayers.find(p => p && p.name === window.myName);
         if (me) {
-            // Vaihdetaan väylää uuden layoutin tapaisesti (zoomauksen sijaan)
-            if (typeof window.myLastHoleIndex === 'undefined' || window.myLastHoleIndex !== window.currentHoleIndex) {
+            
+            // BUGIKORJAUS 1: Väylän automaattinen vaihto, historia-näkymän nollaus ja pisteilmoitukset
+            if (typeof window.myLastHoleIndex !== 'undefined' && window.myLastHoleIndex !== window.currentHoleIndex) {
+                if (window.myLastHoleIndex < window.currentHoleIndex) {
+                    // Väylä on edennyt (tulokset tallennettu)
+                    if (data.history && data.history.length >= window.myLastHoleIndex) {
+                        let lastHoleData = data.history[window.myLastHoleIndex - 1];
+                        if (lastHoleData && lastHoleData.pointBreakdowns && lastHoleData.pointBreakdowns[window.myName]) {
+                            let myBreakdown = lastHoleData.pointBreakdowns[window.myName];
+                            if (myBreakdown.delta > 0) {
+                                if(window.showAppleToast) window.showAppleToast(`Väylä ohi: +${myBreakdown.delta} P`, '💰');
+                            } else if (myBreakdown.delta < 0) {
+                                if(window.showAppleToast) window.showAppleToast(`Väylä ohi: ${myBreakdown.delta} P`, '💸');
+                            } else {
+                                if(window.showAppleToast) window.showAppleToast(`Väylä ohi: Ei tuloja`, '🤷');
+                            }
+                        }
+                    }
+                }
+                
                 window.myLastHoleIndex = window.currentHoleIndex; 
-                setTimeout(() => { if(window.switchView) window.switchView('view-hole'); }, 300);
+                window.viewedHoleIndex = window.currentHoleIndex; // Pakottaa kaikki uuden väylän näkymään
+                setTimeout(() => { 
+                    if(window.switchView) window.switchView('view-hole');
+                    if(window.updateHoleNav) window.updateHoleNav();
+                }, 300);
+            } else if (typeof window.myLastHoleIndex === 'undefined') {
+                window.myLastHoleIndex = window.currentHoleIndex;
+                window.viewedHoleIndex = window.currentHoleIndex;
             }
             
+            // BUGIKORJAUS 1: Ilmoitukset muiden pelaajien juuri pelaamista korteista
+            let currentPlayedCards = data.activeHole && data.activeHole.playedCards ? Object.keys(data.activeHole.playedCards) : [];
+            if (typeof window.myLastPlayedCards !== 'undefined') {
+                let newCards = currentPlayedCards.filter(k => !window.myLastPlayedCards.includes(k));
+                newCards.forEach(k => {
+                    let pc = data.activeHole.playedCards[k];
+                    // Ilmoitetaan vain jos joku MUU pelasi kortin (omasta tulee ilmoitus muutenkin)
+                    if (pc.by !== window.myName) {
+                        let icon = pc.type === 'buff' ? '🛡️' : '💥';
+                        let targetText = pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKILLE' : pc.target;
+                        let safeCardName = pc.cardName ? pc.cardName.split(' (')[0] : 'Kortti';
+                        if(window.showNotification) window.showNotification(`${icon} ${pc.by} -> ${targetText}: ${safeCardName}`, pc.type === 'buff' ? 'info' : 'danger');
+                    }
+                });
+            }
+            window.myLastPlayedCards = currentPlayedCards;
+
             let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
             
             // Käsirajan varoitus
