@@ -121,27 +121,25 @@ onValue(ref(db, 'gameState'), (snap) => {
         const me = window.allPlayers.find(p => p && p.name === window.myName);
         if (me) {
             
-            // BUGIKORJAUS 1: Väylän automaattinen vaihto, historia-näkymän nollaus ja pisteilmoitukset
+            // Väylän automaattinen vaihto, historia-näkymän nollaus ja pisteilmoitukset yksityiskohtineen
             if (typeof window.myLastHoleIndex !== 'undefined' && window.myLastHoleIndex !== window.currentHoleIndex) {
                 if (window.myLastHoleIndex < window.currentHoleIndex) {
-                    // Väylä on edennyt (tulokset tallennettu)
                     if (data.history && data.history.length >= window.myLastHoleIndex) {
                         let lastHoleData = data.history[window.myLastHoleIndex - 1];
                         if (lastHoleData && lastHoleData.pointBreakdowns && lastHoleData.pointBreakdowns[window.myName]) {
                             let myBreakdown = lastHoleData.pointBreakdowns[window.myName];
-                            if (myBreakdown.delta > 0) {
-                                if(window.showAppleToast) window.showAppleToast(`Väylä ohi: +${myBreakdown.delta} P`, '💰');
-                            } else if (myBreakdown.delta < 0) {
-                                if(window.showAppleToast) window.showAppleToast(`Väylä ohi: ${myBreakdown.delta} P`, '💸');
-                            } else {
-                                if(window.showAppleToast) window.showAppleToast(`Väylä ohi: Ei tuloja`, '🤷');
+                            if(window.showAppleToast) {
+                                let sign = myBreakdown.delta > 0 ? '+' : '';
+                                window.showAppleToast(`Tilitapahtuma: ${sign}${myBreakdown.delta} P`, myBreakdown.delta >= 0 ? '💰' : '💸');
+                                let detailEl = document.getElementById('appleToastDetails');
+                                if(detailEl) detailEl.innerText = myBreakdown.summary || "Ei tuloja tai menoja.";
                             }
                         }
                     }
                 }
                 
                 window.myLastHoleIndex = window.currentHoleIndex; 
-                window.viewedHoleIndex = window.currentHoleIndex; // Pakottaa kaikki uuden väylän näkymään
+                window.viewedHoleIndex = window.currentHoleIndex; 
                 setTimeout(() => { 
                     if(window.switchView) window.switchView('view-hole');
                     if(window.updateHoleNav) window.updateHoleNav();
@@ -151,13 +149,12 @@ onValue(ref(db, 'gameState'), (snap) => {
                 window.viewedHoleIndex = window.currentHoleIndex;
             }
             
-            // BUGIKORJAUS 1: Ilmoitukset muiden pelaajien juuri pelaamista korteista
+            // Ilmoitukset muiden pelaajien juuri pelaamista korteista
             let currentPlayedCards = data.activeHole && data.activeHole.playedCards ? Object.keys(data.activeHole.playedCards) : [];
             if (typeof window.myLastPlayedCards !== 'undefined') {
                 let newCards = currentPlayedCards.filter(k => !window.myLastPlayedCards.includes(k));
                 newCards.forEach(k => {
                     let pc = data.activeHole.playedCards[k];
-                    // Ilmoitetaan vain jos joku MUU pelasi kortin (omasta tulee ilmoitus muutenkin)
                     if (pc.by !== window.myName) {
                         let icon = pc.type === 'buff' ? '🛡️' : '💥';
                         let targetText = pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKILLE' : pc.target;
@@ -169,6 +166,21 @@ onValue(ref(db, 'gameState'), (snap) => {
             window.myLastPlayedCards = currentPlayedCards;
 
             let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
+            
+            // Uuden kortin nostamisen tunnistaminen ja värinä-ilmoitus
+            if (typeof window.myLastHand === 'undefined') {
+                window.myLastHand = [...myCards];
+            } else if (window.myLastHand.length < myCards.length) {
+                let newCardsCount = myCards.length - window.myLastHand.length;
+                if(window.showAppleToast) {
+                    window.showAppleToast(`+${newCardsCount} Uusi Kortti!`, "🃏");
+                    let detailEl = document.getElementById('appleToastDetails');
+                    if(detailEl) detailEl.innerText = "Tarkista Omat Kortit -kansio.";
+                }
+                window.myLastHand = [...myCards];
+            } else {
+                window.myLastHand = [...myCards];
+            }
             
             // Käsirajan varoitus
             if (window.gameSettings && window.gameSettings.handLimitEnabled && myCards.length > (window.gameSettings.handLimit||6)) { 
