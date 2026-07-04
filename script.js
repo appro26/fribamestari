@@ -25,11 +25,8 @@ window.currentHoleIndex = 1;
 window.gameHistory = []; 
 window.pendingShopPurchase = null;
 
-// KORJAUS: Asetetaan oletusasetukset, jotta sovellus ei kaadu jos Firebase-dataa ei vielä ole
+// Asetetaan oletusasetukset, jotta sovellus ei kaadu jos Firebase-dataa ei vielä ole
 window.gameSettings = { handLimitEnabled: true, handLimit: 6, ptsWin: 3, ptsTask: 2, ptsPassive: 2 };
-
-// KORJAUS: Määritellään väylien aloitus-X-koordinaatti, jotta automaatti ja kuitti eivät mene kansion päälle
-window.startXHoles = 1000;
 
 // =============================================
 // REAALIAIKAINEN DATABASE KUUNTELIJA
@@ -45,7 +42,7 @@ onValue(ref(db, 'gameState'), (snap) => {
         }
         window.currentCourse = null; 
         if(document.getElementById('lobbyContainer')) document.getElementById('lobbyContainer').style.display = 'block'; 
-        if(document.getElementById('corkboard-viewport')) document.getElementById('corkboard-viewport').style.display = 'none'; 
+        if(document.getElementById('app-main-area')) document.getElementById('app-main-area').style.display = 'none'; 
         if(document.getElementById('pocketContainer')) document.getElementById('pocketContainer').style.display = 'none'; 
         return;
     }
@@ -70,16 +67,16 @@ onValue(ref(db, 'gameState'), (snap) => {
     
     if(window.updateIdentityUI) window.updateIdentityUI();
     
-    // Ohjataan näkymä joko aulaan tai varsinaiselle ilmoitustaululle
+    // Ohjataan näkymä joko aulaan tai varsinaiselle pelialueelle
     if (window.myName) {
         if (!window.currentCourse) {
             if(document.getElementById('lobbyContainer')) document.getElementById('lobbyContainer').style.display = 'block'; 
             if(document.getElementById('gameSetupArea')) document.getElementById('gameSetupArea').style.display = 'block'; 
-            if(document.getElementById('corkboard-viewport')) document.getElementById('corkboard-viewport').style.display = 'none'; 
+            if(document.getElementById('app-main-area')) document.getElementById('app-main-area').style.display = 'none'; 
             if(document.getElementById('pocketContainer')) document.getElementById('pocketContainer').style.display = 'none';
         } else {
             if(document.getElementById('lobbyContainer')) document.getElementById('lobbyContainer').style.display = 'none'; 
-            if(document.getElementById('corkboard-viewport')) document.getElementById('corkboard-viewport').style.display = 'block'; 
+            if(document.getElementById('app-main-area')) document.getElementById('app-main-area').style.display = 'block'; 
             if(document.getElementById('pocketContainer')) document.getElementById('pocketContainer').style.display = 'flex';
             
             // GM Asetusten päivitys
@@ -112,21 +109,21 @@ onValue(ref(db, 'gameState'), (snap) => {
     } else {
         if(document.getElementById('lobbyContainer')) document.getElementById('lobbyContainer').style.display = 'block'; 
         if(document.getElementById('gameSetupArea')) document.getElementById('gameSetupArea').style.display = 'none'; 
-        if(document.getElementById('corkboard-viewport')) document.getElementById('corkboard-viewport').style.display = 'none'; 
+        if(document.getElementById('app-main-area')) document.getElementById('app-main-area').style.display = 'none'; 
         if(document.getElementById('pocketContainer')) document.getElementById('pocketContainer').style.display = 'none';
     }
 
-    // Piirretään koko ilmoitustaulu uusiksi datan pohjalta
+    // Piirretään aktiivinen UI-näkymä uudelleen datan pohjalta
     if(window.renderBoard) window.renderBoard(); 
     
-    // Hoidetaan pelaajan henkilökohtaiset toimenpiteet (zoomaus, rahojen päivitys yms.)
+    // Hoidetaan pelaajan henkilökohtaiset toimenpiteet
     if (window.myName && window.currentCourse) {
         const me = window.allPlayers.find(p => p && p.name === window.myName);
         if (me) {
-            // Jos väylä vaihtuu, zoomaa kamera automaattisesti siihen
+            // Vaihdetaan väylää uuden layoutin tapaisesti (zoomauksen sijaan)
             if (typeof window.myLastHoleIndex === 'undefined' || window.myLastHoleIndex !== window.currentHoleIndex) {
                 window.myLastHoleIndex = window.currentHoleIndex; 
-                setTimeout(() => { if(window.zoomToHole) window.zoomToHole(window.currentHoleIndex); }, 600);
+                setTimeout(() => { if(window.switchView) window.switchView('view-hole'); }, 300);
             }
             
             let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
