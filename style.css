@@ -1,55 +1,57 @@
 /* =========================================
-   UUSI NÄKYMÄPOHJAINEN (SPA) RAKENNE
+   PERUSRAKENTEET JA VISUAALISUUS
 ========================================= */
 body, html {
     margin: 0; padding: 0; width: 100%; height: 100%;
-    overflow: hidden; /* Estetään koko sivun tärinä */
-    background-color: #1e293b;
+    overflow: hidden; background-color: #cbd5e1;
+    font-family: 'Courier Prime', monospace;
 }
 
-#app-background {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0;
-    background-color: #cbd5e1;
-    background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px);
-    background-size: 15px 15px;
-}
-
-#views-container {
-    position: relative; z-index: 10;
-    width: 100%; height: calc(100% - 80px); /* Tila alavalikolle */
-}
-
-/* Välilehtien asetukset: Mahdollistavat normaalin ja pehmeän selauksen ylhäältä alas */
+/* Näkymien hallinta */
 .app-view {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     overflow-y: auto; overflow-x: hidden;
-    -webkit-overflow-scrolling: touch; /* Apple/Mobiili pehmeä liuku */
-    padding: 20px; box-sizing: border-box;
     display: none; flex-direction: column; align-items: center;
+    padding-bottom: 100px;
 }
+.app-view.active { display: flex; }
+.hidden { display: none; }
 
-.app-view.active {
-    display: flex;
-    animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Korjattu Alavalikko */
+/* Alavalikko */
 #bottom-nav {
-    position: fixed; bottom: 0; left: 0; width: 100%; height: 80px;
-    background: #0f172a; border-top: 2px solid #334155;
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 85px;
+    background: #0f172a; border-top: 4px solid #334155;
     display: flex; justify-content: space-around; align-items: center;
-    z-index: 100; padding-bottom: env(safe-area-inset-bottom);
+    z-index: 100;
 }
 .nav-item {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    color: #64748b; font-size: 0.75rem; font-weight: bold;
-    flex: 1; height: 100%; cursor: pointer; transition: 0.2s;
+    display: flex; flex-direction: column; align-items: center; color: #64748b;
+    font-size: 0.7rem; font-weight: bold; cursor: pointer;
 }
-.nav-item .nav-icon { font-size: 1.8rem; margin-bottom: 4px; transition: 0.2s; filter: grayscale(100%); opacity: 0.7; }
 .nav-item.active { color: #38bdf8; }
-.nav-item.active .nav-icon { filter: grayscale(0%); opacity: 1; transform: scale(1.1); }
+.nav-icon { font-size: 1.6rem; margin-bottom: 2px; }
 
-/* Isot napit Kauppaan ja Modaaleihin */
-.btn-massive { width: 100%; padding: 20px; font-size: 1.4rem; font-weight: 900; box-shadow: 0 5px 15px rgba(0,0,0,0.4); border-radius: 12px; margin-bottom: 15px; border: none; cursor: pointer; color: #fff;}
+/* Alkuperäiset visuaaliset elementit (Kortit, laput, kuitit) */
+.index-card { background: #fff; padding: 20px; box-shadow: 5px 5px 15px rgba(0,0,0,0.3); border-radius: 8px; }
+.post-it-note { padding: 15px; border-radius: 2px; box-shadow: 3px 3px 10px rgba(0,0,0,0.2); }
+.board-receipt-paper { background: #fff; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+.score-display-paper { border: 2px solid #333; border-radius: 50%; width: 30px; height: 30px; display:flex; align-items:center; justify-content:center; }
+.receipt-circle { border-radius: 50%; width: 25px; height: 25px; display:flex; align-items:center; justify-content:center; }
+.even { background: #e2e8f0; } .green { background: #22c55e; color: #fff; } .red { background: #ef4444; color: #fff; }
+
+/* Modaalit */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85); display: none; flex-direction: column;
+    z-index: 1000; padding: 20px; box-sizing: border-box;
+}
+.carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; width: 100%; height: 70%; align-items: center; }
+.fixed-close-btn { margin-top: 20px; padding: 15px; font-weight: 900; }
+
+/* Nappien tyylit */
+.btn { border: none; border-radius: 8px; padding: 10px 20px; font-weight: bold; cursor: pointer; }
+.btn-success { background: #22c55e; color: #fff; }
+.btn-danger { background: #ef4444; color: #fff; }
+.btn-primary { background: #3b82f6; color: #fff; }
+.btn-secondary { background: #64748b; color: #fff; }
+.btn-score-paper { background: #e2e8f0; border: none; padding: 5px 10px; cursor: pointer; }
