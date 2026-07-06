@@ -11,12 +11,13 @@
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="style.css?v=202" />
+    <!-- Päivitetty versio v=204 pakottaa välimuistin lataamaan uudet tyylit ja rakenteet -->
+    <link rel="stylesheet" href="style.css?v=204" />
     <meta id="themeColorMeta" name="theme-color" content="#1e293b" />
     
     <style>
         /* =========================================
-           NÄKYMÄ-RAKENNE
+           NÄKYMÄ-RAKENNE JA TAUSTAT
            ========================================= */
         .cork-bg {
             background-color: #cbd5e1;
@@ -25,15 +26,24 @@
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 5;
             display: none; 
         }
+        
+        /* Uusi seinätausta väylänäkymälle (Tyylikäs raidallinen tapetti) */
+        .wall-bg {
+            background-color: #f1f5f9;
+            background-image: linear-gradient(90deg, rgba(0,0,0,0.02) 50%, transparent 50%), linear-gradient(rgba(0,0,0,0.02) 50%, transparent 50%);
+            background-size: 40px 40px;
+        }
+
         .app-view {
             width: 100%; height: 100%;
             overflow-y: auto; overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
             display: none; flex-direction: column;
             align-items: center; justify-content: flex-start;
-            padding-bottom: 100px; 
+            padding-bottom: 140px; /* Riittävä marginaali alas jottei leikkaudu */
             position: relative;
         }
+        
         .scale-wrapper {
             transform-origin: top center;
             display: flex; justify-content: center;
@@ -89,10 +99,10 @@
         }
 
         /* =========================================
-           TAULULLE PIIRRETTÄVÄT ELEMENTIT (CSS)
+           TAULULLE PIIRRETTÄVÄT ELEMENTIT (Leveämmät kontit)
            ========================================= */
         .board-binder {
-            width: 1100px; /* Levennetty, jotta kortit mahtuvat! */
+            width: 1250px; 
             min-height: 1100px; background: radial-gradient(circle at center, #5c3a21 0%, #3e2723 100%);
             border-radius: 12px 25px 25px 12px; display: flex; padding-top: 40px; padding-bottom: 40px;
             box-shadow: 20px 30px 60px rgba(0,0,0,0.9), inset 5px 0 20px rgba(255,255,255,0.15);
@@ -102,7 +112,7 @@
             box-shadow: inset 0 0 25px rgba(0,0,0,0.05), 5px 5px 25px rgba(0,0,0,0.6); border-left: 2px solid rgba(0,0,0,0.1);
             padding: 50px; display: flex; flex-direction: column;
         }
-        
+
         .board-receipt-paper { width: 500px; background: #fff; padding: 40px; box-shadow: 5px 15px 30px rgba(0,0,0,0.5); font-family: 'Courier Prime', monospace; border-top: 10px solid #cbd5e1; margin: 0 auto; }
 
         .mini-corkboard {
@@ -111,56 +121,64 @@
             background-size: 12px 12px;
             border: 20px solid #5c4033; border-top-color: #7b4e35; border-left-color: #7b4e35; border-bottom-color: #3e2723; border-right-color: #3e2723;
             border-radius: 8px; box-shadow: 10px 15px 30px rgba(0,0,0,0.6);
-            padding: 30px 15px; width: 95%; max-width: 450px; margin: 20px auto;
+            padding: 30px 15px; width: 95%; max-width: 450px; margin: 20px auto; margin-top: 15px;
             display: flex; flex-direction: column; align-items: center; position: relative;
         }
 
         /* =========================================
-           APPLE-TYYLINEN ALAPALKKI (Sirompi versio)
+           APPLE-TYYLINEN ALAPALKKI (Sirompi malli)
            ========================================= */
         .modern-bottom-nav {
-            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
-            width: 95%; max-width: 450px; height: 68px; /* Pienennetty */
+            position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+            width: 95%; max-width: 400px; height: 58px; 
             background: rgba(20, 25, 40, 0.95); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 35px; /* Pillerimäisempi */
+            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 30px; 
             display: flex; justify-content: space-around; align-items: center;
-            padding: 0 10px; box-shadow: 0 15px 30px rgba(0,0,0,0.8); z-index: 9000;
+            padding: 0 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); z-index: 9000;
         }
         .nav-item {
-            display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; background: none; border: none;
-            font-size: 0.6rem; font-weight: 800; text-transform: uppercase; cursor: pointer; position: relative; transition: all 0.2s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; background: none; border: none;
+            font-size: 0.55rem; font-weight: 800; text-transform: uppercase; cursor: pointer; position: relative; transition: all 0.2s;
             flex: 1; height: 100%;
         }
         .nav-item:active { transform: scale(0.9); }
-        .nav-item .icon { font-size: 1.5rem; margin-bottom: 2px; display: block; transition: all 0.2s; filter: grayscale(100%); opacity: 0.5; }
+        .nav-item .icon { font-size: 1.3rem; margin-bottom: 1px; display: block; transition: all 0.2s; filter: grayscale(100%); opacity: 0.6; }
         
         .nav-item.accent { color: #fff; background: rgba(255,255,255,0.05); border-radius: 20px; margin: 4px 2px;}
-        .nav-item.accent .icon { filter: grayscale(0%); opacity: 1; transform: translateY(-2px) scale(1.1); text-shadow: 0 0 10px rgba(255,255,255,0.4); }
+        .nav-item.accent .icon { filter: grayscale(0%); opacity: 1; transform: translateY(-1px) scale(1.1); text-shadow: 0 0 10px rgba(255,255,255,0.4); }
         
-        .nav-item .badge { position: absolute; top: 8px; right: 5px; background: var(--danger); color: white; border-radius: 10px; padding: 2px 6px; font-size: 0.65rem; border: 2px solid #0f172a; font-weight:900; z-index:10;}
-        .nav-item .badge.money { background: var(--warning); color: #000; font-size: 0.9rem; padding: 4px 8px; right: -5px; top: 0px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
+        /* Merkit ja Pisteet alapalkissa */
+        .nav-item .badge { position: absolute; top: 6px; right: 5px; background: var(--danger); color: white; border-radius: 8px; padding: 2px 5px; font-size: 0.6rem; border: 1.5px solid #0f172a; font-weight:900; z-index:10;}
+        .nav-item .badge.money { background: var(--warning); color: #000; font-size: 0.8rem; padding: 3px 6px; right: 0px; top: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.5);}
         
-        #navScoreSummary { position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; color: #fff; background: var(--danger); padding: 2px 6px; border-radius: 6px; font-weight: 900; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.5);}
+        #navScoreSummary { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; color: #fff; background: var(--danger); padding: 2px 5px; border-radius: 6px; font-weight: 900; white-space: nowrap;}
 
         .fixed-close-btn { position: relative; margin-top: 20px; width: 100%; max-width: 400px; background: #ef4444; color: #fff; border: 2px solid #fff; border-radius: 30px; padding: 15px; font-weight: 900; font-size: 1.2rem; box-shadow: 0 5px 15px rgba(0,0,0,0.6); text-transform: uppercase; cursor: pointer; flex-shrink: 0;}
 
         /* =========================================
-           UUSI APPLE iPHONE ILMOITUS (Push Notification)
+           AITO iOS PUSH NOTIFICATION
            ========================================= */
-        .apple-toast { 
-            position: fixed; top: -200px; left: 50%; transform: translateX(-50%); 
-            background: rgba(28, 28, 30, 0.85); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            color: #fff; padding: 15px; border-radius: 20px;
-            display: flex; flex-direction: column; z-index: 100000; 
-            transition: top 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
-            box-shadow: 0 8px 24px rgba(0,0,0,0.5); border: 0.5px solid rgba(255,255,255,0.1);
-            width: 92%; max-width: 400px; text-align: left;
+        .apple-toast {
+            position: fixed; top: -150px; left: 50%; transform: translateX(-50%);
+            width: calc(100% - 16px); max-width: 400px;
+            background: rgba(35, 35, 35, 0.85); 
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px; padding: 12px 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            display: flex; flex-direction: column; gap: 4px;
+            z-index: 100000; transition: top 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            border: 0.5px solid rgba(255,255,255,0.1);
         }
-        .apple-toast.show { top: 15px; } /* Ylös, kuten oikea ilmoitus */
-        .apple-toast-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .apple-toast-icon { width: 24px; height: 24px; background: var(--primary); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-        .apple-toast-title { font-size: 0.85rem; font-weight: 600; opacity: 0.7; letter-spacing: 0.5px; text-transform: uppercase; }
-        .apple-toast-body { font-size: 1.05rem; font-weight: 600; line-height: 1.4; color: #fff; }
+        .apple-toast.show { top: 10px; }
+        .apple-toast-header { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 2px; }
+        .apple-toast-app-info { display: flex; align-items: center; gap: 8px; }
+        .apple-toast-icon { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #10b981, #047857); display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);}
+        .apple-toast-app-name { font-size: 0.8rem; font-weight: 600; color: #ebebf5; letter-spacing: 0.5px; text-transform: uppercase; opacity: 0.8; }
+        .apple-toast-time { font-size: 0.8rem; font-weight: 400; color: #ebebf5; opacity: 0.6; }
+        .apple-toast-body { display: flex; flex-direction: column; gap: 2px; padding-left: 2px; margin-top: 4px; }
+        .apple-toast-title { font-weight: 700; font-size: 1.05rem; color: #fff; margin-bottom: 2px; }
+        .apple-toast-text { font-weight: 400; font-size: 0.95rem; color: #e2e8f0; line-height: 1.4; }
 
         /* ASETUSVALIKKO */
         .apple-settings-group { background: #fff; border-radius: 12px; overflow: hidden; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
@@ -207,13 +225,19 @@
 </head>
 <body class="player-mode">
 
+    <!-- UUSI AITO iOS-TYYLINEN ILMOITUS -->
     <div id="appleToast" class="apple-toast">
         <div class="apple-toast-header">
-            <div class="apple-toast-icon" id="appleToastIcon">✨</div>
-            <div class="apple-toast-title" id="appleToastTitle">Fribamestari</div>
-        </div>
-        <div class="apple-toast-body" id="appleToastBody">
+            <div class="apple-toast-app-info">
+                <div class="apple-toast-icon" id="appleToastIcon">🥨</div>
+                <span class="apple-toast-app-name" id="appleToastAppName">FRIBAMESTARI</span>
             </div>
+            <span class="apple-toast-time">Nyt</span>
+        </div>
+        <div class="apple-toast-body">
+            <div class="apple-toast-title" id="appleToastTitle">Ilmoitus</div>
+            <div class="apple-toast-text" id="appleToastText">...</div>
+        </div>
     </div>
 
     <button id="settingsToggleBtn" onclick="window.showModalSafe('settingsModal')" style="position:fixed; top:15px; right:15px; z-index:8500; width:50px; height:50px; border-radius:50%; border:none; background:rgba(255,255,255,0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; color:#111;">⚙️</button>
@@ -247,6 +271,7 @@
         </div>
     </div>
 
+    <!-- PÄÄALUE: NÄKYMÄRAKENNE -->
     <div id="app-main-area" class="cork-bg">
         
         <div id="view-receipt" class="app-view">
@@ -272,43 +297,49 @@
             </div>
         </div>
 
-        <div id="view-hole" class="app-view" style="display: flex;">
-            <div style="width: 100%; max-width: 500px; display: flex; justify-content: space-between; padding: 15px; z-index: 50; margin-top: 60px;">
+        <!-- VÄYLÄNÄKYMÄ SEINÄTAUSTALLA JA ALANAPEILLA -->
+        <div id="view-hole" class="app-view wall-bg" style="display: flex;">
+            <!-- Itse sisältö (Korkkitaulu) venytetään ylemmäs -->
+            <div id="hole-content" style="display: flex; flex-direction: column; align-items: center; width: 100%; padding-top: 20px; flex: 1;"></div>
+            
+            <!-- Navigointinapit siirretty taulun alapuolelle -->
+            <div style="width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; padding: 15px; z-index: 50; margin-bottom: 20px;">
                 <button class="btn btn-secondary" style="width: auto; padding: 10px 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.5); font-weight:900;" onclick="if(window.prevHoleView) window.prevHoleView()">⬅️ EDEL</button>
                 <div id="hole-nav-title" style="background: rgba(255,255,255,0.9); padding: 10px 20px; border-radius: 8px; font-weight: 900; font-size: 1.1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">VÄYLÄ 1</div>
                 <button class="btn btn-secondary" style="width: auto; padding: 10px 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.5); font-weight:900;" onclick="if(window.nextHoleView) window.nextHoleView()">SEUR ➡️</button>
             </div>
-            <div id="hole-content" style="display: flex; flex-direction: column; align-items: center; width: 100%; padding-top: 10px;"></div>
         </div>
 
     </div>
 
+    <!-- SIRO APPLE-ALAPALKKI -->
     <div class="modern-bottom-nav" id="pocketContainer" style="display:none;">
         <button class="nav-item" onclick="window.switchView('view-receipt')">
             <span class="icon">🧾</span>
-            <span style="margin-top:2px;">TULOKSET</span>
+            <span style="margin-top:1px;">TULOKSET</span>
             <span id="navScoreSummary">TULOS: E</span>
         </button>
         <button class="nav-item" onclick="window.switchView('view-payslip')">
             <span class="icon">💰</span>
-            <span style="margin-top:2px;">PALKKA</span>
+            <span style="margin-top:1px;">PALKKA</span>
         </button>
         <button class="nav-item" onclick="window.switchView('view-binder')">
             <span class="badge" id="handCountBadge">0/6</span>
             <span class="icon">🃏</span>
-            <span style="margin-top:2px;">KORTIT</span>
+            <span style="margin-top:1px;">KORTIT</span>
         </button>
         <button class="nav-item" onclick="window.switchView('view-shop')">
             <span class="badge money" id="myResPointsBtn">0 P</span>
             <span class="icon">🏪</span>
-            <span style="margin-top:2px;">KAUPPA</span>
+            <span style="margin-top:1px;">KAUPPA</span>
         </button>
         <button class="nav-item accent" onclick="window.switchView('view-hole')">
             <span class="icon">📍</span>
-            <span style="margin-top:2px;">VÄYLÄ</span>
+            <span style="margin-top:1px;">VÄYLÄ</span>
         </button>
     </div>
 
+    <!-- MODERNISOITU ASETUSVALIKKO -->
     <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
@@ -404,6 +435,7 @@
         </div>
     </div>
 
+    <!-- KORTTIEN HINNASTO MODAALI -->
     <div id="cardPricingModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
@@ -457,10 +489,10 @@
         <button class="fixed-close-btn" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE KORTTI</button>
     </div>
 
-    <script src="tasks.js?v=202"></script>
-    <script type="module" src="script.js?v=202"></script>
-    <script src="game.js?v=202"></script>
-    <script src="ui.js?v=202"></script>
+    <script src="tasks.js?v=204"></script>
+    <script type="module" src="script.js?v=204"></script>
+    <script src="game.js?v=204"></script>
+    <script src="ui.js?v=204"></script>
     
     <script>
         if ('serviceWorker' in navigator) {
