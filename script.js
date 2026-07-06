@@ -9,14 +9,12 @@ const firebaseConfig = { databaseURL: "https://fribamestari-default-rtdb.europe-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Jaetaan Firebase-funktiot ikkunaan (window)
 window.db = db;
 window.ref = ref;
 window.set = set;
 window.push = push;
 window.update = update;
 
-// Varmistetaan globaalit muuttujat
 window.myName = localStorage.getItem('friba_name') || null;
 window.allPlayers = [];
 window.activeHole = null;
@@ -25,7 +23,6 @@ window.currentHoleIndex = 1;
 window.gameHistory = []; 
 window.pendingShopPurchase = null;
 
-// Asetetaan oletusasetukset, jotta sovellus ei kaadu jos Firebase-dataa ei vielä ole
 window.gameSettings = { handLimitEnabled: true, handLimit: 6, ptsWin: 3, ptsTask: 2, ptsPassive: 2 };
 
 // =============================================
@@ -47,7 +44,6 @@ onValue(ref(db, 'gameState'), (snap) => {
         return;
     }
 
-    // Päivitetään asetukset Firebasesta, mutta yhdistetään ne oletuksiin
     if(data.settings) {
         window.gameSettings = { ...window.gameSettings, ...data.settings };
     }
@@ -58,7 +54,6 @@ onValue(ref(db, 'gameState'), (snap) => {
     window.currentCourse = data.course || null; 
     window.currentHoleIndex = data.currentHoleIndex || 1;
     
-    // Jos pelaaja on poistettu (esim. potkittu), heitetään hänet ulos
     if (window.myName && !window.allPlayers.find(p => p && p.name === window.myName)) { 
         window.myName = null; 
         localStorage.removeItem('friba_name'); 
@@ -67,7 +62,6 @@ onValue(ref(db, 'gameState'), (snap) => {
     
     if(window.updateIdentityUI) window.updateIdentityUI();
     
-    // Ohjataan näkymä joko aulaan tai varsinaiselle pelialueelle
     if (window.myName) {
         if (!window.currentCourse) {
             if(document.getElementById('lobbyContainer')) document.getElementById('lobbyContainer').style.display = 'block'; 
@@ -79,7 +73,6 @@ onValue(ref(db, 'gameState'), (snap) => {
             if(document.getElementById('app-main-area')) document.getElementById('app-main-area').style.display = 'block'; 
             if(document.getElementById('pocketContainer')) document.getElementById('pocketContainer').style.display = 'flex';
             
-            // GM Asetusten päivitys
             let sel = document.getElementById('gmSetCurrentHole');
             if(sel) { 
                 sel.innerHTML = ''; 
@@ -113,31 +106,57 @@ onValue(ref(db, 'gameState'), (snap) => {
         if(document.getElementById('pocketContainer')) document.getElementById('pocketContainer').style.display = 'none';
     }
 
-    // Piirretään aktiivinen UI-näkymä uudelleen datan pohjalta
     if(window.renderBoard) window.renderBoard(); 
     
     // Hoidetaan pelaajan henkilökohtaiset toimenpiteet
     if (window.myName && window.currentCourse) {
         const me = window.allPlayers.find(p => p && p.name === window.myName);
         if (me) {
+            let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
             
-            // Väylän automaattinen vaihto, historia-näkymän nollaus ja pisteilmoitukset yksityiskohtineen
-            if (typeof window.myLastHoleIndex !== 'undefined' && window.myLastHoleIndex !== window.currentHoleIndex) {
-                if (window.myLastHoleIndex < window.currentHoleIndex) {
-                    if (data.history && data.history.length >= window.myLastHoleIndex) {
-                        let lastHoleData = data.history[window.myLastHoleIndex - 1];
-                        if (lastHoleData && lastHoleData.pointBreakdowns && lastHoleData.pointBreakdowns[window.myName]) {
-                            let myBreakdown = lastHoleData.pointBreakdowns[window.myName];
-                            if(window.showAppleToast) {
-                                let sign = myBreakdown.delta > 0 ? '+' : '';
-                                window.showAppleToast(`Tilitapahtuma: ${sign}${myBreakdown.delta} P`, myBreakdown.delta >= 0 ? '💰' : '💸');
-                                let detailEl = document.getElementById('appleToastDetails');
-                                if(detailEl) detailEl.innerText = myBreakdown.summary || "Ei tuloja tai menoja.";
-                            }
+            // ==============================================
+            // YHDISTETTY APPLE-ILMOITUS (Kortit + Pisteet)
+            // ==============================================
+            let showCombinedToast = false;
+            let toastTitle = "";
+            let toastIcon = "✨";
+            let toastDetailsArray = [];
+            
+            // 1. Pisteiden tarkistus (jos väylä vaihtunut)
+            if (typeof window.myLastHoleIndex !== 'undefined' && window.myLastHoleIndex < window.currentHoleIndex) {
+                showCombinedToast = true;
+                if (data.history && data.history.length >= window.myLastHoleIndex) {
+                    let lastHoleData = data.history[window.myLastHoleIndex - 1];
+                    if (lastHoleData && lastHoleData.pointBreakdowns && lastHoleData.pointBreakdowns[window.myName]) {
+                        let myBreakdown = lastHoleData.pointBreakdowns[window.myName];
+                        let sign = myBreakdown.delta > 0 ? '+' : '';
+                        toastTitle = `Väylä ohi: ${sign}${myBreakdown.delta} P`;
+                        toastIcon = myBreakdown.delta >= 0 ? '💰' : '💸';
+                        
+                        if (myBreakdown.summary && myBreakdown.summary !== "Ei tuloja tai menoja.") {
+                            toastDetailsArray.push(myBreakdown.summary);
                         }
                     }
                 }
+            }
+            
+            // 2. Korttien tarkistus (uudet nostot)
+            if (typeof window.myLastHand !== 'undefined' && window.myLastHand.length < myCards.length) {
+                let newCardsCount = myCards.length - window.myLastHand.length;
+                toastDetailsArray.push(`Uudet kortit: +${newCardsCount} kpl`);
                 
+                if (!showCombinedToast) { 
+                    // Jos väylä ei vaihtunut, mutta saatiin kortti (esim. kauppa)
+                    showCombinedToast = true;
+                    toastTitle = `Uusi kortti nostettu!`;
+                    toastIcon = "🃏";
+                }
+            }
+            
+            window.myLastHand = [...myCards];
+
+            // Väylän vaihdon UI-päivitys
+            if (typeof window.myLastHoleIndex !== 'undefined' && window.myLastHoleIndex !== window.currentHoleIndex) {
                 window.myLastHoleIndex = window.currentHoleIndex; 
                 window.viewedHoleIndex = window.currentHoleIndex; 
                 setTimeout(() => { 
@@ -149,7 +168,19 @@ onValue(ref(db, 'gameState'), (snap) => {
                 window.viewedHoleIndex = window.currentHoleIndex;
             }
             
-            // Ilmoitukset muiden pelaajien juuri pelaamista korteista
+            // Laukaistaan yhdistetty Apple-toast
+            if (showCombinedToast && window.showAppleToast) {
+                let detailEl = document.getElementById('appleToastDetails');
+                if(detailEl) {
+                    // Pilkutetaan yhdeksi merkkijonoksi (ui.js osaa parsia tämän taulukoksi)
+                    detailEl.innerText = toastDetailsArray.join(', ');
+                }
+                window.showAppleToast(toastTitle, toastIcon);
+            }
+
+            // ==============================================
+            // MUIDEN PELAAJIEN TAPAHTUMAT
+            // ==============================================
             let currentPlayedCards = data.activeHole && data.activeHole.playedCards ? Object.keys(data.activeHole.playedCards) : [];
             if (typeof window.myLastPlayedCards !== 'undefined') {
                 let newCards = currentPlayedCards.filter(k => !window.myLastPlayedCards.includes(k));
@@ -164,32 +195,15 @@ onValue(ref(db, 'gameState'), (snap) => {
                 });
             }
             window.myLastPlayedCards = currentPlayedCards;
-
-            let myCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
             
-            // Uuden kortin nostamisen tunnistaminen ja värinä-ilmoitus
-            if (typeof window.myLastHand === 'undefined') {
-                window.myLastHand = [...myCards];
-            } else if (window.myLastHand.length < myCards.length) {
-                let newCardsCount = myCards.length - window.myLastHand.length;
-                if(window.showAppleToast) {
-                    window.showAppleToast(`+${newCardsCount} Uusi Kortti!`, "🃏");
-                    let detailEl = document.getElementById('appleToastDetails');
-                    if(detailEl) detailEl.innerText = "Tarkista Omat Kortit -kansio.";
-                }
-                window.myLastHand = [...myCards];
-            } else {
-                window.myLastHand = [...myCards];
-            }
-            
-            // Käsirajan varoitus
+            // Käsiraja
             if (window.gameSettings && window.gameSettings.handLimitEnabled && myCards.length > (window.gameSettings.handLimit||6)) { 
                 if(window.showHandLimitModal) window.showHandLimitModal(myCards); 
             } else { 
                 if(document.getElementById('handLimitModal')) document.getElementById('handLimitModal').style.display = 'none'; 
             }
             
-            // Päivitä alapalkin napit
+            // UI päivitykset
             if(document.getElementById('myResPointsBtn')) document.getElementById('myResPointsBtn').innerText = `${me.score || 0} P`;
             if(window.gameSettings) {
                 if(document.getElementById('handCountBadge')) document.getElementById('handCountBadge').innerText = `${myCards.length}/${window.gameSettings.handLimit||6}`; 
