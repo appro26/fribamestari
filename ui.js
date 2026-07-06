@@ -24,35 +24,28 @@ window.pseudoRandom = (seed) => {
 };
 
 // ==============================================
-// SKAALAUS JA NÄKYMIEN HALLINTA
+// SKAALAUS JA NÄKYMIEN HALLINTA (UUSI)
 // ==============================================
 window.applyViewScales = function() {
     let w = window.innerWidth;
-    let h = window.innerHeight;
     
-    // KAUPAN SKAALAUS (Jättimäinen kauppakontti indexissä)
+    // Nyt kun asettelu perustuu Gridiin ja Container Queriesiin, 
+    // pehmeä skaalaus varmistaa vain, ettei sisältö repeä kapeimmillakaan puhelimilla.
     let shopWrapper = el('shop-scale-wrapper');
     if(shopWrapper) {
-        let shopScale = Math.min(1.0, w / 1000); 
-        let maxHScale = (h - 120) / 1450; 
-        shopScale = Math.min(shopScale, maxHScale);
-        if(shopScale < 0.30) shopScale = 0.30;
+        let shopScale = Math.min(1.0, w / 650); 
         shopWrapper.style.transform = `scale(${shopScale})`;
-        shopWrapper.style.height = (1450 * shopScale) + 'px'; // Estää tyhjän skrollin
     }
     
-    // KANSION SKAALAUS (Valtava 1600px leveys indexissä)
     let binderWrapper = el('binder-scale-wrapper');
     if(binderWrapper) {
-        let binderScale = Math.min(1.0, w / 1650);
+        let binderScale = Math.min(1.0, w / 650);
         binderWrapper.style.transform = `scale(${binderScale})`;
-        binderWrapper.style.height = (1300 * binderScale) + 'px';
     }
     
-    // KUITIN SKAALAUS
     let receiptWrapper = el('receipt-scale-wrapper');
     if(receiptWrapper) {
-        let recScale = Math.min(1.0, w / 650);
+        let recScale = Math.min(1.0, w / 500);
         receiptWrapper.style.transform = `scale(${recScale})`;
     }
 };
@@ -186,11 +179,11 @@ window.openTargetModal = function(cId) {
     let opponents = (window.allPlayers || []).filter(p => p.name !== window.myName);
     
     if (opponents.length === 1) {
-        // Vain 2 pelaajaa pelissä -> Heitä automaattisesti sille ainoalle vastustajalle!
+        // Vain 1 vastustaja pelissä -> Iskee automaattisesti häneen!
         window.executeCardPlay(opponents[0].name);
         return;
     } else if (opponents.length > 1) {
-        // Useampi vastustaja -> Kysy kenelle heitetään, ei "Kaikille" vaihtoehtoa
+        // Useampi vastustaja -> Pakota valitsemaan 1 kohde. EI "kaikille" vaihtoehtoa.
         let nameEl = el('targetCardName');
         if(nameEl) nameEl.innerText = cDef.n;
         
@@ -208,9 +201,9 @@ window.openTargetModal = function(cId) {
 };
 
 // ==============================================
-// KORTIN GENEROINTI (JÄTTIKOKO)
+// KORTIN GENEROINTI (CONTAINER QUERIES CSS)
 // ==============================================
-window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
+window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '') {
     if (!cDef) return '';
     let typeClass = `tier-${cDef.level || 1}`;
     let typeIcon = cDef.type === 'buff' ? '🛡️' : '💥';
@@ -223,19 +216,17 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '',
     }
 
     let lockedStyle = isLocked ? 'opacity: 0.5; filter: grayscale(50%);' : '';
-    let dimensions = isCarousel ? 'width: 100%; height: 100%; box-sizing: border-box; display:flex; flex-direction:column;' : 'width: 320px; height: 480px;';
-    let titleSize = isCarousel ? 'font-size: 2.5rem;' : '';
-    let descSize = isCarousel ? 'font-size: 1.5rem; flex: 1;' : '';
     
+    // Tässä luotetaan CSS:n container-type: inline-size; ominaisuuteen! Mitat haetaan vanhemmalta.
     return `
-    <div class="physical-card ${typeClass}" style="${lockedStyle} ${dimensions} margin: 0 auto;">
+    <div class="physical-card ${typeClass}" style="${lockedStyle}">
         <div class="card-header ${typeName}">
             <span>${typeIcon} ${cDef.type === 'buff' ? 'HELPOTUS' : 'SABOTAASI'}</span><span>TASO ${cDef.level || 1}</span>
         </div>
         <div class="card-body ${typeName}">
             <div class="play-cost-badge">MAKSU: ${playCost} P</div>
-            <h3 class="card-title" style="${titleSize}">${safeCardName}</h3>
-            <div class="card-desc" style="${descSize}">${cDef.d}</div>
+            <div class="card-title">${safeCardName}</div>
+            <div class="card-desc">${cDef.d}</div>
             ${extraBottomHtml}
         </div>
     </div>`;
@@ -376,15 +367,13 @@ window.renderHoleView = function(hIndex, isCurrent) {
                 let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
                 
-                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:10px; border-radius:8px; font-size:1rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(Käyttäjä: ${pc.by})</span></div>`;
+                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:3cqw; border-radius:2cqw; font-size:4cqw; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
                 let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml);
 
                 html += `
-                <div class="pinned-card-container btn-modern" style="transform: rotate(${cRot}deg); cursor:pointer;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
+                <div class="pinned-card-container btn-modern" style="transform: rotate(${cRot}deg); cursor:pointer; width:150px; position:relative;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div class="pushpin" style="left: ${pinLeft}%; z-index:20;"></div>
-                    <div style="transform: scale(0.50); transform-origin: top center; margin-bottom: -220px;">
-                        ${fullCardHtml}
-                    </div>
+                    ${fullCardHtml}
                 </div>`;
             }
         });
@@ -393,7 +382,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
 
     html += `</div>`; // Sulkee mini-corkboardin
 
-    // 4. UUSI TULOSLAPPU (NAHKAINEN LEIKEPÖYTÄ)
+    // 4. UUSI TULOSLAPPU (3D LEIKEPÖYTÄ)
     let playersToRender = hData.players || window.allPlayers;
     let sortedPlayers = [...playersToRender].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
     
@@ -426,7 +415,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
             </div>
         </div>`;
     });
-    html += `</div></div>`; // Sulkee scorecard-paperin ja kansioin
+    html += `</div></div>`; // Sulkee clipboardin
 
     // 5. UUSI PALKKA (NAHKAINEN LOMPAKKO)
     if (!isCurrent && window.myName && hData.pointBreakdowns && hData.pointBreakdowns[window.myName]) {
@@ -452,21 +441,20 @@ window.renderHoleView = function(hIndex, isCurrent) {
         html += `
         <div class="leather-wallet">
             <div class="wallet-stitching">
-                <div class="wallet-pocket">
-                    <div class="wallet-receipt-paper">
-                        <div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; text-align:center;">
-                            <div style="font-weight:900; font-size:1.6rem; color:#1e293b; letter-spacing:1px; text-transform:uppercase;">Palkkakuitti</div>
-                            <div style="font-size:0.9rem; color:#555; margin-top:4px;">Väylä ${hIndex} &nbsp;|&nbsp; Hljo: ${window.myName.toUpperCase()}</div>
-                        </div>
-                        <table style="width:100%; font-size:1.15rem; border-collapse: collapse; margin-bottom: 15px;">
-                            ${rowsHtml}
-                        </table>
-                        <div style="border-top: 2px dashed #000; padding-top: 15px; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:1.3rem; font-weight:900; color:#1e293b;">NETTOPALKKA</span>
-                            <span style="font-size:1.7rem; font-weight:900; background:${bgDeltaColor}; padding:5px 10px; border:2px solid ${deltaColor}; border-radius:6px; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
-                        </div>
+                <div class="wallet-receipt-paper">
+                    <div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; text-align:center;">
+                        <div style="font-weight:900; font-size:1.6rem; color:#1e293b; letter-spacing:1px; text-transform:uppercase;">Palkkakuitti</div>
+                        <div style="font-size:0.9rem; color:#555; margin-top:4px;">Väylä ${hIndex} &nbsp;|&nbsp; Hljo: ${window.myName.toUpperCase()}</div>
+                    </div>
+                    <table style="width:100%; font-size:1.15rem; border-collapse: collapse; margin-bottom: 15px;">
+                        ${rowsHtml}
+                    </table>
+                    <div style="border-top: 2px dashed #000; padding-top: 15px; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:1.3rem; font-weight:900; color:#1e293b;">NETTOPALKKA</span>
+                        <span style="font-size:1.7rem; font-weight:900; background:${bgDeltaColor}; padding:5px 10px; border:2px solid ${deltaColor}; border-radius:6px; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
                     </div>
                 </div>
+                <div class="wallet-pocket-front"></div>
             </div>
         </div>`;
     }
@@ -518,30 +506,29 @@ window.renderPayslipView = function(hIndex) {
     }
 
     container.innerHTML = `
-    <div class="leather-wallet" style="max-width: 500px; transform: scale(0.95);">
+    <div class="leather-wallet">
         <div class="wallet-stitching">
-            <div class="wallet-pocket">
-                <div class="wallet-receipt-paper">
-                    <div style="border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 25px; text-align:center;">
-                        <div style="font-weight:900; font-size:2.4rem; color:#1e293b; letter-spacing:2px; text-transform:uppercase;">Palkkakuitti</div>
-                        <div style="font-size:1.1rem; color:#555; margin-top:8px; font-weight:bold;">Kausi: Väylä ${viewIndex}</div>
-                        <div style="font-size:1.2rem; color:#1e293b; margin-top:12px;">Työntekijä: <b>${window.myName.toUpperCase()}</b></div>
-                    </div>
-                    <table style="width:100%; font-size:1.35rem; border-collapse: collapse; margin-bottom: 25px;">
-                        ${rowsHtml}
-                    </table>
-                    <div style="border-top: 3px dashed #000; padding-top: 20px; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:1.5rem; font-weight:900; color:#1e293b;">NETTOPALKKA</span>
-                        <span style="font-size:2.2rem; font-weight:900; background:${bgDeltaColor}; padding:8px 15px; border:3px solid ${deltaColor}; border-radius:8px; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
-                    </div>
+            <div class="wallet-receipt-paper">
+                <div style="border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 25px; text-align:center;">
+                    <div style="font-weight:900; font-size:2.4rem; color:#1e293b; letter-spacing:2px; text-transform:uppercase;">Palkkakuitti</div>
+                    <div style="font-size:1.1rem; color:#555; margin-top:8px; font-weight:bold;">Kausi: Väylä ${viewIndex}</div>
+                    <div style="font-size:1.2rem; color:#1e293b; margin-top:12px;">Työntekijä: <b>${window.myName.toUpperCase()}</b></div>
+                </div>
+                <table style="width:100%; font-size:1.35rem; border-collapse: collapse; margin-bottom: 25px;">
+                    ${rowsHtml}
+                </table>
+                <div style="border-top: 3px dashed #000; padding-top: 20px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:1.5rem; font-weight:900; color:#1e293b;">NETTOPALKKA</span>
+                    <span style="font-size:2.2rem; font-weight:900; background:${bgDeltaColor}; padding:8px 15px; border:3px solid ${deltaColor}; border-radius:8px; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
                 </div>
             </div>
+            <div class="wallet-pocket-front"></div>
         </div>
     </div>`;
 };
 
 // ==============================================
-// KANSIO (OMAT KORTIT) MASSIVISELLA KOLLA!
+// KANSIO (OMAT KORTIT)
 // ==============================================
 window.renderBinderOnBoard = function() {
     let wrapper = el('board-binder-wrapper');
@@ -561,7 +548,7 @@ window.renderBinderOnBoard = function() {
             let cDef = window.allCards.find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:1.2rem; color:#111; margin-top:auto; padding-top:10px;">🔄 KATSO TASOT</div>`;
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:4.5cqw; color:#111; margin-top:auto; padding-top:2cqw;">🔄 KATSO TASOT</div>`;
             let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
             let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cDef.id) : cDef.price;
             if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[cDef.id] !== undefined) playCost = window.gameSettings.cardPrices[cDef.id];
@@ -572,19 +559,18 @@ window.renderBinderOnBoard = function() {
             if (cDef.nextId) {
                 let upgCost = cDef.level === 1 ? 3 : 5;
                 let canUpg = me.score >= upgCost;
-                upgBtn = `<button class="btn ${canUpg ? 'btn-warning' : 'btn-secondary'} btn-modern" ${!canUpg ? 'disabled' : ''} style="width:100%; font-size:1.3rem; padding:15px; margin-bottom:10px; color:#000; font-weight:900;" onclick="event.stopPropagation(); window.upgradeCard('${cId}')">🔼 UPGRADE (${upgCost} P)</button>`;
+                upgBtn = `<button class="btn ${canUpg ? 'btn-warning' : 'btn-secondary'} btn-modern" ${!canUpg ? 'disabled' : ''} style="width:100%; font-size:1.1rem; padding:12px; margin-bottom:10px; color:#000; font-weight:900;" onclick="event.stopPropagation(); window.upgradeCard('${cId}')">🔼 UPGRADE (${upgCost} P)</button>`;
             }
 
-            // Kansion kortit on nyt todella isoja!
             cardsHtml += `
-            <div style="display:flex; flex-direction:column; align-items:center; width:340px;">
-                <div class="plastic-sleeve btn-modern" style="cursor:pointer; transform: scale(1.0); margin-bottom:15px; z-index: 10;" onclick="window.openCardDetail('${cId}', 'sell')">
+            <div style="display:flex; flex-direction:column; align-items:center; width:100%; max-width: 280px;">
+                <div class="plastic-sleeve btn-modern" style="cursor:pointer; width:100%; margin-bottom:15px; position:relative; z-index: 10;" onclick="window.openCardDetail('${cId}', 'sell')">
                     ${fullCardHtml}
                 </div>
                 <div style="width:100%; z-index:20;">
                     ${upgBtn}
-                    <button class="btn ${canPlay ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canPlay ? 'disabled' : ''} style="width:100%; font-size:1.4rem; padding:18px; font-weight:900; margin-bottom:10px;" onclick="event.stopPropagation(); window.openTargetModal('${cDef.id}')">PELAA KORTTI (${playCost} P)</button>
-                    <button class="btn btn-danger btn-modern" style="width:100%; font-size:1.2rem; padding:15px; font-weight:bold; margin-bottom:10px;" onclick="event.stopPropagation(); window.forceDiscard('${cDef.id}')">♻️ MYY (+${sellReward} P)</button>
+                    <button class="btn ${canPlay ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canPlay ? 'disabled' : ''} style="width:100%; font-size:1.3rem; padding:15px; font-weight:900; margin-bottom:10px;" onclick="event.stopPropagation(); window.openTargetModal('${cDef.id}')">PELAA (${playCost} P)</button>
+                    <button class="btn btn-danger btn-modern" style="width:100%; font-size:1.1rem; padding:12px; font-weight:bold; margin-bottom:10px;" onclick="event.stopPropagation(); window.forceDiscard('${cDef.id}')">♻️ MYY (+${sellReward} P)</button>
                 </div>
             </div>`;
         });
@@ -597,9 +583,9 @@ window.renderBinderOnBoard = function() {
             <div class="binder-ring" style="width:35px; height:25px; border-radius:20px; background:#e2e8f0; box-shadow:2px 4px 8px #000, inset 0 2px 5px #fff; margin-left:25px;"></div>
             <div class="binder-ring" style="margin-bottom: 50px; width:35px; height:25px; border-radius:20px; background:#e2e8f0; box-shadow:2px 4px 8px #000, inset 0 2px 5px #fff; margin-left:25px;"></div>
         </div>
-        <div class="binder-page" style="margin-left: 50px; margin-right: 20px; padding: 40px 30px; border-radius: 4px 16px 16px 4px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1), 5px 5px 15px rgba(0,0,0,0.6); box-sizing: border-box; width: calc(100% - 70px);">
+        <div class="binder-page">
             <h2 style="color:#111; font-size:4rem; margin-bottom:40px; font-family:'Kalam', cursive; border-bottom:4px dashed #ccc; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; justify-items: center; gap: 40px; width: 100%; box-sizing: border-box;">
+            <div class="binder-grid">
                 ${cardsHtml}
             </div>
         </div>
@@ -622,9 +608,8 @@ window.renderShopOnBoard = function() {
     let levels = [3, 2, 1]; 
 
     levels.forEach(lvl => {
-        shelvesHtml += `<div style="display:flex; justify-content:space-around; align-items:flex-end; padding-bottom:30px; border-bottom: 25px solid #0f172a; position:relative; height: 480px; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.8)); box-shadow: inset 0 -20px 40px rgba(0,0,0,0.9);">`;
-        
-        shelvesHtml += `<div style="position:absolute; bottom:95px; left:0; width:100%; height:55px; background:repeating-linear-gradient(90deg, transparent, transparent 30px, #64748b 30px, #64748b 42px); z-index:1; opacity:0.9; filter:drop-shadow(0 15px 15px #000);"></div>`;
+        shelvesHtml += `<div class="shop-shelf-grid">`;
+        shelvesHtml += `<div style="position:absolute; bottom:15px; left:0; width:100%; height:45px; background:repeating-linear-gradient(90deg, transparent, transparent 30px, #64748b 30px, #64748b 42px); z-index:1; opacity:0.9; filter:drop-shadow(0 15px 15px #000);"></div>`;
 
         let shelfItems = (shopArray || []).filter(c => c === null || c.level === lvl);
         
@@ -636,30 +621,30 @@ window.renderShopOnBoard = function() {
 
                 const canAfford = myPoints >= itemPrice;
                 let isResFull = actRes.length >= 2;
-                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:1.2rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:4.5cqw; color:#111; margin-top:auto; padding-top:2cqw;">🔄 TARKASTELE</div>`;
                 let fullCardHtml = window.generateCardHTML(item, false, extraHtml, false);
                 
                 shelvesHtml += `
-                    <div style="position:relative; width:45%; display:flex; flex-direction:column; align-items:center; z-index:10;">
-                        <div class="btn-modern" style="transform: scale(0.85); transform-origin: bottom center; cursor:pointer; width:320px; margin-bottom:-45px;" onclick="window.openCardDetail('${item.id}', 'shop')">
+                    <div style="position:relative; width:100%; max-width:260px; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                        <div class="btn-modern" style="cursor:pointer; width:100%; position:relative;" onclick="window.openCardDetail('${item.id}', 'shop')">
                             ${fullCardHtml}
                         </div>
                         
-                        <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 8px 20px; border-radius: 8px; border: 3px solid #22c55e; font-weight: 900; font-size: 1.6rem; margin-top: 15px; box-shadow: 0 0 20px rgba(34,197,94,0.8); z-index: 15;">${itemPrice} P</div>
+                        <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 8px; border: 3px solid #22c55e; font-weight: 900; font-size: 1.5rem; margin-top: 15px; box-shadow: 0 0 15px rgba(34,197,94,0.8); z-index: 15;">${itemPrice} P</div>
                         
-                        <div style="display:flex; gap:10px; margin-top:15px; width:100%; justify-content:center; position: relative; z-index: 1000; pointer-events: auto;">
-                            <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:15px; font-size:1.2rem; font-weight:900; margin:0;" onclick="window.buyShopItem('${item.id}', ${itemPrice}, false)">OSTA</button>
-                            ${!isResFull ? `<button class="btn btn-primary btn-modern" style="padding:15px; font-size:1.2rem; font-weight:900; margin:0;" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
+                        <div class="shop-controls">
+                            <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:12px; font-size:1.1rem; font-weight:900; flex:1;" onclick="window.buyShopItem('${item.id}', ${itemPrice}, false)">OSTA</button>
+                            ${!isResFull ? `<button class="btn btn-primary btn-modern" style="padding:12px; font-size:1.1rem; font-weight:900; flex:1;" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
                         </div>
                     </div>
                 `;
             } else {
                 shelvesHtml += `
-                    <div style="position:relative; width:45%; display:flex; flex-direction:column; align-items:center; z-index:10;">
-                        <div style="width:320px; height:480px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:20px; border:8px dashed #333; transform: scale(0.85); transform-origin: bottom center; margin-bottom:-45px;">
-                            <div style="color:#666; font-weight:900; font-size:3.5rem; letter-spacing:4px; transform:rotate(-45deg);">TYHJÄ</div>
+                    <div style="position:relative; width:100%; max-width:260px; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                        <div style="width:100%; aspect-ratio: 2/3; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:15px; border:6px dashed #333;">
+                            <div style="color:#666; font-weight:900; font-size:2rem; letter-spacing:4px; transform:rotate(-45deg);">TYHJÄ</div>
                         </div>
-                        <div style="background: #000; color: #555; font-family: 'Courier Prime', monospace; padding: 8px 20px; border-radius: 8px; border: 3px solid #444; font-weight: 900; font-size: 1.6rem; margin-top: 15px;">---</div>
+                        <div style="background: #000; color: #555; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 8px; border: 3px solid #444; font-weight: 900; font-size: 1.4rem; margin-top: 15px;">---</div>
                     </div>
                 `;
             }
@@ -670,9 +655,9 @@ window.renderShopOnBoard = function() {
     let reserveHtml = '';
     if(actRes.length > 0) {
         reserveHtml += `
-        <div style="background: #111; border-top: 10px solid #222; border-bottom: 10px solid #000; padding: 25px 15px; box-shadow: inset 0 20px 30px #000;">
-            <div style="color: #fbbf24; font-family: 'Courier Prime', monospace; font-size: 1.5rem; font-weight: 900; text-align: center; margin-bottom: 25px; letter-spacing: 3px; text-shadow: 0 0 10px rgba(251,191,36,0.5);">NOUTOLOKERO (VARATUT)</div>
-            <div style="display:flex; justify-content:space-around; width:100%; gap:20px;">`;
+        <div style="background: #111; border-top: 8px solid #222; border-bottom: 8px solid #000; padding: 25px 15px; box-shadow: inset 0 15px 25px #000;">
+            <div style="color: #fbbf24; font-family: 'Courier Prime', monospace; font-size: 1.5rem; font-weight: 900; text-align: center; margin-bottom: 25px; letter-spacing: 3px; text-shadow: 0 0 10px rgba(251,191,36,0.5);">NOUTOLOKERO</div>
+            <div style="display:flex; justify-content:space-around; width:100%; gap:15px;">`;
             
         actRes.forEach(rId => {
             let resItem = window.allCards.find(c => c.id === rId);
@@ -681,19 +666,19 @@ window.renderShopOnBoard = function() {
             if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[rId] !== undefined) itemPrice = window.gameSettings.cardPrices[rId];
 
             const canAfford = myPoints >= itemPrice;
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:1.2rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:4.5cqw; color:#111; margin-top:auto; padding-top:2cqw;">🔄 TARKASTELE</div>`;
             let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml, false);
             
             reserveHtml += `
-                <div style="width:45%; display:flex; flex-direction:column; align-items:center;">
-                    <div class="btn-modern" style="transform: scale(0.85); margin-bottom:-45px; transform-origin: top center; cursor:pointer; width:320px; position:relative;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
-                        <div style="position:absolute; top:-30px; right:-30px; background:#fbbf24; color:#000; padding:15px 20px; font-weight:900; font-size: 1.5rem; border-radius:12px; z-index:30; border: 5px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.8);">🔒 VARATTU</div>
+                <div style="width:45%; max-width:240px; display:flex; flex-direction:column; align-items:center;">
+                    <div class="btn-modern" style="width:100%; cursor:pointer; position:relative;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
+                        <div style="position:absolute; top:-15px; right:-15px; background:#fbbf24; color:#000; padding:10px 15px; font-weight:900; font-size: 1.2rem; border-radius:10px; z-index:30; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.8);">🔒 VARATTU</div>
                         ${fullCardHtml}
                     </div>
-                    <div style="background: #000; color: #fbbf24; font-family: 'Courier Prime', monospace; padding: 8px 20px; border-radius: 8px; border: 3px solid #fbbf24; font-weight: 900; font-size: 1.6rem; margin-top: 15px; text-align: center; margin-bottom:15px; box-shadow: 0 0 20px rgba(251,191,36,0.6);">${itemPrice} P</div>
-                    <div style="display:flex; gap:10px; width:100%; justify-content:center; position: relative; z-index: 1000; pointer-events: auto;">
-                        <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:15px; font-size:1.2rem; font-weight:900; margin:0;" onclick="window.buyShopItem('${resItem.id}', ${itemPrice}, true)">LUNASTA</button>
-                        <button class="btn btn-danger btn-modern" style="padding:15px; font-size:1.2rem; font-weight:900; margin:0;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
+                    <div style="background: #000; color: #fbbf24; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 8px; border: 3px solid #fbbf24; font-weight: 900; font-size: 1.4rem; margin-top: 15px; text-align: center; margin-bottom:15px; box-shadow: 0 0 15px rgba(251,191,36,0.6);">${itemPrice} P</div>
+                    <div class="shop-controls">
+                        <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:12px; font-size:1.1rem; font-weight:900; flex:1;" onclick="window.buyShopItem('${resItem.id}', ${itemPrice}, true)">LUNASTA</button>
+                        <button class="btn btn-danger btn-modern" style="padding:12px; font-size:1.1rem; font-weight:900; flex:1;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
                     </div>
                 </div>
             `;
@@ -702,38 +687,37 @@ window.renderShopOnBoard = function() {
     }
 
     wrapper.innerHTML = `
-    <div class="automati-container">
+    <div class="shop-machine">
         
-        <div style="background: linear-gradient(135deg, #000, #111); padding: 25px; border-radius: 12px; border: 6px solid #222; display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px; box-shadow: inset 0 0 30px rgba(239,68,68,0.25);">
-            <div style="display:flex; align-items:center; gap: 25px;">
-                <div style="font-size:4rem; text-shadow: 0 0 20px rgba(255,255,255,0.6);">🥨</div>
-                <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:3.5rem; letter-spacing: 4px; text-shadow: 0 0 20px #ef4444;">FRIBAMART SNACKS</div>
+        <div style="background: linear-gradient(135deg, #000, #111); padding: 20px; border-radius: 12px; border: 5px solid #222; display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px; box-shadow: inset 0 0 30px rgba(239,68,68,0.25);">
+            <div style="display:flex; align-items:center; gap: 20px;">
+                <div style="font-size:3rem; text-shadow: 0 0 15px rgba(255,255,255,0.6);">🥨</div>
+                <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:2.5rem; letter-spacing: 3px; text-shadow: 0 0 15px #ef4444;">SNACKS</div>
             </div>
             
-            <div style="background: #000; padding: 15px 30px; border-radius: 8px; border: 4px solid #222; box-shadow: inset 0 0 20px #000, 0 0 10px rgba(34,197,94,0.3); display: flex; flex-direction: column; align-items: center;">
-                <span style="color: #444; font-size: 0.8rem; font-family: 'Courier Prime', monospace; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px;">CREDIT</span>
-                <span style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:3rem; font-weight:900; text-shadow: 0 0 20px #22c55e, 0 0 5px #22c55e;">${myPoints} P</span>
+            <div style="background: #000; padding: 10px 20px; border-radius: 8px; border: 3px solid #222; box-shadow: inset 0 0 15px #000, 0 0 10px rgba(34,197,94,0.3); display: flex; flex-direction: column; align-items: center;">
+                <span style="color: #444; font-size: 0.75rem; font-family: 'Courier Prime', monospace; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px;">CREDIT</span>
+                <span style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:2.5rem; font-weight:900; text-shadow: 0 0 15px #22c55e, 0 0 5px #22c55e;">${myPoints} P</span>
             </div>
         </div>
 
-        <div style="background: #020617; border-radius: 12px; border: 15px solid #0f172a; padding: 20px 20px 0 20px; position:relative; box-shadow: inset 0 20px 50px #000;">
-            <div style="position:absolute; top:0; left:-20%; width:150%; height:100%; background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.08) 50%, transparent 55%); pointer-events:none; z-index:40;"></div>
+        <div class="shop-glass">
             ${shelvesHtml}
         </div>
 
         ${reserveHtml}
 
-        <div style="height: 200px; padding: 40px 0; display:flex; gap:35px;">
-            <div style="width: 200px; background: #000; border-radius: 12px; border: 6px solid #1e293b; padding: 20px; display:flex; flex-direction:column; align-items:center; box-shadow: inset 0 0 20px rgba(0,0,0,0.9);">
-                <div style="width: 100%; height: 40px; background: #0f172a; border: 3px solid #334155; margin-bottom: 20px; color:#22c55e; font-family:'Courier Prime', monospace; font-weight:bold; font-size:1.5rem; text-align:right; padding-right:10px; line-height:34px; box-shadow: inset 0 0 15px #000;">12.00</div>
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width:100%;">
-                    ${Array(9).fill('<div style="background: #334155; height:25px; border-radius:6px; border-bottom:5px solid #0f172a;"></div>').join('')}
+        <div style="height: 160px; padding: 30px 0; display:flex; gap:25px;">
+            <div style="width: 160px; background: #000; border-radius: 10px; border: 5px solid #1e293b; padding: 15px; display:flex; flex-direction:column; align-items:center; box-shadow: inset 0 0 15px rgba(0,0,0,0.9);">
+                <div style="width: 100%; height: 35px; background: #0f172a; border: 2px solid #334155; margin-bottom: 15px; color:#22c55e; font-family:'Courier Prime', monospace; font-weight:bold; font-size:1.2rem; text-align:right; padding-right:8px; line-height:30px; box-shadow: inset 0 0 10px #000;">12.00</div>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width:100%;">
+                    ${Array(9).fill('<div style="background: #334155; height:20px; border-radius:4px; border-bottom:4px solid #0f172a;"></div>').join('')}
                 </div>
             </div>
             
-            <div style="flex: 1; background: #000; border-radius: 12px; border: 10px solid #111; position:relative; box-shadow: inset 0 40px 50px #000;">
-                <div style="position:absolute; top:0; left:0; right:0; height: 110px; background: #1a1a1a; border-bottom: 5px solid #000; display:flex; justify-content:center; align-items:center; transform-origin: top; transform: rotateX(-15deg);">
-                    <span style="color:#444; font-weight:900; font-size:3.5rem; letter-spacing:15px; text-shadow:-2px -2px 0 #000;">PUSH</span>
+            <div style="flex: 1; background: #000; border-radius: 10px; border: 8px solid #111; position:relative; box-shadow: inset 0 30px 40px #000;">
+                <div style="position:absolute; top:0; left:0; right:0; height: 90px; background: #1a1a1a; border-bottom: 4px solid #000; display:flex; justify-content:center; align-items:center; transform-origin: top; transform: rotateX(-15deg);">
+                    <span style="color:#444; font-weight:900; font-size:2.5rem; letter-spacing:10px; text-shadow:-1px -1px 0 #000;">PUSH</span>
                 </div>
             </div>
         </div>
@@ -824,14 +808,14 @@ window.updateAdminPlayerList = function() {
                 </div>
             </div>
             <div style="display:flex; gap:10px; width:100%;">
-                <button class="btn btn-warning btn-modern" style="flex:1; padding:10px; font-size:1.1rem; font-weight:900; color:#000; border-radius:8px; margin:0;" onclick="window.gmAdjustScore('${p.name}', 1)">+1 P</button>
-                <button class="btn btn-warning btn-modern" style="flex:1; padding:10px; font-size:1.1rem; font-weight:900; color:#000; border-radius:8px; margin:0;" onclick="window.gmAdjustScore('${p.name}', -1)">-1 P</button>
+                <button class="btn btn-warning btn-modern" style="flex:1; padding:10px; font-size:1.1rem; font-weight:900; color:#000; margin:0;" onclick="window.gmAdjustScore('${p.name}', 1)">+1 P</button>
+                <button class="btn btn-warning btn-modern" style="flex:1; padding:10px; font-size:1.1rem; font-weight:900; color:#000; margin:0;" onclick="window.gmAdjustScore('${p.name}', -1)">-1 P</button>
             </div>
             <div style="display:flex; gap:10px; width:100%; margin-top:5px;">
-                <button class="btn btn-secondary btn-modern" style="flex:1; padding:10px; font-size:1rem; font-weight:bold; border-radius:8px; margin:0;" onclick="window.gmAdjustDgScore('${p.name}', 1)">+1 Heitto</button>
-                <button class="btn btn-secondary btn-modern" style="flex:1; padding:10px; font-size:1rem; font-weight:bold; border-radius:8px; margin:0;" onclick="window.gmAdjustDgScore('${p.name}', -1)">-1 Heitto</button>
+                <button class="btn btn-secondary btn-modern" style="flex:1; padding:10px; font-size:1rem; font-weight:bold; margin:0;" onclick="window.gmAdjustDgScore('${p.name}', 1)">+1 Heitto</button>
+                <button class="btn btn-secondary btn-modern" style="flex:1; padding:10px; font-size:1rem; font-weight:bold; margin:0;" onclick="window.gmAdjustDgScore('${p.name}', -1)">-1 Heitto</button>
             </div>
-            <button class="btn btn-danger btn-modern" style="width:100%; padding:10px; font-size:1rem; font-weight:bold; border-radius:8px; margin-top:5px;" onclick="window.gmKickPlayer('${p.name}')">POTKI PELAAJA</button>
+            <button class="btn btn-danger btn-modern" style="width:100%; padding:10px; font-size:1rem; font-weight:bold; margin-top:5px;" onclick="window.gmKickPlayer('${p.name}')">POTKI PELAAJA</button>
         </div>`;
     });
     container.innerHTML = html;
@@ -959,21 +943,21 @@ window.renderCarousel = function() {
         familyCards.forEach(fc => {
             let isActive = fc.level === cDef.level;
             levelsHtml += `
-                <li style="${isActive ? 'color:var(--warning); font-weight:bold; border-left:3px solid var(--warning); padding-left:5px;' : 'color:#ccc; opacity:0.8;'}">
-                    <span class="lvl-tag">TASO ${fc.level} ${isActive ? '(NYKYINEN TASO)' : ''}</span>
+                <li style="${isActive ? 'color:var(--warning); font-weight:bold; border-left:1cqw solid var(--warning); padding-left:2cqw;' : 'color:#ccc; opacity:0.8;'}">
+                    <span class="lvl-tag" style="display:block; font-size:4cqw;">TASO ${fc.level} ${isActive ? '(NYKYINEN)' : ''}</span>
                     ${fc.d}
                 </li>`;
         });
         
         let backHtml = `
-            <div style="background:#1e293b; border:4px solid #475569; width:100%; height:100%; border-radius:12px; display:flex; flex-direction:column; padding:15px; box-sizing:border-box; color:#fff;">
-                <div style="font-size:1.4rem; font-weight:900; color:var(--warning); margin-bottom:15px; text-transform:uppercase; text-align:center; border-bottom:2px dashed #475569; padding-bottom:10px;">${cDef.n.split(' (')[0]}</div>
-                <ul class="card-levels-list" style="flex:1; overflow-y:auto; list-style-type:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px;">
+            <div style="background:#1e293b; border: 1cqw solid #475569; width:100%; height:100%; border-radius:4cqw; display:flex; flex-direction:column; padding:4cqw; box-sizing:border-box; color:#fff;">
+                <div style="font-size:6cqw; font-weight:900; color:var(--warning); margin-bottom:4cqw; text-transform:uppercase; text-align:center; border-bottom:0.5cqw dashed #475569; padding-bottom:2cqw;">${cDef.n.split(' (')[0]}</div>
+                <ul class="card-levels-list" style="flex:1; overflow-y:auto; list-style-type:none; margin:0; padding:0; display:flex; flex-direction:column; gap:3cqw; font-size: 4.5cqw;">
                     ${levelsHtml}
                 </ul>
             </div>`;
         
-        let extraHtml = `<div style="text-align:center; font-weight:900; color:#111; margin-top:auto; padding-bottom:10px; font-size:1rem;">🔄 KÄÄNNÄ (KATSO KAIKKI TASOT)</div>`;
+        let extraHtml = `<div style="text-align:center; font-weight:900; color:#111; margin-top:auto; padding-bottom:3cqw; font-size:4cqw;">🔄 KÄÄNNÄ (KATSO KAIKKI TASOT)</div>`;
         let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml, true);
 
         html += `
@@ -1012,7 +996,7 @@ window.renderCarouselActionButtons = function() {
                 let canUpg = me.score >= upgCost;
                 btnHtml += `<button class="btn ${canUpg ? 'btn-warning' : 'btn-secondary'} btn-modern" ${!canUpg ? 'disabled' : ''} style="width:100%; font-size:1.1rem; padding:15px; margin-bottom:10px; color:#000; font-weight:900;" onclick="event.stopPropagation(); window.upgradeCard('${cId}')">🔼 UPGRADE TASOLLE ${cDef.level + 1} (${upgCost} P)</button>`;
             }
-            btnHtml += `<button class="btn ${canPlay ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canPlay ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; box-shadow:0 4px 15px rgba(16,185,129,0.4); margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cDef.id}')">PELAA KORTTI (${playCost} P)</button>`;
+            btnHtml += `<button class="btn ${canPlay ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canPlay ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cDef.id}')">PELAA KORTTI (${playCost} P)</button>`;
             btnHtml += `<button class="btn btn-danger btn-modern" style="width:100%; font-size:1.1rem; padding:15px; font-weight:bold; margin-bottom:10px;" onclick="window.forceDiscard('${cDef.id}')">♻️ MYY KORTTI (+${sellReward} P)</button>`;
         }
     } else if (mode === 'shop' || mode === 'shop_res') {
