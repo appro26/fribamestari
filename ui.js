@@ -30,7 +30,7 @@ window.applyViewScales = function() {
     let w = window.innerWidth;
     let h = window.innerHeight;
     
-    // KAUPAN SKAALAUS
+    // KAUPAN SKAALAUS (Jättimäinen kauppakontti indexissä)
     let shopWrapper = el('shop-scale-wrapper');
     if(shopWrapper) {
         let shopScale = Math.min(1.0, w / 1000); 
@@ -38,10 +38,10 @@ window.applyViewScales = function() {
         shopScale = Math.min(shopScale, maxHScale);
         if(shopScale < 0.25) shopScale = 0.25;
         shopWrapper.style.transform = `scale(${shopScale})`;
-        shopWrapper.style.height = (1450 * shopScale) + 'px'; // Estää tyhjän skrollauksen
+        shopWrapper.style.height = (1450 * shopScale) + 'px'; // Estää tyhjän skrollin!
     }
     
-    // KANSION SKAALAUS (Iso 1400px leveys indexissä)
+    // KANSION SKAALAUS (Valtava 1400px leveys indexissä)
     let binderWrapper = el('binder-scale-wrapper');
     if(binderWrapper) {
         let binderScale = Math.min(1.0, w / 1450);
@@ -61,7 +61,7 @@ window.addEventListener('resize', window.applyViewScales);
 window.viewedHoleIndex = null;
 
 // ==============================================
-// ILMOITUKSET JA IKKUNAT (Aito iOS-Tyyli)
+// ILMOITUKSET JA IKKUNAT
 // ==============================================
 window.showModalSafe = function(id, displayType) {
     let elModal = document.getElementById(id); 
@@ -196,7 +196,7 @@ window.openTargetModal = function(cId) {
         
         let html = '';
         opponents.forEach(p => {
-            html += `<button class="btn btn-warning" style="width:100%; padding:16px; margin-bottom:12px; font-size:1.3rem; font-weight:900; color:#000; border-radius:12px;" onclick="window.executeCardPlay('${p.name}')">SABOTOI: ${p.name}</button>`;
+            html += `<button class="btn btn-warning btn-3d" style="width:100%; padding:16px; margin-bottom:12px; font-size:1.3rem; font-weight:900; color:#000; border-radius:12px;" onclick="window.executeCardPlay('${p.name}')">SABOTOI: ${p.name}</button>`;
         });
         
         let listEl = el('targetPlayerList');
@@ -208,7 +208,7 @@ window.openTargetModal = function(cId) {
 };
 
 // ==============================================
-// KORTIN GENEROINTI (JÄTTIKOKO)
+// KORTIN GENEROINTI
 // ==============================================
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
     if (!cDef) return '';
@@ -223,7 +223,7 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '',
     }
 
     let lockedStyle = isLocked ? 'opacity: 0.5; filter: grayscale(50%);' : '';
-    let dimensions = isCarousel ? 'width: 100%; height: 100%; box-sizing: border-box; display:flex; flex-direction:column;' : 'width: 280px; height: 420px;';
+    let dimensions = isCarousel ? 'width: 100%; height: 100%; box-sizing: border-box; display:flex; flex-direction:column;' : 'width: 280px; height: 430px;';
     let titleSize = isCarousel ? 'font-size: 2.2rem;' : '';
     let descSize = isCarousel ? 'font-size: 1.5rem; flex: 1;' : '';
     
@@ -235,7 +235,7 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '',
         <div class="card-body ${typeName}">
             <div class="play-cost-badge">MAKSU: ${playCost} P</div>
             <h3 class="card-title" style="${titleSize}">${safeCardName}</h3>
-            <p class="card-desc" style="${descSize}">${cDef.d}</p>
+            <div class="card-desc" style="${descSize}">${cDef.d}</div>
             ${extraBottomHtml}
         </div>
     </div>`;
@@ -315,7 +315,6 @@ window.renderHoleView = function(hIndex, isCurrent) {
 
     let html = `<div class="mini-corkboard">`;
 
-    // SOLVAUS / ELÄIN
     let seed = hIndex * 99;
     let insultIdx = Math.floor(window.pseudoRandom(seed) * (window.insults ? window.insults.length : 1));
     let doodleIdx = Math.floor(window.pseudoRandom(seed+1) * (window.doodleSVGs ? window.doodleSVGs.length : 1));
@@ -342,7 +341,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
     html += `<div class="banner-subtitle">${window.currentCourse ? window.currentCourse.name : ''}</div><div class="banner-title">VÄYLÄ <span>${hIndex}</span></div><div style="margin-top: 5px;"><span class="banner-par">PAR <span>${par}</span></span></div>`;
     
     if (isCurrent && hData.penColor) {
-        html += `<div class="pen-container" onclick="event.stopPropagation(); window.openScoreModal();"><div class="pen-string"></div><div class="pen-body" style="background: linear-gradient(to right, ${hData.penColor.c1}, ${hData.penColor.c2}, ${hData.penColor.c1});"><span class="pen-text">MERKKAA</span></div></div>`;
+        html += `<div class="pen-container btn-3d" onclick="event.stopPropagation(); window.openScoreModal();"><div class="pen-string"></div><div class="pen-body" style="background: linear-gradient(to right, ${hData.penColor.c1}, ${hData.penColor.c2}, ${hData.penColor.c1});"><span class="pen-text">MERKKAA</span></div></div>`;
     }
     html += `</div>`;
 
@@ -355,7 +354,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
         let pLh = ruleLen > 80 ? '1.25' : '1.4';
 
         html += `
-        <div class="post-it-note" style="background:${bgCol}; transform: rotate(${rot2}deg); margin-bottom: 30px; width: 90%; max-width: 340px;" onclick="event.stopPropagation(); window.showZoomModal(this.outerHTML)">
+        <div class="post-it-note btn-3d" style="background:${bgCol}; transform: rotate(${rot2}deg); margin-bottom: 30px; width: 90%; max-width: 340px; cursor:pointer;" onclick="event.stopPropagation(); window.showZoomModal(this.outerHTML)">
             <div style="font-weight:900; font-size:0.95rem; margin-bottom:8px; text-transform:uppercase; color:#666;">📌 ${bTxt}</div>
             <div style="font-size:1.8rem; margin-bottom: 8px; font-weight: 900; line-height: 1.1; color:#111;">${hData.rule.n}</div>
             <div style="font-size: ${pSize}; line-height: ${pLh}; font-weight:800; color:#222;">${hData.rule.d}</div>
@@ -380,9 +379,9 @@ window.renderHoleView = function(hIndex, isCurrent) {
                 let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml);
 
                 html += `
-                <div class="pinned-card-container" style="transform: rotate(${cRot}deg); cursor:pointer;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
+                <div class="pinned-card-container btn-3d" style="transform: rotate(${cRot}deg); cursor:pointer;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div class="pushpin" style="left: ${pinLeft}%; z-index:20;"></div>
-                    <div style="transform: scale(0.55); transform-origin: top center; margin-bottom: -180px;">
+                    <div style="transform: scale(0.65); transform-origin: top center; margin-bottom: -150px;">
                         ${fullCardHtml}
                     </div>
                 </div>`;
@@ -391,17 +390,18 @@ window.renderHoleView = function(hIndex, isCurrent) {
         html += `</div>`;
     }
 
-    html += `</div>`; // Suljetaan corkboard
+    html += `</div>`; // Sulkee mini-corkboardin
 
-    // 4. UUSI KUITTI: LEIKEPÖYTÄ + TULOSLAPPU
+    // 4. UUSI TULOSLAPPU (NAHKAINEN KANSIO)
     let playersToRender = hData.players || window.allPlayers;
     let sortedPlayers = [...playersToRender].filter(p=>p).sort((a,b) => (a.dgScore || 0) - (b.dgScore || 0));
     
     html += `
-    <div class="clipboard-board">
-        <div class="clipboard-clip"></div>
-        <div class="board-receipt-paper">
-            <div style="font-size:2.8rem; font-weight:900; margin-bottom:30px; text-align:center; border-bottom:4px solid #111; padding-bottom:10px; text-transform:uppercase;">Tulosseuranta</div>`;
+    <div class="scorecard-folder">
+        <div class="scorecard-paper">
+            <div class="photo-corner tl"></div><div class="photo-corner tr"></div>
+            <div class="photo-corner bl"></div><div class="photo-corner br"></div>
+            <h2 style="color:var(--ink-blue); font-family: 'Kalam', cursive; font-size:2rem; text-align:center; border-bottom:3px solid var(--ink-blue); padding-bottom:5px; margin-bottom:20px;">🏆 TULOS</h2>`;
     
     let renderScoreDots = (strokes, p_par) => {
         if(!strokes) return '-';
@@ -418,17 +418,17 @@ window.renderHoleView = function(hIndex, isCurrent) {
         if (!isCurrent) displayScore = `${p.score || 0} P`;
         
         html += `
-        <div class="player-row-paper" style="border-bottom: 1px dashed #ccc; padding-bottom:10px; margin-bottom:10px;">
+        <div class="player-row-paper" style="border-bottom:1px dashed #ccc; padding-bottom:10px; margin-bottom:10px;">
             <span class="paper-name" style="font-size:1.5rem;">${p.name}</span>
             <div style="display:flex; align-items:center; gap: 10px;">
-                <span style="font-size:1.2rem; color:var(--warning); font-weight:900; background:#111; padding:4px 8px; border-radius:6px;">${displayScore}</span>
+                <span style="font-size:1.2rem; color:var(--warning); font-weight:900; background:#111; padding:4px 8px; border-radius:6px; box-shadow:inset 0 0 5px #000;">${displayScore}</span>
                 <div class="score-display-paper" style="width:auto !important; min-width:38px; height:38px !important; font-size:1.3rem !important; margin-left:auto; padding:0 5px;">${scoreHTML}</div>
             </div>
         </div>`;
     });
-    html += `</div></div>`;
+    html += `</div></div>`; // Sulkee scorecard-paperin ja kansioin
 
-    // 5. UUSI PALKKA: KELTAINEN KIRJEKUORI
+    // 5. UUSI PALKKA (KELTAINEN KIRJEKUORI)
     if (!isCurrent && window.myName && hData.pointBreakdowns && hData.pointBreakdowns[window.myName]) {
         let myBreakdown = hData.pointBreakdowns[window.myName];
         let deltaColor = myBreakdown.delta >= 0 ? '#16a34a' : '#dc2626';
@@ -445,19 +445,22 @@ window.renderHoleView = function(hIndex, isCurrent) {
                     rowsHtml += `<tr><td colspan="2" style="padding:6px 0; color:#475569; font-weight:bold; text-align:left;">${part}</td></tr>`; 
                 }
             });
+        } else {
+             rowsHtml += `<tr><td colspan="2" style="padding:15px 0; color:#475569; text-align:center; font-style:italic;">Ei tapahtumia tällä jaksolla.</td></tr>`; 
         }
 
         html += `
-        <div class="payslip-envelope">
-            <div class="payslip-window">
-                <div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; text-align:center; position:relative; z-index:10;">
+        <div class="bank-envelope">
+            <div class="bank-envelope-flap"></div>
+            <div class="envelope-paper">
+                <div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; text-align:center;">
                     <div style="font-weight:900; font-size:1.6rem; color:#1e293b; letter-spacing:1px; text-transform:uppercase;">Palkkakuitti</div>
                     <div style="font-size:0.9rem; color:#555; margin-top:4px;">Väylä ${hIndex} &nbsp;|&nbsp; Hljo: ${window.myName.toUpperCase()}</div>
                 </div>
-                <table style="width:100%; font-size:1.15rem; border-collapse: collapse; margin-bottom: 15px; position:relative; z-index:10;">
+                <table style="width:100%; font-size:1.15rem; border-collapse: collapse; margin-bottom: 15px;">
                     ${rowsHtml}
                 </table>
-                <div style="border-top: 2px dashed #000; padding-top: 15px; display:flex; justify-content:space-between; align-items:center; position:relative; z-index:10;">
+                <div style="border-top: 2px dashed #000; padding-top: 15px; display:flex; justify-content:space-between; align-items:center;">
                     <span style="font-size:1.3rem; font-weight:900; color:#1e293b;">NETTOPALKKA</span>
                     <span style="font-size:1.7rem; font-weight:900; background:${bgDeltaColor}; padding:5px 10px; border:2px solid ${deltaColor}; border-radius:6px; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
                 </div>
@@ -512,17 +515,18 @@ window.renderPayslipView = function(hIndex) {
     }
 
     container.innerHTML = `
-    <div class="payslip-envelope" style="max-width: 500px;">
-        <div class="payslip-window">
-            <div style="border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 25px; text-align:center; position:relative; z-index:10;">
+    <div class="bank-envelope" style="max-width: 500px;">
+        <div class="bank-envelope-flap"></div>
+        <div class="envelope-paper">
+            <div style="border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 25px; text-align:center;">
                 <div style="font-weight:900; font-size:2.4rem; color:#1e293b; letter-spacing:2px; text-transform:uppercase;">Palkkakuitti</div>
                 <div style="font-size:1.1rem; color:#555; margin-top:8px; font-weight:bold;">Kausi: Väylä ${viewIndex}</div>
                 <div style="font-size:1.2rem; color:#1e293b; margin-top:12px;">Työntekijä: <b>${window.myName.toUpperCase()}</b></div>
             </div>
-            <table style="width:100%; font-size:1.35rem; border-collapse: collapse; margin-bottom: 25px; position:relative; z-index:10;">
+            <table style="width:100%; font-size:1.35rem; border-collapse: collapse; margin-bottom: 25px;">
                 ${rowsHtml}
             </table>
-            <div style="border-top: 3px dashed #000; padding-top: 20px; display:flex; justify-content:space-between; align-items:center; position:relative; z-index:10;">
+            <div style="border-top: 3px dashed #000; padding-top: 20px; display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-size:1.5rem; font-weight:900; color:#1e293b;">NETTOPALKKA</span>
                 <span style="font-size:2.2rem; font-weight:900; background:${bgDeltaColor}; padding:8px 15px; border:3px solid ${deltaColor}; border-radius:8px; color:${deltaColor};">${sign}${myBreakdown.delta} P</span>
             </div>
@@ -531,7 +535,7 @@ window.renderPayslipView = function(hIndex) {
 };
 
 // ==============================================
-// KANSIO (OMAT KORTIT)
+// KANSIO (OMAT KORTIT) JÄTTISKAALA JA NAPIT!
 // ==============================================
 window.renderBinderOnBoard = function() {
     let wrapper = el('board-binder-wrapper');
@@ -545,13 +549,13 @@ window.renderBinderOnBoard = function() {
 
     let cardsHtml = '';
     if(myCards.length === 0) {
-        cardsHtml = '<p style="color:#555; font-size:1.8rem; text-align:center; padding:50px; font-weight:bold; grid-column: 1 / -1;">Kansiosi on tyhjä.</p>';
+        cardsHtml = '<p style="color:#555; font-size:2rem; text-align:center; padding:50px; font-weight:bold; grid-column: 1 / -1;">Kansiosi on tyhjä.</p>';
     } else {
         myCards.forEach((cId) => {
             let cDef = window.allCards.find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:1.2rem; color:#111; margin-top:auto; padding-top:10px;">🔄 KATSO TASOT / PELAA</div>`;
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:1.2rem; color:#111; margin-top:auto; padding-top:10px;">🔄 KATSO TASOT</div>`;
             let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
             let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cDef.id) : cDef.price;
             if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[cDef.id] !== undefined) playCost = window.gameSettings.cardPrices[cDef.id];
@@ -562,34 +566,34 @@ window.renderBinderOnBoard = function() {
             if (cDef.nextId) {
                 let upgCost = cDef.level === 1 ? 3 : 5;
                 let canUpg = me.score >= upgCost;
-                upgBtn = `<button class="btn ${canUpg ? 'btn-warning' : 'btn-secondary'} btn-3d" ${!canUpg ? 'disabled' : ''} style="width:100%; font-size:1rem; padding:12px; margin-bottom:8px; color:#000; font-weight:900;" onclick="event.stopPropagation(); window.upgradeCard('${cId}')">🔼 UPGRADE (${upgCost} P)</button>`;
+                upgBtn = `<button class="btn ${canUpg ? 'btn-warning' : 'btn-secondary'} btn-3d" ${!canUpg ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:15px; margin-bottom:10px; color:#000; font-weight:900; border-radius:10px;" onclick="event.stopPropagation(); window.upgradeCard('${cId}')">🔼 UPGRADE (${upgCost} P)</button>`;
             }
 
-            // Kansion kortit skaalattu 1.05 !
+            // Kansion kortit on nyt HUIMAN KOKOISIA (scale 1.1)
             cardsHtml += `
-            <div style="display:flex; flex-direction:column; align-items:center;">
-                <div class="plastic-sleeve" style="cursor:pointer; transform: scale(1.05); transform-origin: top center; margin-bottom:-5px; z-index: 10;" onclick="window.openCardDetail('${cId}', 'sell')">
+            <div style="display:flex; flex-direction:column; align-items:center; width:300px;">
+                <div class="plastic-sleeve btn-3d" style="cursor:pointer; transform: scale(1.1); transform-origin: top center; margin-bottom:40px; z-index: 10;" onclick="window.openCardDetail('${cId}', 'sell')">
                     ${fullCardHtml}
                 </div>
-                <div style="width:280px; z-index:20; padding-top:10px;">
+                <div style="width:100%; z-index:20; padding-top:10px;">
                     ${upgBtn}
-                    <button class="btn ${canPlay ? 'btn-success' : 'btn-secondary'} btn-3d" ${!canPlay ? 'disabled' : ''} style="width:100%; font-size:1.1rem; padding:12px; font-weight:900; margin-bottom:8px;" onclick="event.stopPropagation(); window.openTargetModal('${cDef.id}')">PELAA (${playCost} P)</button>
-                    <button class="btn btn-danger btn-3d" style="width:100%; font-size:1rem; padding:12px; font-weight:bold; margin-bottom:10px;" onclick="event.stopPropagation(); window.forceDiscard('${cDef.id}')">♻️ MYY (+${sellReward} P)</button>
+                    <button class="btn ${canPlay ? 'btn-success' : 'btn-secondary'} btn-3d" ${!canPlay ? 'disabled' : ''} style="width:100%; font-size:1.3rem; padding:18px; font-weight:900; margin-bottom:10px; border-radius:10px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);" onclick="event.stopPropagation(); window.openTargetModal('${cDef.id}')">PELAA KORTTI (${playCost} P)</button>
+                    <button class="btn btn-danger btn-3d" style="width:100%; font-size:1.1rem; padding:15px; font-weight:bold; margin-bottom:10px; border-radius:10px;" onclick="event.stopPropagation(); window.forceDiscard('${cDef.id}')">♻️ MYY (+${sellReward} P)</button>
                 </div>
             </div>`;
         });
     }
 
     wrapper.innerHTML = `
-    <div class="board-binder" style="width: 100%; min-height: 800px; padding-top: 20px; padding-bottom: 20px; background: radial-gradient(circle at center, #3e2723 0%, #211412 100%); margin: 0 auto; position:relative; box-sizing: border-box;">
+    <div class="board-binder">
         <div class="binder-spine" style="position: absolute; top: 0; bottom: 0; left: 0; z-index: 30; width: 45px; background: linear-gradient(to right, #111, #222, #111); display:flex; flex-direction:column; justify-content:space-evenly; align-items:center;">
             <div class="binder-ring" style="margin-top: 50px; width:35px; height:25px; border-radius:20px; background:#e2e8f0; box-shadow:2px 4px 8px #000, inset 0 2px 5px #fff; margin-left:25px;"></div>
             <div class="binder-ring" style="width:35px; height:25px; border-radius:20px; background:#e2e8f0; box-shadow:2px 4px 8px #000, inset 0 2px 5px #fff; margin-left:25px;"></div>
             <div class="binder-ring" style="margin-bottom: 50px; width:35px; height:25px; border-radius:20px; background:#e2e8f0; box-shadow:2px 4px 8px #000, inset 0 2px 5px #fff; margin-left:25px;"></div>
         </div>
-        <div class="binder-page" style="margin-left: 50px; margin-right: 20px; padding: 35px 20px; border-radius: 4px 16px 16px 4px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1), 5px 5px 15px rgba(0,0,0,0.6); box-sizing: border-box; width: calc(100% - 70px);">
-            <h2 style="color:#111; font-size:3.5rem; margin-bottom:35px; font-family:'Kalam', cursive; border-bottom:4px dashed #ccc; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; justify-items: center; gap: 30px; width: 100%; box-sizing: border-box;">
+        <div class="binder-page" style="margin-left: 50px; margin-right: 20px; padding: 40px 30px; border-radius: 4px 16px 16px 4px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1), 5px 5px 15px rgba(0,0,0,0.6); box-sizing: border-box; width: calc(100% - 70px);">
+            <h2 style="color:#111; font-size:3.5rem; margin-bottom:40px; font-family:'Kalam', cursive; border-bottom:4px dashed #ccc; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; justify-items: center; gap: 40px; width: 100%; box-sizing: border-box;">
                 ${cardsHtml}
             </div>
         </div>
@@ -612,7 +616,7 @@ window.renderShopOnBoard = function() {
     let levels = [3, 2, 1]; 
 
     levels.forEach(lvl => {
-        shelvesHtml += `<div style="display:flex; justify-content:space-around; align-items:flex-end; padding-bottom:30px; border-bottom: 25px solid #0f172a; position:relative; height: 380px; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.8)); box-shadow: inset 0 -20px 40px rgba(0,0,0,0.9);">`;
+        shelvesHtml += `<div style="display:flex; justify-content:space-around; align-items:flex-end; padding-bottom:30px; border-bottom: 25px solid #0f172a; position:relative; height: 420px; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.8)); box-shadow: inset 0 -20px 40px rgba(0,0,0,0.9);">`;
         
         shelvesHtml += `<div style="position:absolute; bottom:85px; left:0; width:100%; height:55px; background:repeating-linear-gradient(90deg, transparent, transparent 30px, #64748b 30px, #64748b 42px); z-index:1; opacity:0.9; filter:drop-shadow(0 15px 15px #000);"></div>`;
 
@@ -631,22 +635,22 @@ window.renderShopOnBoard = function() {
                 
                 shelvesHtml += `
                     <div style="position:relative; width:45%; display:flex; flex-direction:column; align-items:center; z-index:10;">
-                        <div style="transform: scale(0.8); transform-origin: bottom center; cursor:pointer; width:280px; margin-bottom:-45px;" onclick="window.openCardDetail('${item.id}', 'shop')">
+                        <div class="btn-3d" style="transform: scale(0.85); transform-origin: bottom center; cursor:pointer; width:280px; margin-bottom:-45px;" onclick="window.openCardDetail('${item.id}', 'shop')">
                             ${fullCardHtml}
                         </div>
                         
                         <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 8px 20px; border-radius: 8px; border: 3px solid #22c55e; font-weight: 900; font-size: 1.6rem; margin-top: 15px; box-shadow: 0 0 20px rgba(34,197,94,0.8); z-index: 15;">${itemPrice} P</div>
                         
                         <div style="display:flex; gap:10px; margin-top:15px; width:100%; justify-content:center; position: relative; z-index: 1000; pointer-events: auto;">
-                            <button class="btn btn-success btn-3d" ${!canAfford?'disabled':''} style="padding:12px; font-size:1.1rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8);" onclick="window.buyShopItem('${item.id}', ${itemPrice}, false)">OSTA</button>
-                            ${!isResFull ? `<button class="btn btn-primary btn-3d" style="padding:12px; font-size:1.1rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8);" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
+                            <button class="btn btn-success btn-3d" ${!canAfford?'disabled':''} style="padding:15px; font-size:1.2rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8); border-radius:8px;" onclick="window.buyShopItem('${item.id}', ${itemPrice}, false)">OSTA</button>
+                            ${!isResFull ? `<button class="btn btn-primary btn-3d" style="padding:15px; font-size:1.2rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8); border-radius:8px;" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
                         </div>
                     </div>
                 `;
             } else {
                 shelvesHtml += `
                     <div style="position:relative; width:45%; display:flex; flex-direction:column; align-items:center; z-index:10;">
-                        <div style="width:280px; height:420px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:20px; border:8px dashed #333; transform: scale(0.8); transform-origin: bottom center; margin-bottom:-45px;">
+                        <div style="width:280px; height:420px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:20px; border:8px dashed #333; transform: scale(0.85); transform-origin: bottom center; margin-bottom:-45px;">
                             <div style="color:#666; font-weight:900; font-size:3.5rem; letter-spacing:4px; transform:rotate(-45deg);">TYHJÄ</div>
                         </div>
                         <div style="background: #000; color: #555; font-family: 'Courier Prime', monospace; padding: 8px 20px; border-radius: 8px; border: 3px solid #444; font-weight: 900; font-size: 1.6rem; margin-top: 15px;">---</div>
@@ -676,14 +680,14 @@ window.renderShopOnBoard = function() {
             
             reserveHtml += `
                 <div style="width:45%; display:flex; flex-direction:column; align-items:center;">
-                    <div style="transform: scale(0.8); margin-bottom:-45px; transform-origin: top center; cursor:pointer; width:280px; position:relative;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
+                    <div class="btn-3d" style="transform: scale(0.85); margin-bottom:-45px; transform-origin: top center; cursor:pointer; width:280px; position:relative;" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
                         <div style="position:absolute; top:-30px; right:-30px; background:#fbbf24; color:#000; padding:15px 20px; font-weight:900; font-size: 1.5rem; border-radius:12px; z-index:30; border: 5px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.8);">🔒 VARATTU</div>
                         ${fullCardHtml}
                     </div>
                     <div style="background: #000; color: #fbbf24; font-family: 'Courier Prime', monospace; padding: 8px 20px; border-radius: 8px; border: 3px solid #fbbf24; font-weight: 900; font-size: 1.6rem; margin-top: 15px; text-align: center; margin-bottom:15px; box-shadow: 0 0 20px rgba(251,191,36,0.6);">${itemPrice} P</div>
                     <div style="display:flex; gap:10px; width:100%; justify-content:center; position: relative; z-index: 1000; pointer-events: auto;">
-                        <button class="btn btn-success btn-3d" ${!canAfford?'disabled':''} style="padding:12px; font-size:1.1rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8);" onclick="window.buyShopItem('${resItem.id}', ${itemPrice}, true)">LUNASTA</button>
-                        <button class="btn btn-danger btn-3d" style="padding:12px; font-size:1.1rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8);" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
+                        <button class="btn btn-success btn-3d" ${!canAfford?'disabled':''} style="padding:15px; font-size:1.2rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8); border-radius:8px;" onclick="window.buyShopItem('${resItem.id}', ${itemPrice}, true)">LUNASTA</button>
+                        <button class="btn btn-danger btn-3d" style="padding:15px; font-size:1.2rem; font-weight:900; margin:0; box-shadow: 0 5px 10px rgba(0,0,0,0.8); border-radius:8px;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
                     </div>
                 </div>
             `;
@@ -750,7 +754,7 @@ window.renderReceiptOnBoard = function() {
     <div class="clipboard-board">
         <div class="clipboard-clip"></div>
         <div class="board-receipt-paper">
-            <div style="font-size:2.8rem; font-weight:900; margin-bottom:30px; text-align:center; border-bottom:4px solid #111; padding-bottom:10px;">TULOSSEURANTA</div>`;
+            <div style="font-size:2.8rem; font-weight:900; margin-bottom:30px; text-align:center; border-bottom:4px solid #111; padding-bottom:10px; text-transform:uppercase;">Tulosseuranta</div>`;
     
     for(let i=0; i<window.gameHistory.length; i++) { 
         let h = window.gameHistory[i]; 
