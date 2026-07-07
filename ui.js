@@ -322,7 +322,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
     }
     html += `</div>`;
 
-    // 2. VÄYLÄSÄÄNTÖ (TÄYDELLINEN NELIÖ POST-IT SCROLLILLA)
+    // 2. VÄYLÄSÄÄNTÖ (UUSI AITO POST-IT)
     if (hData.rule) {
         let bTxt = hData.rule.type === 'bounty' ? `🏆 TEHTÄVÄ` : '🎲 VÄYLÄSÄÄNTÖ';
         let bgCol = hData.color || '#fef08a';
@@ -514,7 +514,7 @@ window.renderShopOnBoard = function() {
                 let fullCardHtml = window.generateCardHTML(item, false, extraHtml, false);
                 
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                    <div style="position:relative; width:100%; max-width:220px; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="cursor:pointer; width:100%; margin-bottom:10px; box-shadow:0 8px 15px rgba(0,0,0,0.6); border-radius:12px;" onclick="window.openCardDetail('${item.id}', 'shop')">
                             ${fullCardHtml}
                         </div>
@@ -529,7 +529,7 @@ window.renderShopOnBoard = function() {
                 `;
             } else {
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                    <div style="position:relative; width:100%; max-width:220px; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="width:100%; aspect-ratio: 2/3; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:12px; border:6px dashed #333; margin-bottom:10px;">
                             <div style="color:#666; font-weight:900; font-size:1.8rem; letter-spacing:2px; transform:rotate(-45deg);">TYHJÄ</div>
                         </div>
@@ -578,7 +578,7 @@ window.renderShopOnBoard = function() {
     // UUSI 3D AUTOMAATTI JALOILLA JA LATTIALLA
     wrapper.innerHTML = `
     <div style="width: 100%; max-width: 600px; margin: 0 auto; position: relative; padding-bottom:30px;">
-        <div class="shop-machine">
+        <div class="shop-machine" style="background: #111827; border-radius: 12px 12px 0 0; border: 4px solid #334155; border-bottom: none; padding: 20px; box-shadow: inset 0 0 40px rgba(0,0,0,0.8), 0 20px 50px rgba(0,0,0,0.9); position: relative; z-index: 10;">
             
             <!-- LED Header -->
             <div style="background: #000; border-radius: 8px; border: 2px solid #222; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(239,68,68,0.15);">
@@ -590,7 +590,8 @@ window.renderShopOnBoard = function() {
             </div>
 
             <!-- Lasinen Sisäosa -->
-            <div class="shop-glass">
+            <div style="background: #020617; border-radius: 6px; border: 8px solid #1e293b; padding: 15px 10px; box-shadow: inset 0 20px 40px #000; position: relative; overflow: hidden;">
+                <!-- Lasiheijastus -->
                 <div style="position: absolute; top: 0; left: -50%; width: 200%; height: 100%; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.05) 50%, transparent 55%); z-index: 5; pointer-events: none;"></div>
                 ${shelvesHtml}
             </div>
