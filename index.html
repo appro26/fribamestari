@@ -1,24 +1,43 @@
+
 <!DOCTYPE html>
 <html lang="fi">
 <head>
     <meta charset="UTF-8" />
-    <!-- Tärkeä viewport-fit=cover lisätty, jotta alalaidan napit eivät jää puhelimen oman palkin alle -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Fribamestari</title>
     
+    <!-- PAKOTETAAN VÄLIMUISTIN TYHJENNYS JA SUOJATAAN KAATUMISILTA -->
     <script>
         if ('caches' in window) { caches.keys().then(function(n) { for (let x of n) caches.delete(x); }); }
         window.openCardDetail = window.openCardDetail || function() { console.log("Ladataan..."); };
         window.openTargetModal = window.openTargetModal || function() { console.log("Ladataan..."); };
+        
+        window.switchView = function(viewId) {
+            try {
+                document.querySelectorAll('.app-view').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('accent'));
+                
+                let view = document.getElementById(viewId);
+                if(view) {
+                    view.style.display = 'flex';
+                    view.scrollTop = 0;
+                }
+                
+                let btnIndex = ['view-receipt', 'view-payslip', 'view-binder', 'view-shop', 'view-hole'].indexOf(viewId);
+                let navs = document.querySelectorAll('#pocketContainer .nav-item');
+                if(navs[btnIndex]) navs[btnIndex].classList.add('accent');
+            } catch (e) {
+                console.error("Virhe näkymän vaihdossa:", e);
+            }
+        };
     </script>
 
     <link rel="manifest" href='data:application/manifest+json;base64,eyJuYW1lIjoiRnJpYmFtZXN0YXJpIiwic2hvcnRfbmFtZSI6IkZyaWJhbWVzdGFyaSIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2VlZmRmNCIsInRoZW1lX2NvbG9yIjoiIzEwYjk4MSIsImljb25zIjpbeyJzcmMiOiJmcmliYS5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==' />
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- VERSIONS PUMPATTU V=600 -->
-    <link rel="stylesheet" href="style.css?v=600" />
-    <meta id="themeColorMeta" name="theme-color" content="#5c3a21" />
+    <link rel="stylesheet" href="style.css?v=700" />
+    <meta id="themeColorMeta" name="theme-color" content="#111827" />
     
     <style>
         /* =========================================
@@ -34,19 +53,17 @@
             display: none; 
         }
         
-        /* UUSI SEINÄ: Aito ja tyylikäs puupaneeliseinä */
+        /* UUSI SEINÄ: Moderni Akustiikkapaneeli (Acoustic Slat Wood Wall) */
         .wall-bg {
-            background-color: #5c3a21; /* Tumma puu */
-            background-image: 
-                repeating-linear-gradient(
-                    to right,
-                    rgba(0, 0, 0, 0) 0px,
-                    rgba(0, 0, 0, 0) 98px,
-                    rgba(0, 0, 0, 0.5) 98px,
-                    rgba(255, 255, 255, 0.1) 100px
-                ),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.6));
-            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+            background-color: #111827; /* Tumma harmaa/antrasiitti */
+            background-image: repeating-linear-gradient(
+                to right,
+                #1e293b 0px,    /* Paneelin väri */
+                #1e293b 22px,   /* Paneelin leveys */
+                #020617 22px,   /* Raon väri (syvä musta) */
+                #020617 28px    /* Raon leveys */
+            );
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.95);
         }
 
         .app-view {
@@ -55,7 +72,7 @@
             -webkit-overflow-scrolling: touch;
             display: none; flex-direction: column;
             align-items: center; justify-content: flex-start;
-            padding-bottom: 150px; /* Runsaasti tilaa alas napin takia */
+            padding-bottom: 160px; /* Runsaasti tilaa alas alapalkin takia */
             position: relative;
         }
 
@@ -136,8 +153,8 @@
            ========================================= */
         .mini-corkboard {
             background-color: #e2e8f0; background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px); background-size: 12px 12px;
-            border: 15px solid #5c4033; border-top-color: #7b4e35; border-left-color: #7b4e35; border-bottom-color: #3e2723; border-right-color: #3e2723;
-            border-radius: 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            border: 15px solid #334155; border-top-color: #475569; border-left-color: #475569; border-bottom-color: #0f172a; border-right-color: #0f172a;
+            border-radius: 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.9);
             padding: 30px 15px; width: 95%; max-width: 500px; margin: 0 auto; margin-top: 20px; 
             display: flex; flex-direction: column; align-items: center; position: relative;
         }
@@ -147,19 +164,17 @@
             box-shadow: 2px 5px 10px rgba(0,0,0,0.4); position: relative; z-index: 10;
         }
 
-        /* UUSI AITO POST-IT LAPPU (NELIÖ) */
         .post-it-note {
-            width: 250px; height: 250px; /* Aito Neliö */
+            width: 250px; height: 250px;
             padding: 20px 15px 15px 15px;
             box-shadow: 3px 6px 15px rgba(0,0,0,0.4);
             position: relative; z-index: 15;
             display: flex; flex-direction: column;
-            border-bottom-right-radius: 35px 5px; /* Kevyt taitos kulmassa */
+            border-bottom-right-radius: 35px 5px; 
             cursor: pointer;
             margin: 15px auto 30px auto;
             transition: transform 0.2s;
         }
-        /* Varjo taitetulle kulmalle */
         .post-it-note::after {
             content: ""; position: absolute; bottom: 0; right: 0;
             width: 40px; height: 10px;
@@ -168,7 +183,6 @@
             transform: rotate(-15deg) translate(-10px, -5px);
             z-index: -1;
         }
-        /* Teipin pala lapun yläreunassa */
         .post-it-tape {
             position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
             width: 70px; height: 25px; background: rgba(255,255,255,0.5);
@@ -181,11 +195,11 @@
         }
 
         /* =========================================
-           OMAT KORTIT JA KAUPPA
+           OMAT KORTIT (KANSIO)
            ========================================= */
         .binder-page {
             background: #fdfbf7; width: 95%; max-width: 700px; margin: 20px auto;
-            border-radius: 12px; box-shadow: inset 0 0 25px rgba(0,0,0,0.05), 5px 5px 25px rgba(0,0,0,0.6); 
+            border-radius: 12px; box-shadow: inset 0 0 25px rgba(0,0,0,0.05), 5px 5px 25px rgba(0,0,0,0.8); 
             border-left: 15px solid #222; padding: 25px 15px;
         }
         .binder-grid {
@@ -193,24 +207,15 @@
             gap: 15px; width: 100%; justify-items: center;
         }
 
-        .shop-machine {
-            background: #111827; border: 15px solid #020617; border-bottom: 30px solid #000; 
-            border-radius: 15px 15px 0 0; padding: 20px; padding-bottom: 0; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 20px rgba(255,255,255,0.05); 
-            display: flex; flex-direction: column; z-index:20; 
-            width: 95%; max-width: 550px; margin: 20px auto;
-        }
-        .shop-glass {
-            background: #020617; border-radius: 8px; border: 8px solid #0f172a; 
-            padding: 15px 10px; position:relative; box-shadow: inset 0 15px 30px #000;
-        }
+        /* =========================================
+           KAUPPA (3D KONE + JALAT)
+           ========================================= */
         .shop-shelf-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; justify-items: center;
-            border-bottom: 10px solid #0f172a; padding-bottom: 15px; margin-bottom: 15px; position: relative;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; justify-items: center;
+            border-bottom: 10px solid #0f172a; padding-bottom: 20px; margin-bottom: 20px; position: relative;
         }
-        
         .shop-controls {
-            display: flex; gap: 5px; width: 100%; max-width: 220px; margin-top: 10px; z-index: 1000;
+            display: flex; gap: 8px; width: 100%; margin-top: 10px; z-index: 1000;
         }
 
         /* =========================================
@@ -257,31 +262,31 @@
         }
 
         /* =========================================
-           APPLE-TYYLINEN ALAPALKKI (KORJATTU Z-INDEX & KOSKETUS)
+           APPLE-TYYLINEN ALAPALKKI (KORJATTU 100%)
            ========================================= */
         .modern-bottom-nav {
             position: fixed; 
-            /* Tukee iPhone koti-indikaattoria (Safe Area) jottei napit jää alle */
-            bottom: env(safe-area-inset-bottom, 15px); 
+            bottom: 25px !important; /* Tarpeeksi ylhäällä, ohittaa iOS safen */
             left: 50%; transform: translateX(-50%);
             width: 95%; max-width: 420px; height: 65px; 
-            background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 25px; 
+            background: rgba(15, 23, 42, 1); /* Yhtenäinen tumma, EI sumennusta joka rikkoo kosketuksen */
+            border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 20px; 
             display: flex; justify-content: space-around; align-items: center;
-            padding: 0 5px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); 
-            z-index: 999999 !important; /* MAKSIMOITU PRIORITEETTI */
-            pointer-events: auto !important; /* VARMISTETTU KOSKETUS */
-            margin-bottom: 10px; /* Selkeä marginaali alareunasta */
+            padding: 0 5px; box-shadow: 0 15px 35px rgba(0,0,0,0.9); 
+            z-index: 2147483647 !important; /* Absoluuttinen maksimi Z-index */
+            pointer-events: auto !important; 
         }
         .nav-item {
-            display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; background: none; border: none;
-            font-size: 0.65rem; font-weight: 900; text-transform: uppercase; cursor: pointer; position: relative; transition: all 0.2s;
-            flex: 1; height: 100%; width: 100%; touch-action: manipulation;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            color: #94a3b8; background: transparent; border: none;
+            font-size: 0.65rem; font-weight: 900; text-transform: uppercase; cursor: pointer; 
+            flex: 1; height: 100%; padding: 0; margin: 0; outline: none;
+            -webkit-tap-highlight-color: transparent;
         }
-        .nav-item .icon { font-size: 1.5rem; margin-bottom: 2px; display: block; opacity: 0.6; }
-        .nav-item.accent { color: #fff; background: rgba(255,255,255,0.08); border-radius: 20px; margin: 4px 2px;}
+        .nav-item .icon { font-size: 1.5rem; margin-bottom: 2px; display: block; opacity: 0.6; pointer-events: none; }
+        .nav-item.accent { color: #fff; background: rgba(255,255,255,0.08); border-radius: 16px; margin: 4px 2px;}
         .nav-item.accent .icon { opacity: 1; transform: translateY(-2px) scale(1.1); text-shadow: 0 0 12px rgba(255,255,255,0.5); }
-        .nav-item .badge { position: absolute; top: 6px; right: 8px; background: var(--danger); color: white; border-radius: 6px; padding: 2px 6px; font-size: 0.65rem; border: 1.5px solid #0f172a; font-weight:900; z-index:10;}
+        .nav-item .badge { position: absolute; top: 6px; right: 8px; background: var(--danger); color: white; border-radius: 6px; padding: 2px 6px; font-size: 0.65rem; border: 1.5px solid #0f172a; font-weight:900; z-index:10; pointer-events: none;}
         .nav-item .badge.money { background: var(--warning); color: #000; font-size: 0.9rem; padding: 4px 8px; right: 2px; top: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.5);}
 
         /* =========================================
@@ -398,30 +403,30 @@
 
     </div>
 
-    <!-- SIRO APPLE-ALAPALKKI (Z-INDEX KORJATTU) -->
+    <!-- SIRO APPLE-ALAPALKKI (KORJATTU NAPIT = DIV) -->
     <div class="modern-bottom-nav" id="pocketContainer" style="display:none;">
-        <button class="nav-item" onclick="window.switchView('view-receipt')">
+        <div class="nav-item" onclick="window.switchView('view-receipt')">
             <span class="icon">🧾</span>
             <span style="margin-top:1px;">TULOKSET</span>
-        </button>
-        <button class="nav-item" onclick="window.switchView('view-payslip')">
+        </div>
+        <div class="nav-item" onclick="window.switchView('view-payslip')">
             <span class="icon">💰</span>
             <span style="margin-top:1px;">PALKKA</span>
-        </button>
-        <button class="nav-item" onclick="window.switchView('view-binder')">
+        </div>
+        <div class="nav-item" onclick="window.switchView('view-binder')">
             <span class="badge" id="handCountBadge">0/6</span>
             <span class="icon">🃏</span>
             <span style="margin-top:1px;">KORTIT</span>
-        </button>
-        <button class="nav-item" onclick="window.switchView('view-shop')">
+        </div>
+        <div class="nav-item" onclick="window.switchView('view-shop')">
             <span class="badge money" id="myResPointsBtn">0 P</span>
             <span class="icon">🏪</span>
             <span style="margin-top:1px;">KAUPPA</span>
-        </button>
-        <button class="nav-item accent" onclick="window.switchView('view-hole')">
+        </div>
+        <div class="nav-item accent" onclick="window.switchView('view-hole')">
             <span class="icon">📍</span>
             <span style="margin-top:1px;">VÄYLÄ</span>
-        </button>
+        </div>
     </div>
 
     <!-- MODERNISOITU ASETUSVALIKKO -->
@@ -574,10 +579,11 @@
         <button class="btn-modern" style="background:#ef4444; color:#fff; width: 80%; max-width: 250px; padding: 12px; font-weight: 900; font-size: 1.1rem; margin-top: 15px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE KORTTI</button>
     </div>
 
-    <script src="tasks.js?v=600"></script>
-    <script type="module" src="script.js?v=600"></script>
-    <script src="game.js?v=600"></script>
-    <script src="ui.js?v=600"></script>
+    <!-- UI JS:N LATAAJA PÄIVITETTY TÄYSILLÄ SÄÄNNÖILLÄ -->
+    <script src="tasks.js?v=700"></script>
+    <script type="module" src="script.js?v=700"></script>
+    <script src="game.js?v=700"></script>
+    <script src="ui.js?v=700"></script>
     
     <script>
         if ('serviceWorker' in navigator) {
