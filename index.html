@@ -34,7 +34,7 @@
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="style.css?v=1000" />
+    <link rel="stylesheet" href="style.css?v=1100" />
     <meta id="themeColorMeta" name="theme-color" content="#475569" />
     
     <style>
@@ -51,9 +51,9 @@
             display: none; 
         }
         
-        /* UUSI SEINÄ: KIVISEINÄ */
+        /* KIVISEINÄ */
         .wall-bg {
-            background-color: #475569; /* Kiven harmaa */
+            background-color: #475569;
             background-image:
               linear-gradient(rgba(15, 23, 42, 0.8) 3px, transparent 3px),
               linear-gradient(90deg, rgba(15, 23, 42, 0.8) 3px, transparent 3px),
@@ -95,7 +95,7 @@
         }
 
         /* =========================================
-           KORTIT: VAKAA KOKO JA TEKSTI
+           KORTIT: TEKSTI RULLAA OIKEIN!
            ========================================= */
         .physical-card {
             width: 100%; 
@@ -104,8 +104,7 @@
             box-shadow: 2px 5px 15px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.5); 
             background: #fff; position: relative;
             flex-shrink: 0;
-            /* Joustava korkeus tekstin mukaan */
-            min-height: 250px;
+            aspect-ratio: 2 / 3;
         }
         
         .tier-1 { border: 6px solid #cd7f32; } 
@@ -120,9 +119,11 @@
         .card-header.sabotage { background: linear-gradient(180deg, #991b1b, #7f1d1d); color: #fff; border-bottom: 2px solid #450a0a;}
         .card-header.buff { background: linear-gradient(180deg, #166534, #14532d); color: #fff; border-bottom: 2px solid #052e16;}
         
+        /* MIN-HEIGHT: 0 on kriittinen flex-box vieritykselle! */
         .card-body {
             flex: 1; padding: 12px; display: flex; flex-direction: column; 
             align-items: center; text-align: center; background: #fff; z-index: 1; 
+            min-height: 0; 
         }
         .card-body.sabotage { background: radial-gradient(circle at top, #fff5f5, #fca5a5); }
         .card-body.buff { background: radial-gradient(circle at top, #f0fdf4, #86efac); }
@@ -130,17 +131,24 @@
         .play-cost-badge {
             background: linear-gradient(to bottom, #222, #000); color: #fff; font-weight: 900; 
             font-size: 1.1rem; padding: 4px 10px; border-radius: 4px; border: 2px solid #fff;
-            margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.5); flex-shrink: 0;
         }
         
         .card-title { 
             font-size: 1.1rem; font-weight: 900; line-height: 1.1; margin-bottom: 8px; 
             color: #000; font-family: 'Inter', sans-serif; word-wrap: break-word; hyphens: auto;
+            flex-shrink: 0;
         }
+        
+        /* TÄMÄ MAHDOLLISTAA TEKSTIN RULLAAMISEN */
         .card-desc { 
             font-size: 0.85rem; font-weight: 700; line-height: 1.4; color: #1e293b; 
-            width: 100%; flex: 1; padding: 2px;
+            width: 100%; flex: 1; padding: 2px 5px;
+            overflow-y: auto; 
+            min-height: 0;
         }
+        .card-desc::-webkit-scrollbar { width: 5px; display: block; }
+        .card-desc::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 4px; }
 
         /* Karusellin jättikortti */
         .carousel-card-wrapper {
@@ -150,12 +158,10 @@
             max-width: 340px;
             display: flex; justify-content: center; align-items: center;
         }
-        .carousel-card-wrapper .physical-card { 
-            min-height: 400px; border-width: 10px; 
-        }
+        .carousel-card-wrapper .physical-card { border-width: 12px; }
         .carousel-card-wrapper .card-header { font-size: 1.1rem; padding: 12px; }
         .carousel-card-wrapper .play-cost-badge { font-size: 1.4rem; padding: 6px 15px; margin-bottom: 12px;}
-        .carousel-card-wrapper .card-title { font-size: 1.6rem; margin-bottom: 12px; }
+        .carousel-card-wrapper .card-title { font-size: 1.5rem; margin-bottom: 12px; }
         .carousel-card-wrapper .card-desc { font-size: 1.1rem; }
 
         /* PUHDAS CSS KARUSELLI */
@@ -164,13 +170,15 @@
             overflow-x: auto;
             scroll-snap-type: x mandatory;
             width: 100vw;
-            height: 65vh;
             align-items: center;
-            padding: 0 50vw; /* Tekee tilaa reunoille, jotta eka ja vika kortti keskittyvät */
+            padding: 0 calc(50vw - 42.5vw); /* Keskittää ensimmäisen ja viimeisen kortin */
             gap: 20px;
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
+        }
+        @media (min-width: 400px) {
+             .native-carousel-container { padding: 0 calc(50vw - 170px); }
         }
         .native-carousel-container::-webkit-scrollbar { display: none; }
 
@@ -191,13 +199,14 @@
         }
 
         .post-it-note {
-            width: 260px; height: auto; min-height: 200px;
-            padding: 25px 20px 25px 20px;
+            width: 250px; height: 250px; /* AITO NELIÖ */
+            padding: 25px 20px 20px 20px;
             box-shadow: 3px 6px 15px rgba(0,0,0,0.4);
             position: relative; z-index: 15;
             display: flex; flex-direction: column;
             border-bottom-right-radius: 40px 5px; 
             cursor: pointer; margin: 15px auto 30px auto;
+            transition: transform 0.2s;
         }
         .post-it-note::after {
             content: ""; position: absolute; bottom: 0; right: 0;
@@ -358,24 +367,30 @@
         </div>
     </div>
 
+    <!-- PÄÄALUE: NÄKYMÄRAKENNE (Kaikissa wall-bg) -->
     <div id="app-main-area" class="cork-bg">
         
+        <!-- TULOKSET -->
         <div id="view-receipt" class="app-view wall-bg">
             <div id="board-receipt-wrapper" style="width:100%;"></div>
         </div>
 
+        <!-- PALKKA -->
         <div id="view-payslip" class="app-view wall-bg">
             <div id="payslip-content" style="width: 100%;"></div>
         </div>
 
+        <!-- OMAT KORTIT -->
         <div id="view-binder" class="app-view wall-bg">
             <div id="board-binder-wrapper" style="width:100%;"></div>
         </div>
 
+        <!-- KAUPPA -->
         <div id="view-shop" class="app-view wall-bg">
             <div id="board-shop-wrapper" style="width:100%;"></div>
         </div>
 
+        <!-- VÄYLÄNÄKYMÄ SEINÄTAUSTALLA -->
         <div id="view-hole" class="app-view wall-bg" style="display: flex;">
             <div id="hole-content" style="display: flex; flex-direction: column; align-items: center; width: 100%; padding-top: 10px; flex: 1;"></div>
             
@@ -388,6 +403,7 @@
 
     </div>
 
+    <!-- ALAPALKKI -->
     <div class="modern-bottom-nav" id="pocketContainer" style="display:none;">
         <div class="nav-item" onclick="window.switchView('view-receipt')">
             <span class="icon">🧾</span>
@@ -413,6 +429,7 @@
         </div>
     </div>
 
+    <!-- MODERNISOITU ASETUSVALIKKO -->
     <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
@@ -508,6 +525,7 @@
         </div>
     </div>
 
+    <!-- KORTTIEN HINNASTO MODAALI -->
     <div id="cardPricingModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
@@ -554,17 +572,18 @@
         <div id="zoomModalContent"></div>
     </div>
 
-    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; background:rgba(0,0,0,0.9);" onclick="if(event.target === this) { this.style.display='none'; }">
+    <!-- KORTTIKARUSELLIN MODAALI (Uusittu Scroll) -->
+    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; background:rgba(0,0,0,0.95);" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="cardCarousel" class="native-carousel-container" style="width:100%;"></div>
         <div style="text-align:center; color:rgba(255,255,255,0.6); font-size:0.8rem; font-weight:900; text-transform:uppercase; margin-bottom:15px; margin-top:10px;">👆 PYYHKÄISE KORTTEJA SIVULLE 👆</div>
         <div id="cardDetailActionArea" style="width:100%; max-width:400px; margin:0 auto; padding: 0 20px;"></div>
         <button class="btn-modern" style="background:transparent; border:2px solid #ef4444 !important; color:#ef4444; width: 80%; max-width: 250px; padding: 12px; font-weight: 900; font-size: 1.1rem; margin-top: 15px;" onclick="document.getElementById('cardDetailModal').style.display='none'">SULJE NÄKYMÄ</button>
     </div>
 
-    <script src="tasks.js?v=1000"></script>
-    <script type="module" src="script.js?v=1000"></script>
-    <script src="game.js?v=1000"></script>
-    <script src="ui.js?v=1000"></script>
+    <script src="tasks.js?v=1100"></script>
+    <script type="module" src="script.js?v=1100"></script>
+    <script src="game.js?v=1100"></script>
+    <script src="ui.js?v=1100"></script>
     
     <script>
         if ('serviceWorker' in navigator) {
