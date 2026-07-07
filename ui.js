@@ -90,7 +90,7 @@ window.openCardDetail = function(cId, mode) {
     setTimeout(() => { 
         const container = el('cardCarousel');
         if(container) {
-            const cardWidth = window.innerWidth > 400 ? 340 : window.innerWidth * 0.85;
+            const cardWidth = window.innerWidth > 400 ? 340 : window.innerWidth * 0.80;
             // 20px on gap
             container.scrollLeft = window.carouselCurrentIndex * (cardWidth + 20);
             if(window.initNativeCarousel) window.initNativeCarousel();
@@ -213,7 +213,7 @@ window.openTargetModal = function(cId) {
 };
 
 // ==============================================
-// KORTIN GENEROINTI (Vakaa Container Koko)
+// KORTIN GENEROINTI
 // ==============================================
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '') {
     if (!cDef) return '';
@@ -335,6 +335,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
         </svg>
     </div>`;
 
+    /* UUSI JYSK-TYYLINEN ILMOITUSTAULU VAALEALLA PUUKEHYKSELLÄ JA KANGAS-TAUSTALLA */
     html += `<div class="mini-corkboard">`;
 
     // 1. INFO KORTTI
@@ -401,7 +402,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
 };
 
 // ==============================================
-// PALKKALASKELMA NÄKYMÄ (AITO KUITTI)
+// PALKKALASKELMA NÄKYMÄ (ZERVANT TYYLI)
 // ==============================================
 window.renderPayslipView = function(hIndex) {
     let container = el('payslip-content');
@@ -434,30 +435,50 @@ window.renderPayslipView = function(hIndex) {
         myBreakdown.summary.split(', ').forEach(part => {
             let kv = part.split(': ');
             if(kv.length === 2) { 
-                rowsHtml += `<tr><td style="padding:10px 0; border-bottom:1px solid #eee;">${kv[0]}</td><td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; font-weight:900;">${kv[1]}</td></tr>`; 
+                rowsHtml += `<tr><td style="padding:12px 0; border-bottom:1px solid #e5e7eb; font-size:1.1rem;">${kv[0]}</td><td style="padding:12px 0; border-bottom:1px solid #e5e7eb; text-align:right; font-weight:700; font-size:1.1rem;">${kv[1]}</td></tr>`; 
             } else { 
-                rowsHtml += `<tr><td colspan="2" style="font-weight:bold; padding:10px 0; border-bottom:1px solid #eee;">${part}</td></tr>`; 
+                rowsHtml += `<tr><td colspan="2" style="font-weight:bold; padding:12px 0; border-bottom:1px solid #e5e7eb;">${part}</td></tr>`; 
             }
         });
     } else {
         rowsHtml += `<tr><td colspan="2" style="text-align:center; font-style:italic; padding-top:20px;">Ei tapahtumia tällä kaudella.</td></tr>`;
     }
 
-    // PAKOTETTU INLINE-CSS TAKAA VALKOISEN PAPERIN NÄKYMISEN
+    // AITO ZERVANT-TYYLINEN KUITTI (Kovat koodatut inline-värit ja taustat, jottei selain hukkaa)
     container.innerHTML = `
-    <div style="background: #fff; padding: 25px; border-radius: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); font-family: 'Courier Prime', monospace; width: 95%; max-width: 450px; margin: 30px auto; color: #111; box-sizing: border-box;">
-        <div style="border-bottom: 2px dashed #333; padding-bottom: 15px; margin-bottom: 15px;">
-            <h2 style="font-size: 1.6rem; font-weight: 900; margin: 0 0 10px 0; text-transform: uppercase;">Palkkakuitti</h2>
-            <p style="margin: 4px 0; font-size: 0.95rem;">Työnantaja: <strong>Fribamestari Ry</strong></p>
-            <p style="margin: 4px 0; font-size: 0.95rem;">Palkkakausi: <strong>Väylä ${viewIndex}</strong></p>
-            <p style="margin: 4px 0; font-size: 0.95rem;">Työntekijä: <strong>${window.myName.toUpperCase()}</strong></p>
-        </div>
+    <div style="background: #ffffff !important; padding: 30px 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); font-family: 'Inter', sans-serif; width: 95%; max-width: 500px; margin: 30px auto; color: #334155; position: relative; z-index: 10;">
+        <h1 style="color: #06b6d4; font-size: 2.2rem; font-weight: 900; margin: 0 0 25px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">Palkkalaskelma</h1>
         
-        <table style="width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 15px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 30px; font-size:0.9rem;">
+            <div>
+                <strong>Fribamestari Ry</strong><br>
+                Radan toimisto 1<br>
+                00100 Helsinki
+            </div>
+            <div style="text-align:right;">
+                <span style="color:#64748b; font-size:0.8rem; text-transform:uppercase;">Palkkakausi</span><br>
+                <strong>Väylä ${viewIndex}</strong>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 20px;">
+            <div style="font-size:0.9rem;">
+                <span style="color:#64748b; text-transform:uppercase;">Palkansaaja</span><br>
+                <strong style="font-size:1.1rem;">${window.myName.toUpperCase()}</strong>
+            </div>
+            <div style="text-align:right;">
+                <span style="color:#64748b; font-size:0.8rem; text-transform:uppercase; font-weight:bold;">Maksetaan</span><br>
+                <span style="font-size: 1.6rem; font-weight: 900; color: #111827;">${sign}${myBreakdown.delta} P</span>
+            </div>
+        </div>
+
+        <h3 style="color: #06b6d4; font-size: 1rem; text-transform: uppercase; margin-bottom: 5px; border-bottom: 2px solid #06b6d4; padding-bottom: 5px;">Palkkaerittely</h3>
+        
+        <table style="width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 25px;">
             <thead>
                 <tr>
-                    <th style="border-bottom: 1px solid #333; padding-bottom: 8px; font-size: 0.95rem;">Tapahtuma</th>
-                    <th style="border-bottom: 1px solid #333; padding-bottom: 8px; font-size: 0.95rem; text-align:right;">Summa</th>
+                    <th style="border-bottom: 1px solid #94a3b8; padding-bottom: 8px; font-size: 0.85rem; color:#64748b; text-transform:uppercase;">Selite</th>
+                    <th style="border-bottom: 1px solid #94a3b8; padding-bottom: 8px; font-size: 0.85rem; text-align:right; color:#64748b; text-transform:uppercase;">Summa</th>
                 </tr>
             </thead>
             <tbody>
@@ -465,9 +486,9 @@ window.renderPayslipView = function(hIndex) {
             </tbody>
         </table>
         
-        <div style="border-top: 2px solid #333; padding-top: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 1.2rem;">
-            <span>MAKSETTAVA P</span>
-            <span style="font-size: 1.6rem; padding: 4px 8px; border-radius: 6px; ${myBreakdown.delta >= 0 ? 'color: #16a34a; background: #f0fdf4; border: 2px solid #16a34a;' : 'color: #dc2626; background: #fef2f2; border: 2px solid #dc2626;'}">${sign}${myBreakdown.delta} P</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 1.2rem; color: #111827; padding-top: 10px;">
+            <span>Maksetaan</span>
+            <span>${sign}${myBreakdown.delta} P</span>
         </div>
     </div>`;
 };
@@ -485,7 +506,7 @@ window.renderBinderOnBoard = function() {
         myCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
     }
 
-    // Tallennetaan ID:t muistiin karusellia varten!
+    // Tallennetaan ID:t muistiin karusellia varten! TÄMÄ ON KRIITTINEN SELAILULLE
     window.currentBinderCards = myCards;
 
     let cardsHtml = '';
@@ -496,7 +517,7 @@ window.renderBinderOnBoard = function() {
             let cDef = window.allCards.find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:1rem; color:#111; margin-top:auto; padding-top:10px;">👆 KLIKKAA 👆</div>`;
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">👆 KLIKKAA 👆</div>`;
             let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
             
             cardsHtml += `
@@ -550,7 +571,7 @@ window.renderShopOnBoard = function() {
                 const canAfford = myPoints >= itemPrice;
                 let isResFull = actRes.length >= 2;
                 
-                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.9rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
                 let fullCardHtml = window.generateCardHTML(item, false, extraHtml, false);
                 
                 // OSTA/VARAA NAPIT PALAUTETTU TÄHÄN
@@ -596,7 +617,7 @@ window.renderShopOnBoard = function() {
             if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[rId] !== undefined) itemPrice = window.gameSettings.cardPrices[rId];
 
             const canAfford = myPoints >= itemPrice;
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.9rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
             let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml, false);
             
             // LUNASTA / PERU NAPIT
@@ -654,16 +675,15 @@ window.renderShopOnBoard = function() {
             </div>
         </div>
         
-        <!-- Jalat ja Lattia -->
-        <div class="shop-machine-legs">
-            <div class="shop-leg"></div>
-            <div class="shop-leg"></div>
-        </div>
+        <!-- Lattian varjo -->
         <div class="shop-floor"></div>
     </div>
     `;
 };
 
+// ==============================================
+// FRISBEEGOLF -OPASTEKRYLTTI (TULOSSEURANTA)
+// ==============================================
 window.renderReceiptOnBoard = function() {
     let wrapper = el('board-receipt-wrapper');
     if(!wrapper) return;
@@ -673,33 +693,49 @@ window.renderReceiptOnBoard = function() {
         let html = ``; 
         [...window.allPlayers].filter(p=>p).sort((a,b) => (a.dgScore||0) - (b.dgScore||0)).forEach(p => { 
             let scoreStr = p.dgScore > 0 ? `+${p.dgScore}` : (p.dgScore === 0 ? 'E' : p.dgScore);
-            html += `<div style="display:flex; justify-content:space-between; font-size:1.5rem; font-family:'Kalam', cursive; color:var(--ink-blue); font-weight:bold; margin-bottom:8px;"><span>${p.name.substring(0, 12)}</span><span>${scoreStr}</span></div>`; 
+            html += `<div style="display:flex; justify-content:space-between; font-size:1.5rem; font-family:'Inter', sans-serif; color:#334155; font-weight:900; margin-bottom:10px;"><span>${p.name.substring(0, 12)}</span><span>${scoreStr}</span></div>`; 
         }); 
         return html; 
     };
 
+    // TULOS RIVIT
     let html = `
-    <div class="clipboard-board">
-        <div class="clipboard-clip"></div>
-        <div class="board-receipt-paper">
-            <h2 style="font-size:2rem; color:var(--ink-blue); font-family:'Kalam', cursive; font-weight:900; margin-bottom:25px; margin-top:0; text-align:center; border-bottom:3px solid var(--ink-blue); padding-bottom:10px;">TULOSSEURANTA</h2>`;
+    <div class="dg-sign-wrapper">
+        <!-- Sininen Metalliputki Ylhäällä -->
+        <div class="dg-sign-top-bar"></div>
+        
+        <!-- Siniset Metallijalat -->
+        <div class="dg-sign-legs">
+            <div class="dg-sign-leg"></div>
+            <div class="dg-sign-leg"></div>
+        </div>
+
+        <!-- Valkoinen Taulu -->
+        <div class="dg-sign-board">
+            <div style="background: #f0fdf4; border: 3px solid #16a34a; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                <h3 style="text-align:center; font-size:1.8rem; font-family:'Inter', sans-serif; font-weight: 900; color:#166534; margin:0 0 15px 0; text-transform: uppercase;">KOKONAISTILANNE</h3>
+                ${generateTotals()}
+            </div>
+            
+            <h2 style="font-size:1.6rem; color:#0284c7; font-family:'Inter', sans-serif; font-weight:900; margin-bottom:15px; text-transform:uppercase;">Väyläkohtaiset</h2>
+    `;
     
     for(let i=0; i<window.gameHistory.length; i++) { 
         let h = window.gameHistory[i]; 
         let par = window.currentCourse.pars ? (window.currentCourse.pars[i] || 3) : 3; 
-        html += `<div style="font-size:1.2rem; font-weight:bold; border-bottom:1px solid #ddd; margin-top:15px; padding-bottom:5px;">Väylä ${i+1} <span style="color:#666; font-weight:normal; font-size:0.9rem;">(PAR ${par})</span></div>`; 
+        html += `<div style="font-size:1.2rem; font-weight:bold; border-bottom:2px solid #e2e8f0; margin-top:15px; padding-bottom:5px; color:#334155;">Väylä ${i+1} <span style="color:#94a3b8; font-weight:normal; font-size:0.9rem;">(PAR ${par})</span></div>`; 
         if(h.holeResults) { 
             for(let pName in h.holeResults) { 
                 let strokes = h.holeResults[pName]; 
                 let diff = strokes - par;
                 let cClass = diff === 0 ? 'even' : (diff < 0 ? 'green' : 'red'); 
                 if (diff < -1) cClass = 'blue'; 
-                html += `<div style="display:flex; justify-content:space-between; font-size:1.2rem; padding: 6px 0; align-items:center;"><span>${pName.substring(0, 12)}</span><span class="receipt-circle ${cClass}" style="width:30px; height:30px; font-size:1.1rem;">${strokes}</span></div>`; 
+                html += `<div style="display:flex; justify-content:space-between; font-size:1.2rem; padding: 8px 0; align-items:center; color:#1e293b; font-weight: bold;"><span>${pName.substring(0, 12)}</span><span class="receipt-circle ${cClass}" style="width:32px; height:32px; font-size:1.2rem;">${strokes}</span></div>`; 
             } 
         } 
     }
     
-    html += `<div style="margin-top:30px; border-top: 3px dashed var(--ink-blue); padding-top:20px; background:#f8fafc; padding:20px; border-radius:8px;"><h3 style="text-align:center; font-size:1.5rem; font-family:'Kalam', cursive; color:var(--ink-blue); margin-bottom:15px; margin-top:0;">KOKONAISTILANNE</h3>${generateTotals()}</div></div></div>`;
+    html += `</div></div>`;
     wrapper.innerHTML = html;
 };
 
@@ -828,7 +864,7 @@ window.initNativeCarousel = function() {
     // Tunnistaa vierityksen ja päivittää napit
     container.addEventListener('scroll', () => { 
         requestAnimationFrame(() => {
-            const cardWidth = window.innerWidth > 400 ? 340 : window.innerWidth * 0.85;
+            const cardWidth = window.innerWidth > 400 ? 340 : window.innerWidth * 0.80;
             const scrollPos = container.scrollLeft;
             // 20px on flex gap
             const index = Math.round(scrollPos / (cardWidth + 20));
@@ -904,7 +940,7 @@ window.renderCarousel = function() {
     container.innerHTML = html;
 };
 
-// PÄIVITTÄÄ NAPIT KARUSELLIN ALLE
+// PÄIVITTÄÄ NAPIT KARUSELLIN ALLE (VAIN KANSIOSSA)
 window.renderCarouselActionButtons = function() {
     let mode = window.carouselCurrentMode;
     let cId = window.carouselCards[window.carouselCurrentIndex];
