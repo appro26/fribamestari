@@ -67,7 +67,7 @@ window.showZoomModal = function(html) {
     }
 };
 
-// PUUTTUU AIEMMIN! TÄMÄ AVAA KORTTIKARUSELLIN KANSIOSTA JA KAUPASTA.
+// AVAA KORTTI ISOKSI KARUSELLIIN
 window.openCardDetail = function(cId, mode) {
     window.carouselCards = [cId];
     window.carouselCurrentMode = mode;
@@ -75,7 +75,15 @@ window.openCardDetail = function(cId, mode) {
     window.renderCarousel();
     if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
     window.showModalSafe('cardDetailModal');
-    setTimeout(() => { if(window.initNativeCarousel) window.initNativeCarousel(); }, 100);
+    
+    // Annetaan aikaa renderöityä
+    setTimeout(() => { 
+        const container = el('cardCarousel');
+        if(container) {
+            container.scrollLeft = 0;
+            if(window.initNativeCarousel) window.initNativeCarousel();
+        }
+    }, 50);
 };
 
 window.showEventCard = function(cId, target, by) {
@@ -96,7 +104,6 @@ window.showEventCard = function(cId, target, by) {
     let actionArea = el('cardDetailActionArea');
     if(actionArea) actionArea.innerHTML = targetStr;
     window.showModalSafe('cardDetailModal');
-    setTimeout(() => { if(window.initNativeCarousel) window.initNativeCarousel(); }, 100);
 };
 
 // AITO iPHONE TOAST
@@ -194,7 +201,7 @@ window.openTargetModal = function(cId) {
 };
 
 // ==============================================
-// KORTIN GENEROINTI
+// KORTIN GENEROINTI (Vakaa Container Koko)
 // ==============================================
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '') {
     if (!cDef) return '';
@@ -362,7 +369,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
                 let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
                 
-                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:8px; border-radius:8px; font-size:0.9rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
+                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:8px; border-radius:6px; font-size:0.85rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
                 let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml);
 
                 html += `
@@ -415,19 +422,20 @@ window.renderPayslipView = function(hIndex) {
         myBreakdown.summary.split(', ').forEach(part => {
             let kv = part.split(': ');
             if(kv.length === 2) { 
-                rowsHtml += `<tr><td>${kv[0]}</td><td>${kv[1]}</td></tr>`; 
+                rowsHtml += `<tr><td style="padding:6px 0;">${kv[0]}</td><td style="padding:6px 0; text-align:right;">${kv[1]}</td></tr>`; 
             } else { 
-                rowsHtml += `<tr><td colspan="2" style="font-weight:bold;">${part}</td></tr>`; 
+                rowsHtml += `<tr><td colspan="2" style="font-weight:bold; padding:6px 0;">${part}</td></tr>`; 
             }
         });
     } else {
         rowsHtml += `<tr><td colspan="2" style="text-align:center; font-style:italic; padding-top:20px;">Ei tapahtumia tällä kaudella.</td></tr>`;
     }
 
+    // AITO SUOMALAINEN PALKKAKUITTI VAKAA (Leikkautumaton)
     container.innerHTML = `
     <div class="payslip-paper-finnish">
         <div class="payslip-header">
-            <h2>Palkkalaskelma</h2>
+            <h2>Palkkakuitti</h2>
             <p>Työnantaja: <strong>Fribamestari Ry</strong></p>
             <p>Palkkakausi: <strong>Väylä ${viewIndex}</strong></p>
             <p>Työntekijä: <strong>${window.myName.toUpperCase()}</strong></p>
@@ -453,7 +461,7 @@ window.renderPayslipView = function(hIndex) {
 };
 
 // ==============================================
-// KANSIO (OMAT KORTIT) - MAKSIMOITU TILA ILMAN NAPPEJA
+// KANSIO (OMAT KORTIT)
 // ==============================================
 window.renderBinderOnBoard = function() {
     let wrapper = el('board-binder-wrapper');
@@ -473,11 +481,10 @@ window.renderBinderOnBoard = function() {
             let cDef = window.allCards.find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">👆 KLIKKAA 👆</div>`;
-            let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
+            let fullCardHtml = window.generateCardHTML(cDef, isLocked, '', false);
             
             cardsHtml += `
-            <div style="cursor:pointer; width:100%; max-width:280px; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.5); transition:transform 0.1s; border-radius:12px;" onclick="window.openCardDetail('${cId}', 'sell')">
+            <div style="cursor:pointer; width:100%; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.5); border-radius:12px;" onclick="window.openCardDetail('${cId}', 'sell')">
                 ${fullCardHtml}
             </div>`;
         });
@@ -486,6 +493,7 @@ window.renderBinderOnBoard = function() {
     wrapper.innerHTML = `
     <div class="binder-page">
         <h2 style="color:#111; font-size:2.8rem; margin-bottom:25px; font-family:'Kalam', cursive; border-bottom:4px dashed #ccc; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
+        <div style="text-align:center; color:#666; font-weight:bold; margin-bottom:20px; font-size:0.9rem;">👆 KLIKKAA KORTTIA AVATAKSESI TOIMINNOT 👆</div>
         <div class="binder-grid">
             ${cardsHtml}
         </div>
@@ -493,7 +501,7 @@ window.renderBinderOnBoard = function() {
 };
 
 // ==============================================
-// VÄLIPALA-AUTOMAATTI (KAUPPA) - SUORISTETTU KONE, EI NAPPEJA ALLA
+// VÄLIPALA-AUTOMAATTI (KAUPPA) - SUORA LATTIA 3D
 // ==============================================
 window.renderShopOnBoard = function() {
     let wrapper = document.getElementById('board-shop-wrapper');
@@ -509,7 +517,7 @@ window.renderShopOnBoard = function() {
 
     levels.forEach(lvl => {
         shelvesHtml += `<div class="shop-shelf-grid">`;
-        shelvesHtml += `<div style="position:absolute; bottom:15px; left:0; width:100%; height:30px; background:repeating-linear-gradient(90deg, transparent, transparent 20px, #64748b 20px, #64748b 28px); z-index:1; opacity:0.9; filter:drop-shadow(0 10px 10px #000);"></div>`;
+        shelvesHtml += `<div style="position:absolute; bottom:10px; left:0; width:100%; height:30px; background:repeating-linear-gradient(90deg, transparent, transparent 20px, #64748b 20px, #64748b 28px); z-index:1; opacity:0.9; filter:drop-shadow(0 10px 10px #000);"></div>`;
 
         let shelfItems = (shopArray || []).filter(c => c === null || c.level === lvl);
         
@@ -519,22 +527,28 @@ window.renderShopOnBoard = function() {
                 let itemPrice = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(item.id) : item.price;
                 if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[item.id] !== undefined) itemPrice = window.gameSettings.cardPrices[item.id];
 
-                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
-                let fullCardHtml = window.generateCardHTML(item, false, extraHtml, false);
+                let fullCardHtml = window.generateCardHTML(item, false, '', false);
+                const canAfford = myPoints >= itemPrice;
+                let isResFull = actRes.length >= 2;
                 
-                // Jätetään kaupan napit (Osta/Varaa) pois tästä!
-                // Kortit ovat isoja, kun niitä klikkaa, aukeaa karuselli josta ne ostetaan.
+                // Nyt osta ja varaa napit ovat suoraan tässä hyllyllä, selkeästi näkyvissä
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; max-width:260px; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                    <div style="position:relative; width:100%; max-width:220px; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="cursor:pointer; width:100%; margin-bottom:10px; box-shadow:0 8px 15px rgba(0,0,0,0.6); border-radius:12px;" onclick="window.openCardDetail('${item.id}', 'shop')">
                             ${fullCardHtml}
                         </div>
+                        
                         <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 4px 12px; border-radius: 6px; border: 2px solid #22c55e; font-weight: 900; font-size: 1.2rem; margin-top: 5px; box-shadow: 0 0 10px rgba(34,197,94,0.8); z-index: 15;">${itemPrice} P</div>
+                        
+                        <div class="shop-controls">
+                            <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:10px; font-size:0.9rem; font-weight:900; flex:1;" onclick="window.buyShopItem('${item.id}', ${itemPrice}, false)">OSTA</button>
+                            ${!isResFull ? `<button class="btn btn-primary btn-modern" style="padding:10px; font-size:0.9rem; font-weight:900; flex:1;" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
+                        </div>
                     </div>
                 `;
             } else {
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; max-width:260px; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                    <div style="position:relative; width:100%; max-width:220px; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="width:100%; aspect-ratio: 2/3; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:12px; border:6px dashed #333; margin-bottom:10px;">
                             <div style="color:#666; font-weight:900; font-size:1.8rem; letter-spacing:2px; transform:rotate(-45deg);">TYHJÄ</div>
                         </div>
@@ -559,8 +573,8 @@ window.renderShopOnBoard = function() {
             let itemPrice = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(rId) : resItem.price;
             if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[rId] !== undefined) itemPrice = window.gameSettings.cardPrices[rId];
 
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
-            let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml, false);
+            const canAfford = myPoints >= itemPrice;
+            let fullCardHtml = window.generateCardHTML(resItem, false, '', false);
             
             reserveHtml += `
                 <div style="width:48%; max-width:260px; display:flex; flex-direction:column; align-items:center;">
@@ -569,13 +583,18 @@ window.renderShopOnBoard = function() {
                         ${fullCardHtml}
                     </div>
                     <div style="background: #000; color: #fbbf24; font-family: 'Courier Prime', monospace; padding: 4px 12px; border-radius: 6px; border: 2px solid #fbbf24; font-weight: 900; font-size: 1.2rem; margin-top: 5px; text-align: center; margin-bottom:10px; box-shadow: 0 0 10px rgba(251,191,36,0.6);">${itemPrice} P</div>
+                    
+                    <div class="shop-controls" style="max-width:100%;">
+                        <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:10px; font-size:0.9rem; font-weight:900; flex:1;" onclick="window.buyShopItem('${resItem.id}', ${itemPrice}, true)">LUNASTA</button>
+                        <button class="btn btn-danger btn-modern" style="padding:10px; font-size:0.9rem; font-weight:900; flex:1;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
+                    </div>
                 </div>
             `;
         });
         reserveHtml += `</div></div>`;
     }
 
-    // UUSI 3D AUTOMAATTI JALOILLA JA LATTIALLA (Suorassa, ei vinossa!)
+    // SUORISTETTU KONE LATTIALLE
     wrapper.innerHTML = `
     <div class="shop-3d-container">
         <div class="shop-machine">
@@ -612,7 +631,7 @@ window.renderShopOnBoard = function() {
             <div class="shop-leg"></div>
             <div class="shop-leg"></div>
         </div>
-        <div style="width: 100%; height: 15px; background: rgba(0,0,0,0.6); border-radius: 50%; filter: blur(5px); margin: -5px auto 0 auto; z-index: 0;"></div>
+        <div class="shop-floor"></div>
     </div>
     `;
 };
@@ -769,39 +788,19 @@ window.saveCardPrices = function() {
 };
 
 // ==============================================
-// KARUSELLI JA NAPPULAT (TÄÄLLÄ OSTA & VARAA NAPIT!)
+// PUHDAS CSS KARUSELLI JA NAPPULAT
 // ==============================================
 window.isFlipping = false;
 window.flippedCards = new Set();
 
 window.initNativeCarousel = function() {
+    // Ei enää JavaScript-overrideja skrollaukselle! CSS Scroll Snapping hoitaa tämän täydellisesti.
     const container = el('cardCarousel');
-    if(!container) return;
-    
-    container.addEventListener('scroll', () => { 
-        requestAnimationFrame(() => {
-            const cards = Array.from(container.querySelectorAll('.carousel-card-wrapper'));
-            const scrollLeft = container.scrollLeft; 
-            const containerWidth = container.clientWidth || window.innerWidth;
-            const centerOffset = containerWidth / 2; 
-            const cardWidth = 340; 
-            const paddingLeft = centerOffset - (cardWidth / 2); 
-            
-            for (let i = 0; i < cards.length; i++) {
-                const card = cards[i];
-                const diff = ((paddingLeft + (i * cardWidth) + (cardWidth / 2) - scrollLeft) - centerOffset) / 175; 
-                card.style.transform = `translate3d(${diff * -30}px, ${Math.abs(diff) * 15}px, ${Math.abs(diff) * -120}px) rotateZ(${diff * 4}deg) scale(${Math.max(0.85, 1 - Math.abs(diff) * 0.15)})`;
-                card.style.zIndex = 100 - Math.floor(Math.abs(diff)*10);
-                
-                if(Math.abs(diff) < 0.5 && window.carouselCurrentIndex !== i) {
-                    window.carouselCurrentIndex = i;
-                    if(window.carouselCurrentMode === 'sell' || window.carouselCurrentMode === 'shop' || window.carouselCurrentMode === 'shop_res') {
-                        window.renderCarouselActionButtons();
-                    }
-                }
-            }
-        });
-    }, {passive: true});
+    if(container && window.carouselCurrentIndex !== undefined) {
+        // Skrollaa automaattisesti oikean kortin kohdalle avatessa
+        const cardWidth = window.innerWidth > 400 ? 340 : window.innerWidth * 0.85;
+        container.scrollLeft = window.carouselCurrentIndex * (cardWidth + 20); 
+    }
 };
 
 window.flipCard = function(index) {
@@ -852,7 +851,7 @@ window.renderCarousel = function() {
         let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml, true);
 
         html += `
-            <div class="carousel-card-wrapper" style="transform:none; position:relative; margin:0 auto;" data-id="${cId}" onclick="window.flipCard(${i})">
+            <div class="carousel-card-wrapper" data-id="${cId}" onclick="window.flipCard(${i})">
                 <div class="card-3d-inner ${flippedClass}" id="card3d-inner-${i}">
                     <div class="card-face card-front" style="background:transparent; box-shadow:none; border:none; padding:0;">
                         ${fullCardHtml}
@@ -866,9 +865,7 @@ window.renderCarousel = function() {
     container.innerHTML = html;
 };
 
-// ==============================================
-// NAPPULAT (PELAA / OSTA / VARAA)
-// ==============================================
+// Karusellin napit palvelevat nyt VAIN kansionäkymää
 window.renderCarouselActionButtons = function() {
     let mode = window.carouselCurrentMode;
     let cId = window.carouselCards[window.carouselCurrentIndex];
@@ -893,23 +890,8 @@ window.renderCarouselActionButtons = function() {
             btnHtml += `<button class="btn ${canPlay ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canPlay ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cDef.id}')">PELAA KORTTI (${playCost} P)</button>`;
             btnHtml += `<button class="btn btn-danger btn-modern" style="width:100%; font-size:1.1rem; padding:15px; font-weight:bold; margin-bottom:10px;" onclick="window.forceDiscard('${cDef.id}')">♻️ MYY KORTTI (+${sellReward} P)</button>`;
         }
-    } else if (mode === 'shop' || mode === 'shop_res') {
-        let cDef = window.allCards.find(c => c && c.id === cId);
-        if(cDef) {
-            let itemPrice = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cDef.id) : cDef.price;
-            let canAfford = me.score >= itemPrice; 
-            let isRes = mode === 'shop_res';
-            let isResFull = me.reservations ? Object.values(me.reservations).filter(Boolean).length >= 2 : false;
-            
-            if (isRes) {
-                btnHtml += `<button class="btn ${canAfford ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canAfford ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cDef.id}', ${itemPrice}, true)">LUNASTA KORTTI (${itemPrice} P)</button>`;
-                btnHtml += `<button class="btn btn-danger btn-modern" style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.cancelReservation('${cDef.id}')">PERU VARAUS</button>`;
-            } else {
-                btnHtml += `<button class="btn ${canAfford ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canAfford ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cDef.id}', ${itemPrice}, false)">OSTA KORTTI (${itemPrice} P)</button>`;
-                btnHtml += `<button class="btn btn-primary btn-modern" ${isResFull ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.reserveShopItem('${cDef.id}')">${isResFull ? 'VARASTO TÄYNNÄ' : 'VARAA KORTTI'}</button>`;
-            }
-        }
     }
+    // Kauppa-näkymässä mode on 'shop', silloin ei piirretä nappeja karuselliin, koska ne ovat suoraan hyllyllä.
     
     let container = el('cardDetailActionArea');
     if(container) container.innerHTML = btnHtml;
