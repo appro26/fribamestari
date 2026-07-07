@@ -183,7 +183,7 @@ window.openTargetModal = function(cId) {
 };
 
 // ==============================================
-// KORTIN GENEROINTI (Vakaa Container Koko)
+// KORTIN GENEROINTI
 // ==============================================
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '') {
     if (!cDef) return '';
@@ -322,7 +322,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
     }
     html += `</div>`;
 
-    // 2. VÄYLÄSÄÄNTÖ (UUSI AITO POST-IT)
+    // 2. VÄYLÄSÄÄNTÖ (TÄYDELLINEN NELIÖ POST-IT SCROLLILLA)
     if (hData.rule) {
         let bTxt = hData.rule.type === 'bounty' ? `🏆 TEHTÄVÄ` : '🎲 VÄYLÄSÄÄNTÖ';
         let bgCol = hData.color || '#fef08a';
@@ -351,7 +351,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
                 let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
                 
-                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:3cqw; border-radius:2cqw; font-size:4cqw; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
+                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:6px; border-radius:6px; font-size:0.8rem; text-align:center; font-weight:bold; margin-top:auto; width:100%;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
                 let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml);
 
                 html += `
@@ -366,7 +366,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
         html += `</div>`;
     }
 
-    html += `</div>`; // Sulkee mini-corkboardin
+    html += `</div>`; 
     container.innerHTML = html;
 };
 
@@ -462,8 +462,8 @@ window.renderBinderOnBoard = function() {
             let cDef = window.allCards.find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:5cqw; color:#111; margin-top:auto; padding-top:2cqw;">👆 KLIKKAA 👆</div>`;
-            let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">👆 KLIKKAA 👆</div>`;
+            let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml);
             
             cardsHtml += `
             <div style="cursor:pointer; width:100%; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.5); transition:transform 0.1s; border-radius:12px;" onclick="window.openCardDetail('${cId}', 'sell')">
@@ -508,28 +508,20 @@ window.renderShopOnBoard = function() {
                 let itemPrice = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(item.id) : item.price;
                 if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[item.id] !== undefined) itemPrice = window.gameSettings.cardPrices[item.id];
 
-                const canAfford = myPoints >= itemPrice;
-                let isResFull = actRes.length >= 2;
-                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:4cqw; color:#111; margin-top:auto; padding-top:2cqw;">🔄 TARKASTELE</div>`;
-                let fullCardHtml = window.generateCardHTML(item, false, extraHtml, false);
+                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+                let fullCardHtml = window.generateCardHTML(item, false, extraHtml);
                 
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; max-width:220px; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                    <div style="position:relative; width:100%; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="cursor:pointer; width:100%; margin-bottom:10px; box-shadow:0 8px 15px rgba(0,0,0,0.6); border-radius:12px;" onclick="window.openCardDetail('${item.id}', 'shop')">
                             ${fullCardHtml}
                         </div>
-                        
                         <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 4px 12px; border-radius: 6px; border: 2px solid #22c55e; font-weight: 900; font-size: 1.2rem; margin-top: 5px; box-shadow: 0 0 10px rgba(34,197,94,0.8); z-index: 15;">${itemPrice} P</div>
-                        
-                        <div class="shop-controls">
-                            <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:10px; font-size:1rem; font-weight:900; flex:1;" onclick="window.buyShopItem('${item.id}', ${itemPrice}, false)">OSTA</button>
-                            ${!isResFull ? `<button class="btn btn-primary btn-modern" style="padding:10px; font-size:1rem; font-weight:900; flex:1;" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
-                        </div>
                     </div>
                 `;
             } else {
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; max-width:220px; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                    <div style="position:relative; width:100%; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="width:100%; aspect-ratio: 2/3; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:12px; border:6px dashed #333; margin-bottom:10px;">
                             <div style="color:#666; font-weight:900; font-size:1.8rem; letter-spacing:2px; transform:rotate(-45deg);">TYHJÄ</div>
                         </div>
@@ -554,9 +546,8 @@ window.renderShopOnBoard = function() {
             let itemPrice = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(rId) : resItem.price;
             if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[rId] !== undefined) itemPrice = window.gameSettings.cardPrices[rId];
 
-            const canAfford = myPoints >= itemPrice;
-            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:4cqw; color:#111; margin-top:auto; padding-top:2cqw;">🔄 TARKASTELE</div>`;
-            let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml, false);
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+            let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml);
             
             reserveHtml += `
                 <div style="width:48%; display:flex; flex-direction:column; align-items:center;">
@@ -565,20 +556,15 @@ window.renderShopOnBoard = function() {
                         ${fullCardHtml}
                     </div>
                     <div style="background: #000; color: #fbbf24; font-family: 'Courier Prime', monospace; padding: 4px 12px; border-radius: 6px; border: 2px solid #fbbf24; font-weight: 900; font-size: 1.2rem; margin-top: 5px; text-align: center; margin-bottom:10px; box-shadow: 0 0 10px rgba(251,191,36,0.6);">${itemPrice} P</div>
-                    <div class="shop-controls" style="max-width:100%;">
-                        <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:10px; font-size:1rem; font-weight:900; flex:1;" onclick="window.buyShopItem('${resItem.id}', ${itemPrice}, true)">OSTA</button>
-                        <button class="btn btn-danger btn-modern" style="padding:10px; font-size:1rem; font-weight:900; flex:1;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
-                    </div>
                 </div>
             `;
         });
         reserveHtml += `</div></div>`;
     }
 
-    // UUSI 3D AUTOMAATTI JALOILLA JA LATTIALLA
     wrapper.innerHTML = `
-    <div style="width: 100%; max-width: 600px; margin: 0 auto; position: relative; padding-bottom:30px;">
-        <div class="shop-machine" style="background: #111827; border-radius: 12px 12px 0 0; border: 4px solid #334155; border-bottom: none; padding: 20px; box-shadow: inset 0 0 40px rgba(0,0,0,0.8), 0 20px 50px rgba(0,0,0,0.9); position: relative; z-index: 10;">
+    <div class="shop-3d-container">
+        <div class="shop-machine">
             
             <!-- LED Header -->
             <div style="background: #000; border-radius: 8px; border: 2px solid #222; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(239,68,68,0.15);">
@@ -590,8 +576,7 @@ window.renderShopOnBoard = function() {
             </div>
 
             <!-- Lasinen Sisäosa -->
-            <div style="background: #020617; border-radius: 6px; border: 8px solid #1e293b; padding: 15px 10px; box-shadow: inset 0 20px 40px #000; position: relative; overflow: hidden;">
-                <!-- Lasiheijastus -->
+            <div class="shop-glass">
                 <div style="position: absolute; top: 0; left: -50%; width: 200%; height: 100%; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.05) 50%, transparent 55%); z-index: 5; pointer-events: none;"></div>
                 ${shelvesHtml}
             </div>
@@ -613,11 +598,10 @@ window.renderShopOnBoard = function() {
         </div>
         
         <!-- Jalat -->
-        <div style="display: flex; justify-content: space-between; width: 92%; margin: 0 auto; z-index: 1; position: relative;">
-            <div style="width: 30px; height: 25px; background: #111; border-radius: 0 0 4px 4px; box-shadow: 2px 5px 10px rgba(0,0,0,0.8);"></div>
-            <div style="width: 30px; height: 25px; background: #111; border-radius: 0 0 4px 4px; box-shadow: 2px 5px 10px rgba(0,0,0,0.8);"></div>
+        <div class="shop-machine-legs">
+            <div class="shop-leg"></div>
+            <div class="shop-leg"></div>
         </div>
-        
         <!-- Lattian varjo -->
         <div style="width: 100%; height: 15px; background: rgba(0,0,0,0.6); border-radius: 50%; filter: blur(5px); margin: -5px auto 0 auto; z-index: 0;"></div>
     </div>
@@ -776,7 +760,7 @@ window.saveCardPrices = function() {
 };
 
 // ==============================================
-// KARUSELLI (Kortin tarkastelu)
+// KARUSELLI JA NAPPULAT (Kaupassa OSTA ja VARAA)
 // ==============================================
 window.isFlipping = false;
 window.flippedCards = new Set();
@@ -873,6 +857,7 @@ window.renderCarousel = function() {
     container.innerHTML = html;
 };
 
+// TÄSSÄ LISÄTTIIN KAUPAN OSTA & VARAA NAPIT KARUSELLIIN
 window.renderCarouselActionButtons = function() {
     let mode = window.carouselCurrentMode;
     let cId = window.carouselCards[window.carouselCurrentIndex];
@@ -903,7 +888,15 @@ window.renderCarouselActionButtons = function() {
             let itemPrice = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cDef.id) : cDef.price;
             let canAfford = me.score >= itemPrice; 
             let isRes = mode === 'shop_res';
-            btnHtml += `<button class="btn ${canAfford ? 'btn-warning' : 'btn-secondary'} btn-modern" ${!canAfford ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cDef.id}', ${itemPrice}, ${isRes})">OSTA AUTOMAATISTA (${itemPrice} P)</button>`;
+            let isResFull = me.reservations ? Object.values(me.reservations).filter(Boolean).length >= 2 : false;
+            
+            btnHtml += `<button class="btn ${canAfford ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canAfford ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cDef.id}', ${itemPrice}, ${isRes})">OSTA KORTTI (${itemPrice} P)</button>`;
+            
+            if (!isRes) {
+                btnHtml += `<button class="btn btn-primary btn-modern" ${isResFull ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.reserveShopItem('${cDef.id}')">${isResFull ? 'VARASTO TÄYNNÄ' : 'VARAA KORTTI'}</button>`;
+            } else {
+                 btnHtml += `<button class="btn btn-danger btn-modern" style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.cancelReservation('${cDef.id}')">PERU VARAUS</button>`;
+            }
         }
     }
     
