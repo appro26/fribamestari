@@ -67,20 +67,32 @@ window.showZoomModal = function(html) {
     }
 };
 
-// AVAA KORTTI ISOKSI KARUSELLIIN
+// AVAA KORTTI ISOKSI KARUSELLIIN JA LATAA KAIKKI NÄKYMÄN KORTIT
 window.openCardDetail = function(cId, mode) {
-    window.carouselCards = [cId];
+    if (mode === 'sell') {
+        window.carouselCards = window.currentBinderCards || [cId];
+    } else if (mode === 'shop') {
+        window.carouselCards = window.currentShopCards || [cId];
+    } else if (mode === 'shop_res') {
+        window.carouselCards = window.currentShopResCards || [cId];
+    } else {
+        window.carouselCards = [cId];
+    }
+    
     window.carouselCurrentMode = mode;
-    window.carouselCurrentIndex = 0;
+    window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
+    if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
+    
     window.renderCarousel();
     if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
     window.showModalSafe('cardDetailModal');
     
-    // Annetaan aikaa renderöityä
     setTimeout(() => { 
         const container = el('cardCarousel');
         if(container) {
-            container.scrollLeft = 0;
+            const cardWidth = window.innerWidth > 400 ? 340 : window.innerWidth * 0.85;
+            // 20px on gap
+            container.scrollLeft = window.carouselCurrentIndex * (cardWidth + 20);
             if(window.initNativeCarousel) window.initNativeCarousel();
         }
     }, 50);
@@ -369,7 +381,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
                 let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
                 
-                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:8px; border-radius:6px; font-size:0.85rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
+                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:6px; border-radius:6px; font-size:0.85rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
                 let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml);
 
                 html += `
@@ -389,7 +401,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
 };
 
 // ==============================================
-// PALKKALASKELMA NÄKYMÄ (Erillinen välilehti)
+// PALKKALASKELMA NÄKYMÄ (AITO KUITTI)
 // ==============================================
 window.renderPayslipView = function(hIndex) {
     let container = el('payslip-content');
@@ -422,30 +434,30 @@ window.renderPayslipView = function(hIndex) {
         myBreakdown.summary.split(', ').forEach(part => {
             let kv = part.split(': ');
             if(kv.length === 2) { 
-                rowsHtml += `<tr><td style="padding:6px 0;">${kv[0]}</td><td style="padding:6px 0; text-align:right;">${kv[1]}</td></tr>`; 
+                rowsHtml += `<tr><td style="padding:10px 0; border-bottom:1px solid #eee;">${kv[0]}</td><td style="padding:10px 0; border-bottom:1px solid #eee; text-align:right; font-weight:900;">${kv[1]}</td></tr>`; 
             } else { 
-                rowsHtml += `<tr><td colspan="2" style="font-weight:bold; padding:6px 0;">${part}</td></tr>`; 
+                rowsHtml += `<tr><td colspan="2" style="font-weight:bold; padding:10px 0; border-bottom:1px solid #eee;">${part}</td></tr>`; 
             }
         });
     } else {
         rowsHtml += `<tr><td colspan="2" style="text-align:center; font-style:italic; padding-top:20px;">Ei tapahtumia tällä kaudella.</td></tr>`;
     }
 
-    // AITO SUOMALAINEN PALKKAKUITTI VAKAA (Leikkautumaton)
+    // PAKOTETTU INLINE-CSS TAKAA VALKOISEN PAPERIN NÄKYMISEN
     container.innerHTML = `
-    <div class="payslip-paper-finnish">
-        <div class="payslip-header">
-            <h2>Palkkakuitti</h2>
-            <p>Työnantaja: <strong>Fribamestari Ry</strong></p>
-            <p>Palkkakausi: <strong>Väylä ${viewIndex}</strong></p>
-            <p>Työntekijä: <strong>${window.myName.toUpperCase()}</strong></p>
+    <div style="background: #fff; padding: 25px; border-radius: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); font-family: 'Courier Prime', monospace; width: 95%; max-width: 450px; margin: 30px auto; color: #111; box-sizing: border-box;">
+        <div style="border-bottom: 2px dashed #333; padding-bottom: 15px; margin-bottom: 15px;">
+            <h2 style="font-size: 1.6rem; font-weight: 900; margin: 0 0 10px 0; text-transform: uppercase;">Palkkakuitti</h2>
+            <p style="margin: 4px 0; font-size: 0.95rem;">Työnantaja: <strong>Fribamestari Ry</strong></p>
+            <p style="margin: 4px 0; font-size: 0.95rem;">Palkkakausi: <strong>Väylä ${viewIndex}</strong></p>
+            <p style="margin: 4px 0; font-size: 0.95rem;">Työntekijä: <strong>${window.myName.toUpperCase()}</strong></p>
         </div>
         
-        <table class="payslip-table">
+        <table style="width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 15px;">
             <thead>
                 <tr>
-                    <th>Tapahtuma</th>
-                    <th style="text-align:right;">Summa</th>
+                    <th style="border-bottom: 1px solid #333; padding-bottom: 8px; font-size: 0.95rem;">Tapahtuma</th>
+                    <th style="border-bottom: 1px solid #333; padding-bottom: 8px; font-size: 0.95rem; text-align:right;">Summa</th>
                 </tr>
             </thead>
             <tbody>
@@ -453,9 +465,9 @@ window.renderPayslipView = function(hIndex) {
             </tbody>
         </table>
         
-        <div class="payslip-footer">
+        <div style="border-top: 2px solid #333; padding-top: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 1.2rem;">
             <span>MAKSETTAVA P</span>
-            <span class="${myBreakdown.delta >= 0 ? 'net-positive' : 'net-negative'}">${sign}${myBreakdown.delta} P</span>
+            <span style="font-size: 1.6rem; padding: 4px 8px; border-radius: 6px; ${myBreakdown.delta >= 0 ? 'color: #16a34a; background: #f0fdf4; border: 2px solid #16a34a;' : 'color: #dc2626; background: #fef2f2; border: 2px solid #dc2626;'}">${sign}${myBreakdown.delta} P</span>
         </div>
     </div>`;
 };
@@ -473,6 +485,9 @@ window.renderBinderOnBoard = function() {
         myCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
     }
 
+    // Tallennetaan ID:t muistiin karusellia varten!
+    window.currentBinderCards = myCards;
+
     let cardsHtml = '';
     if(myCards.length === 0) {
         cardsHtml = '<p style="color:#555; font-size:1.6rem; text-align:center; padding:40px; font-weight:bold; grid-column: 1 / -1;">Kansiosi on tyhjä.</p>';
@@ -481,10 +496,11 @@ window.renderBinderOnBoard = function() {
             let cDef = window.allCards.find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
-            let fullCardHtml = window.generateCardHTML(cDef, isLocked, '', false);
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:1rem; color:#111; margin-top:auto; padding-top:10px;">👆 KLIKKAA 👆</div>`;
+            let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
             
             cardsHtml += `
-            <div style="cursor:pointer; width:100%; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.5); border-radius:12px;" onclick="window.openCardDetail('${cId}', 'sell')">
+            <div style="cursor:pointer; width:100%; max-width:280px; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.5); transition:transform 0.1s; border-radius:12px;" onclick="window.openCardDetail('${cId}', 'sell')">
                 ${fullCardHtml}
             </div>`;
         });
@@ -501,7 +517,7 @@ window.renderBinderOnBoard = function() {
 };
 
 // ==============================================
-// VÄLIPALA-AUTOMAATTI (KAUPPA) - SUORA LATTIA 3D
+// VÄLIPALA-AUTOMAATTI (KAUPPA) - SUORA LATTIA 3D & NAPIT HYLLYLLÄ
 // ==============================================
 window.renderShopOnBoard = function() {
     let wrapper = document.getElementById('board-shop-wrapper');
@@ -511,13 +527,17 @@ window.renderShopOnBoard = function() {
     let shopArray = window.activeHole && window.activeHole.shop ? window.activeHole.shop[window.myName] : [];
     let resArray = me && me.reservations ? (Array.isArray(me.reservations) ? me.reservations : Object.values(me.reservations)) : [];
 
+    // Tallennetaan listat karusellia varten!
+    window.currentShopCards = shopArray.filter(c => c !== null).map(c => c.id);
+    window.currentShopResCards = resArray.filter(Boolean);
+
     let shelvesHtml = '';
-    let actRes = resArray.filter(Boolean);
+    let actRes = window.currentShopResCards;
     let levels = [3, 2, 1]; 
 
     levels.forEach(lvl => {
         shelvesHtml += `<div class="shop-shelf-grid">`;
-        shelvesHtml += `<div style="position:absolute; bottom:10px; left:0; width:100%; height:30px; background:repeating-linear-gradient(90deg, transparent, transparent 20px, #64748b 20px, #64748b 28px); z-index:1; opacity:0.9; filter:drop-shadow(0 10px 10px #000);"></div>`;
+        shelvesHtml += `<div style="position:absolute; bottom:15px; left:0; width:100%; height:30px; background:repeating-linear-gradient(90deg, transparent, transparent 20px, #64748b 20px, #64748b 28px); z-index:1; opacity:0.9; filter:drop-shadow(0 10px 10px #000);"></div>`;
 
         let shelfItems = (shopArray || []).filter(c => c === null || c.level === lvl);
         
@@ -527,20 +547,22 @@ window.renderShopOnBoard = function() {
                 let itemPrice = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(item.id) : item.price;
                 if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[item.id] !== undefined) itemPrice = window.gameSettings.cardPrices[item.id];
 
-                let fullCardHtml = window.generateCardHTML(item, false, '', false);
                 const canAfford = myPoints >= itemPrice;
                 let isResFull = actRes.length >= 2;
                 
-                // Nyt osta ja varaa napit ovat suoraan tässä hyllyllä, selkeästi näkyvissä
+                let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.9rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+                let fullCardHtml = window.generateCardHTML(item, false, extraHtml, false);
+                
+                // OSTA/VARAA NAPIT PALAUTETTU TÄHÄN
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; max-width:220px; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                    <div style="position:relative; width:100%; max-width:260px; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="cursor:pointer; width:100%; margin-bottom:10px; box-shadow:0 8px 15px rgba(0,0,0,0.6); border-radius:12px;" onclick="window.openCardDetail('${item.id}', 'shop')">
                             ${fullCardHtml}
                         </div>
                         
                         <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 4px 12px; border-radius: 6px; border: 2px solid #22c55e; font-weight: 900; font-size: 1.2rem; margin-top: 5px; box-shadow: 0 0 10px rgba(34,197,94,0.8); z-index: 15;">${itemPrice} P</div>
                         
-                        <div class="shop-controls">
+                        <div class="shop-controls" style="margin-top: 10px; display:flex; gap:5px; width:100%;">
                             <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:10px; font-size:0.9rem; font-weight:900; flex:1;" onclick="window.buyShopItem('${item.id}', ${itemPrice}, false)">OSTA</button>
                             ${!isResFull ? `<button class="btn btn-primary btn-modern" style="padding:10px; font-size:0.9rem; font-weight:900; flex:1;" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
                         </div>
@@ -548,8 +570,8 @@ window.renderShopOnBoard = function() {
                 `;
             } else {
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; max-width:220px; display:flex; flex-direction:column; align-items:center; z-index:10;">
-                        <div style="width:100%; aspect-ratio: 2/3; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:12px; border:6px dashed #333; margin-bottom:10px;">
+                    <div style="position:relative; width:100%; max-width:260px; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                        <div style="width:100%; min-height: 250px; aspect-ratio: 2/3; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:12px; border:6px dashed #333; margin-bottom:10px;">
                             <div style="color:#666; font-weight:900; font-size:1.8rem; letter-spacing:2px; transform:rotate(-45deg);">TYHJÄ</div>
                         </div>
                         <div style="background: #000; color: #555; font-family: 'Courier Prime', monospace; padding: 4px 12px; border-radius: 6px; border: 2px solid #444; font-weight: 900; font-size: 1.2rem; margin-top: 5px;">---</div>
@@ -574,8 +596,10 @@ window.renderShopOnBoard = function() {
             if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[rId] !== undefined) itemPrice = window.gameSettings.cardPrices[rId];
 
             const canAfford = myPoints >= itemPrice;
-            let fullCardHtml = window.generateCardHTML(resItem, false, '', false);
+            let extraHtml = `<div style="text-align:center; font-weight:900; font-size:0.9rem; color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
+            let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml, false);
             
+            // LUNASTA / PERU NAPIT
             reserveHtml += `
                 <div style="width:48%; max-width:260px; display:flex; flex-direction:column; align-items:center;">
                     <div style="width:100%; cursor:pointer; position:relative; margin-bottom:10px; border-radius:12px; box-shadow:0 8px 15px rgba(0,0,0,0.6);" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
@@ -584,7 +608,7 @@ window.renderShopOnBoard = function() {
                     </div>
                     <div style="background: #000; color: #fbbf24; font-family: 'Courier Prime', monospace; padding: 4px 12px; border-radius: 6px; border: 2px solid #fbbf24; font-weight: 900; font-size: 1.2rem; margin-top: 5px; text-align: center; margin-bottom:10px; box-shadow: 0 0 10px rgba(251,191,36,0.6);">${itemPrice} P</div>
                     
-                    <div class="shop-controls" style="max-width:100%;">
+                    <div class="shop-controls" style="margin-top: 10px; display:flex; gap:5px; width:100%;">
                         <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:10px; font-size:0.9rem; font-weight:900; flex:1;" onclick="window.buyShopItem('${resItem.id}', ${itemPrice}, true)">LUNASTA</button>
                         <button class="btn btn-danger btn-modern" style="padding:10px; font-size:0.9rem; font-weight:900; flex:1;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
                     </div>
@@ -599,6 +623,7 @@ window.renderShopOnBoard = function() {
     <div class="shop-3d-container">
         <div class="shop-machine">
             
+            <!-- LED Header -->
             <div style="background: #000; border-radius: 8px; border: 2px solid #222; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(239,68,68,0.15);">
                 <div style="color: #ef4444; font-family: monospace; font-size: 1.6rem; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px #ef4444;">FRIBAMART</div>
                 <div style="background: #022c22; border: 2px solid #064e3b; padding: 5px 15px; border-radius: 4px; box-shadow: inset 0 0 10px #000; text-align: center;">
@@ -607,6 +632,7 @@ window.renderShopOnBoard = function() {
                 </div>
             </div>
 
+            <!-- Lasinen Sisäosa -->
             <div class="shop-glass">
                 <div style="position: absolute; top: 0; left: -50%; width: 200%; height: 100%; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.05) 50%, transparent 55%); z-index: 5; pointer-events: none;"></div>
                 ${shelvesHtml}
@@ -614,6 +640,7 @@ window.renderShopOnBoard = function() {
 
             ${reserveHtml}
 
+            <!-- Alapaneeli (Numpad ja PUSH-luukku) -->
             <div style="background: #0f172a; margin-top: 20px; padding: 15px; border-radius: 8px; border: 2px solid #334155; display: flex; justify-content: space-between; align-items: flex-start; box-shadow: inset 0 0 15px #000;">
                 <div style="width: 90px; background: #000; padding: 10px; border-radius: 6px; border: 2px solid #1e293b; box-shadow: inset 0 0 10px #000;">
                    <div style="color: #10b981; text-align: right; font-family: monospace; border: 1px solid #334155; padding: 2px 5px; margin-bottom: 8px; font-size: 0.9rem;">12.00</div>
@@ -627,6 +654,7 @@ window.renderShopOnBoard = function() {
             </div>
         </div>
         
+        <!-- Jalat ja Lattia -->
         <div class="shop-machine-legs">
             <div class="shop-leg"></div>
             <div class="shop-leg"></div>
@@ -794,13 +822,23 @@ window.isFlipping = false;
 window.flippedCards = new Set();
 
 window.initNativeCarousel = function() {
-    // Ei enää JavaScript-overrideja skrollaukselle! CSS Scroll Snapping hoitaa tämän täydellisesti.
     const container = el('cardCarousel');
-    if(container && window.carouselCurrentIndex !== undefined) {
-        // Skrollaa automaattisesti oikean kortin kohdalle avatessa
-        const cardWidth = window.innerWidth > 400 ? 340 : window.innerWidth * 0.85;
-        container.scrollLeft = window.carouselCurrentIndex * (cardWidth + 20); 
-    }
+    if(!container) return;
+    
+    // Tunnistaa vierityksen ja päivittää napit
+    container.addEventListener('scroll', () => { 
+        requestAnimationFrame(() => {
+            const cardWidth = window.innerWidth > 400 ? 340 : window.innerWidth * 0.85;
+            const scrollPos = container.scrollLeft;
+            // 20px on flex gap
+            const index = Math.round(scrollPos / (cardWidth + 20));
+            
+            if (window.carouselCurrentIndex !== index && index >= 0 && index < window.carouselCards.length) {
+                window.carouselCurrentIndex = index;
+                if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
+            }
+        });
+    }, {passive: true});
 };
 
 window.flipCard = function(index) {
@@ -817,6 +855,7 @@ window.flipCard = function(index) {
     setTimeout(() => { window.isFlipping = false; }, 300); 
 };
 
+// PIIRTÄÄ JÄTTIKORTIT KARUSELLIIN
 window.renderCarousel = function() {
     const container = el('cardCarousel');
     if(!container) return;
@@ -865,7 +904,7 @@ window.renderCarousel = function() {
     container.innerHTML = html;
 };
 
-// Karusellin napit palvelevat nyt VAIN kansionäkymää
+// PÄIVITTÄÄ NAPIT KARUSELLIN ALLE
 window.renderCarouselActionButtons = function() {
     let mode = window.carouselCurrentMode;
     let cId = window.carouselCards[window.carouselCurrentIndex];
@@ -890,7 +929,7 @@ window.renderCarouselActionButtons = function() {
             btnHtml += `<button class="btn ${canPlay ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canPlay ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cDef.id}')">PELAA KORTTI (${playCost} P)</button>`;
             btnHtml += `<button class="btn btn-danger btn-modern" style="width:100%; font-size:1.1rem; padding:15px; font-weight:bold; margin-bottom:10px;" onclick="window.forceDiscard('${cDef.id}')">♻️ MYY KORTTI (+${sellReward} P)</button>`;
         }
-    }
+    } 
     // Kauppa-näkymässä mode on 'shop', silloin ei piirretä nappeja karuselliin, koska ne ovat suoraan hyllyllä.
     
     let container = el('cardDetailActionArea');
