@@ -34,8 +34,8 @@
     <link rel="apple-touch-icon" href="friba.png" />
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="style.css?v=1200" />
-    <meta id="themeColorMeta" name="theme-color" content="#788692" />
+    <link rel="stylesheet" href="style.css?v=1400" />
+    <meta id="themeColorMeta" name="theme-color" content="#475569" />
     
     <style>
         /* =========================================
@@ -51,12 +51,22 @@
             display: none; 
         }
         
-        /* UUSI SEINÄ: Puhdas matta harmaa seinä */
+        /* HARMAA KIVISEINÄ */
         .wall-bg {
-            background-color: #788692; /* Puhdas viileä harmaa */
-            background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
-            box-shadow: inset 0 0 100px rgba(0,0,0,0.4);
+            background-color: #475569;
+            background-image:
+              linear-gradient(rgba(15, 23, 42, 0.8) 3px, transparent 3px),
+              linear-gradient(90deg, rgba(15, 23, 42, 0.8) 3px, transparent 3px),
+              linear-gradient(90deg, rgba(15, 23, 42, 0.8) 3px, transparent 3px);
+            background-size: 120px 60px, 120px 60px, 120px 60px;
+            background-position: 0 0, 0 0, 60px 30px;
+            box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
+        }
+
+        /* UUSI FRISBEEGOLF-MAISEMA (Ale Open tyylinen) */
+        .landscape-bg {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1593305118742-1e712a875a5e?q=80&w=1080&auto=format&fit=crop') center top / cover fixed no-repeat;
+            background-color: #0f172a;
         }
 
         .app-view {
@@ -100,7 +110,7 @@
             box-shadow: 2px 5px 15px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.5); 
             background: #fff; position: relative;
             flex-shrink: 0;
-            aspect-ratio: 2 / 3; /* Absoluuttinen kuvasuhde! */
+            aspect-ratio: 2 / 3; 
         }
         
         .tier-1 { border: 6px solid #cd7f32; } 
@@ -108,7 +118,7 @@
         .tier-3 { border: 6px solid #fbbf24; } 
 
         .card-header {
-            padding: 6% 8%; font-weight: 900; font-size: clamp(0.7rem, 3.5vw, 1rem); 
+            padding: 6% 8%; font-weight: 900; font-size: 0.8rem; 
             display: flex; justify-content: space-between; align-items: center; 
             text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 2;
         }
@@ -125,23 +135,24 @@
         
         .play-cost-badge {
             background: linear-gradient(to bottom, #222, #000); color: #fff; font-weight: 900; 
-            font-size: clamp(0.9rem, 4vw, 1.4rem); padding: 2% 5%; border-radius: 4px; border: 2px solid #fff;
-            margin-bottom: 5%; box-shadow: 0 2px 6px rgba(0,0,0,0.5); flex-shrink: 0;
+            font-size: 1.1rem; padding: 4px 10px; border-radius: 4px; border: 2px solid #fff;
+            margin-bottom: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.5); flex-shrink: 0;
         }
         
         .card-title { 
-            font-size: clamp(1.1rem, 5vw, 1.8rem); font-weight: 900; line-height: 1.1; margin-bottom: 5%; 
+            font-size: 1.1rem; font-weight: 900; line-height: 1.1; margin-bottom: 8px; 
             color: #000; font-family: 'Inter', sans-serif; word-wrap: break-word; hyphens: auto;
             flex-shrink: 0;
         }
         
-        /* SKROLLAUS POIS - Keskitetään teksti ja sovitetaan */
+        /* SKROLLAUS TAKAISIN - Näin pitkät tekstit eivät koskaan mene yli! */
         .card-desc { 
-            font-size: clamp(0.7rem, 3.5vw, 1.15rem); font-weight: 700; line-height: 1.35; color: #1e293b; 
-            width: 100%; flex: 1; padding: 2px;
-            display: flex; align-items: center; justify-content: center; /* Keskittää dynaamisesti! */
-            overflow: hidden; /* Ei enää skrollia */
+            font-size: 0.8rem; font-weight: 700; line-height: 1.3; color: #1e293b; 
+            width: 100%; flex: 1; padding: 2px 5px;
+            overflow-y: auto; text-align: left;
         }
+        .card-desc::-webkit-scrollbar { width: 4px; }
+        .card-desc::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
 
         /* Karusellin jättikortti */
         .carousel-card-wrapper {
@@ -149,7 +160,6 @@
             flex-shrink: 0;
             width: 80vw;
             max-width: 320px;
-            height: calc(min(80vw, 320px) * 1.5); /* Pakottaa 2:3 kuvasuhteen korkeuden avulla */
             display: flex; justify-content: center; align-items: center;
         }
         .carousel-card-wrapper .physical-card { 
@@ -160,31 +170,32 @@
         .carousel-card-wrapper .card-title { font-size: 1.8rem; margin-bottom: 12px; }
         .carousel-card-wrapper .card-desc { font-size: 1.15rem; }
 
-        /* PUHDAS CSS KARUSELLI */
+        /* PUHDAS CSS KARUSELLI VIUHKALLE */
         .native-carousel-container {
             display: flex;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
             width: 100vw;
             align-items: center;
-            padding: 0 calc(50vw - 40vw); /* Keskitys */
+            padding: 20px calc(50vw - 40vw); 
             gap: 20px;
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
+            perspective: 1000px; /* Mahdollistaa viuhka-3D:n */
         }
         @media (min-width: 400px) {
-             .native-carousel-container { padding: 0 calc(50vw - 160px); }
+             .native-carousel-container { padding: 20px calc(50vw - 160px); }
         }
         .native-carousel-container::-webkit-scrollbar { display: none; }
 
         /* =========================================
-           UUSI ILMOITUSTAULU (JYSK-TYYLI)
+           VÄYLÄTAULU & POST-IT
            ========================================= */
         .mini-corkboard {
-            background-color: #d1d5db; /* Huopa/kangas harmaa */
+            background-color: #d1d5db;
             background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.08"/></svg>');
-            border: 15px solid #d2b48c; /* Vaalea tammikehys */
+            border: 15px solid #d2b48c; 
             border-radius: 4px; box-shadow: 5px 15px 30px rgba(0,0,0,0.5);
             padding: 30px 15px; width: 95%; max-width: 500px; margin: 0 auto; margin-top: 30px; 
             display: flex; flex-direction: column; align-items: center; position: relative;
@@ -196,7 +207,7 @@
         }
 
         .post-it-note {
-            width: 250px; height: 250px; /* AITO NELIÖ */
+            width: 250px; height: 250px; 
             padding: 25px 20px 20px 20px;
             box-shadow: 3px 6px 15px rgba(0,0,0,0.3);
             position: relative; z-index: 15;
@@ -252,7 +263,7 @@
             margin-bottom: 15px;
         }
         .shop-floor {
-            width: 100%; height: 60px; background: #334155; /* Harmaa lattia */
+            width: 100%; height: 60px; background: #334155; 
             border-top: 8px solid #1e293b; border-radius: 0 0 12px 12px;
             box-shadow: 0 20px 30px rgba(0,0,0,0.6);
             transform: perspective(300px) rotateX(20deg); margin-top: -15px;
@@ -260,35 +271,28 @@
         }
 
         /* =========================================
-           UUSI TULOSOPASTE (FRISBEEGOLF-METALLIKYLTTI)
+           UUSI TULOSOPASTE (FRISBEEGOLF 3D METALLIKYLTTI)
            ========================================= */
-        .dg-sign-wrapper {
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            width: 95%; max-width: 500px; margin: 30px auto; position: relative;
-        }
         .dg-sign-top-bar {
-            width: 100%; height: 25px; background: #0284c7; border-radius: 15px 15px 0 0;
-            box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.4);
+            width: 100%; height: 40px; border-radius: 20px 20px 0 0;
+            background: linear-gradient(to bottom, #7dd3fc 0%, #0284c7 40%, #0369a1 80%, #082f49 100%);
+            box-shadow: inset 0 4px 6px rgba(255,255,255,0.6), inset 0 -4px 6px rgba(0,0,0,0.5), 0 10px 20px rgba(0,0,0,0.6);
             z-index: 3; position: relative;
         }
         .dg-sign-legs {
-            position: absolute; top: 12px; bottom: -50px; left: 0; right: 0;
-            display: flex; justify-content: space-between; z-index: 1;
+            position: absolute; top: 20px; bottom: -50px; left: 0; right: 0;
+            display: flex; justify-content: space-between; z-index: 1; padding: 0 15px;
         }
         .dg-sign-leg {
-            width: 25px; height: 100%; background: #0284c7;
-            box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.4);
+            width: 35px; height: 100%; border-radius: 17px;
+            background: linear-gradient(to right, #082f49 0%, #0284c7 20%, #7dd3fc 50%, #0369a1 80%, #082f49 100%);
+            box-shadow: 8px 10px 15px rgba(0,0,0,0.6), inset 2px 0 5px rgba(255,255,255,0.5);
         }
         .dg-sign-board {
-            width: 90%; background: #fff; margin-top: -5px; padding: 25px 20px;
-            border: 4px solid #0284c7; border-top: none;
-            box-shadow: 0 15px 25px rgba(0,0,0,0.4); z-index: 2; position: relative;
+            width: 85%; background: #fff; margin-top: -15px; padding: 25px 20px;
+            border: 6px solid #0284c7; border-top: none; border-radius: 0 0 8px 8px;
+            box-shadow: 0 15px 25px rgba(0,0,0,0.6); z-index: 2; position: relative;
         }
-
-        /* =========================================
-           UUSI ZERVANT-PALKKAKUITTI (INLINE-TYYLIT VARMISTAVAT TOIMIVUUDEN)
-           ========================================= */
-        /* Zervant tyylit kirjoitetaan suoraan JS:n puolella inline-tyyleinä, jottei selain hukkaa niitä */
 
         /* =========================================
            APPLE-TYYLINEN ALAPALKKI
@@ -319,19 +323,20 @@
         .nav-item .badge.money { background: var(--warning); color: #000; font-size: 0.9rem; padding: 4px 8px; right: 2px; top: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.5);}
 
         /* =========================================
-           AITO iOS PUSH NOTIFICATION
+           AITO iOS PUSH NOTIFICATION (Katoaa klikkaamalla)
            ========================================= */
         .apple-toast {
             position: fixed; top: -150px; left: 50%; transform: translateX(-50%);
             width: calc(100% - 20px); max-width: 400px;
-            background: rgba(30, 30, 30, 0.95); 
-            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            background: rgba(25, 25, 25, 0.85) !important; 
+            backdrop-filter: blur(15px) !important;
             border-radius: 20px; padding: 12px 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             display: flex; flex-direction: column; gap: 4px;
             z-index: 100000; transition: top 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             color: #fff; font-family: -apple-system, sans-serif;
-            border: 0.5px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            cursor: pointer; 
         }
         .apple-toast.show { top: 15px; }
         .apple-toast-header { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 2px; }
@@ -341,7 +346,7 @@
         .apple-toast-time { font-size: 0.75rem; font-weight: 400; color: #ebebf5; opacity: 0.6; }
         .apple-toast-body { display: flex; flex-direction: column; gap: 2px; padding-left: 2px; margin-top: 2px; }
         
-        /* ASETUSVALIKKO */
+        /* ASETUSVALIKKO & PELAAJAN LISÄYS MUSTALLA TEKSTILLÄ */
         .apple-settings-group { background: #fff; border-radius: 12px; overflow: hidden; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .apple-setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #e2e8f0; background: #fff; }
         .apple-setting-row:last-child { border-bottom: none; }
@@ -349,11 +354,14 @@
         .apple-setting-input { width: 70px; padding: 6px; border-radius: 6px; border: 2px solid #cbd5e1; font-size: 1rem; font-weight: 900; text-align: center; background: #f8fafc; color: #0f172a; }
         .apple-settings-title { font-size: 0.85rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; padding-left: 10px; letter-spacing: 1px; }
 
+        #gmNewPlayerName {
+            color: #000 !important; font-weight: bold; background: #fff !important;
+        }
     </style>
 </head>
 <body class="player-mode">
 
-    <div id="appleToast" class="apple-toast">
+    <div id="appleToast" class="apple-toast" onclick="this.classList.remove('show')">
         <div class="apple-toast-header">
             <div class="apple-toast-app-info">
                 <div class="apple-toast-icon" id="appleToastIcon">🥨</div>
@@ -395,30 +403,24 @@
         </div>
     </div>
 
-    <!-- PÄÄALUE: NÄKYMÄRAKENNE (Kaikissa wall-bg) -->
     <div id="app-main-area" class="cork-bg">
         
-        <!-- TULOKSET -->
-        <div id="view-receipt" class="app-view wall-bg">
+        <div id="view-receipt" class="app-view landscape-bg">
             <div id="board-receipt-wrapper" style="width:100%;"></div>
         </div>
 
-        <!-- PALKKA -->
         <div id="view-payslip" class="app-view wall-bg">
             <div id="payslip-content" style="width: 100%;"></div>
         </div>
 
-        <!-- OMAT KORTIT -->
         <div id="view-binder" class="app-view wall-bg">
             <div id="board-binder-wrapper" style="width:100%;"></div>
         </div>
 
-        <!-- KAUPPA -->
         <div id="view-shop" class="app-view wall-bg">
             <div id="board-shop-wrapper" style="width:100%;"></div>
         </div>
 
-        <!-- VÄYLÄNÄKYMÄ SEINÄTAUSTALLA -->
         <div id="view-hole" class="app-view wall-bg" style="display: flex;">
             <div id="hole-content" style="display: flex; flex-direction: column; align-items: center; width: 100%; padding-top: 10px; flex: 1;"></div>
             
@@ -431,7 +433,6 @@
 
     </div>
 
-    <!-- ALAPALKKI -->
     <div class="modern-bottom-nav" id="pocketContainer" style="display:none;">
         <div class="nav-item" onclick="window.switchView('view-receipt')">
             <span class="icon">🧾</span>
@@ -457,7 +458,6 @@
         </div>
     </div>
 
-    <!-- MODERNISOITU ASETUSVALIKKO -->
     <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
@@ -527,7 +527,7 @@
                 <div class="apple-settings-title">Pelaajien Hallinta (GM)</div>
                 <div class="apple-settings-group">
                     <div class="apple-setting-row" style="padding: 10px 15px;">
-                        <input type="text" id="gmNewPlayerName" placeholder="Uusi pelaaja..." style="flex:1; padding:10px; border-radius:8px; border:2px solid #cbd5e1; margin-right:10px; font-size:1rem; font-weight:bold;">
+                        <input type="text" id="gmNewPlayerName" placeholder="Uusi pelaaja..." style="flex:1; padding:10px; border-radius:8px; border:2px solid #cbd5e1; margin-right:10px; font-size:1rem;">
                         <button class="btn btn-success btn-modern" style="padding:10px 15px;" onclick="if(window.gmAddPlayer) window.gmAddPlayer()">LISÄÄ</button>
                     </div>
                     <div id="adminPlayerList"></div>
@@ -553,7 +553,6 @@
         </div>
     </div>
 
-    <!-- KORTTIEN HINNASTO MODAALI -->
     <div id="cardPricingModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
@@ -586,6 +585,13 @@
                 <h2>VÄYLÄ <span id="scoreModalHoleNum">1</span></h2>
                 <p>Par <strong id="scoreModalPar">3</strong></p>
             </div>
+            
+            <div id="scoreModalTaskInfo" style="background:#fef08a; padding:10px; border-radius:8px; margin-bottom:20px; box-shadow:0 2px 5px rgba(0,0,0,0.2); display:none;">
+                <div style="font-weight:900; font-size:0.85rem; color:#666; text-transform:uppercase;">🏆 Tehtävä</div>
+                <div id="scoreModalTaskName" style="font-size:1.2rem; font-weight:900; color:#111; margin-bottom:4px;"></div>
+                <div id="scoreModalTaskDesc" style="font-size:0.9rem; font-weight:700; color:#333;"></div>
+            </div>
+
             <div id="scoreInputsContainer" style="margin-bottom: 20px;"></div>
             <div style="margin-bottom: 25px; border-top: 2px dashed var(--ink-blue); padding-top:15px;">
                 <label style="font-size: 1.2rem; font-weight: 700; margin-bottom: 10px; display: block; font-family:'Kalam', cursive; color:var(--ink-blue);">Kuka suoritti tehtävän?</label>
@@ -600,20 +606,21 @@
         <div id="zoomModalContent"></div>
     </div>
 
-    <!-- KORTTIKARUSELLIN MODAALI (LISÄTTY X-NAPPI YLÄKULMAAN) -->
-    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:center; align-items:center; background:rgba(0,0,0,0.95);">
-        <!-- SULKUNAPPI TÄÄLLÄ -->
+    <div id="cardDetailModal" class="winner-overlay" style="z-index:10000; flex-direction:column; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.95); padding: 20px 0;">
         <button onclick="document.getElementById('cardDetailModal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); border: 2px solid #fff; border-radius: 50%; width: 45px; height: 45px; color: #fff; font-size: 1.8rem; font-weight: bold; z-index: 10001; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
         
-        <div id="cardCarousel" class="native-carousel-container" style="width:100%;"></div>
-        <div style="text-align:center; color:rgba(255,255,255,0.6); font-size:0.8rem; font-weight:900; text-transform:uppercase; margin-bottom:15px; margin-top:10px;">👆 PYYHKÄISE KORTTEJA SIVULLE 👆</div>
-        <div id="cardDetailActionArea" style="width:100%; max-width:400px; margin:0 auto; padding: 0 20px;"></div>
+        <div id="cardCarousel" class="native-carousel-container" style="flex: 1; width:100%; display:flex; align-items:center; margin-top: 40px;"></div>
+        
+        <div style="width:100%; display:flex; flex-direction:column; justify-content:flex-end; padding: 0 20px;">
+            <div style="text-align:center; color:rgba(255,255,255,0.6); font-size:0.8rem; font-weight:900; text-transform:uppercase; margin-bottom:15px;">👆 PYYHKÄISE KORTTEJA SIVULLE 👆</div>
+            <div id="cardDetailActionArea" style="width:100%; max-width:400px; margin:0 auto; min-height: 140px; display:flex; flex-direction:column; justify-content:flex-end;"></div>
+        </div>
     </div>
 
-    <script src="tasks.js?v=1200"></script>
-    <script type="module" src="script.js?v=1200"></script>
-    <script src="game.js?v=1200"></script>
-    <script src="ui.js?v=1200"></script>
+    <script src="tasks.js?v=1400"></script>
+    <script type="module" src="script.js?v=1400"></script>
+    <script src="game.js?v=1400"></script>
+    <script src="ui.js?v=1400"></script>
     
     <script>
         if ('serviceWorker' in navigator) {
