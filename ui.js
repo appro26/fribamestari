@@ -67,6 +67,17 @@ window.showZoomModal = function(html) {
     }
 };
 
+// PUUTTUU AIEMMIN! TÄMÄ AVAA KORTTIKARUSELLIN KANSIOSTA JA KAUPASTA.
+window.openCardDetail = function(cId, mode) {
+    window.carouselCards = [cId];
+    window.carouselCurrentMode = mode;
+    window.carouselCurrentIndex = 0;
+    window.renderCarousel();
+    if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
+    window.showModalSafe('cardDetailModal');
+    setTimeout(() => { if(window.initNativeCarousel) window.initNativeCarousel(); }, 100);
+};
+
 window.showEventCard = function(cId, target, by) {
     window.carouselCards = [cId];
     window.carouselCurrentMode = 'event';
@@ -351,7 +362,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
                 let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
                 
-                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:6px; border-radius:6px; font-size:0.8rem; text-align:center; font-weight:bold; margin-top:auto; width:100%;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
+                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:8px; border-radius:8px; font-size:0.9rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
                 let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml);
 
                 html += `
@@ -366,7 +377,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
         html += `</div>`;
     }
 
-    html += `</div>`; 
+    html += `</div>`; // Sulkee mini-corkboardin
     container.innerHTML = html;
 };
 
@@ -442,7 +453,7 @@ window.renderPayslipView = function(hIndex) {
 };
 
 // ==============================================
-// KANSIO (OMAT KORTIT)
+// KANSIO (OMAT KORTIT) - MAKSIMOITU TILA ILMAN NAPPEJA
 // ==============================================
 window.renderBinderOnBoard = function() {
     let wrapper = el('board-binder-wrapper');
@@ -463,10 +474,10 @@ window.renderBinderOnBoard = function() {
             if(!cDef) return; 
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
             let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">👆 KLIKKAA 👆</div>`;
-            let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml);
+            let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
             
             cardsHtml += `
-            <div style="cursor:pointer; width:100%; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.5); transition:transform 0.1s; border-radius:12px;" onclick="window.openCardDetail('${cId}', 'sell')">
+            <div style="cursor:pointer; width:100%; max-width:280px; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.5); transition:transform 0.1s; border-radius:12px;" onclick="window.openCardDetail('${cId}', 'sell')">
                 ${fullCardHtml}
             </div>`;
         });
@@ -482,7 +493,7 @@ window.renderBinderOnBoard = function() {
 };
 
 // ==============================================
-// VÄLIPALA-AUTOMAATTI (KAUPPA) - FULL 3D
+// VÄLIPALA-AUTOMAATTI (KAUPPA) - SUORISTETTU KONE, EI NAPPEJA ALLA
 // ==============================================
 window.renderShopOnBoard = function() {
     let wrapper = document.getElementById('board-shop-wrapper');
@@ -509,10 +520,12 @@ window.renderShopOnBoard = function() {
                 if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[item.id] !== undefined) itemPrice = window.gameSettings.cardPrices[item.id];
 
                 let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
-                let fullCardHtml = window.generateCardHTML(item, false, extraHtml);
+                let fullCardHtml = window.generateCardHTML(item, false, extraHtml, false);
                 
+                // Jätetään kaupan napit (Osta/Varaa) pois tästä!
+                // Kortit ovat isoja, kun niitä klikkaa, aukeaa karuselli josta ne ostetaan.
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                    <div style="position:relative; width:100%; max-width:260px; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="cursor:pointer; width:100%; margin-bottom:10px; box-shadow:0 8px 15px rgba(0,0,0,0.6); border-radius:12px;" onclick="window.openCardDetail('${item.id}', 'shop')">
                             ${fullCardHtml}
                         </div>
@@ -521,7 +534,7 @@ window.renderShopOnBoard = function() {
                 `;
             } else {
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                    <div style="position:relative; width:100%; max-width:260px; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="width:100%; aspect-ratio: 2/3; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:12px; border:6px dashed #333; margin-bottom:10px;">
                             <div style="color:#666; font-weight:900; font-size:1.8rem; letter-spacing:2px; transform:rotate(-45deg);">TYHJÄ</div>
                         </div>
@@ -547,10 +560,10 @@ window.renderShopOnBoard = function() {
             if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[rId] !== undefined) itemPrice = window.gameSettings.cardPrices[rId];
 
             let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
-            let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml);
+            let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml, false);
             
             reserveHtml += `
-                <div style="width:48%; display:flex; flex-direction:column; align-items:center;">
+                <div style="width:48%; max-width:260px; display:flex; flex-direction:column; align-items:center;">
                     <div style="width:100%; cursor:pointer; position:relative; margin-bottom:10px; border-radius:12px; box-shadow:0 8px 15px rgba(0,0,0,0.6);" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
                         <div style="position:absolute; top:-10px; right:-10px; background:#fbbf24; color:#000; padding:6px 10px; font-weight:900; font-size: 0.9rem; border-radius:8px; z-index:30; border: 3px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.8);">🔒 VARATTU</div>
                         ${fullCardHtml}
@@ -562,11 +575,11 @@ window.renderShopOnBoard = function() {
         reserveHtml += `</div></div>`;
     }
 
+    // UUSI 3D AUTOMAATTI JALOILLA JA LATTIALLA (Suorassa, ei vinossa!)
     wrapper.innerHTML = `
     <div class="shop-3d-container">
         <div class="shop-machine">
             
-            <!-- LED Header -->
             <div style="background: #000; border-radius: 8px; border: 2px solid #222; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(239,68,68,0.15);">
                 <div style="color: #ef4444; font-family: monospace; font-size: 1.6rem; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px #ef4444;">FRIBAMART</div>
                 <div style="background: #022c22; border: 2px solid #064e3b; padding: 5px 15px; border-radius: 4px; box-shadow: inset 0 0 10px #000; text-align: center;">
@@ -575,7 +588,6 @@ window.renderShopOnBoard = function() {
                 </div>
             </div>
 
-            <!-- Lasinen Sisäosa -->
             <div class="shop-glass">
                 <div style="position: absolute; top: 0; left: -50%; width: 200%; height: 100%; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.05) 50%, transparent 55%); z-index: 5; pointer-events: none;"></div>
                 ${shelvesHtml}
@@ -583,7 +595,6 @@ window.renderShopOnBoard = function() {
 
             ${reserveHtml}
 
-            <!-- Alapaneeli (Numpad ja PUSH-luukku) -->
             <div style="background: #0f172a; margin-top: 20px; padding: 15px; border-radius: 8px; border: 2px solid #334155; display: flex; justify-content: space-between; align-items: flex-start; box-shadow: inset 0 0 15px #000;">
                 <div style="width: 90px; background: #000; padding: 10px; border-radius: 6px; border: 2px solid #1e293b; box-shadow: inset 0 0 10px #000;">
                    <div style="color: #10b981; text-align: right; font-family: monospace; border: 1px solid #334155; padding: 2px 5px; margin-bottom: 8px; font-size: 0.9rem;">12.00</div>
@@ -597,12 +608,10 @@ window.renderShopOnBoard = function() {
             </div>
         </div>
         
-        <!-- Jalat -->
         <div class="shop-machine-legs">
             <div class="shop-leg"></div>
             <div class="shop-leg"></div>
         </div>
-        <!-- Lattian varjo -->
         <div style="width: 100%; height: 15px; background: rgba(0,0,0,0.6); border-radius: 50%; filter: blur(5px); margin: -5px auto 0 auto; z-index: 0;"></div>
     </div>
     `;
@@ -760,7 +769,7 @@ window.saveCardPrices = function() {
 };
 
 // ==============================================
-// KARUSELLI JA NAPPULAT (Kaupassa OSTA ja VARAA)
+// KARUSELLI JA NAPPULAT (TÄÄLLÄ OSTA & VARAA NAPIT!)
 // ==============================================
 window.isFlipping = false;
 window.flippedCards = new Set();
@@ -857,7 +866,9 @@ window.renderCarousel = function() {
     container.innerHTML = html;
 };
 
-// TÄSSÄ LISÄTTIIN KAUPAN OSTA & VARAA NAPIT KARUSELLIIN
+// ==============================================
+// NAPPULAT (PELAA / OSTA / VARAA)
+// ==============================================
 window.renderCarouselActionButtons = function() {
     let mode = window.carouselCurrentMode;
     let cId = window.carouselCards[window.carouselCurrentIndex];
@@ -890,12 +901,12 @@ window.renderCarouselActionButtons = function() {
             let isRes = mode === 'shop_res';
             let isResFull = me.reservations ? Object.values(me.reservations).filter(Boolean).length >= 2 : false;
             
-            btnHtml += `<button class="btn ${canAfford ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canAfford ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cDef.id}', ${itemPrice}, ${isRes})">OSTA KORTTI (${itemPrice} P)</button>`;
-            
-            if (!isRes) {
-                btnHtml += `<button class="btn btn-primary btn-modern" ${isResFull ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.reserveShopItem('${cDef.id}')">${isResFull ? 'VARASTO TÄYNNÄ' : 'VARAA KORTTI'}</button>`;
+            if (isRes) {
+                btnHtml += `<button class="btn ${canAfford ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canAfford ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cDef.id}', ${itemPrice}, true)">LUNASTA KORTTI (${itemPrice} P)</button>`;
+                btnHtml += `<button class="btn btn-danger btn-modern" style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.cancelReservation('${cDef.id}')">PERU VARAUS</button>`;
             } else {
-                 btnHtml += `<button class="btn btn-danger btn-modern" style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.cancelReservation('${cDef.id}')">PERU VARAUS</button>`;
+                btnHtml += `<button class="btn ${canAfford ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canAfford ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.buyShopItem('${cDef.id}', ${itemPrice}, false)">OSTA KORTTI (${itemPrice} P)</button>`;
+                btnHtml += `<button class="btn btn-primary btn-modern" ${isResFull ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.reserveShopItem('${cDef.id}')">${isResFull ? 'VARASTO TÄYNNÄ' : 'VARAA KORTTI'}</button>`;
             }
         }
     }
