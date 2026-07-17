@@ -2,7 +2,7 @@ window.allCards = [];
 window.holeRules = [];
 
 // ==========================================
-// ELÄINTEN GRAFIIKAT JA SOLVAUKSET (Bugikorjaus 9)
+// ELÄINTEN GRAFIIKAT JA SOLVAUKSET
 // Uudet yksinkertaiset ja tunnistettavat eläimet (Kissa, Koira, Possu, Pöllö, Karhu)
 // ==========================================
 window.doodleSVGs = [
@@ -440,34 +440,24 @@ window.getCardPlayCost = function(cId) {
 };
 
 // ==========================================
-// LAATUTARKISTETUT VÄYLÄSÄÄNNÖT & TEHTÄVÄT
+// UUDET KILPAILULLISET VÄYLÄHAASTEET (Bugikorjaus 4)
+// Kaikki suoritetaan automaattisesti normaalin pelin ohessa!
 // ==========================================
 window.holeRules = [
-    // Säilytetyt alkuperäiset
-    { type: "rule", n: "Putteriväylä", d: "Koko väylä on pelattava pelkillä puttereilla (mukaan lukien avaus)." },
-    { type: "rule", n: "Midariväylä", d: "Avaus ja lähestymiset on pakko heittää midareilla." },
-    { type: "rule", n: "Haaraputti-pakko", d: "Kaikki putit on suoritettava haaraputtina." },
-    { type: "rule", n: "Vain vakain", d: "Väylä on pelattava bägisi vakaimmalla kiekolla." },
-    
-    // Uudet luovat säännöt
-    { type: "rule", n: "Äänetön Griini", d: "C1-alueella (10m korista) ei saa puhua sanaakaan. Puhumisesta +1 tulokseen." },
-    { type: "rule", n: "Vasuri-avaus", d: "Kaikkien on pakko heittää avausheitto heikommalla kädellään." },
-    { type: "rule", n: "Sokkoputti", d: "Jokaisen pelaajan ensimmäinen putti on suoritettava silmät kiinni." },
-    { type: "rule", n: "Kiekko-ruletti", d: "Nosta bägistäsi sokkona satunnainen kiekko ja avaa väylä sillä." },
-    { type: "rule", n: "Rolleri-pakko", d: "Avausheitto on pakko heittää rollerina (kiekon osuttava maahan pystyssä)." },
-    { type: "rule", n: "Ei vauhtia", d: "Kaikki heitot koko väylällä on suoritettava täysin paikaltaan." },
-    { type: "rule", n: "Kiekkopoika", d: "Huonoimman avauksen heittänyt joutuu hakemaan muiden kiekot koria kohti käveltäessä." },
-    { type: "rule", n: "Tuplaputit", d: "Jos ensimmäinen putti ei mene sisään, saat heti yrittää toisella kiekolla uudestaan." },
+    // Bountyt (Yksi voittaja, kilpailuheitot)
+    { type: "bounty", n: "CTP (Closest to Pin)", d: "Pelaaja, jonka ensimmäinen heitto (avaus) jää lähimmäs koria, voittaa tehtävän." },
+    { type: "bounty", n: "Pisin Draivi", d: "Pelaaja, jonka avausheitto lentää pisimmälle JA jää turvallisesti pelattavalle alueelle (ei OB/Mando-virhettä), voittaa." },
+    { type: "bounty", n: "Pisin Putti", d: "Pelaaja, joka upottaa pisimmän putin (mitataan askeleilla), voittaa tehtävän." },
+    { type: "bounty", n: "Rautamies", d: "Pelaaja, joka ensimmäisenä osuu korin rautoihin (yläpanta, alahäkki tai tolppa) ILMAN että kiekko jää sisään, voittaa säälikolikon (tehtävän)." },
+    { type: "bounty", n: "Bullseye", d: "Ensimmäinen pelaaja, jonka heitto pysähtyy alle 3 metrin säteelle korista (ei putti), voittaa." },
+    { type: "bounty", n: "Pisin Rulli", d: "Pelaaja, jonka kiekko rullaa (tahallaan tai vahingossa) pisimmän matkan maata pitkin, voittaa." },
+    { type: "bounty", n: "Puu-CTP", d: "Pelaaja, jonka kiekko osuu ensimmäisenä mihin tahansa puuhun, voittaa tehtävän." },
+    { type: "bounty", n: "Grip-lock pelastus", d: "Pelaaja, joka heittää selvän gripparin tai muuten surkean avauksen, mutta onnistuu silti pelastamaan Par-tuloksen, voittaa." },
+    { type: "bounty", n: "Pisin putti -ralli", d: "Kaikki saavat yrittää kerran yli 10m puttia korin ulkopuolelta. Lähimmäksi koria osunut (tai sisään laittanut) voittaa." },
 
-    // Säilytetyt bountyt
-    { type: "bounty", n: "Tarkka-ampuja", d: "Pelaaja, kenen avausheitto on lähimpänä koria, voittaa tehtävän." },
-    { type: "bounty", n: "Pelastaja", d: "Ensimmäinen pelaaja, joka tekee onnistuneen pitkän putin (C2), voittaa." },
-    { type: "bounty", n: "Puu-magneetti", d: "Pelaaja, jolla on eniten puuosumia tällä väylällä, MUTTA joka pelaa väylän silti Par-tulokseen tai paremmin, voittaa." },
-    
-    // Uudet luovat bountyt
-    { type: "bounty", n: "Pituusputti", d: "Pelaaja, joka puttaa kaikkein pisimmältä sisään (yli 5m), voittaa tehtävän." },
-    { type: "bounty", n: "Grip-lock Pelastus", d: "Pelaaja, joka heittää ilmiselvän gripparin tai epäonnistuneen avauksen, mutta pelastaa silti parin, voittaa." },
-    { type: "bounty", n: "Kakkosen Kuningas", d: "Pelaaja, jonka toinen heitto on väylän pisin ja tarkin, voittaa." },
-    { type: "bounty", n: "Parkkeeraaja", d: "Pelaaja, jonka avausheitto jää alle 3 metrin päähän korista, voittaa." },
-    { type: "bounty", n: "Tolppa-apina", d: "Ensimmäinen pelaaja, joka osuu putatessa rautoihin menemättä sisään, voittaa säälinapin." }
+    // Säännöt (Kaikkia koskevat tilanteet / erikoishaasteet)
+    { type: "rule", n: "C1-Ralli", d: "KAIKKI pelaajat, jotka saavat avauksensa tai lähestymisensä (C2 ulkopuolelta) C1-rinkiin (10m), voittavat tehtävän." },
+    { type: "rule", n: "Kuoleman putti", d: "KAIKKI pelaajat, jotka upottavat ensimmäisen puttinsa C1-alueelta (tai kauempaa), voittavat tehtävän. Ohi menneestä putista ei rangaista, mutta tehtävän menettää." },
+    { type: "rule", n: "Bogey-Vapaa", d: "KAIKKI pelaajat, jotka pelaavat tämän väylän ilman yhtäkään rangaistusta (OB, mando) ja tekevät vähintään Par-tuloksen, voittavat tehtävän." },
+    { type: "rule", n: "Tyylipisteet", d: "Pelaaja, joka suorittaa näyttävimmän / tyylikkäimmän heiton tällä väylällä (ryhmän huutoäänestys päättää), voittaa tehtävän." }
 ];
