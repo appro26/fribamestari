@@ -50,10 +50,41 @@ window.claimIdentity = function() {
 };
 
 // ==============================================
-// GLOBAALIN PAKAN HALLINTA
+// GLOBAALIN PAKAN HALLINTA (DUPLIKAATTIEN ESTO)
 // ==============================================
-window.createFullDeck = function() {
-    let deck = window.allCards.map(c => c.id);
+
+// Hakee listan kaikista korteista, jotka ovat tällä hetkellä pelaajilla tai kaupoissa
+window.getCardsInUse = function(players, currentShops = {}) {
+    let inUse = [];
+    (players || []).filter(Boolean).forEach(p => {
+        if(p.cards) {
+            let cArr = Array.isArray(p.cards) ? p.cards : Object.values(p.cards);
+            inUse.push(...cArr.filter(Boolean));
+        }
+        if(p.reservations) {
+            let rArr = Array.isArray(p.reservations) ? p.reservations : Object.values(p.reservations);
+            inUse.push(...rArr.filter(Boolean));
+        }
+    });
+    Object.values(currentShops || {}).forEach(shopArr => {
+        if(shopArr) {
+            let sArr = Array.isArray(shopArr) ? shopArr : Object.values(shopArr);
+            sArr.forEach(c => { if(c && c.id) inUse.push(c.id); });
+        }
+    });
+    return [...new Set(inUse)];
+};
+
+// Luo uuden pakan ja varmistaa, ettei tällä hetkellä käytössä olevia kortteja laiteta mukaan
+window.createFullDeck = function(excludeIds = []) {
+    let deck = window.allCards.map(c => c.id).filter(id => !excludeIds.includes(id));
+    
+    // Varmistus: Jos pelaajilla on syli täynnä aivan kaikkia kortteja ja pakka menisi täysin nollaan
+    if (deck.length === 0) {
+        deck = window.allCards.map(c => c.id);
+    }
+    
+    // Sekoitetaan pakka
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -61,10 +92,15 @@ window.createFullDeck = function() {
     return deck;
 };
 
-window.drawFromDeck = function(deckArr, type, level) {
-    if (!deckArr || deckArr.length === 0) {
-        deckArr.push(...window.createFullDeck());
-    }
+// Nostaa pakasta pyydetyn kortin. Jos pakka on tyhjä, luo uuden pakan vähentäen pelissä olevat kortit!
+window.drawFromDeck = function(deckArr, type, level, inUseIds = []) {
+    let refillIfNeeded = () => {
+        if (!deckArr || deckArr.length === 0) {
+            deckArr.push(...window.createFullDeck(inUseIds));
+        }
+    };
+    
+    refillIfNeeded();
 
     let idx = deckArr.findIndex(cId => {
         let def = window.allCards.find(c => c.id === cId);
@@ -77,6 +113,7 @@ window.drawFromDeck = function(deckArr, type, level) {
     if (idx !== -1) {
         return deckArr.splice(idx, 1)[0];
     } else {
+        // Fallback: Haetaan edes oikean tyyppinen (Sabotaasi / Helpotus)
         let fallbackIdx = deckArr.findIndex(cId => {
             let def = window.allCards.find(c => c.id === cId);
             if (!def) return false;
@@ -85,18 +122,35 @@ window.drawFromDeck = function(deckArr, type, level) {
         if (fallbackIdx !== -1) {
             return deckArr.splice(fallbackIdx, 1)[0];
         }
-        return deckArr.shift();
+        
+        // Viimeinen oljenkorsi: jos edes tyyppiä ei löydy, annetaan mitä pakassa on
+        if (deckArr.length > 0) {
+            return deckArr.shift();
+        } else {
+            refillIfNeeded();
+            return deckArr.shift();
+        }
     }
 };
 
-window.generatePersonalShop = function(deckArr) {
+window.generatePersonalShop = function(deckArr, inUseIds = []) {
     let shopCards = [];
-    shopCards.push(window.drawFromDeck(deckArr, null, 3));
-    shopCards.push(window.drawFromDeck(deckArr, null, 3));
-    shopCards.push(window.drawFromDeck(deckArr, null, 2));
-    shopCards.push(window.drawFromDeck(deckArr, null, 2));
-    shopCards.push(window.drawFromDeck(deckArr, null, 1));
-    shopCards.push(window.drawFromDeck(deckArr, null, 1));
+    
+    // Automaatti päivittää inUse-listaa reaaliajassa nostojen aikana estäen duplikaatit samassa kaupassa
+    let drawAndTrack = (type, level) => {
+        let cId = window.drawFromDeck(deckArr, type, level, inUseIds);
+        if (cId) {
+            shopCards.push(cId);
+            inUseIds.push(cId);
+        }
+    };
+    
+    drawAndTrack(null, 3);
+    drawAndTrack(null, 3);
+    drawAndTrack(null, 2);
+    drawAndTrack(null, 2);
+    drawAndTrack(null, 1);
+    drawAndTrack(null, 1);
     
     return shopCards.map(id => window.allCards.find(c => c.id === id) || null);
 };
@@ -232,6 +286,7 @@ window.submitScores = function() {
     
     let holePointBreakdowns = {};
     let currentDeck = window.activeHole && window.activeHole.deck ? [...window.activeHole.deck] : window.createFullDeck();
+    let nextShop = {}; // Alustetaan hyvissä ajoin, jotta sitä voidaan käyttää duplikaattisuojana
 
     nextPlayers.forEach(p => {
         let res = playerResults[p.name]; 
@@ -283,7 +338,7 @@ window.submitScores = function() {
         p.cards = Array.isArray(p.cards) ? p.cards : Object.values(p.cards || {}); 
         p.cards = p.cards.filter(Boolean);
         
-        // Pelaajan korttinostot asetusten mukaan
+        // Pelaajan korttinostot (takaa vähintään yhden sabotaasin ja yhden helpotuksen)
         if (!res.denyDraw) {
             let cardsToDraw = [];
             
@@ -308,16 +363,18 @@ window.submitScores = function() {
             
             cardsToDraw.forEach(drawReq => {
                 if (p.cards.length < limit) {
-                    let drawnId = window.drawFromDeck(currentDeck, drawReq.type, null);
+                    let inUse = window.getCardsInUse(nextPlayers, nextShop);
+                    let drawnId = window.drawFromDeck(currentDeck, drawReq.type, null, inUse);
                     if (drawnId) p.cards.push(drawnId);
                 }
             });
         }
     });
 
-    let nextShop = {};
+    // Tuotetaan uudet kaupat
     nextPlayers.forEach(p => { 
-        nextShop[p.name] = window.generatePersonalShop(currentDeck); 
+        let inUse = window.getCardsInUse(nextPlayers, nextShop);
+        nextShop[p.name] = window.generatePersonalShop(currentDeck, inUse); 
     });
 
     let nextActiveHole = { 
@@ -375,8 +432,10 @@ window.executeCardPlay = function(targetName) {
         me.cards = me.cards.filter(Boolean);
         let actualIndex = me.cards.indexOf(card.id);
         if (actualIndex !== -1) {
-            let removedCard = me.cards.splice(actualIndex, 1)[0]; 
-            nextDeck.push(removedCard); // Palautetaan poistopakkaan!
+            me.cards.splice(actualIndex, 1); 
+            // HUOM: Korttia EI siirretä nextDeckin loppuun.
+            // Pelattu kortti vain katoaa pelaajalta, ja vapautuu siten takaisin yhteiseen kiertoon,
+            // kun pakka seuraavan kerran tyhjenee ja sekoitetaan uudelleen!
         }
         
         let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(card.id) : card.cost;
@@ -429,7 +488,6 @@ window.upgradeCard = function(cId) {
     let idx = me.cards.indexOf(cId);
     if(idx !== -1) { 
         me.cards[idx] = nextDef.id; 
-        nextDeck.push(cId); 
     }
     
     if(!me.upgradedThisHole) me.upgradedThisHole = [];
@@ -461,8 +519,7 @@ window.forceDiscard = function(cId) {
     let idx = me.cards.indexOf(cId);
     
     if(idx !== -1) {
-        let removedCard = me.cards.splice(idx, 1)[0];
-        nextDeck.push(removedCard); 
+        me.cards.splice(idx, 1);
         
         let sellReward = cDef.level === 3 ? 4 : (cDef.level === 2 ? 2 : 1);
         me.score = (parseInt(me.score) || 0) + sellReward; 
@@ -636,15 +693,21 @@ window.startMeilahti = function() {
         return { ...p, score: 3, dgScore: 0, cards: [], reservations: [], upgradedThisHole: [] }; 
     });
     
+    let personalizedShop = {}; 
     let initialDeck = window.createFullDeck();
     
     nextPlayers.forEach(p => { 
-        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', null)); 
-        p.cards.push(window.drawFromDeck(initialDeck, 'buff', null)); 
+        let inUse = window.getCardsInUse(nextPlayers, personalizedShop);
+        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', null, inUse)); 
+        
+        inUse = window.getCardsInUse(nextPlayers, personalizedShop);
+        p.cards.push(window.drawFromDeck(initialDeck, 'buff', null, inUse)); 
     });
     
-    let personalizedShop = {}; 
-    nextPlayers.forEach(p => { personalizedShop[p.name] = window.generatePersonalShop(initialDeck); });
+    nextPlayers.forEach(p => { 
+        let inUse = window.getCardsInUse(nextPlayers, personalizedShop);
+        personalizedShop[p.name] = window.generatePersonalShop(initialDeck, inUse); 
+    });
     
     let nextActiveHole = { 
         rule: window.holeRules[Math.floor(Math.random() * window.holeRules.length)], 
@@ -682,15 +745,21 @@ window.startCustomCourse = function() {
         return { ...p, score: 3, dgScore: 0, cards: [], reservations: [], upgradedThisHole: [] }; 
     });
     
+    let personalizedShop = {}; 
     let initialDeck = window.createFullDeck();
     
     nextPlayers.forEach(p => { 
-        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', null)); 
-        p.cards.push(window.drawFromDeck(initialDeck, 'buff', null)); 
+        let inUse = window.getCardsInUse(nextPlayers, personalizedShop);
+        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', null, inUse)); 
+        
+        inUse = window.getCardsInUse(nextPlayers, personalizedShop);
+        p.cards.push(window.drawFromDeck(initialDeck, 'buff', null, inUse)); 
     });
     
-    let personalizedShop = {}; 
-    nextPlayers.forEach(p => { personalizedShop[p.name] = window.generatePersonalShop(initialDeck); });
+    nextPlayers.forEach(p => { 
+        let inUse = window.getCardsInUse(nextPlayers, personalizedShop);
+        personalizedShop[p.name] = window.generatePersonalShop(initialDeck, inUse); 
+    });
     
     let nextActiveHole = { 
         rule: window.holeRules[0], shop: personalizedShop, playedCards: {}, 
@@ -797,3 +866,240 @@ window.gmKickPlayer = function(pName) {
         window.logEvent(`GM potki pelaajan ${pName} ulos pelistä.`);
     }
 };
+
+
+// ==============================================
+// KAMERAN OHJAUS, ZOOM JA KOSKETUS (camera.js)
+// ==============================================
+
+window.camCurrent = { x: 0, y: 0, scale: 1 };
+window.camTarget = { x: 0, y: 0, scale: 1 };
+
+window.getRightXPanel = function() {
+    if(!window.currentCourse || !window.currentCourse.pars) return 2000;
+    let cols = Math.min(9, window.currentCourse.pars.length);
+    let startX = window.startXHoles || 1000;
+    return startX + (cols * 380) + ((cols - 1) * 80) + 150;
+};
+
+window.applyBounds = function(customTarget) {
+    let target = customTarget || window.camTarget; 
+    let boardEl = document.getElementById('corkboard-surface');
+    if(!boardEl) return target;
+    
+    let rightXPanel = window.getRightXPanel();
+    let corkW = rightXPanel + 400;
+    let boardW = corkW + 1500; 
+    
+    let totalHoles = (window.currentCourse && window.currentCourse.pars) ? window.currentCourse.pars.length : 18; 
+    let cols = Math.min(9, totalHoles); 
+    let rows = Math.ceil(totalHoles / cols);
+    let boardH = Math.max((rows * 1010) + 200, 2500) + 800; 
+    
+    let minX = window.innerWidth - boardW * target.scale - 1000;
+    let maxX = 1000;
+    let minY = window.innerHeight - boardH * target.scale - 1000;
+    let maxY = 1000;
+
+    if (target.x < minX) target.x = minX;
+    if (target.x > maxX) target.x = maxX;
+    if (target.y < minY) target.y = minY;
+    if (target.y > maxY) target.y = maxY;
+    
+    return target;
+};
+
+window.animFrame = null;
+window.animateCameraTo = function(tX, tY, tScale) {
+    if(window.animFrame) cancelAnimationFrame(window.animFrame);
+    let sX = window.camCurrent.x, sY = window.camCurrent.y, sScale = window.camCurrent.scale;
+    
+    let target = window.applyBounds({x: tX, y: tY, scale: tScale});
+    tX = target.x; tY = target.y; tScale = target.scale;
+
+    let startTime = performance.now();
+    let duration = 350; 
+    
+    function step(time) {
+        let p = (time - startTime) / duration;
+        if(p > 1) p = 1;
+        let ease = 1 - Math.pow(1 - p, 3); 
+        
+        window.camCurrent.x = sX + (tX - sX) * ease;
+        window.camCurrent.y = sY + (tY - sY) * ease;
+        window.camCurrent.scale = sScale + (tScale - sScale) * ease;
+        window.camTarget = {...window.camCurrent}; 
+        
+        let boardEl = document.getElementById('corkboard-surface');
+        if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
+        if(p < 1) window.animFrame = requestAnimationFrame(step);
+    }
+    window.animFrame = requestAnimationFrame(step);
+};
+
+// --- KAMERAN KOHDISTUKSET NAPPEIHIN ---
+window.zoomToHole = function(hIndex) {
+    if(!window.currentCourse || !window.currentCourse.pars) return;
+    let cols = Math.min(9, window.currentCourse.pars.length);
+    let col = (hIndex - 1) % cols;
+    let row = Math.floor((hIndex - 1) / cols);
+    
+    let startX = window.startXHoles || 1000;
+    let cellX = startX + 50 + col * 460; 
+    let cellY = 150 + row * 1010; 
+    
+    let targetX = (window.innerWidth - 380) / 2 - cellX; 
+    let targetY = 10 - cellY;
+    
+    window.animateCameraTo(targetX, targetY, 1);
+};
+
+window.zoomToCurrentHole = function() { window.zoomToHole(window.currentHoleIndex || 1); };
+window.zoomToPreviousHole = function() { let prev = Math.max(1, (window.currentHoleIndex || 1) - 1); window.zoomToHole(prev); };
+
+window.zoomToBinder = function() { 
+    let tScale = Math.min(1.0, window.innerWidth / 550); 
+    let wrapper = document.getElementById('board-binder-wrapper');
+    let tY = 50; let tX = 50;
+    if(wrapper) {
+        let wX = parseInt(wrapper.style.left) || 0;
+        let wY = parseInt(wrapper.style.top) || 0;
+        tX = (window.innerWidth - 500 * tScale) / 2 - wX * tScale; 
+        tY = 50 - wY * tScale; 
+    }
+    window.animateCameraTo(tX, tY, tScale); 
+};
+
+window.zoomToReceipt = function() {
+    let tScale = Math.min(1.0, window.innerWidth / 500);
+    let wrapper = document.getElementById('board-receipt-wrapper');
+    let tY = 50; let tX = 50;
+    if(wrapper) {
+        let wX = parseInt(wrapper.style.left) || 0;
+        let wY = parseInt(wrapper.style.top) || 0;
+        tX = (window.innerWidth - 450 * tScale) / 2 - wX * tScale; 
+        tY = 50 - wY * tScale; 
+    }
+    window.animateCameraTo(tX, tY, tScale);
+};
+
+window.zoomToShop = function() { 
+    let wrapper = document.getElementById('board-shop-wrapper');
+    let tY = 50; let tX = 50;
+    let shopPhysicalWidth = 650; 
+    
+    let tScale = window.innerWidth / (shopPhysicalWidth + 30); 
+    if (tScale > 1.4) tScale = 1.4; 
+    
+    if(wrapper) {
+        let wX = parseInt(wrapper.style.left) || 0;
+        let wY = parseInt(wrapper.style.top) || 0;
+        tX = (window.innerWidth - shopPhysicalWidth * tScale) / 2 - wX * tScale; 
+        tY = 40 - wY * tScale; 
+    }
+    window.animateCameraTo(tX, tY, tScale);
+};
+
+// --- KOSKETUSNÄYTÖN OHJAUS JA MOMENTUM ---
+document.addEventListener('DOMContentLoaded', () => {
+    const vp = document.getElementById('corkboard-viewport');
+    if(!vp) return;
+
+    let isDraggingBoard = false;
+    let lastTouch = null;
+    let initialPinchDist = 0;
+    let pinchCenterBoard = { x: 0, y: 0 };
+    
+    let velX = 0; let velY = 0;
+    let momentumFrame = null;
+
+    function applyMomentum() {
+        if (isDraggingBoard) return; 
+        window.camTarget.x += velX;
+        window.camTarget.y += velY;
+        
+        velX *= 0.90; 
+        velY *= 0.90;
+        
+        window.applyBounds(window.camTarget);
+        window.camCurrent.x = window.camTarget.x;
+        window.camCurrent.y = window.camTarget.y;
+        
+        let boardEl = document.getElementById('corkboard-surface');
+        if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
+        
+        if (Math.abs(velX) > 0.5 || Math.abs(velY) > 0.5) {
+            momentumFrame = requestAnimationFrame(applyMomentum);
+        }
+    }
+
+    vp.addEventListener('touchstart', e => {
+        if (momentumFrame) cancelAnimationFrame(momentumFrame);
+        if (window.animFrame) cancelAnimationFrame(window.animFrame);
+        
+        vp.classList.add('is-dragging'); 
+        velX = 0; velY = 0; 
+        
+        if(e.touches.length === 1) {
+            isDraggingBoard = true;
+            lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else if (e.touches.length === 2) {
+            isDraggingBoard = true;
+            initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            let screenCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            let screenCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            pinchCenterBoard = { x: (screenCX - window.camCurrent.x) / window.camCurrent.scale, y: (screenCY - window.camCurrent.y) / window.camCurrent.scale };
+        }
+    }, {passive: false});
+
+    vp.addEventListener('touchmove', e => {
+        if(!isDraggingBoard) return;
+        e.preventDefault(); 
+        
+        let nextCam = { ...window.camCurrent };
+
+        if(e.touches.length === 1 && lastTouch) {
+            let dx = e.touches[0].clientX - lastTouch.x;
+            let dy = e.touches[0].clientY - lastTouch.y;
+            
+            window.camTarget.x += dx; window.camTarget.y += dy;
+            nextCam.x = window.camTarget.x; nextCam.y = window.camTarget.y;
+            
+            velX = (velX * 0.4) + (dx * 0.6); velY = (velY * 0.4) + (dy * 0.6);
+            lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        } else if (e.touches.length === 2) {
+            velX = 0; velY = 0;
+            let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            let scaleDelta = dist / initialPinchDist;
+            
+            let newScale = window.camCurrent.scale * scaleDelta;
+            if(newScale < 0.15) newScale = 0.15; if(newScale > 3.0) newScale = 3.0;
+            
+            let screenCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            let screenCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            
+            window.camTarget.scale = newScale;
+            window.camTarget.x = screenCX - pinchCenterBoard.x * newScale;
+            window.camTarget.y = screenCY - pinchCenterBoard.y * newScale;
+            
+            nextCam.x = window.camTarget.x; nextCam.y = window.camTarget.y; nextCam.scale = window.camTarget.scale;
+            initialPinchDist = dist;
+        }
+
+        window.camCurrent = window.applyBounds(nextCam);
+        let boardEl = document.getElementById('corkboard-surface');
+        if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
+    }, {passive: false});
+
+    vp.addEventListener('touchend', e => {
+        if(e.touches.length === 0) {
+            isDraggingBoard = false;
+            lastTouch = null;
+            vp.classList.remove('is-dragging');
+            if (Math.abs(velX) > 1 || Math.abs(velY) > 1) momentumFrame = requestAnimationFrame(applyMomentum);
+        } else if (e.touches.length === 1) {
+            lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            velX = 0; velY = 0;
+        }
+    }, {passive: true});
+});
