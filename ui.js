@@ -82,12 +82,12 @@ window.openCardDetail = function(cId, mode) {
     if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
     window.showModalSafe('cardDetailModal');
     
+    // KORJAUS 2: Kortin täydellinen keskitys avatessa
     setTimeout(() => { 
         const container = el('cardCarousel');
         if(container) {
-            const cardWidth = window.innerWidth > 400 ? 320 : window.innerWidth * 0.80;
-            const gap = -140; 
-            container.scrollLeft = window.carouselCurrentIndex * (cardWidth + gap);
+            // 280px (kortin leveys) - 160px (limitys / gap) = 120px on tarkka hyppäys!
+            container.scrollLeft = window.carouselCurrentIndex * 120;
             if(window.initNativeCarousel) window.initNativeCarousel();
         }
     }, 50);
@@ -303,16 +303,44 @@ window.renderHoleView = function(hIndex, isCurrent) {
     let rot1 = (window.pseudoRandom(hIndex * 1.1) * 6 - 3).toFixed(1);
     let rot2 = (window.pseudoRandom(hIndex * 2.2) * 6 - 3).toFixed(1);
 
-    let html = ``;
+    // KORJAUS 4: Haetaan huonoin pelaaja edelliseltä väylältä
+    let prevHData = hIndex > 1 ? window.gameHistory[hIndex - 2] : null;
+    let worstPlayer = null;
+    
+    if (prevHData && prevHData.holeResults) {
+        let maxStrokes = -1;
+        let worstCount = 0;
+        let potentialWorst = null;
+        for (let p in prevHData.holeResults) {
+            let s = prevHData.holeResults[p];
+            if (s > maxStrokes) {
+                maxStrokes = s;
+                worstCount = 1;
+                potentialWorst = p;
+            } else if (s === maxStrokes) {
+                worstCount++;
+            }
+        }
+        if (worstCount === 1) {
+            worstPlayer = potentialWorst;
+        }
+    }
 
     let insultIdx = Math.floor(Math.random() * (window.insults ? window.insults.length : 1));
     let doodleIdx = Math.floor(Math.random() * (window.doodleSVGs ? window.doodleSVGs.length : 1));
     let rawInsult = window.insults && window.insults.length > 0 ? window.insults[insultIdx] : "Heitä paremmin!";
     
-    let playerNames = (window.allPlayers || []).map(p=>p.name);
-    let targetPlayer = playerNames.length > 0 ? playerNames[Math.floor(Math.random() * playerNames.length)] : window.myName;
-    let finalInsult = rawInsult.replace(/\[Pelaaja\]/g, targetPlayer);
+    let finalInsult = rawInsult;
+    if (worstPlayer) {
+        finalInsult = finalInsult.replace(/\[Pelaaja\]/g, worstPlayer);
+    } else {
+        // Jos tasatulos tai 1. väylä, poistetaan "[Pelaaja]" ja siistitään pilkut
+        finalInsult = finalInsult.replace(/\[Pelaaja\],\s*/g, "").replace(/\[Pelaaja\]\s*/g, "").replace(/\[Pelaaja\]/g, "");
+        finalInsult = finalInsult.charAt(0).toUpperCase() + finalInsult.slice(1);
+    }
     let svgPath = window.doodleSVGs && window.doodleSVGs.length > 0 ? window.doodleSVGs[doodleIdx] : "";
+
+    let html = ``;
 
     html += `
     <div style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; margin-top: 55px; position: relative;">
@@ -498,16 +526,17 @@ window.renderBinderOnBoard = function() {
     let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     let myPoints = me ? (me.score || 0) : 0;
     
-    // Tarkka lajittelu: Ensin taso (3->1), sitten sabotaasit ensin
+    // KORJAUS 3: Täydellinen lajittelu (Taso 3->1, sitten Sabotaasi ensin). Ei väliotsikoita!
     myCards.sort((a,b) => {
         let cA = window.allCards.find(x => x.id === a);
         let cB = window.allCards.find(x => x.id === b);
         if(!cA || !cB) return 0;
+        
         if (cA.level !== cB.level) return cB.level - cA.level; 
+        
         let typeW_A = cA.type === 'sabotage' ? 1 : 2;
         let typeW_B = cB.type === 'sabotage' ? 1 : 2;
-        if (typeW_A !== typeW_B) return typeW_A - typeW_B;
-        return 0;
+        return typeW_A - typeW_B;
     });
 
     window.currentBinderCards = myCards.slice();
@@ -516,19 +545,10 @@ window.renderBinderOnBoard = function() {
     if(myCards.length === 0) {
         cardsHtml = '<p style="color:#64748b; font-size:1.6rem; text-align:center; padding:40px; font-weight:bold; grid-column: 1 / -1;">Kansiosi on tyhjä.</p>';
     } else {
-        let currentGroup = '';
         myCards.forEach((cId) => {
             let cDef = window.allCards.find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
-            
-            // Ryhmittelyotsikot
-            let groupName = `TASO ${cDef.level} - ${cDef.type === 'sabotage' ? 'SABOTAASIT' : 'HELPOTUKSET'}`;
-            if(groupName !== currentGroup) {
-                cardsHtml += `<div style="grid-column: 1 / -1; width: 100%; border-bottom: 2px solid #cbd5e1; margin-top: 20px; margin-bottom: 10px;"><h3 style="color:#475569; font-size:1.1rem; text-transform:uppercase; letter-spacing:2px; font-weight:900; text-align:center; padding-bottom:5px;">${groupName}</h3></div>`;
-                currentGroup = groupName;
-            }
-
             let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">👆 KLIKKAA 👆</div>`;
             let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
             
@@ -737,7 +757,9 @@ window.renderReceiptOnBoard = function() {
                 let diff = strokes - par;
                 let cClass = diff === 0 ? 'even' : (diff < 0 ? 'green' : 'red'); 
                 if (diff < -1) cClass = 'blue'; 
-                html += `<div style="display:flex; justify-content:space-between; font-size:1.2rem; padding: 8px 0; align-items:center; color:#0f172a; font-weight: bold;"><span>${pName.substring(0, 12)}</span><span class="receipt-circle ${cClass}" style="width:32px; height:32px; font-size:1.2rem; color:#fff;">${strokes}</span></div>`; 
+                
+                // KORJAUS 1: Tekstiväri css:n mukaisesti! Poistettiin color:#fff;
+                html += `<div style="display:flex; justify-content:space-between; font-size:1.2rem; padding: 8px 0; align-items:center; color:#0f172a; font-weight: bold;"><span>${pName.substring(0, 12)}</span><span class="receipt-circle ${cClass}" style="width:32px; height:32px; font-size:1.2rem;">${strokes}</span></div>`; 
             } 
         } 
     }
@@ -864,6 +886,7 @@ window.saveCardPrices = function() {
 window.isFlipping = false;
 window.flippedCards = new Set();
 
+// KORJAUS 2: Viuhkan tihennys
 window.initNativeCarousel = function() {
     const container = el('cardCarousel');
     if(!container) return;
@@ -879,14 +902,15 @@ window.initNativeCarousel = function() {
             const cardCenter = card.offsetLeft + card.offsetWidth / 2;
             const diff = cardCenter - center;
             
-            const maxDist = container.clientWidth * 0.6; 
+            const maxDist = container.clientWidth * 0.45; 
             let percentage = diff / maxDist;
             if (percentage > 1) percentage = 1;
             if (percentage < -1) percentage = -1;
             
-            const angle = percentage * 35; 
-            const yOffset = Math.abs(percentage) * 80; 
-            const scale = 1 - Math.abs(percentage) * 0.2; 
+            // Pienemmät kulmat, pysyvät pystymmässä ja vähemmän skaalausta (näkyy vierestä!)
+            const angle = percentage * 25; 
+            const yOffset = Math.abs(percentage) * 30; 
+            const scale = 1 - Math.abs(percentage) * 0.1; 
             const zIndex = 100 - Math.round(Math.abs(percentage) * 10);
 
             card.style.transform = `rotate(${angle}deg) translateY(${yOffset}px) scale(${scale})`;
@@ -1084,7 +1108,6 @@ window.openScoreModal = function() {
     if(hNumEl) hNumEl.innerText = window.currentHoleIndex; 
     if(hParEl) hParEl.innerText = par; 
     
-    // VÄYLÄTEHTÄVÄ NÄKYVIIN (Bugikorjaus 6)
     let taskInfoHtml = '';
     if (window.activeHole && window.activeHole.rule) {
         let r = window.activeHole.rule;
