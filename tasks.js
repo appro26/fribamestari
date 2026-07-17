@@ -3,7 +3,6 @@ window.holeRules = [];
 
 // ==========================================
 // ELÄINTEN GRAFIIKAT JA SOLVAUKSET
-// Uudet yksinkertaiset ja tunnistettavat eläimet (Kissa, Koira, Possu, Pöllö, Karhu)
 // ==========================================
 window.doodleSVGs = [
     // 1. Kissa
@@ -102,7 +101,7 @@ window.insults = [
 ];
 
 // ==========================================
-// KORTTIPERHEET (CONCEPT LOCKING & UPGRADES)
+// KORTTIPERHEET
 // ==========================================
 const familyDefs = [
     // --- KATEGORIA A: FYYSISET SABOTAASIT ---
@@ -385,12 +384,11 @@ const familyDefs = [
 ];
 
 // ==========================================
-// RAKENNETAAN window.allCards ARRAY
+// RAKENNETAAN window.allCards ARRAY (Tuplahinnasto Taso 3:lle lisätty!)
 // ==========================================
 const baseCostT1 = 2;
 const baseCostT2 = 4;
-const baseCostT3 = 6;
-const expensiveBump = 2; // +2 P kalliimmat kortit
+const expensiveBump = 2; 
 
 familyDefs.forEach(fam => {
     let maxLvl = Math.max(...fam.levels.map(l => l.lvl));
@@ -398,12 +396,25 @@ familyDefs.forEach(fam => {
     fam.levels.forEach((lvDef, index) => {
         let cardId = `${fam.family}_t${lvDef.lvl}`;
         
-        let p = baseCostT1;
-        if(lvDef.lvl === 2) p = baseCostT2;
-        if(lvDef.lvl === 3) p = baseCostT3;
+        // Hinnan asetus
+        let sPrice = baseCostT1;
+        let pCost = baseCostT1;
+        
+        if (lvDef.lvl === 2) { 
+            sPrice = baseCostT2; 
+            pCost = baseCostT2; 
+        }
+        
+        // Kultaisen (Taso 3) kortin erikoishinnoittelu (Bugikorjaus 3)
+        if (lvDef.lvl === 3) { 
+            sPrice = 12; // Ostohinta
+            pCost = 8;   // Peluuhinta kädestä
+        }
 
+        // Tasapainotus kalliille korttiperheille (koskee kaikkia tasoja)
         if (fam.isExpensive) {
-            p += expensiveBump;
+            sPrice += expensiveBump;
+            pCost += expensiveBump;
         }
 
         let nextLvlDef = fam.levels.find(l => l.lvl === lvDef.lvl + 1);
@@ -427,7 +438,8 @@ familyDefs.forEach(fam => {
             nextId: nextIdStr,
             tier: "normal", 
             type: fam.type,
-            price: p, 
+            price: sPrice,       // Kaupan hinta
+            playCost: pCost,     // Käden hinta
             mech: lvDef.mech || null
         });
     });
@@ -436,12 +448,16 @@ familyDefs.forEach(fam => {
 window.getCardPlayCost = function(cId) {
     let cDef = window.allCards.find(c => c.id === cId);
     if(!cDef) return 0;
-    return cDef.price; 
+    
+    if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[cId] !== undefined) {
+        return window.gameSettings.cardPrices[cId];
+    }
+    // Palautetaan playCost jos määritetty (Taso 3 kortit), muuten normaali price
+    return cDef.playCost !== undefined ? cDef.playCost : cDef.price; 
 };
 
 // ==========================================
-// UUDET KILPAILULLISET VÄYLÄHAASTEET (Bugikorjaus 4)
-// Kaikki suoritetaan automaattisesti normaalin pelin ohessa!
+// UUDET KILPAILULLISET VÄYLÄHAASTEET
 // ==========================================
 window.holeRules = [
     // Bountyt (Yksi voittaja, kilpailuheitot)
