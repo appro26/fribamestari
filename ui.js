@@ -1,7 +1,3 @@
-// ==============================================
-// KÄYTTÖLIITTYMÄN RENDERÖINTI JA MODAALIT (ui.js)
-// ==============================================
-
 var el = id => document.getElementById(id);
 
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
@@ -213,7 +209,7 @@ window.openTargetModal = function(cId) {
 };
 
 // ==============================================
-// KORTIN GENEROINTI
+// KORTIN GENEROINTI (Bugikorjaus 4)
 // ==============================================
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '') {
     if (!cDef) return '';
@@ -236,15 +232,15 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '')
         </div>
         <div class="card-body ${typeName}">
             <div class="play-cost-badge">MAKSU: ${playCost} P</div>
-            <div class="card-title">${safeCardName}</div>
-            <div class="card-desc">${cDef.d}</div>
+            <h3>${safeCardName}</h3>
+            <p>${cDef.d}</p>
             ${extraBottomHtml}
         </div>
     </div>`;
 };
 
 // ==============================================
-// VÄYLÄN RENDERÖINTI
+// VÄYLÄN RENDERÖINTI JA TAPAHTUMAT (Bugit 5 ja 9)
 // ==============================================
 window.updateHoleNav = function() {
     if (!window.currentCourse) return;
@@ -315,12 +311,14 @@ window.renderHoleView = function(hIndex, isCurrent) {
 
     let html = ``;
 
-    let seed = hIndex * 99;
-    let insultIdx = Math.floor(window.pseudoRandom(seed) * (window.insults ? window.insults.length : 1));
-    let doodleIdx = Math.floor(window.pseudoRandom(seed+1) * (window.doodleSVGs ? window.doodleSVGs.length : 1));
+    // SATUNNAISET SOLVAUKSET JA ELÄIMET (Korjaus 9)
+    // Arvotaan tulos aidosti joka päivityksellä Math.random():n avulla
+    let insultIdx = Math.floor(Math.random() * (window.insults ? window.insults.length : 1));
+    let doodleIdx = Math.floor(Math.random() * (window.doodleSVGs ? window.doodleSVGs.length : 1));
     let rawInsult = window.insults && window.insults.length > 0 ? window.insults[insultIdx] : "Heitä paremmin!";
+    
     let playerNames = (window.allPlayers || []).map(p=>p.name);
-    let targetPlayer = playerNames.length > 0 ? playerNames[Math.floor(window.pseudoRandom(seed+2) * playerNames.length)] : window.myName;
+    let targetPlayer = playerNames.length > 0 ? playerNames[Math.floor(Math.random() * playerNames.length)] : window.myName;
     let finalInsult = rawInsult.replace(/\[Pelaaja\]/g, targetPlayer);
     let svgPath = window.doodleSVGs && window.doodleSVGs.length > 0 ? window.doodleSVGs[doodleIdx] : "";
 
@@ -335,7 +333,6 @@ window.renderHoleView = function(hIndex, isCurrent) {
         </svg>
     </div>`;
 
-    /* UUSI JYSK-TYYLINEN ILMOITUSTAULU VAALEALLA PUUKEHYKSELLÄ JA KANGAS-TAUSTALLA */
     html += `<div class="mini-corkboard">`;
 
     // 1. INFO KORTTI
@@ -353,7 +350,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
     }
     html += `</div>`;
 
-    // 2. VÄYLÄSÄÄNTÖ (TÄYDELLINEN NELIÖ POST-IT SCROLLILLA)
+    // 2. VÄYLÄSÄÄNTÖ
     if (hData.rule) {
         let bTxt = hData.rule.type === 'bounty' ? `🏆 TEHTÄVÄ` : '🎲 VÄYLÄSÄÄNTÖ';
         let bgCol = hData.color || '#fef08a';
@@ -368,29 +365,43 @@ window.renderHoleView = function(hIndex, isCurrent) {
         </div>`;
     }
 
-    // 3. PELATUT KORTIT
+    // 3. PELATUT KORTIT JA LAPUT (Bugikorjaus 5)
     let playedCards = [];
     if (hData.playedCards) { playedCards = Object.values(hData.playedCards).filter(Boolean); }
     
     if(playedCards.length > 0) {
-        html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top: 10px;">`;
+        html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; gap:15px; margin-top: 15px;">`;
         playedCards.forEach((pc, idx) => {
-            if (pc.target === window.myName || pc.target === 'KAIKKI VASTUSTAJAT') {
-                let cRot = (window.pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
-                let pinLeft = 50 + (Math.floor(window.pseudoRandom((hIndex + idx) * 5.5) * 20) - 10);
-                let encodedBy = pc.by ? pc.by.replace(/"/g, '&quot;') : '';
-                let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
-                let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
-                
-                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:6px; border-radius:6px; font-size:0.85rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
+            // Kaikki piirretään! Omat isona korttina, muiden post-it lappuna.
+            let isTargetingMe = (pc.target === window.myName || pc.target === 'KAIKKI VASTUSTAJAT');
+            let cRot = (window.pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
+            
+            let encodedBy = pc.by ? pc.by.replace(/"/g, '&quot;') : '';
+            let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
+            let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
+            
+            if (isTargetingMe) {
+                // AITO KORTTI (Pienennetty hieman 140px -> 110px jotta sopii paremmin taululle)
+                let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:6px; border-radius:6px; font-size:0.75rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
                 let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml);
 
                 html += `
-                <div style="transform: rotate(${cRot}deg); cursor:pointer; width:140px; position:relative; overflow:hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border-radius:12px;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
-                    <div class="pushpin" style="left: ${pinLeft}%; z-index:20;"></div>
+                <div style="transform: rotate(${cRot}deg); cursor:pointer; width:110px; position:relative; overflow:hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border-radius:12px;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div style="width: 100%; pointer-events: none;">
                         ${fullCardHtml}
                     </div>
+                </div>`;
+            } else {
+                // TIEDOKSI LAPPU VASTUSTAJALLE PELATUSTA KORTISTA
+                let typeClass = pc.type === 'buff' ? 'buff' : 'sabotage';
+                let icon = pc.type === 'buff' ? '🛡️' : '💥';
+                let shortName = pc.cardName.split(' (')[0];
+
+                html += `
+                <div class="opponent-event-note ${typeClass}" style="transform: rotate(${cRot}deg);" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
+                    <div style="font-weight:900; font-size:0.95rem; line-height:1.1; margin-top:5px;">${icon} ${shortName}</div>
+                    <div style="font-size:0.8rem; font-weight:bold; margin-top:8px;">Kohteelle:<br><span style="font-size:1rem; color:#111; font-family: 'Inter', sans-serif;">${pc.target}</span></div>
+                    <div style="font-size:0.65rem; margin-top:auto; opacity:0.8; font-family: 'Inter', sans-serif; text-transform:uppercase;">Pelaaja: ${pc.by}</div>
                 </div>`;
             }
         });
@@ -444,7 +455,6 @@ window.renderPayslipView = function(hIndex) {
         rowsHtml += `<tr><td colspan="2" style="text-align:center; font-style:italic; padding-top:20px;">Ei tapahtumia tällä kaudella.</td></tr>`;
     }
 
-    // AITO ZERVANT-TYYLINEN KUITTI (Kovat koodatut inline-värit ja taustat, jottei selain hukkaa)
     container.innerHTML = `
     <div style="background: #ffffff !important; padding: 30px 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); font-family: 'Inter', sans-serif; width: 95%; max-width: 500px; margin: 30px auto; color: #334155; position: relative; z-index: 10;">
         <h1 style="color: #06b6d4; font-size: 2.2rem; font-weight: 900; margin: 0 0 25px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 15px;">Palkkalaskelma</h1>
@@ -494,19 +504,20 @@ window.renderPayslipView = function(hIndex) {
 };
 
 // ==============================================
-// KANSIO (OMAT KORTIT)
+// KANSIO (OMAT KORTIT JA LOMPAKKO, Bugikorjaus 3)
 // ==============================================
 window.renderBinderOnBoard = function() {
     let wrapper = el('board-binder-wrapper');
     if(!wrapper) return;
     let me = (window.allPlayers || []).find(p => p && p.name === window.myName);
     let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
+    let myPoints = me ? (me.score || 0) : 0;
     
     if (typeof window.getCardSortWeight === 'function') {
         myCards.sort((a,b) => window.getCardSortWeight(a) - window.getCardSortWeight(b));
     }
 
-    // Tallennetaan ID:t muistiin karusellia varten! TÄMÄ ON KRIITTINEN SELAILULLE
+    // Tallennetaan ID:t muistiin karusellia varten!
     window.currentBinderCards = myCards;
 
     let cardsHtml = '';
@@ -529,7 +540,13 @@ window.renderBinderOnBoard = function() {
 
     wrapper.innerHTML = `
     <div class="binder-page">
-        <h2 style="color:#111; font-size:2.8rem; margin-bottom:25px; font-family:'Kalam', cursive; border-bottom:4px dashed #ccc; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
+        <h2 style="color:#111; font-size:2.8rem; margin-bottom:15px; font-family:'Kalam', cursive; border-bottom:4px dashed #ccc; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
+        
+        <!-- LOMPAKON TILANNE (Lisäys bugikorjaus 3) -->
+        <div style="text-align:center; margin-bottom: 25px;">
+            <div style="background:#000; color:#22c55e; padding: 10px 25px; border-radius: 8px; border: 3px solid #22c55e; font-family:'Courier Prime', monospace; font-size:1.6rem; font-weight:900; display:inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">LOMPAKKO: ${myPoints} P</div>
+        </div>
+        
         <div style="text-align:center; color:#666; font-weight:bold; margin-bottom:20px; font-size:0.9rem;">👆 KLIKKAA KORTTIA AVATAKSESI TOIMINNOT 👆</div>
         <div class="binder-grid">
             ${cardsHtml}
@@ -548,7 +565,6 @@ window.renderShopOnBoard = function() {
     let shopArray = window.activeHole && window.activeHole.shop ? window.activeHole.shop[window.myName] : [];
     let resArray = me && me.reservations ? (Array.isArray(me.reservations) ? me.reservations : Object.values(me.reservations)) : [];
 
-    // Tallennetaan listat karusellia varten!
     window.currentShopCards = shopArray.filter(c => c !== null).map(c => c.id);
     window.currentShopResCards = resArray.filter(Boolean);
 
@@ -574,7 +590,6 @@ window.renderShopOnBoard = function() {
                 let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
                 let fullCardHtml = window.generateCardHTML(item, false, extraHtml, false);
                 
-                // OSTA/VARAA NAPIT PALAUTETTU TÄHÄN
                 shelvesHtml += `
                     <div style="position:relative; width:100%; max-width:260px; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="cursor:pointer; width:100%; margin-bottom:10px; box-shadow:0 8px 15px rgba(0,0,0,0.6); border-radius:12px;" onclick="window.openCardDetail('${item.id}', 'shop')">
@@ -620,7 +635,6 @@ window.renderShopOnBoard = function() {
             let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
             let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml, false);
             
-            // LUNASTA / PERU NAPIT
             reserveHtml += `
                 <div style="width:48%; max-width:260px; display:flex; flex-direction:column; align-items:center;">
                     <div style="width:100%; cursor:pointer; position:relative; margin-bottom:10px; border-radius:12px; box-shadow:0 8px 15px rgba(0,0,0,0.6);" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
@@ -639,7 +653,6 @@ window.renderShopOnBoard = function() {
         reserveHtml += `</div></div>`;
     }
 
-    // SUORISTETTU KONE LATTIALLE
     wrapper.innerHTML = `
     <div class="shop-3d-container">
         <div class="shop-machine">
@@ -661,7 +674,7 @@ window.renderShopOnBoard = function() {
 
             ${reserveHtml}
 
-            <!-- Alapaneeli (Numpad ja PUSH-luukku) -->
+            <!-- Alapaneeli -->
             <div style="background: #0f172a; margin-top: 20px; padding: 15px; border-radius: 8px; border: 2px solid #334155; display: flex; justify-content: space-between; align-items: flex-start; box-shadow: inset 0 0 15px #000;">
                 <div style="width: 90px; background: #000; padding: 10px; border-radius: 6px; border: 2px solid #1e293b; box-shadow: inset 0 0 10px #000;">
                    <div style="color: #10b981; text-align: right; font-family: monospace; border: 1px solid #334155; padding: 2px 5px; margin-bottom: 8px; font-size: 0.9rem;">12.00</div>
@@ -698,7 +711,6 @@ window.renderReceiptOnBoard = function() {
         return html; 
     };
 
-    // TULOS RIVIT
     let html = `
     <div class="dg-sign-wrapper">
         <!-- Sininen Metalliputki Ylhäällä -->
@@ -861,12 +873,10 @@ window.initNativeCarousel = function() {
     const container = el('cardCarousel');
     if(!container) return;
     
-    // Tunnistaa vierityksen ja päivittää napit
     container.addEventListener('scroll', () => { 
         requestAnimationFrame(() => {
             const cardWidth = window.innerWidth > 400 ? 340 : window.innerWidth * 0.80;
             const scrollPos = container.scrollLeft;
-            // 20px on flex gap
             const index = Math.round(scrollPos / (cardWidth + 20));
             
             if (window.carouselCurrentIndex !== index && index >= 0 && index < window.carouselCards.length) {
@@ -966,7 +976,6 @@ window.renderCarouselActionButtons = function() {
             btnHtml += `<button class="btn btn-danger btn-modern" style="width:100%; font-size:1.1rem; padding:15px; font-weight:bold; margin-bottom:10px;" onclick="window.forceDiscard('${cDef.id}')">♻️ MYY KORTTI (+${sellReward} P)</button>`;
         }
     } 
-    // Kauppa-näkymässä mode on 'shop', silloin ei piirretä nappeja karuselliin, koska ne ovat suoraan hyllyllä.
     
     let container = el('cardDetailActionArea');
     if(container) container.innerHTML = btnHtml;
