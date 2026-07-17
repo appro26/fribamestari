@@ -28,7 +28,7 @@ body {
 }
 
 /* =========================================
-   UUDET TYYLIKKÄÄT TAUSTAT (Bugikorjaus 5)
+   UUDET TYYLIKKÄÄT TAUSTAT
    ========================================= */
 .cork-bg {
     background-color: #0f172a;
@@ -60,7 +60,7 @@ body {
     touch-action: none; 
 }
 
-/* Uusi Taktinen "Korkkitaulu" (Slate / Dark Metal tyyli) */
+/* Taktinen "Korkkitaulu" (Slate / Dark Metal tyyli) */
 #corkboard-surface {
     display: inline-grid;
     gap: 60px 80px; 
@@ -192,7 +192,7 @@ input[type="text"], input[type="number"], select {
 .physical-card p::-webkit-scrollbar { width: 4px; } .physical-card p::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
 
 /* =========================================
-   KARUSELLI JA VIUHKA (Bugikorjaus 2)
+   KARUSELLI JA VIUHKA (Tihennetty gap)
    ========================================= */
 #cardDetailModal { 
     padding: 0 !important; 
@@ -203,12 +203,11 @@ input[type="text"], input[type="number"], select {
     width: 100%; height: 100vh; padding: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; overflow: hidden;
 }
 
-/* Scroll-snap containeri piilotetaan ja kortit limittyvät! */
 .native-carousel-container { 
     flex: 1; display: flex; align-items: center; overflow-x: auto; 
     scroll-snap-type: x mandatory; 
-    padding: 20px 50vw; /* Keskittää ensimmäisen ja viimeisen kortin! */
-    gap: -160px; /* KORTIT LIMIIN VIUHKAA VARTEN */
+    padding: 20px 50vw; 
+    gap: -200px; /* TIHENNETTY: Kortit enemmän limittäin! */
     width: 100vw; height: auto; min-height: 0; 
     touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: auto;
 }
@@ -218,8 +217,8 @@ input[type="text"], input[type="number"], select {
     flex: 0 0 280px; height: 420px; 
     scroll-snap-align: center; position: relative; margin: 0; cursor: pointer; 
     perspective: 1200px; 
-    transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1); /* Pehmeä seuranta */
-    transform-origin: bottom center; /* Viuhka kääntyy alareunasta */
+    transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1); 
+    transform-origin: bottom center; 
 }
 
 #cardDetailActionArea {
@@ -251,7 +250,7 @@ input[type="text"], input[type="number"], select {
 #zoomModalContent .post-it-note, #zoomModalContent .pinned-card-container, #zoomModalContent > div { margin: 0 !important; }
 
 /* =========================================
-   KANSIO JA KAUPPA (Modernisoitu tyyli)
+   KANSIO JA KAUPPA
    ========================================= */
 .binder-page { background: #f8fafc; width: 95%; max-width: 700px; margin: 20px auto; border-radius: 12px; box-shadow: 5px 15px 30px rgba(0,0,0,0.6); border-left: 15px solid #1e293b; padding: 25px 15px; }
 .binder-grid, .shop-shelf-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; justify-items: center; align-items: start; }
@@ -293,10 +292,13 @@ input[type="text"], input[type="number"], select {
    TULOSKYLTTI JA PISTEIDEN SYÖTTÖ
    ========================================= */
 .dg-sign-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 95%; max-width: 500px; margin: 30px auto; position: relative; }
-.dg-sign-top-bar { width: 100%; height: 25px; background: #0ea5e9; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.6); z-index: 3; position: relative; }
+.dg-sign-top-bar { width: 100%; height: 25px; background: #16a34a; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.6); z-index: 3; position: relative; }
 .dg-sign-legs { position: absolute; top: 12px; bottom: -50px; left: 0; right: 0; display: flex; justify-content: space-between; z-index: 1; }
-.dg-sign-leg { width: 25px; height: 100%; background: #0ea5e9; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.6); }
-.dg-sign-board { width: 90%; background: #fff; margin-top: -5px; padding: 25px 20px; border: 4px solid #0ea5e9; border-top: none; box-shadow: 0 15px 30px rgba(0,0,0,0.6); z-index: 2; position: relative; }
+.dg-sign-leg { width: 25px; height: 100%; background: #16a34a; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.6); }
+
+/* Vaaleanvihreä Opastekyltti-tausta */
+.dg-sign-board { width: 90%; background: #dcfce7; margin-top: -5px; padding: 25px 20px; border: 4px solid #16a34a; border-top: none; box-shadow: 0 15px 30px rgba(0,0,0,0.6); z-index: 2; position: relative; }
+
 .receipt-circle { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; font-size: 0.8rem; flex-shrink: 0; }
 .receipt-circle.green { background-color: #22c55e; color: #fff; } .receipt-circle.blue { background-color: #3b82f6; color: #fff; } .receipt-circle.red { background-color: #ef4444; color: #fff; } .receipt-circle.even { color: #111; }
 
