@@ -2,16 +2,23 @@ window.allCards = [];
 window.holeRules = [];
 
 // ==========================================
-// ELÄINTEN GRAFIIKAT JA SOLVAUKSET (80 kpl)
+// ELÄINTEN GRAFIIKAT JA SOLVAUKSET (Bugikorjaus 9)
+// Uudet yksinkertaiset ja tunnistettavat eläimet (Kissa, Koira, Possu, Pöllö, Karhu)
 // ==========================================
-const doodleSVGs = [
-    "M 20 80 Q 20 60 40 60 L 45 40 L 50 60 L 60 30 L 65 60 L 75 40 L 80 80 Z M 30 70 L 32 70 M 15 75 L 20 80 M 85 75 L 80 80", 
-    "M 20 80 L 20 40 L 30 20 L 40 40 L 60 40 L 70 20 L 80 40 L 80 80 Z M 35 55 L 37 55 M 65 55 L 63 55 M 45 65 L 55 65 L 50 72 Z",
-    "M 20 80 C 20 30 80 30 80 80 Z M 20 40 C 10 40 10 20 25 30 M 80 40 C 90 40 90 20 75 30 M 40 55 L 42 55 M 60 55 L 58 55",
-    "M 50 80 C 20 80 20 30 50 30 C 80 30 80 80 50 80 Z M 40 55 L 60 55 L 50 70 Z M 35 45 L 40 48 M 65 45 L 60 48"
+window.doodleSVGs = [
+    // 1. Kissa
+    "M30 40 L20 15 L45 30 Q50 25 55 30 L80 15 L70 40 A30 30 0 1 1 30 40 Z M40 60 Q50 70 60 60 M35 50 v2 M65 50 v2 M25 55 h-15 M25 65 h-15 M75 55 h15 M75 65 h15",
+    // 2. Koira
+    "M25 40 Q10 40 15 65 Q20 75 30 65 A30 30 0 1 0 70 65 Q80 75 85 65 Q90 40 75 40 Z M40 50 v2 M60 50 v2 M45 65 Q50 75 55 65 M50 65 v10",
+    // 3. Possu
+    "M20 50 A30 30 0 1 0 80 50 A30 30 0 1 0 20 50 Z M40 55 A10 7 0 1 0 60 55 A10 7 0 1 0 40 55 Z M47 55 v2 M53 55 v2 M25 25 L15 10 L35 20 M75 25 L85 10 L65 20",
+    // 4. Pöllö
+    "M20 40 L10 15 L35 30 Q50 20 65 30 L90 15 L80 40 A35 35 0 1 1 20 40 Z M35 55 A10 10 0 1 0 45 55 A10 10 0 1 0 35 55 Z M55 55 A10 10 0 1 0 65 55 A10 10 0 1 0 55 55 Z M47 62 L53 62 L50 70 Z",
+    // 5. Karhu
+    "M30 35 A15 15 0 1 1 15 20 M70 35 A15 15 0 1 0 85 20 M20 60 A30 30 0 1 0 80 60 A30 30 0 1 0 20 60 M40 65 A10 8 0 1 0 60 65 A10 8 0 1 0 40 65 M45 62 h10 v6 h-10 Z M35 50 v2 M65 50 v2"
 ];
 
-const insults = [
+window.insults = [
     "[Pelaaja], v*ttu mikä heitto, ootko sä koskaan edes pitänyt kiekkoa kädessä?",
     "[Pelaaja] p*rkele, mummonikin puttaa paremmin.",
     "S**tanan sirkkeli [Pelaaja], puut tykkää susta enemmän ku sun omat vanhemmat.",
@@ -286,7 +293,6 @@ const familyDefs = [
     },
 
     // --- KATEGORIA C: TALOUS / TULOS ---
-    // (Piste-sakot 69, 70, 71 on poistettu toiveiden mukaisesti)
     {
         family: "deny_income", name: "Tulojen eväys", type: "sabotage",
         levels: [
@@ -396,7 +402,6 @@ familyDefs.forEach(fam => {
         if(lvDef.lvl === 2) p = baseCostT2;
         if(lvDef.lvl === 3) p = baseCostT3;
 
-        // Kallistetaan määritetyt korttiperheet (+2P)
         if (fam.isExpensive) {
             p += expensiveBump;
         }
@@ -407,7 +412,6 @@ familyDefs.forEach(fam => {
 
         if (nextLvlDef) {
             nextIdStr = `${fam.family}_t${nextLvlDef.lvl}`;
-            // Päivitys maksaa periaatteessa erotuksen tai vakiokorotuksen. Määritellään se simppelisti:
             let uCost = (lvDef.lvl === 1) ? 3 : 5;
             upgradeText = `Päivitys Tasolle ${nextLvlDef.lvl} (Hinta: ${uCost} P): ${nextLvlDef.d}`;
         }
@@ -423,7 +427,7 @@ familyDefs.forEach(fam => {
             nextId: nextIdStr,
             tier: "normal", 
             type: fam.type,
-            price: p, // TÄMÄ MÄÄRITTÄÄ NYT KAIKEN HINNAN (Kauppa ja Peluu)
+            price: p, 
             mech: lvDef.mech || null
         });
     });
