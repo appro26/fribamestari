@@ -209,7 +209,7 @@ window.openTargetModal = function(cId) {
 };
 
 // ==============================================
-// KORTIN GENEROINTI (Bugikorjaus 4)
+// KORTIN GENEROINTI
 // ==============================================
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '') {
     if (!cDef) return '';
@@ -240,7 +240,7 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '')
 };
 
 // ==============================================
-// VÄYLÄN RENDERÖINTI JA TAPAHTUMAT (Bugit 5 ja 9)
+// VÄYLÄN RENDERÖINTI JA TAPAHTUMAT
 // ==============================================
 window.updateHoleNav = function() {
     if (!window.currentCourse) return;
@@ -311,8 +311,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
 
     let html = ``;
 
-    // SATUNNAISET SOLVAUKSET JA ELÄIMET (Korjaus 9)
-    // Arvotaan tulos aidosti joka päivityksellä Math.random():n avulla
+    // SATUNNAISET SOLVAUKSET JA ELÄIMET
     let insultIdx = Math.floor(Math.random() * (window.insults ? window.insults.length : 1));
     let doodleIdx = Math.floor(Math.random() * (window.doodleSVGs ? window.doodleSVGs.length : 1));
     let rawInsult = window.insults && window.insults.length > 0 ? window.insults[insultIdx] : "Heitä paremmin!";
@@ -322,8 +321,9 @@ window.renderHoleView = function(hIndex, isCurrent) {
     let finalInsult = rawInsult.replace(/\[Pelaaja\]/g, targetPlayer);
     let svgPath = window.doodleSVGs && window.doodleSVGs.length > 0 ? window.doodleSVGs[doodleIdx] : "";
 
+    // PUSKETAAN SOLVAUSTA ALASPÄIN MARGIN-TOPILLA (Bugikorjaus 4)
     html += `
-    <div style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; position: relative;">
+    <div style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; margin-top: 55px; position: relative;">
         <div style="background: rgba(255,255,255,0.95); padding: 12px 18px; border-radius: 16px; border: 3px solid #1e293b; font-family: 'Kalam', cursive; font-size: 1.2rem; font-weight: 900; color: #1e293b; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); max-width: 90%; line-height: 1.2; z-index: 2;">
             "${finalInsult}"
         </div>
@@ -365,14 +365,13 @@ window.renderHoleView = function(hIndex, isCurrent) {
         </div>`;
     }
 
-    // 3. PELATUT KORTIT JA LAPUT (Bugikorjaus 5)
+    // 3. PELATUT KORTIT JA LAPUT (Bugikorjaus 2 ja 5)
     let playedCards = [];
     if (hData.playedCards) { playedCards = Object.values(hData.playedCards).filter(Boolean); }
     
     if(playedCards.length > 0) {
         html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; gap:15px; margin-top: 15px;">`;
         playedCards.forEach((pc, idx) => {
-            // Kaikki piirretään! Omat isona korttina, muiden post-it lappuna.
             let isTargetingMe = (pc.target === window.myName || pc.target === 'KAIKKI VASTUSTAJAT');
             let cRot = (window.pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
             
@@ -381,27 +380,27 @@ window.renderHoleView = function(hIndex, isCurrent) {
             let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
             
             if (isTargetingMe) {
-                // AITO KORTTI (Pienennetty hieman 140px -> 110px jotta sopii paremmin taululle)
+                // AITO KORTTI (Leveyttä kasvatettu 130px, jotta tekstit näkyvät varmasti kunnolla)
                 let extraHtml = `<div style="background:rgba(0,0,0,0.9); color:#fff; padding:6px; border-radius:6px; font-size:0.75rem; text-align:center; font-weight:bold; margin-top:auto; width:100%; box-sizing:border-box;">Kohteelle: ${pc.target === 'KAIKKI VASTUSTAJAT' ? 'KAIKKI' : 'Sinuun!'}<br><span style="font-weight:normal; color:#ccc;">(${pc.by})</span></div>`;
                 let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml);
 
                 html += `
-                <div style="transform: rotate(${cRot}deg); cursor:pointer; width:110px; position:relative; overflow:hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border-radius:12px;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
+                <div style="transform: rotate(${cRot}deg); cursor:pointer; width:130px; position:relative; overflow:hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border-radius:12px;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div style="width: 100%; pointer-events: none;">
                         ${fullCardHtml}
                     </div>
                 </div>`;
             } else {
-                // TIEDOKSI LAPPU VASTUSTAJALLE PELATUSTA KORTISTA
+                // TIEDOKSI LAPPU (Kiinteä 140x140px neliö, määritetty CSS:ssä!)
                 let typeClass = pc.type === 'buff' ? 'buff' : 'sabotage';
                 let icon = pc.type === 'buff' ? '🛡️' : '💥';
                 let shortName = pc.cardName.split(' (')[0];
 
                 html += `
                 <div class="opponent-event-note ${typeClass}" style="transform: rotate(${cRot}deg);" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
-                    <div style="font-weight:900; font-size:0.95rem; line-height:1.1; margin-top:5px;">${icon} ${shortName}</div>
-                    <div style="font-size:0.8rem; font-weight:bold; margin-top:8px;">Kohteelle:<br><span style="font-size:1rem; color:#111; font-family: 'Inter', sans-serif;">${pc.target}</span></div>
-                    <div style="font-size:0.65rem; margin-top:auto; opacity:0.8; font-family: 'Inter', sans-serif; text-transform:uppercase;">Pelaaja: ${pc.by}</div>
+                    <div style="font-weight:900; font-size:1.1rem; line-height:1.1; margin-top:5px;">${icon} ${shortName}</div>
+                    <div style="font-size:0.9rem; font-weight:bold; margin-top:10px;">Kohteelle:<br><span style="font-size:1.1rem; color:#111; font-family: 'Inter', sans-serif;">${pc.target}</span></div>
+                    <div style="font-size:0.75rem; margin-top:auto; opacity:0.8; font-family: 'Inter', sans-serif; text-transform:uppercase;">Pelaaja: ${pc.by}</div>
                 </div>`;
             }
         });
@@ -413,7 +412,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
 };
 
 // ==============================================
-// PALKKALASKELMA NÄKYMÄ (ZERVANT TYYLI)
+// PALKKALASKELMA NÄKYMÄ
 // ==============================================
 window.renderPayslipView = function(hIndex) {
     let container = el('payslip-content');
@@ -504,7 +503,7 @@ window.renderPayslipView = function(hIndex) {
 };
 
 // ==============================================
-// KANSIO (OMAT KORTIT JA LOMPAKKO, Bugikorjaus 3)
+// KANSIO (OMAT KORTIT JA LOMPAKKO)
 // ==============================================
 window.renderBinderOnBoard = function() {
     let wrapper = el('board-binder-wrapper');
@@ -531,8 +530,9 @@ window.renderBinderOnBoard = function() {
             let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">👆 KLIKKAA 👆</div>`;
             let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
             
+            // KORTIN MAKSIMILEVEYTTÄ KASVATETTU (Bugikorjaus 3)
             cardsHtml += `
-            <div style="cursor:pointer; width:100%; max-width:280px; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.5); transition:transform 0.1s; border-radius:12px;" onclick="window.openCardDetail('${cId}', 'sell')">
+            <div style="cursor:pointer; width:100%; max-width:320px; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.5); transition:transform 0.1s; border-radius:12px;" onclick="window.openCardDetail('${cId}', 'sell')">
                 ${fullCardHtml}
             </div>`;
         });
@@ -542,7 +542,6 @@ window.renderBinderOnBoard = function() {
     <div class="binder-page">
         <h2 style="color:#111; font-size:2.8rem; margin-bottom:15px; font-family:'Kalam', cursive; border-bottom:4px dashed #ccc; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
         
-        <!-- LOMPAKON TILANNE (Lisäys bugikorjaus 3) -->
         <div style="text-align:center; margin-bottom: 25px;">
             <div style="background:#000; color:#22c55e; padding: 10px 25px; border-radius: 8px; border: 3px solid #22c55e; font-family:'Courier Prime', monospace; font-size:1.6rem; font-weight:900; display:inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">LOMPAKKO: ${myPoints} P</div>
         </div>
@@ -555,7 +554,7 @@ window.renderBinderOnBoard = function() {
 };
 
 // ==============================================
-// VÄLIPALA-AUTOMAATTI (KAUPPA) - SUORA LATTIA 3D & NAPIT HYLLYLLÄ
+// VÄLIPALA-AUTOMAATTI (KAUPPA)
 // ==============================================
 window.renderShopOnBoard = function() {
     let wrapper = document.getElementById('board-shop-wrapper');
@@ -590,8 +589,9 @@ window.renderShopOnBoard = function() {
                 let extraHtml = `<div style="text-align:center; font-weight:900; font-size:clamp(0.8rem, 4vw, 1.2rem); color:#111; margin-top:auto; padding-top:10px;">🔄 TARKASTELE</div>`;
                 let fullCardHtml = window.generateCardHTML(item, false, extraHtml, false);
                 
+                // KORTIN MAKSIMILEVEYTTÄ KASVATETTU (Bugikorjaus 3)
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; max-width:260px; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                    <div style="position:relative; width:100%; max-width:300px; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="cursor:pointer; width:100%; margin-bottom:10px; box-shadow:0 8px 15px rgba(0,0,0,0.6); border-radius:12px;" onclick="window.openCardDetail('${item.id}', 'shop')">
                             ${fullCardHtml}
                         </div>
@@ -606,7 +606,7 @@ window.renderShopOnBoard = function() {
                 `;
             } else {
                 shelvesHtml += `
-                    <div style="position:relative; width:100%; max-width:260px; display:flex; flex-direction:column; align-items:center; z-index:10;">
+                    <div style="position:relative; width:100%; max-width:300px; display:flex; flex-direction:column; align-items:center; z-index:10;">
                         <div style="width:100%; min-height: 250px; aspect-ratio: 2/3; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:12px; border:6px dashed #333; margin-bottom:10px;">
                             <div style="color:#666; font-weight:900; font-size:1.8rem; letter-spacing:2px; transform:rotate(-45deg);">TYHJÄ</div>
                         </div>
@@ -636,7 +636,7 @@ window.renderShopOnBoard = function() {
             let fullCardHtml = window.generateCardHTML(resItem, false, extraHtml, false);
             
             reserveHtml += `
-                <div style="width:48%; max-width:260px; display:flex; flex-direction:column; align-items:center;">
+                <div style="width:48%; max-width:300px; display:flex; flex-direction:column; align-items:center;">
                     <div style="width:100%; cursor:pointer; position:relative; margin-bottom:10px; border-radius:12px; box-shadow:0 8px 15px rgba(0,0,0,0.6);" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
                         <div style="position:absolute; top:-10px; right:-10px; background:#fbbf24; color:#000; padding:6px 10px; font-weight:900; font-size: 0.9rem; border-radius:8px; z-index:30; border: 3px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.8);">🔒 VARATTU</div>
                         ${fullCardHtml}
