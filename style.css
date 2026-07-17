@@ -144,11 +144,8 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
    KORTTIEN KÄÄRE JA SKAALAUS
    ========================================= */
 .card-aspect-wrapper {
-    width: 100%;
-    padding-top: 150%; 
-    position: relative;
-    border-radius: 12px;
-    box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+    width: 100%; padding-top: 150%; 
+    position: relative; border-radius: 12px; box-shadow: 0 8px 15px rgba(0,0,0,0.5);
 }
 .card-aspect-wrapper .physical-card {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -177,7 +174,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .physical-card p::-webkit-scrollbar { width: 4px; } .physical-card p::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
 
 /* =========================================
-   KARUSELLI JA VIUHKA (Magneettinen Selaus Palautettu)
+   KARUSELLI JA VIUHKA (Parannettu näkyvyys!)
    ========================================= */
 #cardDetailModal { 
     padding: 0 !important; z-index: 2147483650 !important; 
@@ -189,9 +186,9 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 
 .native-carousel-container { 
     flex: 1; display: flex; align-items: center; overflow-x: auto; 
-    scroll-snap-type: x mandatory; /* SNAP TAKAISIN: Pakottaa kortin keskelle */
-    padding: 20px calc(50vw - 140px); /* Oletetaan 280px leveydeksi (140 on puolet) */
-    gap: -80px; /* Sopiva limitys, jotta kortit kääntyvät nätisti */
+    scroll-snap-type: x mandatory; 
+    padding: 20px calc(50vw - 140px); /* Keskittää täydellisesti 280px levyisen kortin */
+    gap: -160px; /* Jättää 120px näkyviin viereisestä kortista */
     width: 100vw; height: auto; min-height: 0; 
     touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
 }
@@ -199,10 +196,9 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 
 .carousel-card-wrapper { 
     flex: 0 0 280px; height: 420px; 
-    scroll-snap-align: center; /* Keskittää kortin napakasti */
+    scroll-snap-align: center; 
     position: relative; margin: 0; cursor: pointer; perspective: 1200px; 
-    transition: transform 0.1s ease-out; 
-    transform-origin: bottom center; 
+    transition: transform 0.1s ease-out; transform-origin: bottom center; 
 }
 
 #cardDetailActionArea {
@@ -272,15 +268,20 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 @keyframes penSwing { 0%, 100% { transform: rotate(6deg); } 50% { transform: rotate(-6deg); } }
 
 /* =========================================
-   TULOSKYLTTI
+   TULOSKYLTTI (Ympyröiden värit korjattu!)
    ========================================= */
 .dg-sign-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 95%; max-width: 500px; margin: 30px auto; position: relative; }
 .dg-sign-top-bar { width: 100%; height: 25px; background: #0284c7; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.6); z-index: 3; position: relative; }
 .dg-sign-legs { position: absolute; top: 12px; bottom: -50px; left: 0; right: 0; display: flex; justify-content: space-between; z-index: 1; }
 .dg-sign-leg { width: 25px; height: 100%; background: #0284c7; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.6); }
 .dg-sign-board { width: 90%; background: #dcfce7; margin-top: -5px; padding: 25px 20px; border: 4px solid #0284c7; border-top: none; box-shadow: 0 15px 30px rgba(0,0,0,0.6); z-index: 2; position: relative; }
+
+/* KORJAUS 1: Ympyröiden värit ja kontrastit */
 .receipt-circle { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; font-size: 0.8rem; flex-shrink: 0; }
-.receipt-circle.green { background-color: #22c55e; color: #fff; } .receipt-circle.blue { background-color: #3b82f6; color: #fff; } .receipt-circle.red { background-color: #ef4444; color: #fff; } .receipt-circle.even { color: #111; }
+.receipt-circle.green { background-color: #22c55e; color: #fff; } 
+.receipt-circle.blue { background-color: #3b82f6; color: #fff; } 
+.receipt-circle.red { background-color: #ef4444; color: #fff; } 
+.receipt-circle.even { background-color: #e2e8f0; color: #0f172a; } /* Erottuu nyt selkeästi pohjasta! */
 
 .torn-paper { background: var(--paper-bg); padding: 24px; margin-bottom: 25px; position: relative; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto; box-shadow: 5px 15px 30px rgba(0,0,0,0.4); }
 .tape { position: absolute; width: 50px; height: 18px; background: rgba(255,255,255,0.75); box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 10; border-radius: 2px;}
