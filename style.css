@@ -28,7 +28,7 @@ body {
 }
 
 /* =========================================
-   UUDET TYYLIKKÄÄT TAUSTAT
+   TAUSTAT JA 3D MAISEMA (Korjaus 3)
    ========================================= */
 .cork-bg {
     background-color: #0f172a;
@@ -41,6 +41,25 @@ body {
     background-color: #0f172a;
     background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 100%);
     box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+}
+
+/* 3D Kukkulamaisema tulosnäkymään */
+#view-receipt {
+    background: linear-gradient(to bottom, #38bdf8 0%, #e0f2fe 35%, #22c55e 35%, #14532d 100%) !important;
+    position: relative;
+    overflow-x: hidden;
+    box-shadow: none !important;
+}
+#view-receipt::before {
+    content: ''; position: absolute; top: 25%; left: -20%; width: 140%; height: 30%;
+    background: #16a34a; border-radius: 50%; z-index: 0; pointer-events: none;
+}
+#view-receipt::after {
+    content: ''; position: absolute; top: 30%; right: -10%; width: 80%; height: 35%;
+    background: #15803d; border-radius: 50%; z-index: 0; pointer-events: none;
+}
+#view-receipt > div {
+    z-index: 2; position: relative; /* Nostaa taulun kukkuloiden päälle */
 }
 
 .app-view {
@@ -60,27 +79,14 @@ body {
     touch-action: none; 
 }
 
-/* Taktinen "Korkkitaulu" (Slate / Dark Metal tyyli) */
 #corkboard-surface {
-    display: inline-grid;
-    gap: 60px 80px; 
-    padding: 120px;
-    box-sizing: border-box;
-    transform-origin: 0 0;
-    pointer-events: auto; 
-    
+    display: inline-grid; gap: 60px 80px; padding: 120px; box-sizing: border-box;
+    transform-origin: 0 0; pointer-events: auto; 
     background-color: #1e293b;
-    background-image: 
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), 
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
     background-size: 30px 30px;
-    
-    border: 24px solid #020617;
-    border-top-color: #0f172a; border-left-color: #0f172a;
-    border-radius: 16px;
-    position: relative;
-    z-index: 1;
-    box-shadow: 10px 20px 40px rgba(0,0,0,0.8);
+    border: 24px solid #020617; border-top-color: #0f172a; border-left-color: #0f172a; border-radius: 16px;
+    position: relative; z-index: 1; box-shadow: 10px 20px 40px rgba(0,0,0,0.8);
 }
 
 .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 10; }
@@ -88,11 +94,7 @@ h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; margi
 
 button { appearance: none; -webkit-appearance: none; outline: none; border: none; background: transparent; font-family: inherit; }
 .btn { width: 100%; padding: 16px; border-radius: 8px; font-weight: 900; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; color: #fff; text-align: center; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-.btn-modern {
-    position: relative; border-radius: 8px; border: none !important; transition: all 0.1s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.2);
-    display: inline-flex; align-items: center; justify-content: center;
-}
+.btn-modern { position: relative; border-radius: 8px; border: none !important; transition: all 0.1s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.2); display: inline-flex; align-items: center; justify-content: center; }
 .btn-modern:active { transform: scale(0.96) translateY(2px); box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
 .btn-modern:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-primary { background-color: var(--primary); }
@@ -102,40 +104,17 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .btn-warning { background-color: var(--warning); color: #000; }
 
 /* =========================================
-   ALAPALKKI
+   ALAPALKKI & ILMOITUKSET
    ========================================= */
-.modern-bottom-nav {
-    position: fixed; bottom: 25px !important; left: 50%; transform: translateX(-50%);
-    width: 95%; max-width: 420px; height: 65px; background: rgba(15, 23, 42, 0.95); 
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; 
-    display: flex; justify-content: space-around; align-items: center;
-    padding: 0 5px; box-shadow: 0 15px 35px rgba(0,0,0,0.9); 
-    z-index: 2147483640 !important; pointer-events: auto !important; 
-}
-.nav-item {
-    display: flex; flex-direction: column; align-items: center; justify-content: center; 
-    color: #94a3b8; background: transparent; border: none;
-    font-size: 0.65rem; font-weight: 900; text-transform: uppercase; cursor: pointer; 
-    flex: 1; height: 100%; padding: 0; margin: 0; outline: none;
-}
+.modern-bottom-nav { position: fixed; bottom: 25px !important; left: 50%; transform: translateX(-50%); width: 95%; max-width: 420px; height: 65px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; display: flex; justify-content: space-around; align-items: center; padding: 0 5px; box-shadow: 0 15px 35px rgba(0,0,0,0.9); z-index: 2147483640 !important; pointer-events: auto !important; }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; background: transparent; border: none; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; cursor: pointer; flex: 1; height: 100%; padding: 0; margin: 0; outline: none; }
 .nav-item .icon { font-size: 1.5rem; margin-bottom: 2px; display: block; opacity: 0.6; pointer-events: none; }
 .nav-item.accent { color: #fff; background: rgba(255,255,255,0.1); border-radius: 16px; margin: 4px 2px;}
 .nav-item.accent .icon { opacity: 1; transform: translateY(-2px) scale(1.1); text-shadow: 0 0 12px rgba(255,255,255,0.5); }
 .nav-item .badge { position: absolute; top: 6px; right: 8px; background: var(--danger); color: white; border-radius: 6px; padding: 2px 6px; font-size: 0.65rem; border: 1.5px solid #0f172a; font-weight:900; z-index:10; pointer-events: none;}
 .nav-item .badge.money { background: var(--warning); color: #000; font-size: 0.9rem; padding: 4px 8px; right: 2px; top: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.5);}
 
-/* =========================================
-   APPLE TOAST & ILMOITUKSET
-   ========================================= */
-.apple-toast {
-    position: fixed; top: -150px; left: 50%; transform: translateX(-50%);
-    width: calc(100% - 20px); max-width: 400px; background: rgba(30, 30, 30, 0.95); 
-    backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-    border-radius: 20px; padding: 12px 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-    display: flex; flex-direction: column; gap: 4px; z-index: 100000; 
-    transition: top 0.4s cubic-bezier(0.25, 1, 0.5, 1); color: #fff; border: 0.5px solid rgba(255,255,255,0.1);
-}
+.apple-toast { position: fixed; top: -150px; left: 50%; transform: translateX(-50%); width: calc(100% - 20px); max-width: 400px; background: rgba(30, 30, 30, 0.95); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border-radius: 20px; padding: 12px 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); display: flex; flex-direction: column; gap: 4px; z-index: 100000; transition: top 0.4s cubic-bezier(0.25, 1, 0.5, 1); color: #fff; border: 0.5px solid rgba(255,255,255,0.1); }
 .apple-toast.show { top: 15px; }
 .apple-toast-header { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 2px; }
 .apple-toast-app-info { display: flex; align-items: center; gap: 8px; }
@@ -159,16 +138,29 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .apple-setting-input { width: 70px; padding: 6px; border-radius: 6px; border: 2px solid #cbd5e1; font-size: 1rem; font-weight: 900; text-align: center; background: #f8fafc; color: #0f172a; margin-bottom: 0;}
 .apple-settings-title { font-size: 0.85rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; padding-left: 10px; letter-spacing: 1px; }
 
-input[type="text"], input[type="number"], select { 
-    width: 100%; padding: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.9); 
-    border: 2px solid #cbd5e1; color: #000; border-radius: 12px; 
-    font-size: 1.1rem; font-weight:800; 
-}
+input[type="text"], input[type="number"], select { width: 100%; padding: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.9); border: 2px solid #cbd5e1; color: #000; border-radius: 12px; font-size: 1.1rem; font-weight:800; }
 #gmNewPlayerName { flex: 1; min-width: 0; margin-right: 10px; margin-bottom: 0; }
 
 /* =========================================
-   KORTTIEN TÄYDELLINEN SKAALAUS
+   KORTTIEN TÄYDELLINEN SKAALAUS KÄÄREELLÄ (Korjaus 4)
+   Pakottaa kaikkien korttien koot ruudukossa samaksi!
    ========================================= */
+.card-aspect-wrapper {
+    width: 100%;
+    padding-top: 150%; /* 2:3 aspect ratio */
+    position: relative;
+    border-radius: 12px;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+}
+.card-aspect-wrapper .physical-card {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100% !important; 
+    height: 100% !important;
+    margin: 0;
+    box-shadow: none; 
+}
+
 .physical-card {
     background: #fff; border-radius: 10px; 
     width: 100%; aspect-ratio: 2 / 3 !important; padding: 10px; 
@@ -192,11 +184,10 @@ input[type="text"], input[type="number"], select {
 .physical-card p::-webkit-scrollbar { width: 4px; } .physical-card p::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
 
 /* =========================================
-   KARUSELLI JA VIUHKA (Tihennetty gap)
+   KARUSELLI JA VIUHKA (Korjaus 2)
    ========================================= */
 #cardDetailModal { 
-    padding: 0 !important; 
-    z-index: 2147483650 !important; 
+    padding: 0 !important; z-index: 2147483650 !important; 
     display: flex; flex-direction: column; justify-content: center; align-items: center;
 }
 #cardDetailModal .scrollable-modal-content {
@@ -204,30 +195,28 @@ input[type="text"], input[type="number"], select {
 }
 
 .native-carousel-container { 
-    flex: 1; display: flex; align-items: center; overflow-x: auto; 
-    scroll-snap-type: x mandatory; 
+    flex: 1; display: flex; align-items: center; overflow-x: auto; scroll-snap-type: none; /* Ei snappia, JS hoitaa sulavasti */
     padding: 20px 50vw; 
-    gap: -200px; /* TIHENNETTY: Kortit enemmän limittäin! */
+    gap: -140px; /* Sopivan tiheä korttien väli viuhkassa */
     width: 100vw; height: auto; min-height: 0; 
     touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: auto;
 }
 .native-carousel-container::-webkit-scrollbar { display: none; }
 
 .carousel-card-wrapper { 
-    flex: 0 0 280px; height: 420px; 
-    scroll-snap-align: center; position: relative; margin: 0; cursor: pointer; 
-    perspective: 1200px; 
-    transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1); 
+    flex: 0 0 320px; /* Kortit ISOMPIA selattaessa */
+    height: 480px; 
+    position: relative; margin: 0; cursor: pointer; perspective: 1200px; 
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); 
     transform-origin: bottom center; 
 }
 
 #cardDetailActionArea {
-    width: 100%; max-width: 400px; padding: 25px 20px 35px 20px; flex-shrink: 0; 
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 80%, transparent);
+    width: 100%; max-width: 400px; padding: 20px 20px 35px 20px; flex-shrink: 0; 
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 85%, transparent);
     z-index: 100; position: relative;
 }
 
-/* Jättikorttien omat fonttikoot */
 .carousel-card-wrapper .card-header { font-size: 1rem; padding: 12px 15px; }
 .carousel-card-wrapper .play-cost-badge { font-size: 1.5rem; padding: 8px 18px; margin-bottom: 15px; }
 .carousel-card-wrapper .physical-card h3 { font-size: 1.5rem; margin-bottom: 12px; }
@@ -253,7 +242,7 @@ input[type="text"], input[type="number"], select {
    KANSIO JA KAUPPA
    ========================================= */
 .binder-page { background: #f8fafc; width: 95%; max-width: 700px; margin: 20px auto; border-radius: 12px; box-shadow: 5px 15px 30px rgba(0,0,0,0.6); border-left: 15px solid #1e293b; padding: 25px 15px; }
-.binder-grid, .shop-shelf-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; justify-items: center; align-items: start; }
+.binder-grid, .shop-shelf-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; justify-items: center; align-items: stretch; }
 .shop-3d-container { width: 100%; max-width: 600px; margin: 30px auto; position: relative; }
 .shop-machine { background: #0f172a; border: 6px solid #334155; border-bottom: none; border-radius: 12px 12px 0 0; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.5); position: relative; z-index: 10; }
 .shop-glass { background: #020617; border-radius: 8px; border: 8px solid #1e293b; padding: 15px 10px; position:relative; box-shadow: inset 0 15px 30px #000; margin-bottom: 15px; }
@@ -289,16 +278,13 @@ input[type="text"], input[type="number"], select {
 @keyframes penSwing { 0%, 100% { transform: rotate(6deg); } 50% { transform: rotate(-6deg); } }
 
 /* =========================================
-   TULOSKYLTTI JA PISTEIDEN SYÖTTÖ
+   TULOSKYLTTI (Metallijalat takaisin sinisiksi)
    ========================================= */
 .dg-sign-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 95%; max-width: 500px; margin: 30px auto; position: relative; }
-.dg-sign-top-bar { width: 100%; height: 25px; background: #16a34a; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.6); z-index: 3; position: relative; }
+.dg-sign-top-bar { width: 100%; height: 25px; background: #0284c7; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.6); z-index: 3; position: relative; }
 .dg-sign-legs { position: absolute; top: 12px; bottom: -50px; left: 0; right: 0; display: flex; justify-content: space-between; z-index: 1; }
-.dg-sign-leg { width: 25px; height: 100%; background: #16a34a; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.6); }
-
-/* Vaaleanvihreä Opastekyltti-tausta */
-.dg-sign-board { width: 90%; background: #dcfce7; margin-top: -5px; padding: 25px 20px; border: 4px solid #16a34a; border-top: none; box-shadow: 0 15px 30px rgba(0,0,0,0.6); z-index: 2; position: relative; }
-
+.dg-sign-leg { width: 25px; height: 100%; background: #0284c7; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.6); }
+.dg-sign-board { width: 90%; background: #dcfce7; margin-top: -5px; padding: 25px 20px; border: 4px solid #0284c7; border-top: none; box-shadow: 0 15px 30px rgba(0,0,0,0.6); z-index: 2; position: relative; }
 .receipt-circle { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; font-size: 0.8rem; flex-shrink: 0; }
 .receipt-circle.green { background-color: #22c55e; color: #fff; } .receipt-circle.blue { background-color: #3b82f6; color: #fff; } .receipt-circle.red { background-color: #ef4444; color: #fff; } .receipt-circle.even { color: #111; }
 
