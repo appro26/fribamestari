@@ -28,9 +28,6 @@ body {
     min-height: 100vh; overflow-x: hidden;
 }
 
-/* =========================================
-   PÄÄNÄKYMÄT JA TAUSTAT (Tämä puuttui, aiheutti päällekkäisyyden!)
-   ========================================= */
 .cork-bg {
     background-color: #cbd5e1;
     background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px);
@@ -54,19 +51,40 @@ body {
     width: 100%; height: 100%;
     overflow-y: auto; overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    display: none; /* TÄMÄ PIILOTTAA INAKTIIVISET NÄKYMÄT */
+    display: none; 
     flex-direction: column;
     align-items: center; justify-content: flex-start;
     padding-bottom: 160px; 
     position: relative;
 }
 
+#corkboard-viewport {
+    width: 100vw; height: 100vh; position: fixed;
+    top: 0; left: 0; z-index: 5; 
+    touch-action: none; 
+}
+
+#corkboard-surface {
+    display: inline-grid;
+    gap: 60px 80px; 
+    padding: 120px;
+    box-sizing: border-box;
+    transform-origin: 0 0;
+    pointer-events: auto; 
+    background-color: #cbd5e1;
+    background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px);
+    background-size: 12px 12px;
+    border: 35px solid #5c4033;
+    border-top-color: #7b4e35; border-left-color: #7b4e35;
+    border-bottom-color: #3e2723; border-right-color: #3e2723;
+    border-radius: 12px;
+    position: relative;
+    z-index: 1;
+}
+
 .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 10; }
 h2 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; font-weight: 900; }
 
-/* =========================================
-   PAINIKKEET
-   ========================================= */
 button { appearance: none; -webkit-appearance: none; outline: none; border: none; background: transparent; font-family: inherit; }
 .btn { width: 100%; padding: 16px; border-radius: 8px; font-weight: 900; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; color: #fff; text-align: center; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
 .btn-modern {
@@ -83,7 +101,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .btn-warning { background-color: var(--warning); color: #000; }
 
 /* =========================================
-   ALAPALKKI (Tämä puuttui)
+   ALAPALKKI
    ========================================= */
 .modern-bottom-nav {
     position: fixed; bottom: 25px !important; left: 50%; transform: translateX(-50%);
@@ -91,7 +109,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 20px; 
     display: flex; justify-content: space-around; align-items: center;
     padding: 0 5px; box-shadow: 0 15px 35px rgba(0,0,0,0.9); 
-    z-index: 2147483647 !important; pointer-events: auto !important; 
+    z-index: 2147483640 !important; pointer-events: auto !important; 
 }
 .nav-item {
     display: flex; flex-direction: column; align-items: center; justify-content: center; 
@@ -106,7 +124,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .nav-item .badge.money { background: var(--warning); color: #000; font-size: 0.9rem; padding: 4px 8px; right: 2px; top: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.5);}
 
 /* =========================================
-   APPLE TOAST ILMOITUKSET (Tämä puuttui)
+   APPLE TOAST & ILMOITUKSET
    ========================================= */
 .apple-toast {
     position: fixed; top: -150px; left: 50%; transform: translateX(-50%);
@@ -130,7 +148,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 @keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
 
 /* =========================================
-   ASETUSVALIKKO JA INPUTIT (Tämä puuttui + Korjaukset)
+   ASETUSVALIKKO
    ========================================= */
 .apple-settings-group { background: #fff; border-radius: 12px; overflow: hidden; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 .apple-setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #e2e8f0; background: #fff; flex-wrap: nowrap; }
@@ -147,7 +165,8 @@ input[type="text"], input[type="number"], select {
 #gmNewPlayerName { flex: 1; min-width: 0; margin-right: 10px; margin-bottom: 0; }
 
 /* =========================================
-   KORTTIEN MITTASUHTEET JA TEKSTIT
+   KORTTIEN TÄYDELLINEN SKAALAUS (Bugikorjaukset 1 & 2)
+   vw-yksiköt poistettu, jotta korkkitaulu ei tuhoa niitä!
    ========================================= */
 .physical-card {
     background: #fff; border-radius: 10px; 
@@ -158,25 +177,50 @@ input[type="text"], input[type="number"], select {
 }
 .tier-1 { border: 6px solid #cd7f32; } .tier-2 { border: 6px solid #94a3b8; } .tier-3 { border: 6px solid #fbbf24; } 
 
-.card-header { padding: 6% 8%; font-weight: 900; font-size: clamp(0.7rem, 3.5vw, 1rem); display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 2; margin: -10px -10px 0 -10px; }
+.card-header { padding: 6px 10px; font-weight: 900; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 2; margin: -10px -10px 0 -10px; }
 .card-header.sabotage { background: linear-gradient(180deg, #991b1b, #7f1d1d); color: #fff; border-bottom: 2px solid #450a0a;}
 .card-header.buff { background: linear-gradient(180deg, #166534, #14532d); color: #fff; border-bottom: 2px solid #052e16;}
-.card-body { flex: 1; padding: 6%; display: flex; flex-direction: column; align-items: center; text-align: center; background: #fff; z-index: 1; min-height: 0; margin: 0 -10px -10px -10px;}
+.card-body { flex: 1; padding: 8px; display: flex; flex-direction: column; align-items: center; text-align: center; background: #fff; z-index: 1; min-height: 0; margin: 0 -10px -10px -10px;}
 .card-body.sabotage { background: radial-gradient(circle at top, #fff5f5, #fca5a5); }
 .card-body.buff { background: radial-gradient(circle at top, #f0fdf4, #86efac); }
 
-.play-cost-badge { background: linear-gradient(to bottom, #222, #000); color: #fff; font-weight: 900; font-size: clamp(0.9rem, 4vw, 1.4rem); padding: 2% 5%; border-radius: 4px; border: 2px solid #fff; margin-bottom: 5%; box-shadow: 0 2px 6px rgba(0,0,0,0.5); flex-shrink: 0; }
+.play-cost-badge { background: linear-gradient(to bottom, #222, #000); color: #fff; font-weight: 900; font-size: 1rem; padding: 4px 12px; border-radius: 4px; border: 2px solid #fff; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.5); flex-shrink: 0; }
 
-.physical-card h3 { font-size: 0.95rem; font-weight: 900; color: #000; line-height: 1.15; margin-bottom: 6px; text-transform: uppercase; word-break: break-word; hyphens: auto; flex-shrink: 0; }
+.physical-card h3 { font-size: 1rem; font-weight: 900; color: #000; line-height: 1.15; margin-bottom: 6px; text-transform: uppercase; word-break: break-word; hyphens: auto; flex-shrink: 0; }
 .physical-card p { font-size: 0.85rem; color: #111; font-weight: 700; line-height: 1.35; margin-bottom: 4px; flex: 1; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent; }
 .physical-card p::-webkit-scrollbar { width: 4px; } .physical-card p::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
 
 /* =========================================
-   KARUSELLI JA JÄTTIKORTIT
+   KARUSELLI JA JÄTTIKORTIT (Bugikorjaus 1)
    ========================================= */
-.native-carousel-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 40px calc(50vw - 160px); gap: 0px; width: 100vw; height: auto; min-height: 480px; align-items: center; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: auto; }
+#cardDetailModal { 
+    padding: 0 !important; 
+    z-index: 2147483650 !important; /* Peittää nyt varmasti myös alavalikon! */
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+#cardDetailModal .scrollable-modal-content {
+    width: 100%; height: 100vh; padding: 0; display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+}
+.native-carousel-container { 
+    flex: 1; display: flex; align-items: center; overflow-x: auto; 
+    scroll-snap-type: x mandatory; padding: 0 calc(50vw - 140px); gap: 20px; width: 100vw; 
+    height: auto; min-height: 0; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: auto;
+}
 .native-carousel-container::-webkit-scrollbar { display: none; }
-.carousel-card-wrapper { flex: 0 0 320px; scroll-snap-align: center; position: relative; height: 460px; cursor: pointer; perspective: 1200px; margin: 0 10px; }
+.carousel-card-wrapper { 
+    flex: 0 0 280px; height: 420px; scroll-snap-align: center; position: relative; margin: 0; cursor: pointer; perspective: 1200px; 
+}
+#cardDetailActionArea {
+    width: 100%; max-width: 400px; padding: 15px 20px 30px 20px; flex-shrink: 0; 
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 70%, transparent);
+}
+
+/* Jättikorttien omat fonttikoot */
+.carousel-card-wrapper .card-header { font-size: 1rem; padding: 12px 15px; }
+.carousel-card-wrapper .play-cost-badge { font-size: 1.5rem; padding: 8px 18px; margin-bottom: 15px; }
+.carousel-card-wrapper .physical-card h3 { font-size: 1.5rem; margin-bottom: 12px; }
+.carousel-card-wrapper .physical-card p { font-size: 1.15rem; line-height: 1.4; }
+
 .card-3d-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .card-3d-inner.flipped { transform: rotateY(180deg); }
 .card-face { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 12px; box-shadow: -10px 20px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; background: #fff; border: 2px solid #ccc; }
@@ -184,37 +228,44 @@ input[type="text"], input[type="number"], select {
 .card-back { transform: rotateY(180deg); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 6px solid #fff; background: #1e293b; }
 
 /* =========================================
-   MODAALIT (Asetukset, Karuselli, Pisteet)
+   MUUT MODAALIT
    ========================================= */
 .scrollable-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; z-index: 10000; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-.scrollable-modal-content { padding: 40px 15px 150px 15px; min-height: 100%; display: flex; flex-direction: column; }
-#cardDetailModal { padding-bottom: 120px !important; }
+.scrollable-modal-content { padding: 40px 15px 100px 15px; min-height: 100%; display: flex; flex-direction: column; }
 .winner-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: none; align-items: center; justify-content: center; z-index: 10500; padding: 16px; overflow-y:auto; overscroll-behavior: none; overflow-x: hidden; } 
 .close-modal-btn { background: var(--danger); border: none; border-radius: 50%; width:44px; height:44px; color: #fff; font-size: 1.8rem; font-weight:bold; cursor: pointer; display:flex; align-items:center; justify-content:center; box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4); z-index:100; flex-shrink:0;}
 #zoomModalContent { pointer-events: auto; display: flex; justify-content: center; align-items: center; width: 100%; }
 #zoomModalContent .post-it-note, #zoomModalContent .pinned-card-container, #zoomModalContent > div { margin: 0 !important; }
 
 /* =========================================
-   KANSIO JA KAUPPA (GRIDIT JA ULKOASU)
+   KANSIO JA KAUPPA
    ========================================= */
 .binder-page { background: #fdfbf7; width: 95%; max-width: 700px; margin: 20px auto; border-radius: 12px; box-shadow: inset 0 0 25px rgba(0,0,0,0.05), 5px 5px 25px rgba(0,0,0,0.4); border-left: 15px solid #222; padding: 25px 15px; }
 .binder-grid, .shop-shelf-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; justify-items: center; align-items: start; }
-.shop-3d-container { width: 100%; max-width: 550px; margin: 30px auto; position: relative; }
+.shop-3d-container { width: 100%; max-width: 600px; margin: 30px auto; position: relative; }
 .shop-machine { background: #111827; border: 6px solid #334155; border-bottom: none; border-radius: 12px 12px 0 0; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.5); position: relative; z-index: 10; }
 .shop-glass { background: #020617; border-radius: 8px; border: 8px solid #0f172a; padding: 15px 10px; position:relative; box-shadow: inset 0 15px 30px #000; margin-bottom: 15px; }
 .shop-floor { width: 100%; height: 60px; background: #334155; border-top: 8px solid #1e293b; border-radius: 0 0 12px 12px; box-shadow: 0 20px 30px rgba(0,0,0,0.6); transform: perspective(300px) rotateX(20deg); margin-top: -15px; z-index: 1; position: relative; }
 
 /* =========================================
-   VÄYLÄTAULU JA PAPERIELEMENTIT
+   VÄYLÄTAULU JA PAPERIELEMENTIT (Bugikorjaus 5)
    ========================================= */
-.mini-corkboard { background-color: #d1d5db; background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.08"/></svg>'); border: 15px solid #d2b48c; border-radius: 4px; box-shadow: 5px 15px 30px rgba(0,0,0,0.5); padding: 30px 15px; width: 95%; max-width: 500px; margin: 0 auto; margin-top: 30px; display: flex; flex-direction: column; align-items: center; position: relative; }
-.index-card { background: #fdfaf6; background-image: repeating-linear-gradient(transparent, transparent 23px, #bae6fd 24px); border-top: 16px solid #ef4444; border-radius: 4px; position: relative; display: flex; flex-direction: column; justify-content: center; box-shadow: 6px 12px 20px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.05); padding: 10px 15px; margin-bottom: 15px;}
+.hole-cell { width: 380px; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; z-index: 10; }
+.mini-corkboard { background-color: #d1d5db; background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.08"/></svg>'); border: 15px solid #d2b48c; border-radius: 4px; box-shadow: 5px 15px 30px rgba(0,0,0,0.5); padding: 30px 15px; width: 95%; max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; position: relative; }
+.index-card { background: #fdfaf6; background-image: repeating-linear-gradient(transparent, transparent 23px, #bae6fd 24px); border-top: 16px solid #ef4444; border-radius: 4px; position: relative; display: flex; flex-direction: column; justify-content: center; box-shadow: 6px 12px 20px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.05); padding: 10px 15px; margin-bottom: 15px; z-index: 5;}
 .index-card .banner-subtitle { font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 2px; }
 .index-card .banner-title { font-weight: 700; color: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.8rem; margin-bottom: 2px; }
 .index-card .banner-par { display: inline-block; color: var(--danger); font-weight: 900; font-family: 'Kalam', cursive; font-size: 1.1rem; }
 .post-it-note { width: 280px; height: 250px; padding: 25px 20px 20px 20px; box-shadow: 3px 6px 15px rgba(0,0,0,0.3); position: relative; z-index: 15; display: flex; flex-direction: column; border-bottom-right-radius: 40px 5px; cursor: pointer; margin: 15px auto 30px auto; transition: transform 0.2s; background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(0,0,0,0.02) 100%);}
 .post-it-tape { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 80px; height: 25px; background: rgba(255,255,255,0.6); box-shadow: 0 1px 3px rgba(0,0,0,0.1); z-index: 20; }
-.opponent-event-note { width: 130px; aspect-ratio: 1/1; padding: 12px; box-shadow: 2px 4px 10px rgba(0,0,0,0.3); font-family: 'Kalam', cursive; text-align: center; display: flex; flex-direction: column; justify-content: space-between; align-items: center; border-radius: 2px 15px 2px 15px; cursor: pointer; position: relative; transition: transform 0.1s; }
+
+/* KIINTEÄ KOKO POST-IT LAPULLE! (Bugikorjaus 5) */
+.opponent-event-note { 
+    width: 140px; height: 140px; flex-shrink: 0; padding: 12px; 
+    box-shadow: 2px 4px 10px rgba(0,0,0,0.3); font-family: 'Kalam', cursive; text-align: center; 
+    display: flex; flex-direction: column; justify-content: space-between; align-items: center; 
+    border-radius: 2px 15px 2px 15px; cursor: pointer; position: relative; transition: transform 0.1s; z-index: 5;
+}
 .opponent-event-note:active { transform: scale(0.95) !important; }
 .opponent-event-note::before { content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 40px; height: 15px; background: rgba(255,255,255,0.6); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .opponent-event-note.buff { background: #bbf7d0; color: #14532d; }
