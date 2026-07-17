@@ -12,9 +12,6 @@
         
         window.switchView = function(viewId) {
             try {
-                // =========================================
-                // MODAALIEN PAKKOSULKU (Bugikorjaus 7)
-                // =========================================
                 const modalsToClose = ['settingsModal', 'rulesModal', 'handLimitModal', 'courseModal', 'cardPricingModal', 'targetModal', 'scoreModal', 'zoomModal', 'cardDetailModal'];
                 modalsToClose.forEach(mId => {
                     let m = document.getElementById(mId);
@@ -44,12 +41,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;600;700;800;900&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="style.css?v=1200" />
-    <meta id="themeColorMeta" name="theme-color" content="#788692" />
+    <meta id="themeColorMeta" name="theme-color" content="#0f172a" />
     
 </head>
 <body class="player-mode">
 
-    <!-- LISÄTTY ONCLICK ILMOITUKSEN PIILOTTAMISEKSI (Bugikorjaus 8) -->
     <div id="appleToast" class="apple-toast" onclick="this.classList.remove('show')" style="cursor: pointer;">
         <div class="apple-toast-header">
             <div class="apple-toast-app-info">
@@ -66,7 +62,8 @@
     
     <div id="notificationContainer"></div> 
 
-    <div id="handLimitModal" class="winner-overlay" style="z-index: 10005;" onclick="if(event.target === this) { this.style.display='none'; }">
+    <!-- Modaalit on nyt pakotettu piiloon (display: none;) estämään alun musta ruutu -->
+    <div id="handLimitModal" class="winner-overlay" style="display: none; z-index: 10005;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="torn-paper" style="text-align:center;">
             <div class="tape tape-tl"></div><div class="tape tape-tr"></div>
             <div style="font-size:3rem; margin-bottom:10px;">⚠️</div>
@@ -92,8 +89,7 @@
         </div>
     </div>
 
-    <!-- LUO RATA MODAALI (Puuttui ehkä, mutta lisätään se rakenteeseen oikein) -->
-    <div id="courseModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="courseModal" class="scrollable-modal" style="display: none;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -110,36 +106,31 @@
         </div>
     </div>
 
-    <!-- PÄÄALUE: NÄKYMÄRAKENNE (Kaikissa wall-bg) -->
+    <!-- PÄÄALUE: NÄKYMÄRAKENNE -->
     <div id="app-main-area" class="cork-bg">
         
-        <!-- TULOKSET -->
         <div id="view-receipt" class="app-view wall-bg">
             <div id="board-receipt-wrapper" style="width:100%;"></div>
         </div>
 
-        <!-- PALKKA -->
         <div id="view-payslip" class="app-view wall-bg">
             <div id="payslip-content" style="width: 100%;"></div>
         </div>
 
-        <!-- OMAT KORTIT -->
         <div id="view-binder" class="app-view wall-bg">
             <div id="board-binder-wrapper" style="width:100%;"></div>
         </div>
 
-        <!-- KAUPPA -->
         <div id="view-shop" class="app-view wall-bg">
             <div id="board-shop-wrapper" style="width:100%;"></div>
         </div>
 
-        <!-- VÄYLÄNÄKYMÄ SEINÄTAUSTALLA -->
         <div id="view-hole" class="app-view wall-bg" style="display: flex;">
             <div id="hole-content" style="display: flex; flex-direction: column; align-items: center; width: 100%; padding-top: 10px; flex: 1;"></div>
             
             <div style="width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; padding: 15px; z-index: 50;">
                 <button class="btn btn-secondary btn-modern" style="padding: 10px 15px; font-weight:900;" onclick="if(window.prevHoleView) window.prevHoleView()">⬅️ EDEL</button>
-                <div id="hole-nav-title" style="background: rgba(255,255,255,0.95); padding: 8px 15px; border-radius: 8px; font-weight: 900; font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">VÄYLÄ 1</div>
+                <div id="hole-nav-title" style="background: rgba(30,41,59,0.95); color: #fff; border: 2px solid #475569; padding: 8px 15px; border-radius: 8px; font-weight: 900; font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">VÄYLÄ 1</div>
                 <button class="btn btn-secondary btn-modern" style="padding: 10px 15px; font-weight:900;" onclick="if(window.nextHoleView) window.nextHoleView()">SEUR ➡️</button>
             </div>
         </div>
@@ -173,7 +164,7 @@
     </div>
 
     <!-- MODERNISOITU ASETUSVALIKKO -->
-    <div id="settingsModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="settingsModal" class="scrollable-modal" style="display: none;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -185,11 +176,11 @@
                 <div class="apple-settings-group">
                     <div class="apple-setting-row" style="background:#f8fafc;">
                         <span class="apple-setting-label" style="color:#ef4444;">Nollaa Koko Peli</span>
-                        <button class="btn btn-danger btn-modern" style="padding:8px 12px;" onclick="if(window.resetGame) { window.resetGame(); }">WIPE</button>
+                        <button class="btn btn-danger btn-modern" style="padding:8px 12px; width:auto;" onclick="if(window.resetGame) { window.resetGame(); }">WIPE</button>
                     </div>
                     <div class="apple-setting-row" style="background:#f8fafc;">
                         <span class="apple-setting-label">Päivitä Selain</span>
-                        <button class="btn btn-secondary btn-modern" style="padding:8px 12px;" onclick="location.reload()">RELOAD</button>
+                        <button class="btn btn-secondary btn-modern" style="padding:8px 12px; width:auto;" onclick="location.reload()">RELOAD</button>
                     </div>
                 </div>
 
@@ -268,8 +259,7 @@
         </div>
     </div>
 
-    <!-- KORTTIEN HINNASTO MODAALI -->
-    <div id="cardPricingModal" class="scrollable-modal" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="cardPricingModal" class="scrollable-modal" style="display: none;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="scrollable-modal-content">
             <div style="width:100%; max-width:500px; margin: 0 auto; padding-bottom:50px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -285,7 +275,7 @@
         </div>
     </div>
 
-    <div id="targetModal" class="winner-overlay" style="z-index: 10001;" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="targetModal" class="winner-overlay" style="display: none; z-index: 10001;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="card glass-card" style="width: 100%; max-width: 400px; border: 4px solid var(--danger); background: #fff; border-radius: 12px; padding: 20px;">
             <h2 style="color:var(--text-main);">Valitse kohde</h2>
             <p id="targetCardName" style="color: var(--danger); font-weight: 900; margin-bottom: 20px; font-size: 1.3rem; text-align:center; text-transform:uppercase;"></p>
@@ -294,7 +284,7 @@
         </div>
     </div>
 
-    <div id="scoreModal" class="winner-overlay" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="scoreModal" class="winner-overlay" style="display: none;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div class="paper-score-modal" style="max-height: 90vh; overflow-y:auto;">
             <div class="pin pin-green" style="top: 15px; right: 20px;"></div>
             <div style="text-align: center; margin-bottom: 15px;">
@@ -311,12 +301,12 @@
         </div>
     </div>
 
-    <div id="zoomModal" class="winner-overlay" style="z-index: 10500;" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="zoomModal" class="winner-overlay" style="display: none; z-index: 10500;" onclick="if(event.target === this) { this.style.display='none'; }">
         <div id="zoomModalContent"></div>
     </div>
 
     <!-- KORTTIKARUSELLIN MODAALI -->
-    <div id="cardDetailModal" class="scrollable-modal" style="z-index:10000; background:rgba(0,0,0,0.95);" onclick="if(event.target === this) { this.style.display='none'; }">
+    <div id="cardDetailModal" class="scrollable-modal" style="display: none; z-index:10000; background:rgba(0,0,0,0.95);" onclick="if(event.target === this) { this.style.display='none'; }">
         <!-- SULKUNAPPI TÄÄLLÄ -->
         <button onclick="document.getElementById('cardDetailModal').style.display='none'" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); border: 2px solid #fff; border-radius: 50%; width: 45px; height: 45px; color: #fff; font-size: 1.8rem; font-weight: bold; z-index: 10001; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
         
