@@ -4,8 +4,8 @@
     --danger: #dc2626;
     --warning: #f59e0b;
     --info: #2563eb;
-    --text-main: #111;
-    --text-muted: #444;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
     --paper-bg: #fdfaf6;
     --ink-blue: #0f1b61;
 }
@@ -22,28 +22,24 @@ html, body { overscroll-behavior-y: none; overscroll-behavior-x: none; touch-act
 input, textarea, select { -webkit-user-select: auto; user-select: auto; font-family: inherit; }
 
 body { 
-    background-color: #1e293b; 
-    background-image: linear-gradient(0deg, #0f172a 0%, transparent 100%);
+    background-color: #020617; 
     color: var(--text-main); 
     min-height: 100vh; overflow-x: hidden;
 }
 
+/* =========================================
+   UUDET TYYLIKKÄÄT TAUSTAT (Bugikorjaus 5)
+   ========================================= */
 .cork-bg {
-    background-color: #cbd5e1;
-    background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px);
-    background-size: 12px 12px; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 5;
+    background-color: #0f172a;
+    background-image: radial-gradient(circle at top right, #1e293b, transparent 60%);
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 5;
     display: none; 
 }
 
 .wall-bg {
-    background-color: #3e2723;
-    background-image: 
-        linear-gradient(rgba(255,255,255,0.03) 2px, transparent 2px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 2px, transparent 2px),
-        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
-    background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
+    background-color: #0f172a;
+    background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 100%);
     box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
 }
 
@@ -64,6 +60,7 @@ body {
     touch-action: none; 
 }
 
+/* Uusi Taktinen "Korkkitaulu" (Slate / Dark Metal tyyli) */
 #corkboard-surface {
     display: inline-grid;
     gap: 60px 80px; 
@@ -71,15 +68,19 @@ body {
     box-sizing: border-box;
     transform-origin: 0 0;
     pointer-events: auto; 
-    background-color: #cbd5e1;
-    background-image: radial-gradient(rgba(0,0,0,0.08) 2px, transparent 2px);
-    background-size: 12px 12px;
-    border: 35px solid #5c4033;
-    border-top-color: #7b4e35; border-left-color: #7b4e35;
-    border-bottom-color: #3e2723; border-right-color: #3e2723;
-    border-radius: 12px;
+    
+    background-color: #1e293b;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), 
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    
+    border: 24px solid #020617;
+    border-top-color: #0f172a; border-left-color: #0f172a;
+    border-radius: 16px;
     position: relative;
     z-index: 1;
+    box-shadow: 10px 20px 40px rgba(0,0,0,0.8);
 }
 
 .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 10; }
@@ -97,7 +98,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .btn-primary { background-color: var(--primary); }
 .btn-danger { background-color: var(--danger); }
 .btn-success { background-color: var(--primary); } 
-.btn-secondary { background: #eee; color: #111; border: 1px solid #ccc !important; }
+.btn-secondary { background: #334155; color: #f8fafc; border: 1px solid #475569 !important; }
 .btn-warning { background-color: var(--warning); color: #000; }
 
 /* =========================================
@@ -105,8 +106,9 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
    ========================================= */
 .modern-bottom-nav {
     position: fixed; bottom: 25px !important; left: 50%; transform: translateX(-50%);
-    width: 95%; max-width: 420px; height: 65px; background: rgba(15, 23, 42, 1); 
-    border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 20px; 
+    width: 95%; max-width: 420px; height: 65px; background: rgba(15, 23, 42, 0.95); 
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; 
     display: flex; justify-content: space-around; align-items: center;
     padding: 0 5px; box-shadow: 0 15px 35px rgba(0,0,0,0.9); 
     z-index: 2147483640 !important; pointer-events: auto !important; 
@@ -118,7 +120,7 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
     flex: 1; height: 100%; padding: 0; margin: 0; outline: none;
 }
 .nav-item .icon { font-size: 1.5rem; margin-bottom: 2px; display: block; opacity: 0.6; pointer-events: none; }
-.nav-item.accent { color: #fff; background: rgba(255,255,255,0.08); border-radius: 16px; margin: 4px 2px;}
+.nav-item.accent { color: #fff; background: rgba(255,255,255,0.1); border-radius: 16px; margin: 4px 2px;}
 .nav-item.accent .icon { opacity: 1; transform: translateY(-2px) scale(1.1); text-shadow: 0 0 12px rgba(255,255,255,0.5); }
 .nav-item .badge { position: absolute; top: 6px; right: 8px; background: var(--danger); color: white; border-radius: 6px; padding: 2px 6px; font-size: 0.65rem; border: 1.5px solid #0f172a; font-weight:900; z-index:10; pointer-events: none;}
 .nav-item .badge.money { background: var(--warning); color: #000; font-size: 0.9rem; padding: 4px 8px; right: 2px; top: 2px; box-shadow: 0 2px 6px rgba(0,0,0,0.5);}
@@ -158,15 +160,14 @@ button { appearance: none; -webkit-appearance: none; outline: none; border: none
 .apple-settings-title { font-size: 0.85rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; padding-left: 10px; letter-spacing: 1px; }
 
 input[type="text"], input[type="number"], select { 
-    width: 100%; padding: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.8); 
-    border: 2px solid #cbd5e1; color: var(--text-main); border-radius: 12px; 
+    width: 100%; padding: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.9); 
+    border: 2px solid #cbd5e1; color: #000; border-radius: 12px; 
     font-size: 1.1rem; font-weight:800; 
 }
 #gmNewPlayerName { flex: 1; min-width: 0; margin-right: 10px; margin-bottom: 0; }
 
 /* =========================================
-   KORTTIEN TÄYDELLINEN SKAALAUS (Bugikorjaukset 1 & 2)
-   vw-yksiköt poistettu, jotta korkkitaulu ei tuhoa niitä!
+   KORTTIEN TÄYDELLINEN SKAALAUS
    ========================================= */
 .physical-card {
     background: #fff; border-radius: 10px; 
@@ -191,28 +192,40 @@ input[type="text"], input[type="number"], select {
 .physical-card p::-webkit-scrollbar { width: 4px; } .physical-card p::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
 
 /* =========================================
-   KARUSELLI JA JÄTTIKORTIT (Bugikorjaus 1)
+   KARUSELLI JA VIUHKA (Bugikorjaus 2)
    ========================================= */
 #cardDetailModal { 
     padding: 0 !important; 
-    z-index: 2147483650 !important; /* Peittää nyt varmasti myös alavalikon! */
+    z-index: 2147483650 !important; 
     display: flex; flex-direction: column; justify-content: center; align-items: center;
 }
 #cardDetailModal .scrollable-modal-content {
-    width: 100%; height: 100vh; padding: 0; display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+    width: 100%; height: 100vh; padding: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; overflow: hidden;
 }
+
+/* Scroll-snap containeri piilotetaan ja kortit limittyvät! */
 .native-carousel-container { 
     flex: 1; display: flex; align-items: center; overflow-x: auto; 
-    scroll-snap-type: x mandatory; padding: 0 calc(50vw - 140px); gap: 20px; width: 100vw; 
-    height: auto; min-height: 0; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: auto;
+    scroll-snap-type: x mandatory; 
+    padding: 20px 50vw; /* Keskittää ensimmäisen ja viimeisen kortin! */
+    gap: -160px; /* KORTIT LIMIIN VIUHKAA VARTEN */
+    width: 100vw; height: auto; min-height: 0; 
+    touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: auto;
 }
 .native-carousel-container::-webkit-scrollbar { display: none; }
+
 .carousel-card-wrapper { 
-    flex: 0 0 280px; height: 420px; scroll-snap-align: center; position: relative; margin: 0; cursor: pointer; perspective: 1200px; 
+    flex: 0 0 280px; height: 420px; 
+    scroll-snap-align: center; position: relative; margin: 0; cursor: pointer; 
+    perspective: 1200px; 
+    transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1); /* Pehmeä seuranta */
+    transform-origin: bottom center; /* Viuhka kääntyy alareunasta */
 }
+
 #cardDetailActionArea {
-    width: 100%; max-width: 400px; padding: 15px 20px 30px 20px; flex-shrink: 0; 
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 70%, transparent);
+    width: 100%; max-width: 400px; padding: 25px 20px 35px 20px; flex-shrink: 0; 
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 80%, transparent);
+    z-index: 100; position: relative;
 }
 
 /* Jättikorttien omat fonttikoot */
@@ -238,20 +251,20 @@ input[type="text"], input[type="number"], select {
 #zoomModalContent .post-it-note, #zoomModalContent .pinned-card-container, #zoomModalContent > div { margin: 0 !important; }
 
 /* =========================================
-   KANSIO JA KAUPPA
+   KANSIO JA KAUPPA (Modernisoitu tyyli)
    ========================================= */
-.binder-page { background: #fdfbf7; width: 95%; max-width: 700px; margin: 20px auto; border-radius: 12px; box-shadow: inset 0 0 25px rgba(0,0,0,0.05), 5px 5px 25px rgba(0,0,0,0.4); border-left: 15px solid #222; padding: 25px 15px; }
+.binder-page { background: #f8fafc; width: 95%; max-width: 700px; margin: 20px auto; border-radius: 12px; box-shadow: 5px 15px 30px rgba(0,0,0,0.6); border-left: 15px solid #1e293b; padding: 25px 15px; }
 .binder-grid, .shop-shelf-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; justify-items: center; align-items: start; }
 .shop-3d-container { width: 100%; max-width: 600px; margin: 30px auto; position: relative; }
-.shop-machine { background: #111827; border: 6px solid #334155; border-bottom: none; border-radius: 12px 12px 0 0; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.5); position: relative; z-index: 10; }
-.shop-glass { background: #020617; border-radius: 8px; border: 8px solid #0f172a; padding: 15px 10px; position:relative; box-shadow: inset 0 15px 30px #000; margin-bottom: 15px; }
+.shop-machine { background: #0f172a; border: 6px solid #334155; border-bottom: none; border-radius: 12px 12px 0 0; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.5); position: relative; z-index: 10; }
+.shop-glass { background: #020617; border-radius: 8px; border: 8px solid #1e293b; padding: 15px 10px; position:relative; box-shadow: inset 0 15px 30px #000; margin-bottom: 15px; }
 .shop-floor { width: 100%; height: 60px; background: #334155; border-top: 8px solid #1e293b; border-radius: 0 0 12px 12px; box-shadow: 0 20px 30px rgba(0,0,0,0.6); transform: perspective(300px) rotateX(20deg); margin-top: -15px; z-index: 1; position: relative; }
 
 /* =========================================
-   VÄYLÄTAULU JA PAPERIELEMENTIT (Bugikorjaus 5)
+   VÄYLÄTAULU JA PAPERIELEMENTIT
    ========================================= */
 .hole-cell { width: 380px; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; z-index: 10; }
-.mini-corkboard { background-color: #d1d5db; background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.08"/></svg>'); border: 15px solid #d2b48c; border-radius: 4px; box-shadow: 5px 15px 30px rgba(0,0,0,0.5); padding: 30px 15px; width: 95%; max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; position: relative; }
+.mini-corkboard { background-color: #cbd5e1; border: 12px solid #334155; border-radius: 8px; box-shadow: 10px 20px 40px rgba(0,0,0,0.8); padding: 30px 15px; width: 95%; max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; position: relative; }
 .index-card { background: #fdfaf6; background-image: repeating-linear-gradient(transparent, transparent 23px, #bae6fd 24px); border-top: 16px solid #ef4444; border-radius: 4px; position: relative; display: flex; flex-direction: column; justify-content: center; box-shadow: 6px 12px 20px rgba(0,0,0,0.4), inset 0 0 10px rgba(0,0,0,0.05); padding: 10px 15px; margin-bottom: 15px; z-index: 5;}
 .index-card .banner-subtitle { font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 2px; }
 .index-card .banner-title { font-weight: 700; color: var(--ink-blue); font-family: 'Kalam', cursive; font-size: 1.8rem; margin-bottom: 2px; }
@@ -259,7 +272,6 @@ input[type="text"], input[type="number"], select {
 .post-it-note { width: 280px; height: 250px; padding: 25px 20px 20px 20px; box-shadow: 3px 6px 15px rgba(0,0,0,0.3); position: relative; z-index: 15; display: flex; flex-direction: column; border-bottom-right-radius: 40px 5px; cursor: pointer; margin: 15px auto 30px auto; transition: transform 0.2s; background-image: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(0,0,0,0.02) 100%);}
 .post-it-tape { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 80px; height: 25px; background: rgba(255,255,255,0.6); box-shadow: 0 1px 3px rgba(0,0,0,0.1); z-index: 20; }
 
-/* KIINTEÄ KOKO POST-IT LAPULLE! (Bugikorjaus 5) */
 .opponent-event-note { 
     width: 140px; height: 140px; flex-shrink: 0; padding: 12px; 
     box-shadow: 2px 4px 10px rgba(0,0,0,0.3); font-family: 'Kalam', cursive; text-align: center; 
@@ -281,10 +293,10 @@ input[type="text"], input[type="number"], select {
    TULOSKYLTTI JA PISTEIDEN SYÖTTÖ
    ========================================= */
 .dg-sign-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 95%; max-width: 500px; margin: 30px auto; position: relative; }
-.dg-sign-top-bar { width: 100%; height: 25px; background: #0284c7; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.4); z-index: 3; position: relative; }
+.dg-sign-top-bar { width: 100%; height: 25px; background: #0ea5e9; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.6); z-index: 3; position: relative; }
 .dg-sign-legs { position: absolute; top: 12px; bottom: -50px; left: 0; right: 0; display: flex; justify-content: space-between; z-index: 1; }
-.dg-sign-leg { width: 25px; height: 100%; background: #0284c7; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.4); }
-.dg-sign-board { width: 90%; background: #fff; margin-top: -5px; padding: 25px 20px; border: 4px solid #0284c7; border-top: none; box-shadow: 0 15px 25px rgba(0,0,0,0.4); z-index: 2; position: relative; }
+.dg-sign-leg { width: 25px; height: 100%; background: #0ea5e9; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.6); }
+.dg-sign-board { width: 90%; background: #fff; margin-top: -5px; padding: 25px 20px; border: 4px solid #0ea5e9; border-top: none; box-shadow: 0 15px 30px rgba(0,0,0,0.6); z-index: 2; position: relative; }
 .receipt-circle { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; font-size: 0.8rem; flex-shrink: 0; }
 .receipt-circle.green { background-color: #22c55e; color: #fff; } .receipt-circle.blue { background-color: #3b82f6; color: #fff; } .receipt-circle.red { background-color: #ef4444; color: #fff; } .receipt-circle.even { color: #111; }
 
