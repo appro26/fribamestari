@@ -145,36 +145,40 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
    ========================================= */
 .card-aspect-wrapper {
     width: 100%; padding-top: 150%; 
-    position: relative; border-radius: 12px; box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+    position: relative; border-radius: 14px; box-shadow: 0 8px 15px rgba(0,0,0,0.5);
 }
 .card-aspect-wrapper .physical-card {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     width: 100% !important; height: 100% !important; margin: 0; box-shadow: none; 
 }
 
+/* KORJAUS 4: Paksummat reunat, parempi tunnistettavuus! */
 .physical-card {
-    background: #fff; border-radius: 10px; width: 100%; aspect-ratio: 2 / 3 !important; padding: 10px; 
+    background: #fff; border-radius: 12px; width: 100%; aspect-ratio: 2 / 3 !important; 
+    padding: 6px; /* Pienennetty padding, koska reuna on paksumpi */
     display: flex; flex-direction: column; justify-content: flex-start;
-    box-shadow: 6px 15px 30px rgba(0,0,0,0.5), inset -1px 2px 4px rgba(255,255,255,0.9);
+    box-shadow: inset -1px 2px 4px rgba(255,255,255,0.9);
     border: 1px solid #ccc; position: relative; z-index: 1; overflow: hidden;
 }
-.tier-1 { border: 6px solid #cd7f32; } .tier-2 { border: 6px solid #94a3b8; } .tier-3 { border: 6px solid #fbbf24; } 
+.tier-1 { border: 12px solid #cd7f32; } 
+.tier-2 { border: 12px solid #94a3b8; } 
+.tier-3 { border: 12px solid #fbbf24; box-shadow: inset 0 0 10px rgba(251,191,36,0.3); } 
 
-.card-header { padding: 6px 10px; font-weight: 900; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 2; margin: -10px -10px 0 -10px; }
+.card-header { padding: 4px 8px; font-weight: 900; font-size: 0.70rem; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 2; margin: -6px -6px 0 -6px; }
 .card-header.sabotage { background: linear-gradient(180deg, #991b1b, #7f1d1d); color: #fff; border-bottom: 2px solid #450a0a;}
 .card-header.buff { background: linear-gradient(180deg, #166534, #14532d); color: #fff; border-bottom: 2px solid #052e16;}
-.card-body { flex: 1; padding: 8px; display: flex; flex-direction: column; align-items: center; text-align: center; background: #fff; z-index: 1; min-height: 0; margin: 0 -10px -10px -10px;}
+.card-body { flex: 1; padding: 6px; display: flex; flex-direction: column; align-items: center; text-align: center; background: #fff; z-index: 1; min-height: 0; margin: 0 -6px -6px -6px;}
 .card-body.sabotage { background: radial-gradient(circle at top, #fff5f5, #fca5a5); }
 .card-body.buff { background: radial-gradient(circle at top, #f0fdf4, #86efac); }
 
-.play-cost-badge { background: linear-gradient(to bottom, #222, #000); color: #fff; font-weight: 900; font-size: 1rem; padding: 4px 12px; border-radius: 4px; border: 2px solid #fff; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.5); flex-shrink: 0; }
+.play-cost-badge { background: linear-gradient(to bottom, #222, #000); color: #fff; font-weight: 900; font-size: 1rem; padding: 4px 12px; border-radius: 4px; border: 2px solid #fff; margin-bottom: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.5); flex-shrink: 0; }
 
-.physical-card h3 { font-size: 1rem; font-weight: 900; color: #000; line-height: 1.15; margin-bottom: 6px; text-transform: uppercase; word-break: break-word; hyphens: auto; flex-shrink: 0; }
-.physical-card p { font-size: 0.85rem; color: #111; font-weight: 700; line-height: 1.35; margin-bottom: 4px; flex: 1; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent; }
+.physical-card h3 { font-size: 0.95rem; font-weight: 900; color: #000; line-height: 1.15; margin-bottom: 6px; text-transform: uppercase; word-break: break-word; hyphens: auto; flex-shrink: 0; }
+.physical-card p { font-size: 0.80rem; color: #111; font-weight: 700; line-height: 1.35; margin-bottom: 4px; flex: 1; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent; }
 .physical-card p::-webkit-scrollbar { width: 4px; } .physical-card p::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
 
 /* =========================================
-   KARUSELLI JA VIUHKA (Parannettu näkyvyys!)
+   KARUSELLI JA VIUHKA (Tiivis limitys!)
    ========================================= */
 #cardDetailModal { 
     padding: 0 !important; z-index: 2147483650 !important; 
@@ -184,11 +188,12 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     width: 100%; height: 100vh; padding: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; overflow: hidden;
 }
 
+/* KORJAUS 3: Kortit todella tiiviisti yhdessä! Gap muutettu reilusti negatiiviseksi. */
 .native-carousel-container { 
     flex: 1; display: flex; align-items: center; overflow-x: auto; 
     scroll-snap-type: x mandatory; 
-    padding: 20px calc(50vw - 140px); /* Keskittää täydellisesti 280px levyisen kortin */
-    gap: -160px; /* Jättää 120px näkyviin viereisestä kortista */
+    padding: 20px calc(50vw - 140px); /* Keskittää 280px levyisen kortin */
+    gap: -220px; /* Jättää vain 60px reunaa näkyviin viereisestä kortista! */
     width: 100vw; height: auto; min-height: 0; 
     touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
 }
@@ -207,7 +212,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     z-index: 100; position: relative;
 }
 
-.carousel-card-wrapper .card-header { font-size: 1rem; padding: 12px 15px; }
+.carousel-card-wrapper .card-header { font-size: 1rem; padding: 12px 15px; margin: -6px -6px 0 -6px; }
 .carousel-card-wrapper .play-cost-badge { font-size: 1.5rem; padding: 8px 18px; margin-bottom: 15px; }
 .carousel-card-wrapper .physical-card h3 { font-size: 1.5rem; margin-bottom: 12px; }
 .carousel-card-wrapper .physical-card p { font-size: 1.15rem; line-height: 1.4; }
@@ -268,7 +273,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 @keyframes penSwing { 0%, 100% { transform: rotate(6deg); } 50% { transform: rotate(-6deg); } }
 
 /* =========================================
-   TULOSKYLTTI (Ympyröiden värit korjattu!)
+   TULOSKYLTTI
    ========================================= */
 .dg-sign-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 95%; max-width: 500px; margin: 30px auto; position: relative; }
 .dg-sign-top-bar { width: 100%; height: 25px; background: #0284c7; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.6); z-index: 3; position: relative; }
@@ -276,12 +281,12 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .dg-sign-leg { width: 25px; height: 100%; background: #0284c7; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.6); }
 .dg-sign-board { width: 90%; background: #dcfce7; margin-top: -5px; padding: 25px 20px; border: 4px solid #0284c7; border-top: none; box-shadow: 0 15px 30px rgba(0,0,0,0.6); z-index: 2; position: relative; }
 
-/* KORJAUS 1: Ympyröiden värit ja kontrastit */
+/* KORJAUS 1: Ympyröiden värit. Even tulokset harmaalle pohjalle tummalla tekstillä! */
 .receipt-circle { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; font-size: 0.8rem; flex-shrink: 0; }
 .receipt-circle.green { background-color: #22c55e; color: #fff; } 
 .receipt-circle.blue { background-color: #3b82f6; color: #fff; } 
 .receipt-circle.red { background-color: #ef4444; color: #fff; } 
-.receipt-circle.even { background-color: #e2e8f0; color: #0f172a; } /* Erottuu nyt selkeästi pohjasta! */
+.receipt-circle.even { background-color: #e2e8f0; color: #0f172a; border: 1px solid #cbd5e1;} 
 
 .torn-paper { background: var(--paper-bg); padding: 24px; margin-bottom: 25px; position: relative; width: 92%; max-width: 450px; margin-left: auto; margin-right: auto; box-shadow: 5px 15px 30px rgba(0,0,0,0.4); }
 .tape { position: absolute; width: 50px; height: 18px; background: rgba(255,255,255,0.75); box-shadow: 0 1px 3px rgba(0,0,0,0.3); z-index: 10; border-radius: 2px;}
