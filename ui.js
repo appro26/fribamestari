@@ -82,12 +82,11 @@ window.openCardDetail = function(cId, mode) {
     if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
     window.showModalSafe('cardDetailModal');
     
-    // KORJAUS 2: Kortin täydellinen keskitys avatessa
     setTimeout(() => { 
         const container = el('cardCarousel');
         if(container) {
-            // 280px (kortin leveys) - 160px (limitys / gap) = 120px on tarkka hyppäys!
-            container.scrollLeft = window.carouselCurrentIndex * 120;
+            // KORJAUS 1: Tarkka hyppäys, kun kortti on 280px ja limitys -220px = 60px "askel"
+            container.scrollLeft = window.carouselCurrentIndex * 60;
             if(window.initNativeCarousel) window.initNativeCarousel();
         }
     }, 50);
@@ -303,7 +302,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
     let rot1 = (window.pseudoRandom(hIndex * 1.1) * 6 - 3).toFixed(1);
     let rot2 = (window.pseudoRandom(hIndex * 2.2) * 6 - 3).toFixed(1);
 
-    // KORJAUS 4: Haetaan huonoin pelaaja edelliseltä väylältä
+    // KORJAUS 3: Etsitään oikea henkilö solvausta varten edelliseltä väylältä
     let prevHData = hIndex > 1 ? window.gameHistory[hIndex - 2] : null;
     let worstPlayer = null;
     
@@ -334,7 +333,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
     if (worstPlayer) {
         finalInsult = finalInsult.replace(/\[Pelaaja\]/g, worstPlayer);
     } else {
-        // Jos tasatulos tai 1. väylä, poistetaan "[Pelaaja]" ja siistitään pilkut
+        // Poistetaan nimen paikka siististi jos tasapeli tai eka väylä
         finalInsult = finalInsult.replace(/\[Pelaaja\],\s*/g, "").replace(/\[Pelaaja\]\s*/g, "").replace(/\[Pelaaja\]/g, "");
         finalInsult = finalInsult.charAt(0).toUpperCase() + finalInsult.slice(1);
     }
@@ -386,8 +385,9 @@ window.renderHoleView = function(hIndex, isCurrent) {
     let playedCards = [];
     if (hData.playedCards) { playedCards = Object.values(hData.playedCards).filter(Boolean); }
     
+    // KORJAUS 2: Kortit asettuvat taululla nätisti vierekkäin jos tilaa on!
     if(playedCards.length > 0) {
-        html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; gap:15px; margin-top: 15px;">`;
+        html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top: 15px;">`;
         playedCards.forEach((pc, idx) => {
             let isTargetingMe = (pc.target === window.myName || pc.target === 'KAIKKI VASTUSTAJAT');
             let cRot = (window.pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
@@ -400,7 +400,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
                 let fullCardHtml = window.generateCardHTML(cDef, false, '');
 
                 html += `
-                <div style="transform: rotate(${cRot}deg); cursor:pointer; width:200px; position:relative; overflow:hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.6); border-radius:12px;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
+                <div style="transform: rotate(${cRot}deg); cursor:pointer; width:calc(50% - 10px); max-width:160px; position:relative; overflow:hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border-radius:12px;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div style="width: 100%; pointer-events: none;">
                         <div class="card-aspect-wrapper">${fullCardHtml}</div>
                     </div>
@@ -517,7 +517,7 @@ window.renderPayslipView = function(hIndex) {
 };
 
 // ==============================================
-// KANSIO (OMAT KORTIT JA LOMPAKKO LAJITELTUNA)
+// KANSIO (OMAT KORTIT ILMAN OTSIKKOJA, LAJITELTUNA)
 // ==============================================
 window.renderBinderOnBoard = function() {
     let wrapper = el('board-binder-wrapper');
@@ -526,7 +526,7 @@ window.renderBinderOnBoard = function() {
     let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     let myPoints = me ? (me.score || 0) : 0;
     
-    // KORJAUS 3: Täydellinen lajittelu (Taso 3->1, sitten Sabotaasi ensin). Ei väliotsikoita!
+    // KORJAUS 3: Täydellinen lajittelu ILMAN tekstiotikoita. 
     myCards.sort((a,b) => {
         let cA = window.allCards.find(x => x.id === a);
         let cB = window.allCards.find(x => x.id === b);
@@ -757,8 +757,6 @@ window.renderReceiptOnBoard = function() {
                 let diff = strokes - par;
                 let cClass = diff === 0 ? 'even' : (diff < 0 ? 'green' : 'red'); 
                 if (diff < -1) cClass = 'blue'; 
-                
-                // KORJAUS 1: Tekstiväri css:n mukaisesti! Poistettiin color:#fff;
                 html += `<div style="display:flex; justify-content:space-between; font-size:1.2rem; padding: 8px 0; align-items:center; color:#0f172a; font-weight: bold;"><span>${pName.substring(0, 12)}</span><span class="receipt-circle ${cClass}" style="width:32px; height:32px; font-size:1.2rem;">${strokes}</span></div>`; 
             } 
         } 
@@ -886,7 +884,6 @@ window.saveCardPrices = function() {
 window.isFlipping = false;
 window.flippedCards = new Set();
 
-// KORJAUS 2: Viuhkan tihennys
 window.initNativeCarousel = function() {
     const container = el('cardCarousel');
     if(!container) return;
@@ -907,7 +904,6 @@ window.initNativeCarousel = function() {
             if (percentage > 1) percentage = 1;
             if (percentage < -1) percentage = -1;
             
-            // Pienemmät kulmat, pysyvät pystymmässä ja vähemmän skaalausta (näkyy vierestä!)
             const angle = percentage * 25; 
             const yOffset = Math.abs(percentage) * 30; 
             const scale = 1 - Math.abs(percentage) * 0.1; 
