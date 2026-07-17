@@ -28,7 +28,7 @@ body {
 }
 
 /* =========================================
-   TAUSTAT JA 3D MAISEMA (Korjaus 3)
+   TAUSTAT JA 3D MAISEMA
    ========================================= */
 .cork-bg {
     background-color: #0f172a;
@@ -43,7 +43,6 @@ body {
     box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
 }
 
-/* 3D Kukkulamaisema tulosnäkymään */
 #view-receipt {
     background: linear-gradient(to bottom, #38bdf8 0%, #e0f2fe 35%, #22c55e 35%, #14532d 100%) !important;
     position: relative;
@@ -59,7 +58,7 @@ body {
     background: #15803d; border-radius: 50%; z-index: 0; pointer-events: none;
 }
 #view-receipt > div {
-    z-index: 2; position: relative; /* Nostaa taulun kukkuloiden päälle */
+    z-index: 2; position: relative; 
 }
 
 .app-view {
@@ -142,28 +141,22 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 #gmNewPlayerName { flex: 1; min-width: 0; margin-right: 10px; margin-bottom: 0; }
 
 /* =========================================
-   KORTTIEN TÄYDELLINEN SKAALAUS KÄÄREELLÄ (Korjaus 4)
-   Pakottaa kaikkien korttien koot ruudukossa samaksi!
+   KORTTIEN KÄÄRE JA SKAALAUS
    ========================================= */
 .card-aspect-wrapper {
     width: 100%;
-    padding-top: 150%; /* 2:3 aspect ratio */
+    padding-top: 150%; 
     position: relative;
     border-radius: 12px;
     box-shadow: 0 8px 15px rgba(0,0,0,0.5);
 }
 .card-aspect-wrapper .physical-card {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    width: 100% !important; 
-    height: 100% !important;
-    margin: 0;
-    box-shadow: none; 
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    width: 100% !important; height: 100% !important; margin: 0; box-shadow: none; 
 }
 
 .physical-card {
-    background: #fff; border-radius: 10px; 
-    width: 100%; aspect-ratio: 2 / 3 !important; padding: 10px; 
+    background: #fff; border-radius: 10px; width: 100%; aspect-ratio: 2 / 3 !important; padding: 10px; 
     display: flex; flex-direction: column; justify-content: flex-start;
     box-shadow: 6px 15px 30px rgba(0,0,0,0.5), inset -1px 2px 4px rgba(255,255,255,0.9);
     border: 1px solid #ccc; position: relative; z-index: 1; overflow: hidden;
@@ -184,7 +177,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .physical-card p::-webkit-scrollbar { width: 4px; } .physical-card p::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
 
 /* =========================================
-   KARUSELLI JA VIUHKA (Korjaus 2)
+   KARUSELLI JA VIUHKA (Magneettinen Selaus Palautettu)
    ========================================= */
 #cardDetailModal { 
     padding: 0 !important; z-index: 2147483650 !important; 
@@ -195,19 +188,20 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 }
 
 .native-carousel-container { 
-    flex: 1; display: flex; align-items: center; overflow-x: auto; scroll-snap-type: none; /* Ei snappia, JS hoitaa sulavasti */
-    padding: 20px 50vw; 
-    gap: -140px; /* Sopivan tiheä korttien väli viuhkassa */
+    flex: 1; display: flex; align-items: center; overflow-x: auto; 
+    scroll-snap-type: x mandatory; /* SNAP TAKAISIN: Pakottaa kortin keskelle */
+    padding: 20px calc(50vw - 140px); /* Oletetaan 280px leveydeksi (140 on puolet) */
+    gap: -80px; /* Sopiva limitys, jotta kortit kääntyvät nätisti */
     width: 100vw; height: auto; min-height: 0; 
-    touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: auto;
+    touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
 }
 .native-carousel-container::-webkit-scrollbar { display: none; }
 
 .carousel-card-wrapper { 
-    flex: 0 0 320px; /* Kortit ISOMPIA selattaessa */
-    height: 480px; 
+    flex: 0 0 280px; height: 420px; 
+    scroll-snap-align: center; /* Keskittää kortin napakasti */
     position: relative; margin: 0; cursor: pointer; perspective: 1200px; 
-    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); 
+    transition: transform 0.1s ease-out; 
     transform-origin: bottom center; 
 }
 
@@ -278,7 +272,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 @keyframes penSwing { 0%, 100% { transform: rotate(6deg); } 50% { transform: rotate(-6deg); } }
 
 /* =========================================
-   TULOSKYLTTI (Metallijalat takaisin sinisiksi)
+   TULOSKYLTTI
    ========================================= */
 .dg-sign-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 95%; max-width: 500px; margin: 30px auto; position: relative; }
 .dg-sign-top-bar { width: 100%; height: 25px; background: #0284c7; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.6); z-index: 3; position: relative; }
