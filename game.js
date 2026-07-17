@@ -35,6 +35,7 @@ window.updateIdentityUI = function() {
     if(el('identityCard')) el('identityCard').style.display = window.myName ? 'none' : 'block'; 
 };
 
+// KORJAUS 2: Uusi pelaaja saa kortit ja kaupan liittyessään kesken pelin
 window.claimIdentity = function() { 
     let n = el('playerNameInput').value.trim(); 
     if(!n) return; 
@@ -44,7 +45,28 @@ window.claimIdentity = function() {
     
     if(!(window.allPlayers || []).find(x => x && x.name === n)) { 
         let nextPlayers = JSON.parse(JSON.stringify(window.allPlayers || [])).filter(Boolean); 
-        nextPlayers.push({ name: n, score: 3, dgScore: 0, cards: [], reservations: [], upgradedThisHole: [] }); 
+        let newPlayer = { name: n, score: 3, dgScore: 0, cards: [], reservations: [], upgradedThisHole: [] };
+        
+        // Jos peli on jo käynnissä, jaetaan kortit ja luodaan kauppa yhteisestä pakasta
+        if (window.currentCourse && window.activeHole) {
+            let currentDeck = window.activeHole.deck ? [...window.activeHole.deck] : window.createFullDeck();
+            let nextShop = window.activeHole.shop ? JSON.parse(JSON.stringify(window.activeHole.shop)) : {};
+
+            let inUse = window.getCardsInUse(nextPlayers, nextShop);
+            let lvl1 = Math.random() < 0.75 ? 1 : 2;
+            newPlayer.cards.push(window.drawFromDeck(currentDeck, 'sabotage', lvl1, inUse));
+
+            inUse = window.getCardsInUse(nextPlayers, nextShop);
+            let lvl2 = Math.random() < 0.75 ? 1 : 2;
+            newPlayer.cards.push(window.drawFromDeck(currentDeck, 'buff', lvl2, inUse));
+
+            inUse = window.getCardsInUse([...nextPlayers, newPlayer], nextShop);
+            nextShop[n] = window.generatePersonalShop(currentDeck, inUse);
+
+            window.update(window.ref(window.db, 'gameState/activeHole'), window.cleanFirebaseData({ deck: currentDeck, shop: nextShop }));
+        }
+
+        nextPlayers.push(newPlayer); 
         if(window.db) window.set(window.ref(window.db, 'gameState/players'), window.cleanFirebaseData(nextPlayers)); 
     } 
 };
@@ -76,11 +98,9 @@ window.getCardsInUse = function(players, currentShops = {}) {
 
 window.createFullDeck = function(excludeIds = []) {
     let deck = window.allCards.map(c => c.id).filter(id => !excludeIds.includes(id));
-    
     if (deck.length === 0) {
         deck = window.allCards.map(c => c.id);
     }
-    
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -88,7 +108,6 @@ window.createFullDeck = function(excludeIds = []) {
     return deck;
 };
 
-// Nostaa pakasta pyydetyn kortin (Bugikorjaus 2: Estetään kultaiset ilmaiseksi)
 window.drawFromDeck = function(deckArr, type, level, inUseIds = []) {
     let refillIfNeeded = () => {
         if (!deckArr || deckArr.length === 0) {
@@ -109,7 +128,6 @@ window.drawFromDeck = function(deckArr, type, level, inUseIds = []) {
     if (idx !== -1) {
         return deckArr.splice(idx, 1)[0];
     } else {
-        // Fallback 1: Haetaan oikea tyyppi, mutta ESTETÄÄN Taso 3 jos pyydettiin Taso 1 tai 2
         let fallbackIdx = deckArr.findIndex(cId => {
             let def = window.allCards.find(c => c.id === cId);
             if (!def) return false;
@@ -122,7 +140,6 @@ window.drawFromDeck = function(deckArr, type, level, inUseIds = []) {
             return deckArr.splice(fallbackIdx, 1)[0];
         }
         
-        // Fallback 2: Annetaan mitä vain, mutta yritetään yhä estää Taso 3 jos pyydettiin 1 tai 2
         let lastResortIdx = deckArr.findIndex(cId => {
             let def = window.allCards.find(c => c.id === cId);
             if (!def) return false;
@@ -132,7 +149,7 @@ window.drawFromDeck = function(deckArr, type, level, inUseIds = []) {
         if (lastResortIdx !== -1) {
             return deckArr.splice(lastResortIdx, 1)[0];
         } else if (deckArr.length > 0) {
-            return deckArr.shift(); // Pakko ottaa joku (esim. vain kultaisia jäljellä)
+            return deckArr.shift(); 
         } else {
             refillIfNeeded();
             return deckArr.shift();
@@ -140,6 +157,9 @@ window.drawFromDeck = function(deckArr, type, level, inUseIds = []) {
     }
 };
 
+// ==============================================
+// KAUPAN TASAPAINO
+// ==============================================
 window.generatePersonalShop = function(deckArr, inUseIds = []) {
     let shopCards = [];
     
@@ -151,21 +171,30 @@ window.generatePersonalShop = function(deckArr, inUseIds = []) {
         }
     };
     
-    // Kauppa tuottaa edelleen myös Tason 3 (kultaisia) kortteja
-    drawAndTrack(null, 3);
-    drawAndTrack(null, 3);
-    drawAndTrack(null, 2);
-    drawAndTrack(null, 2);
-    drawAndTrack(null, 1);
-    drawAndTrack(null, 1);
+    drawAndTrack('sabotage', 3);
+    drawAndTrack('buff', 3);
+    drawAndTrack('sabotage', 2);
+    drawAndTrack('buff', 2);
+    drawAndTrack('sabotage', 1);
+    drawAndTrack('buff', 1);
     
     return shopCards.map(id => window.allCards.find(c => c.id === id) || null);
+};
+
+// ==============================================
+// OMIEN KORTTIEN LAJITTELULOGIIKKA
+// ==============================================
+window.getCardSortWeight = function(cId) {
+    let c = window.allCards.find(x => x.id === cId);
+    if(!c) return 0;
+    // Sabotaasit ensin (100), Helpotukset toisena (200). Sitten lajittelu tason mukaan alaspäin.
+    let typeW = c.type === 'sabotage' ? 100 : 200;
+    return typeW + (10 - c.level); 
 };
 
 window.getCardPlayCost = function(cId) {
     let cDef = window.allCards.find(c => c.id === cId);
     if(!cDef) return 0;
-    
     if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[cId] !== undefined) {
         return window.gameSettings.cardPrices[cId];
     }
@@ -343,10 +372,8 @@ window.submitScores = function() {
         p.cards = Array.isArray(p.cards) ? p.cards : Object.values(p.cards || {}); 
         p.cards = p.cards.filter(Boolean);
         
-        // Pelaajan korttinostot
         if (!res.denyDraw) {
             let cardsToDraw = [];
-            // (Bugikorjaus 2: 75% pronssia, 25% hopeaa. Ei koskaan kultaa!)
             let getRandomLvl = () => Math.random() < 0.75 ? 1 : 2;
             
             for (let i = 0; i < drawBase; i++) {
