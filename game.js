@@ -53,7 +53,6 @@ window.claimIdentity = function() {
 // GLOBAALIN PAKAN HALLINTA (DUPLIKAATTIEN ESTO)
 // ==============================================
 
-// Hakee listan kaikista korteista, jotka ovat tällä hetkellä pelaajilla tai kaupoissa
 window.getCardsInUse = function(players, currentShops = {}) {
     let inUse = [];
     (players || []).filter(Boolean).forEach(p => {
@@ -75,16 +74,13 @@ window.getCardsInUse = function(players, currentShops = {}) {
     return [...new Set(inUse)];
 };
 
-// Luo uuden pakan ja varmistaa, ettei tällä hetkellä käytössä olevia kortteja laiteta mukaan
 window.createFullDeck = function(excludeIds = []) {
     let deck = window.allCards.map(c => c.id).filter(id => !excludeIds.includes(id));
     
-    // Varmistus: Jos pelaajilla on syli täynnä aivan kaikkia kortteja ja pakka menisi täysin nollaan
     if (deck.length === 0) {
         deck = window.allCards.map(c => c.id);
     }
     
-    // Sekoitetaan pakka
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -92,7 +88,7 @@ window.createFullDeck = function(excludeIds = []) {
     return deck;
 };
 
-// Nostaa pakasta pyydetyn kortin. Jos pakka on tyhjä, luo uuden pakan vähentäen pelissä olevat kortit!
+// Nostaa pakasta pyydetyn kortin (Bugikorjaus 2: Estetään kultaiset ilmaiseksi)
 window.drawFromDeck = function(deckArr, type, level, inUseIds = []) {
     let refillIfNeeded = () => {
         if (!deckArr || deckArr.length === 0) {
@@ -113,19 +109,30 @@ window.drawFromDeck = function(deckArr, type, level, inUseIds = []) {
     if (idx !== -1) {
         return deckArr.splice(idx, 1)[0];
     } else {
-        // Fallback: Haetaan edes oikean tyyppinen (Sabotaasi / Helpotus)
+        // Fallback 1: Haetaan oikea tyyppi, mutta ESTETÄÄN Taso 3 jos pyydettiin Taso 1 tai 2
         let fallbackIdx = deckArr.findIndex(cId => {
             let def = window.allCards.find(c => c.id === cId);
             if (!def) return false;
-            return type ? def.type === type : true;
+            let typeMatch = type ? def.type === type : true;
+            let preventLevel3 = (level === 1 || level === 2) ? def.level !== 3 : true;
+            return typeMatch && preventLevel3;
         });
+        
         if (fallbackIdx !== -1) {
             return deckArr.splice(fallbackIdx, 1)[0];
         }
         
-        // Viimeinen oljenkorsi: jos edes tyyppiä ei löydy, annetaan mitä pakassa on
-        if (deckArr.length > 0) {
-            return deckArr.shift();
+        // Fallback 2: Annetaan mitä vain, mutta yritetään yhä estää Taso 3 jos pyydettiin 1 tai 2
+        let lastResortIdx = deckArr.findIndex(cId => {
+            let def = window.allCards.find(c => c.id === cId);
+            if (!def) return false;
+            return (level === 1 || level === 2) ? def.level !== 3 : true;
+        });
+
+        if (lastResortIdx !== -1) {
+            return deckArr.splice(lastResortIdx, 1)[0];
+        } else if (deckArr.length > 0) {
+            return deckArr.shift(); // Pakko ottaa joku (esim. vain kultaisia jäljellä)
         } else {
             refillIfNeeded();
             return deckArr.shift();
@@ -136,7 +143,6 @@ window.drawFromDeck = function(deckArr, type, level, inUseIds = []) {
 window.generatePersonalShop = function(deckArr, inUseIds = []) {
     let shopCards = [];
     
-    // Automaatti päivittää inUse-listaa reaaliajassa nostojen aikana estäen duplikaatit samassa kaupassa
     let drawAndTrack = (type, level) => {
         let cId = window.drawFromDeck(deckArr, type, level, inUseIds);
         if (cId) {
@@ -145,6 +151,7 @@ window.generatePersonalShop = function(deckArr, inUseIds = []) {
         }
     };
     
+    // Kauppa tuottaa edelleen myös Tason 3 (kultaisia) kortteja
     drawAndTrack(null, 3);
     drawAndTrack(null, 3);
     drawAndTrack(null, 2);
@@ -159,11 +166,10 @@ window.getCardPlayCost = function(cId) {
     let cDef = window.allCards.find(c => c.id === cId);
     if(!cDef) return 0;
     
-    // Tarkista onko hinta yliajettu asetuksista
     if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[cId] !== undefined) {
         return window.gameSettings.cardPrices[cId];
     }
-    return cDef.price; 
+    return cDef.playCost !== undefined ? cDef.playCost : cDef.price; 
 };
 
 
@@ -274,7 +280,6 @@ window.submitScores = function() {
 
     let nextPlayers = JSON.parse(JSON.stringify(window.allPlayers)).filter(Boolean);
     
-    // Asetusten muuttujat
     let ptsWin = window.gameSettings.ptsWin !== undefined ? window.gameSettings.ptsWin : 3; 
     let ptsTask = window.gameSettings.ptsTask !== undefined ? window.gameSettings.ptsTask : 2; 
     let ptsPassive = window.gameSettings.ptsPassive !== undefined ? window.gameSettings.ptsPassive : 2; 
@@ -286,7 +291,7 @@ window.submitScores = function() {
     
     let holePointBreakdowns = {};
     let currentDeck = window.activeHole && window.activeHole.deck ? [...window.activeHole.deck] : window.createFullDeck();
-    let nextShop = {}; // Alustetaan hyvissä ajoin, jotta sitä voidaan käyttää duplikaattisuojana
+    let nextShop = {};
 
     nextPlayers.forEach(p => {
         let res = playerResults[p.name]; 
@@ -338,40 +343,38 @@ window.submitScores = function() {
         p.cards = Array.isArray(p.cards) ? p.cards : Object.values(p.cards || {}); 
         p.cards = p.cards.filter(Boolean);
         
-        // Pelaajan korttinostot (takaa vähintään yhden sabotaasin ja yhden helpotuksen)
+        // Pelaajan korttinostot
         if (!res.denyDraw) {
             let cardsToDraw = [];
+            // (Bugikorjaus 2: 75% pronssia, 25% hopeaa. Ei koskaan kultaa!)
+            let getRandomLvl = () => Math.random() < 0.75 ? 1 : 2;
             
-            // Perusnostot
             for (let i = 0; i < drawBase; i++) {
-                if (i === 0) cardsToDraw.push({type: 'sabotage'});
-                else if (i === 1) cardsToDraw.push({type: 'buff'});
-                else cardsToDraw.push({type: null}); // Loput arvalla
+                if (i === 0) cardsToDraw.push({type: 'sabotage', level: getRandomLvl()});
+                else if (i === 1) cardsToDraw.push({type: 'buff', level: getRandomLvl()});
+                else cardsToDraw.push({type: null, level: getRandomLvl()}); 
             }
             
-            // Häviäjän lisäkortit (jos ei tullut kaikkien tasapeliä)
             if (holeLosers.includes(p.name) && holeLosers.length < nextPlayers.length) {
                 for (let i = 0; i < drawLoser; i++) {
-                    cardsToDraw.push({type: null});
+                    cardsToDraw.push({type: null, level: getRandomLvl()});
                 }
             }
             
-            // Korttiefektien tuomat lisänostot
             for (let i = 0; i < res.drawMod; i++) {
-                cardsToDraw.push({type: null});
+                cardsToDraw.push({type: null, level: getRandomLvl()});
             }
             
             cardsToDraw.forEach(drawReq => {
                 if (p.cards.length < limit) {
                     let inUse = window.getCardsInUse(nextPlayers, nextShop);
-                    let drawnId = window.drawFromDeck(currentDeck, drawReq.type, null, inUse);
+                    let drawnId = window.drawFromDeck(currentDeck, drawReq.type, drawReq.level, inUse);
                     if (drawnId) p.cards.push(drawnId);
                 }
             });
         }
     });
 
-    // Tuotetaan uudet kaupat
     nextPlayers.forEach(p => { 
         let inUse = window.getCardsInUse(nextPlayers, nextShop);
         nextShop[p.name] = window.generatePersonalShop(currentDeck, inUse); 
@@ -433,9 +436,6 @@ window.executeCardPlay = function(targetName) {
         let actualIndex = me.cards.indexOf(card.id);
         if (actualIndex !== -1) {
             me.cards.splice(actualIndex, 1); 
-            // HUOM: Korttia EI siirretä nextDeckin loppuun.
-            // Pelattu kortti vain katoaa pelaajalta, ja vapautuu siten takaisin yhteiseen kiertoon,
-            // kun pakka seuraavan kerran tyhjenee ja sekoitetaan uudelleen!
         }
         
         let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(card.id) : card.cost;
@@ -698,10 +698,12 @@ window.startMeilahti = function() {
     
     nextPlayers.forEach(p => { 
         let inUse = window.getCardsInUse(nextPlayers, personalizedShop);
-        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', null, inUse)); 
+        let lvl1 = Math.random() < 0.75 ? 1 : 2;
+        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', lvl1, inUse)); 
         
         inUse = window.getCardsInUse(nextPlayers, personalizedShop);
-        p.cards.push(window.drawFromDeck(initialDeck, 'buff', null, inUse)); 
+        let lvl2 = Math.random() < 0.75 ? 1 : 2;
+        p.cards.push(window.drawFromDeck(initialDeck, 'buff', lvl2, inUse)); 
     });
     
     nextPlayers.forEach(p => { 
@@ -750,10 +752,12 @@ window.startCustomCourse = function() {
     
     nextPlayers.forEach(p => { 
         let inUse = window.getCardsInUse(nextPlayers, personalizedShop);
-        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', null, inUse)); 
+        let lvl1 = Math.random() < 0.75 ? 1 : 2;
+        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', lvl1, inUse)); 
         
         inUse = window.getCardsInUse(nextPlayers, personalizedShop);
-        p.cards.push(window.drawFromDeck(initialDeck, 'buff', null, inUse)); 
+        let lvl2 = Math.random() < 0.75 ? 1 : 2;
+        p.cards.push(window.drawFromDeck(initialDeck, 'buff', lvl2, inUse)); 
     });
     
     nextPlayers.forEach(p => { 
@@ -937,7 +941,6 @@ window.animateCameraTo = function(tX, tY, tScale) {
     window.animFrame = requestAnimationFrame(step);
 };
 
-// --- KAMERAN KOHDISTUKSET NAPPEIHIN ---
 window.zoomToHole = function(hIndex) {
     if(!window.currentCourse || !window.currentCourse.pars) return;
     let cols = Math.min(9, window.currentCourse.pars.length);
@@ -1000,7 +1003,6 @@ window.zoomToShop = function() {
     window.animateCameraTo(tX, tY, tScale);
 };
 
-// --- KOSKETUSNÄYTÖN OHJAUS JA MOMENTUM ---
 document.addEventListener('DOMContentLoaded', () => {
     const vp = document.getElementById('corkboard-viewport');
     if(!vp) return;
