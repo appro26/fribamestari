@@ -70,7 +70,6 @@ window.claimIdentity = function() {
 // GLOBAALIN YHTEISEN PAKAN HALLINTA
 // ==============================================
 
-// Kerää kaikki kortit, jotka ovat KÄYTÖSSÄ juuri nyt (pelaajien käsissä, varauksissa tai kaupoissa)
 window.getCardsInUse = function(players, currentShops = {}) {
     let inUse = [];
     (players || []).filter(Boolean).forEach(p => {
@@ -93,11 +92,8 @@ window.getCardsInUse = function(players, currentShops = {}) {
 };
 
 window.drawFromDeck = function(type, level, inUseIds = []) {
-    // 1. Vapaana olevat kortit = Kaikki kortit miinus ne mitkä ovat tällä hetkellä jollain kädessä/kaupassa.
-    // Tämä sekoittaa pelatut/myydyt kortit automaattisesti takaisin yhteiseen pakkaan!
     let candidates = window.allCards.filter(c => !inUseIds.includes(c.id));
     
-    // 2. Yritetään löytää täydellinen osuma
     let exactMatches = candidates.filter(c => 
         (type ? c.type === type : true) && 
         (level ? c.level === level : true)
@@ -105,11 +101,10 @@ window.drawFromDeck = function(type, level, inUseIds = []) {
     
     if (exactMatches.length > 0) {
         let picked = exactMatches[Math.floor(Math.random() * exactMatches.length)];
-        inUseIds.push(picked.id); // Merkitään samantien käytetyksi
+        inUseIds.push(picked.id);
         return picked.id;
     }
     
-    // 3. Joustetaan tasosta (Etsitään oikea tyyppi, mutta varmistetaan ettei ikinä anneta vahingossa kultaista Taso 3:a, jos pyydettiin 1 tai 2)
     let typeMatches = candidates.filter(c => 
         (type ? c.type === type : true) && 
         ((level === 1 || level === 2) ? c.level !== 3 : true)
@@ -121,7 +116,6 @@ window.drawFromDeck = function(type, level, inUseIds = []) {
         return picked.id;
     }
     
-    // 4. Hätävara: Joustetaan tyypistä ja tasosta (Pidetään edelleen huoli ettei norminostolla tule Taso 3:a)
     let anyMatches = candidates.filter(c => 
         ((level === 1 || level === 2) ? c.level !== 3 : true)
     );
@@ -132,7 +126,7 @@ window.drawFromDeck = function(type, level, inUseIds = []) {
         return picked.id;
     }
     
-    return null; // Aivan kaikki sallitut kortit ovat tällä hetkellä pelaajien käsissä
+    return null;
 };
 
 window.generatePersonalShop = function(inUseIds = []) {
@@ -143,7 +137,6 @@ window.generatePersonalShop = function(inUseIds = []) {
         else shopCards.push(null);
     };
     
-    // Kauppaan ladataan aina varmasti jokaista tasoa yksi.
     drawAndTrack('sabotage', 3);
     drawAndTrack('buff', 3);
     drawAndTrack('sabotage', 2);
@@ -169,6 +162,37 @@ window.getCardPlayCost = function(cId) {
     }
     return cDef.playCost !== undefined ? cDef.playCost : cDef.price; 
 };
+
+// ==============================================
+// UNIIKKIEN SÄÄNTÖJEN JA SOLVAUSTEN ARPOMINEN
+// ==============================================
+
+window.getUnusedRule = function() {
+    if (!window.holeRules || window.holeRules.length === 0) return {n: "Sääntö", d: "Pelaa normaalisti", type: "rule"};
+    let usedNames = (window.gameHistory || []).map(h => h.rule ? h.rule.n : null).filter(Boolean);
+    if (window.activeHole && window.activeHole.rule) usedNames.push(window.activeHole.rule.n);
+    
+    let available = window.holeRules.filter(r => !usedNames.includes(r.n));
+    if (available.length === 0) available = window.holeRules; // Nollataan jos kaikki käytetty
+    
+    return available[Math.floor(Math.random() * available.length)];
+};
+
+window.getUnusedInsultIdx = function() {
+    let total = window.insults ? window.insults.length : 1;
+    let usedIdxs = (window.gameHistory || []).map(h => h.insultIdx).filter(x => x !== undefined && x !== null);
+    if (window.activeHole && window.activeHole.insultIdx !== undefined) usedIdxs.push(window.activeHole.insultIdx);
+    
+    let available = [];
+    for(let i = 0; i < total; i++) {
+        if(!usedIdxs.includes(i)) available.push(i);
+    }
+    if (available.length === 0) {
+        for(let i = 0; i < total; i++) available.push(i);
+    }
+    return available[Math.floor(Math.random() * available.length)];
+};
+
 
 // ==============================================
 // TULOSTEN LASKENTA JA PELIN EDISTYMINEN
@@ -290,7 +314,6 @@ window.submitScores = function() {
     let holePointBreakdowns = {};
     let nextShop = {};
 
-    // Haetaan vapaana olevat kortit ainoastaan nykyisistä pelaajien käsistä/varauksista
     let inUse = window.getCardsInUse(nextPlayers);
 
     nextPlayers.forEach(p => {
@@ -377,7 +400,8 @@ window.submitScores = function() {
     });
 
     let nextActiveHole = { 
-        rule: window.holeRules[Math.floor(Math.random() * window.holeRules.length)], 
+        rule: window.getUnusedRule(), 
+        insultIdx: window.getUnusedInsultIdx(),
         shop: nextShop, 
         playedCards: {}, 
         timestamp: Date.now(), 
@@ -391,6 +415,7 @@ window.submitScores = function() {
     
     nextHistory.push({ 
         rule: window.activeHole.rule, 
+        insultIdx: window.activeHole.insultIdx,
         playedCards: window.activeHole.playedCards, 
         color: window.activeHole.color, 
         holeResults: holeStrokes, 
@@ -682,7 +707,7 @@ window.startMeilahti = function() {
     });
     
     let personalizedShop = {}; 
-    let inUse = window.getCardsInUse(nextPlayers); // Alussa pidetään silmällä vain varauksia (joita ei vielä ole)
+    let inUse = window.getCardsInUse(nextPlayers); 
     
     nextPlayers.forEach(p => { 
         let lvl1 = Math.random() < 0.75 ? 1 : 2;
@@ -697,7 +722,8 @@ window.startMeilahti = function() {
     });
     
     let nextActiveHole = { 
-        rule: window.holeRules[Math.floor(Math.random() * window.holeRules.length)], 
+        rule: window.getUnusedRule(), 
+        insultIdx: window.getUnusedInsultIdx(),
         shop: personalizedShop, 
         playedCards: {}, 
         timestamp: Date.now(), 
@@ -747,7 +773,9 @@ window.startCustomCourse = function() {
     });
     
     let nextActiveHole = { 
-        rule: window.holeRules[0], shop: personalizedShop, playedCards: {}, 
+        rule: window.getUnusedRule(), 
+        insultIdx: window.getUnusedInsultIdx(),
+        shop: personalizedShop, playedCards: {}, 
         timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen()
     };
     
@@ -803,9 +831,12 @@ window.gmRemoveCurrentHole = function() {
         let nextHistory = JSON.parse(JSON.stringify(window.gameHistory || []));
         if(nextHistory.length >= window.currentHoleIndex) { nextHistory = nextHistory.slice(0, window.currentHoleIndex - 1); }
         
-        let nextActiveHole = { rule: window.holeRules[0], shop: {}, playedCards: {}, timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen() };
+        let nextActiveHole = { 
+            rule: window.getUnusedRule(), 
+            insultIdx: window.getUnusedInsultIdx(),
+            shop: {}, playedCards: {}, timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen() 
+        };
         
-        // Pakan laskenta ja kauppojen generointi tässä poikkeustilassa
         let inUse = window.getCardsInUse(window.allPlayers);
         (window.allPlayers || []).filter(Boolean).forEach(p => { nextActiveHole.shop[p.name] = window.generatePersonalShop(inUse); });
         
