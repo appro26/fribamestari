@@ -64,7 +64,7 @@ body {
     overflow-x: hidden;
     box-shadow: none !important;
 }
-#view-receipt::before, #view-receipt::after { display: none; } /* Poistetaan vanhat rikkinäiset pallot */
+#view-receipt::before, #view-receipt::after { display: none; } 
 
 #view-receipt > div {
     z-index: 2; position: relative; 
@@ -155,7 +155,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .card-aspect-wrapper {
     width: 100%; padding-top: 150%; 
     position: relative; border-radius: 14px; 
-    box-shadow: 0 10px 25px rgba(0,0,0,0.6); /* Vahvempi varjo kääreelle */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6); 
 }
 .card-aspect-wrapper .physical-card {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -167,12 +167,11 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     background: #fff; border-radius: 12px; width: 100%; aspect-ratio: 2 / 3 !important; 
     padding: 6px; 
     display: flex; flex-direction: column; justify-content: flex-start;
-    /* Kolmiulotteinen laattaefekti */
     box-shadow: 
         inset 2px 2px 4px rgba(255,255,255,0.9), 
         inset -4px -4px 8px rgba(0,0,0,0.25);
     position: relative; z-index: 1; overflow: hidden;
-    transform: translateZ(0); /* Force GPU rendering */
+    transform: translateZ(0); 
 }
 
 /* Heijastus/glare-efekti kortin päälle */
@@ -182,41 +181,65 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     pointer-events: none; z-index: 15; border-radius: 10px;
 }
 
-/* TASOT (Pronssi, Hopea, Kulta) 3D Reunoilla */
+/* TASOT (Pronssi, Hopea, Kulta) 3D Reunoilla - PÄIVITETYT VÄRIT */
 .tier-1 { 
-    border: 8px solid #b87333; 
+    border: 8px solid #c97a3a; 
     box-shadow: 
-        inset 0 0 0 2px #cd7f32, 
-        inset 3px 3px 6px rgba(255,255,255,0.4), 
-        inset -4px -4px 8px rgba(0,0,0,0.4); 
+        inset 0 0 0 2px #e69655, 
+        inset 3px 3px 6px rgba(255,255,255,0.5), 
+        inset -4px -4px 8px rgba(0,0,0,0.5); 
 } 
 .tier-2 { 
-    border: 8px solid #64748b; 
+    border: 8px solid #94a3b8; 
     box-shadow: 
-        inset 0 0 0 2px #94a3b8, 
-        inset 3px 3px 6px rgba(255,255,255,0.6), 
+        inset 0 0 0 2px #cbd5e1, 
+        inset 3px 3px 6px rgba(255,255,255,0.8), 
         inset -4px -4px 8px rgba(0,0,0,0.4); 
 } 
+/* Kulta on nyt huomattavasti kirkkaampi ja keltaisempi */
 .tier-3 { 
-    border: 8px solid #b45309; 
+    border: 8px solid #f59e0b; 
     box-shadow: 
-        inset 0 0 0 2px #fbbf24, 
-        inset 3px 3px 8px rgba(255,255,255,0.7), 
-        inset -4px -4px 10px rgba(0,0,0,0.5); 
+        inset 0 0 0 2px #fef08a, 
+        inset 3px 3px 8px rgba(255,255,255,0.9), 
+        inset -4px -4px 10px rgba(0,0,0,0.4); 
 } 
 
+/* KORTIN YLÄPALKKI JA TASON LAATTA */
 .card-header { 
-    padding: 6px 8px; font-weight: 900; font-size: 0.70rem; display: flex; justify-content: space-between; align-items: center; 
+    padding: 6px 4px; /* Kavennettu padding */
+    font-weight: 900; 
+    font-size: 0.65rem; /* Pienennetty fontti */
+    display: flex; justify-content: space-between; align-items: center; 
     text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 11; margin: -6px -6px 0 -6px; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.25); /* Tuo headeria ulos kortista */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.25); 
+    white-space: nowrap; /* Estää tekstin rivittymisen */
+    gap: 4px;
 }
 .card-header.sabotage { background: linear-gradient(180deg, #b91c1c, #7f1d1d); color: #fff; border-bottom: 2px solid #450a0a;}
 .card-header.buff { background: linear-gradient(180deg, #15803d, #14532d); color: #fff; border-bottom: 2px solid #052e16;}
 
+/* Uudet tason laatat / badges */
+.level-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 900;
+    font-size: 0.65rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.4);
+    letter-spacing: 0.5px;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    display: inline-block;
+}
+.level-badge-1 { background: linear-gradient(135deg, #cd7f32, #8b5a2b); border: 1px solid #ffebcd; }
+.level-badge-2 { background: linear-gradient(135deg, #cbd5e1, #64748b); border: 1px solid #f8fafc; color: #1e293b; text-shadow: none; }
+.level-badge-3 { background: linear-gradient(135deg, #fde047, #f59e0b); border: 1px solid #fff; color: #451a03; text-shadow: none; }
+
+
 .card-body { 
     flex: 1; padding: 6px; display: flex; flex-direction: column; align-items: center; text-align: center; 
     z-index: 10; min-height: 0; margin: 0 -6px -6px -6px;
-    box-shadow: inset 0 6px 10px rgba(0,0,0,0.05); /* Syvyyttä headerin alle */
+    box-shadow: inset 0 6px 10px rgba(0,0,0,0.05); 
 }
 .card-body.sabotage { background: radial-gradient(circle at top, #fff5f5, #fca5a5); }
 .card-body.buff { background: radial-gradient(circle at top, #f0fdf4, #86efac); }
@@ -245,8 +268,8 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .native-carousel-container { 
     flex: 1; display: flex; align-items: center; overflow-x: auto; 
     scroll-snap-type: x mandatory; 
-    padding: 20px calc(50vw - 140px); /* Keskittää 280px levyisen kortin */
-    gap: -60px; /* Korttien väliä avarrettu, jotta ne näkyvät kunnolla! */
+    padding: 20px calc(50vw - 140px); 
+    gap: -60px; 
     width: 100vw; height: auto; min-height: 0; 
     touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
 }
@@ -266,6 +289,8 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 }
 
 .carousel-card-wrapper .card-header { font-size: 1.1rem; padding: 12px 15px; margin: -6px -6px 0 -6px; }
+/* Varmistetaan että myös karusellissa badge skaalautuu oikein */
+.carousel-card-wrapper .level-badge { font-size: 1rem; padding: 4px 10px; border-radius: 6px; }
 .carousel-card-wrapper .play-cost-badge { font-size: 1.5rem; padding: 8px 18px; margin-bottom: 15px; }
 .carousel-card-wrapper .physical-card h3 { font-size: 1.6rem; margin-bottom: 12px; }
 .carousel-card-wrapper .physical-card p { font-size: 1.2rem; line-height: 1.4; }
