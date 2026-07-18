@@ -46,20 +46,39 @@ body {
 /* UUSI KASVAVA AVARUUS-MAISEMA TULOSTAULUUN (Pohjaväri) */
 #view-receipt {
     background: linear-gradient(to top, 
-        #14532d 0vh,      /* Maa / Ruoho */
-        #38bdf8 30vh,     /* Taivas */
-        #1e3a8a 100vh,    /* Yläilmakehä */
-        #0f172a 180vh,    /* Avaruuden raja */
-        #020617 250vh     /* Syvä avaruus */
+        #14532d 0%,       /* Maa / Ruoho (Alhaalla) */
+        #38bdf8 20%,      /* Taivas */
+        #1e3a8a 50%,      /* Yläilmakehä */
+        #0f172a 80%,      /* Avaruuden raja */
+        #020617 100%      /* Syvä avaruus (Ylhäällä) */
     );
-    background-attachment: local; 
+    background-attachment: local !important; 
+    background-size: 100% 100% !important;
     min-height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end; /* Pakottaa sisällön alareunaan, kasvaa ylös! */
+    justify-content: flex-start;
     padding-bottom: 120px;
     position: relative;
     overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* 3D Ruohikko aina alareunassa */
+#view-receipt::after {
+    content: '';
+    position: absolute; 
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    background-image: 
+        radial-gradient(ellipse 150vw 150px at 10% 100%, #064e3b 0%, #064e3b 45%, transparent 45.2%),
+        radial-gradient(ellipse 150vw 200px at 90% 100%, #065f46 0%, #065f46 35%, transparent 35.2%),
+        radial-gradient(ellipse 100vw 100px at 50% 100%, #166534 0%, #166534 50%, transparent 50.2%),
+        linear-gradient(to top, #15803d 0%, #15803d 10px, transparent 10px);
+    z-index: 1;
+    pointer-events: none;
 }
 
 #view-receipt > div {
@@ -158,7 +177,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     width: 100% !important; height: 100% !important; margin: 0; 
 }
 
-/* 3D-KORTIT JOTKA POMPPAAVAT ESIIN */
+/* 3D-KORTIT JOTKA POMPPAAVAT ESIIN (Kiilto-animaatio poistettu suorituskyvyn vuoksi) */
 .physical-card {
     background: #fff; border-radius: 12px; width: 100%; aspect-ratio: 2 / 3 !important; 
     padding: 6px; 
@@ -168,22 +187,29 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     transform: translateZ(0); 
 }
 
-/* TASOT (Pronssi, Hopea, Kulta) - REUNAT TÄSMÄÄVÄT LAATTOIHIN */
+/* Staattinen heijastus kortin päälle */
+.physical-card::after {
+    content: ''; position: absolute; top: 0; left: -50%; width: 200%; height: 200%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.1) 35%, rgba(255,255,255,0) 50%, rgba(255,255,255,0) 100%);
+    pointer-events: none; z-index: 15; border-radius: 10px;
+}
+
+/* TASOT (Pronssi, Hopea, Kulta) */
 .tier-1 { border: 8px solid #d97706; } 
 .tier-2 { border: 8px solid #cbd5e1; } 
 .tier-3 { border: 8px solid #facc15; } 
 
-/* KORTIN YLÄPALKKI JA TEKSTIN ASETTELU */
+/* KORTIN YLÄPALKKI */
 .card-header { 
     padding: 4px 6px; 
     padding-right: 88px; /* Täällä on nyt reilusti tilaa Sabotaasi-tekstille! */
     font-weight: 900; 
-    font-size: 0.58rem; /* Pienennetty hieman jotta teksti mahtuu varmasti */
+    font-size: 0.58rem; 
     letter-spacing: -0.2px;
     display: flex; justify-content: flex-start; align-items: center; 
     text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 11; margin: -6px -6px 0 -6px; 
     box-shadow: 0 4px 6px rgba(0,0,0,0.25); 
-    white-space: nowrap; /* Estää rivittymisen */
+    white-space: nowrap; 
 }
 .card-header.sabotage { background: linear-gradient(180deg, #b91c1c, #7f1d1d); color: #fff; border-bottom: 2px solid #450a0a;}
 .card-header.buff { background: linear-gradient(180deg, #15803d, #14532d); color: #fff; border-bottom: 2px solid #052e16;}
@@ -327,6 +353,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
     width: 95%; max-width: 500px; margin: 30px auto; position: relative; 
     margin-top: auto !important; 
+    z-index: 10;
 }
 .dg-sign-top-bar { width: 100%; height: 25px; background: #0284c7; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.6); z-index: 3; position: relative; }
 .dg-sign-legs { position: absolute; top: 12px; bottom: -50px; left: 0; right: 0; display: flex; justify-content: space-between; z-index: 1; }
