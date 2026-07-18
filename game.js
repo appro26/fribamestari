@@ -173,7 +173,7 @@ window.getUnusedRule = function() {
     if (window.activeHole && window.activeHole.rule) usedNames.push(window.activeHole.rule.n);
     
     let available = window.holeRules.filter(r => !usedNames.includes(r.n));
-    if (available.length === 0) available = window.holeRules; // Nollataan jos kaikki käytetty
+    if (available.length === 0) available = window.holeRules; 
     
     return available[Math.floor(Math.random() * available.length)];
 };
@@ -543,45 +543,6 @@ window.forceDiscard = function(cId) {
         if(window.showAppleToast) window.showAppleToast(`+${sellReward} P (Myyty)`, '💰'); 
     }
     
-    if (window.pendingShopPurchase) {
-        let pId = window.pendingShopPurchase.id; 
-        let pPrice = window.pendingShopPurchase.price; 
-        let isRes = window.pendingShopPurchase.isRes;
-        
-        if (me.score >= pPrice) {
-            me.score -= pPrice; 
-            me.cards.push(pId);
-            window.logScore(window.myName, -pPrice, `Osti kortin automaatista myynnin jälkeen`);
-            
-            if (isRes) {
-                me.reservations = me.reservations || [];
-                let rIdx = me.reservations.indexOf(pId);
-                if (rIdx !== -1) me.reservations.splice(rIdx, 1);
-            } else {
-                let nextShopAll = JSON.parse(JSON.stringify(window.activeHole.shop || {}));
-                if (nextShopAll[window.myName]) {
-                    const sIdx = nextShopAll[window.myName].findIndex(i => i && i.id === pId);
-                    if (sIdx !== -1) {
-                        nextShopAll[window.myName][sIdx] = null; 
-                    }
-                }
-                window.update(window.ref(window.db, 'gameState/activeHole/shop'), window.cleanFirebaseData(nextShopAll));
-            }
-
-            window.update(window.ref(window.db), {
-                'gameState/players': window.cleanFirebaseData(nextPlayers)
-            });
-            window.pendingShopPurchase = null; 
-            
-            if(window.showNotification) window.showNotification(`🛒 Ostit edun!`, 'warning');
-            if(window.switchView) window.switchView('view-shop');
-            if(el('cardDetailModal')) el('cardDetailModal').style.display='none';
-            return;
-        } else { 
-            window.pendingShopPurchase = null; 
-        }
-    }
-    
     window.update(window.ref(window.db), {
         'gameState/players': window.cleanFirebaseData(nextPlayers)
     });
@@ -652,12 +613,17 @@ window.buyShopItem = function(idStr, priceVal, isReservation) {
     let currentCards = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean).length : 0;
     
     if (window.gameSettings.handLimitEnabled && currentCards >= limit) {
-        let nameStr = window.allCards.find(c=>c.id===idStr).n;
-        window.pendingShopPurchase = { id: idStr, name: nameStr, price: priceVal, isRes: isReservation };
-        
         if(el('cardDetailModal')) el('cardDetailModal').style.display='none';
         if(window.switchView) window.switchView('view-binder'); 
-        if(window.showNotification) window.showNotification("⚠️ KÄSI TÄYNNÄ! Myy jokin kortti alta tehdäksesi tilaa ostolle.", "warning");
+        
+        // Näytetään varoitus täydestä kädestä
+        if(window.showNotification) window.showNotification("🛑 KÄSI ON TÄYNNÄ! Myy jokin kortti ensin ja palaa sitten kauppaan.", "danger");
+        
+        // Avataan myyntimodaali heti
+        if(window.showHandLimitModal) {
+            let myCardsArray = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
+            window.showHandLimitModal(myCardsArray);
+        }
         return;
     }
 
@@ -690,11 +656,6 @@ window.buyShopItem = function(idStr, priceVal, isReservation) {
     if(window.showNotification) window.showNotification(`🛒 Ostit edun!`, 'warning');
     if(window.switchView) window.switchView('view-shop');
     if(el('cardDetailModal')) el('cardDetailModal').style.display='none';
-};
-
-window.cancelShopPurchase = function() {
-    window.pendingShopPurchase = null;
-    if(window.switchView) window.switchView('view-shop'); 
 };
 
 // ==============================================
