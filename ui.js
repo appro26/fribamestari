@@ -399,7 +399,16 @@ window.renderHoleView = function(hIndex, isCurrent) {
     if (hData.playedCards) { playedCards = Object.values(hData.playedCards).filter(Boolean); }
     
     if(playedCards.length > 0) {
-        html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top: 15px;">`;
+        // LAJITELLAAN KORTIT: Muiden pelaajien laput alimmaiseksi (piirretään ensin), 
+        // itseesi vaikuttavat kortit päällimmäiseksi (piirretään viimeiseksi).
+        playedCards.sort((a, b) => {
+            let aTargetMe = (a.target === window.myName || a.target === 'KAIKKI VASTUSTAJAT');
+            let bTargetMe = (b.target === window.myName || b.target === 'KAIKKI VASTUSTAJAT');
+            if (aTargetMe === bTargetMe) return a.timestamp - b.timestamp;
+            return aTargetMe ? 1 : -1;
+        });
+
+        html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:15px; margin-top: 25px;">`;
         playedCards.forEach((pc, idx) => {
             let isTargetingMe = (pc.target === window.myName || pc.target === 'KAIKKI VASTUSTAJAT');
             let cRot = (window.pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
@@ -412,7 +421,7 @@ window.renderHoleView = function(hIndex, isCurrent) {
                 let fullCardHtml = window.generateCardHTML(cDef, false, '');
 
                 html += `
-                <div style="transform: rotate(${cRot}deg); cursor:pointer; width:calc(50% - 10px); max-width:160px; position:relative; overflow:hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border-radius:12px;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
+                <div style="transform: rotate(${cRot}deg); cursor:pointer; width:calc(50% - 10px); min-width: 165px; max-width:190px; position:relative; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.7); border-radius:12px; z-index: 20;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
                     <div style="width: 100%; pointer-events: none;">
                         <div class="card-aspect-wrapper">${fullCardHtml}</div>
                     </div>
@@ -423,10 +432,10 @@ window.renderHoleView = function(hIndex, isCurrent) {
                 let shortName = pc.cardName.split(' (')[0];
 
                 html += `
-                <div class="opponent-event-note ${typeClass}" style="transform: rotate(${cRot}deg);" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
-                    <div style="font-weight:900; font-size:1.1rem; line-height:1.1; margin-top:5px;">${icon} ${shortName}</div>
-                    <div style="font-size:0.9rem; font-weight:bold; margin-top:10px;">Kohteelle:<br><span style="font-size:1.1rem; color:#111; font-family: 'Inter', sans-serif;">${pc.target}</span></div>
-                    <div style="font-size:0.75rem; margin-top:auto; opacity:0.8; font-family: 'Inter', sans-serif; text-transform:uppercase;">Pelaaja: ${pc.by}</div>
+                <div class="opponent-event-note ${typeClass}" style="transform: rotate(${cRot}deg); z-index: 5;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
+                    <div style="font-weight:900; font-size:1rem; line-height:1.1; margin-top:5px;">${icon} ${shortName}</div>
+                    <div style="font-size:0.8rem; font-weight:bold; margin-top:10px;">Kohteelle:<br><span style="font-size:1rem; color:#111; font-family: 'Inter', sans-serif;">${pc.target}</span></div>
+                    <div style="font-size:0.65rem; margin-top:auto; opacity:0.8; font-family: 'Inter', sans-serif; text-transform:uppercase;">Pelaaja: ${pc.by}</div>
                 </div>`;
             }
         });
