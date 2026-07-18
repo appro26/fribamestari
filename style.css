@@ -43,55 +43,27 @@ body {
     box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
 }
 
-/* UUSI KASVAVA AVARUUS-MAISEMA TULOSTAULUUN */
+/* UUSI KASVAVA AVARUUS-MAISEMA TULOSTAULUUN (Pohjaväri) */
 #view-receipt {
-    background-color: #020617;
-    background-image: 
-        /* 1. UFO Ylhäällä (Noin 2% korkeudessa) */
-        radial-gradient(ellipse 40px 15px at 50% 2%, #22c55e 0%, transparent 60%),
-        radial-gradient(circle 8px at 50% 1.5%, #fff 0%, transparent 70%),
-        /* 2. Kuu ja Satelliitit (Yläosa) */
-        radial-gradient(circle 45px at 80% 8%, #e2e8f0 0%, #cbd5e1 80%, transparent 85%),
-        radial-gradient(circle 3px at 20% 12%, #fff 0%, transparent 100%),
-        /* 3. Tähdet (Avaruus) */
-        radial-gradient(circle 2px at 30% 4%, #fff 0%, transparent 100%),
-        radial-gradient(circle 2px at 70% 7%, #fff 0%, transparent 100%),
-        radial-gradient(circle 3px at 40% 16%, #fff 0%, transparent 100%),
-        radial-gradient(circle 1px at 85% 18%, #fff 0%, transparent 100%),
-        /* 4. Aurinko (Alempi taivas) */
-        radial-gradient(circle 80px at 50% 70%, #fef08a 0%, #facc15 60%, transparent 65%),
-        /* 5. Väriliuku ylhäältä alas (Avaruus -> Taivas) */
-        linear-gradient(to bottom, #020617 0%, #0f172a 15%, #1e3a8a 35%, #38bdf8 65%, #bae6fd 100%);
-    
-    background-size: 100% 100%;
-    background-attachment: local; /* Tausta kasvaa sisällön mukana ja rullautuu täydellisesti */
+    background: linear-gradient(to top, 
+        #14532d 0vh,      /* Maa / Ruoho */
+        #38bdf8 30vh,     /* Taivas */
+        #1e3a8a 100vh,    /* Yläilmakehä */
+        #0f172a 180vh,    /* Avaruuden raja */
+        #020617 250vh     /* Syvä avaruus */
+    );
+    background-attachment: local; 
     min-height: 100%;
     display: flex;
     flex-direction: column;
+    justify-content: flex-end; /* Pakottaa sisällön alareunaan, kasvaa ylös! */
     padding-bottom: 120px;
     position: relative;
     overflow-x: hidden;
 }
 
-/* Kiinteä ruohikko-etuala, joka pysyy aina näytön alareunassa */
-#view-receipt::after {
-    content: '';
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100vw;
-    height: 200px;
-    background-image: 
-        radial-gradient(ellipse 150vw 200px at 10% 100%, #064e3b 0%, #064e3b 45%, transparent 45.2%),
-        radial-gradient(ellipse 150vw 250px at 90% 100%, #065f46 0%, #065f46 35%, transparent 35.2%),
-        radial-gradient(ellipse 100vw 150px at 50% 100%, #166534 0%, #166534 50%, transparent 50.2%),
-        linear-gradient(to top, #15803d 0%, #15803d 20px, transparent 20px);
-    z-index: 0;
-    pointer-events: none;
-}
-
 #view-receipt > div {
-    z-index: 2; position: relative; 
+    z-index: 5; position: relative; 
 }
 
 .app-view {
@@ -179,78 +151,44 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .card-aspect-wrapper {
     width: 100%; padding-top: 150%; 
     position: relative; border-radius: 14px; 
-    box-shadow: 0 10px 25px rgba(0,0,0,0.6); 
+    box-shadow: 0 6px 15px rgba(0,0,0,0.4); 
 }
 .card-aspect-wrapper .physical-card {
     position: absolute; top: 0; left: 0; right: 0; bottom: 0;
     width: 100% !important; height: 100% !important; margin: 0; 
 }
 
-/* 3D-KORTIT JOTKA POMPPAAVAT ESIIN (Kiilto-animaatio poistettu) */
+/* 3D-KORTIT JOTKA POMPPAAVAT ESIIN */
 .physical-card {
     background: #fff; border-radius: 12px; width: 100%; aspect-ratio: 2 / 3 !important; 
     padding: 6px; 
     display: flex; flex-direction: column; justify-content: flex-start;
-    box-shadow: 
-        inset 2px 2px 4px rgba(255,255,255,0.9), 
-        inset -4px -4px 8px rgba(0,0,0,0.25);
+    box-shadow: inset 1px 1px 3px rgba(255,255,255,0.8), inset -2px -2px 6px rgba(0,0,0,0.15);
     position: relative; z-index: 1; overflow: hidden;
     transform: translateZ(0); 
 }
 
-/* Staattinen heijastus kortin päälle (ei lagaa) */
-.physical-card::after {
-    content: ''; position: absolute; top: 0; left: -50%; width: 200%; height: 200%;
-    background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.1) 35%, rgba(255,255,255,0) 50%, rgba(255,255,255,0) 100%);
-    pointer-events: none; z-index: 15; border-radius: 10px;
-}
+/* TASOT (Pronssi, Hopea, Kulta) - REUNAT TÄSMÄÄVÄT LAATTOIHIN */
+.tier-1 { border: 8px solid #d97706; } 
+.tier-2 { border: 8px solid #cbd5e1; } 
+.tier-3 { border: 8px solid #facc15; } 
 
-/* TASOT (Pronssi, Hopea, Kulta) */
-.tier-1 { 
-    border: 8px solid #d97706; 
-    box-shadow: 
-        inset 0 0 0 2px #fde68a, 
-        inset 3px 3px 6px rgba(255,255,255,0.4), 
-        inset -4px -4px 8px rgba(0,0,0,0.6),
-        0 0 8px rgba(217, 119, 6, 0.4); 
-} 
-.tier-2 { 
-    border: 8px solid #cbd5e1; 
-    box-shadow: 
-        inset 0 0 0 2px #fff, 
-        inset 3px 3px 6px rgba(255,255,255,0.8), 
-        inset -4px -4px 8px rgba(0,0,0,0.4),
-        0 0 8px rgba(203, 213, 225, 0.4); 
-} 
-.tier-3 { 
-    border: 8px solid #facc15; 
-    box-shadow: 
-        inset 0 0 0 2px #fff, 
-        inset 3px 3px 8px rgba(255,255,255,0.9), 
-        inset -4px -4px 10px rgba(0,0,0,0.3),
-        0 0 15px rgba(250, 204, 21, 0.6); 
-    animation: goldPulse 3s infinite alternate;
-}
-@keyframes goldPulse {
-    0% { box-shadow: inset 0 0 0 2px #fff, inset 3px 3px 8px rgba(255,255,255,0.9), inset -4px -4px 10px rgba(0,0,0,0.3), 0 0 10px rgba(250, 204, 21, 0.4); }
-    100% { box-shadow: inset 0 0 0 2px #fff, inset 3px 3px 8px rgba(255,255,255,0.9), inset -4px -4px 10px rgba(0,0,0,0.3), 0 0 25px rgba(250, 204, 21, 0.9); }
-}
-
-/* KORTIN YLÄPALKKI */
+/* KORTIN YLÄPALKKI JA TEKSTIN ASETTELU */
 .card-header { 
-    padding: 6px 8px; 
-    padding-right: 75px; /* Tilaa tasolaatalle! */
+    padding: 4px 6px; 
+    padding-right: 88px; /* Täällä on nyt reilusti tilaa Sabotaasi-tekstille! */
     font-weight: 900; 
-    font-size: 0.65rem; 
+    font-size: 0.58rem; /* Pienennetty hieman jotta teksti mahtuu varmasti */
+    letter-spacing: -0.2px;
     display: flex; justify-content: flex-start; align-items: center; 
     text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 11; margin: -6px -6px 0 -6px; 
     box-shadow: 0 4px 6px rgba(0,0,0,0.25); 
-    white-space: nowrap; 
+    white-space: nowrap; /* Estää rivittymisen */
 }
 .card-header.sabotage { background: linear-gradient(180deg, #b91c1c, #7f1d1d); color: #fff; border-bottom: 2px solid #450a0a;}
 .card-header.buff { background: linear-gradient(180deg, #15803d, #14532d); color: #fff; border-bottom: 2px solid #052e16;}
 
-/* TASO-LAATTA KORTIN KULMAAN */
+/* ABSOLUUTTINEN TASO-LAATTA KORTIN KULMAAN */
 .level-badge {
     position: absolute;
     top: 0;
@@ -349,9 +287,9 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .binder-page { background: #f8fafc; width: 95%; max-width: 700px; margin: 20px auto; border-radius: 12px; box-shadow: 5px 15px 30px rgba(0,0,0,0.6); border-left: 15px solid #1e293b; padding: 25px 15px; }
 .binder-grid, .shop-shelf-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 100%; justify-items: center; align-items: stretch; }
 .shop-3d-container { width: 100%; max-width: 600px; margin: 30px auto; position: relative; }
-.shop-machine { background: #0f172a; border: 6px solid #334155; border-bottom: none; border-radius: 12px 12px 0 0; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.5); position: relative; z-index: 10; }
-.shop-glass { background: #020617; border-radius: 8px; border: 8px solid #1e293b; padding: 15px 10px; position:relative; box-shadow: inset 0 15px 30px #000; margin-bottom: 15px; }
-.shop-floor { width: 100%; height: 60px; background: #334155; border-top: 8px solid #1e293b; border-radius: 0 0 12px 12px; box-shadow: 0 20px 30px rgba(0,0,0,0.6); transform: perspective(300px) rotateX(20deg); margin-top: -15px; z-index: 1; position: relative; }
+.shop-machine { background: #0f172a; border: 6px solid #334155; border-bottom: none; border-radius: 12px 12px 0 0; padding: 20px; position: relative; z-index: 10; }
+.shop-glass { background: #020617; border-radius: 8px; border: 8px solid #1e293b; padding: 15px 10px; position:relative; margin-bottom: 15px; }
+.shop-floor { width: 100%; height: 60px; background: #334155; border-top: 8px solid #1e293b; border-radius: 0 0 12px 12px; transform: perspective(300px) rotateX(20deg); margin-top: -15px; z-index: 1; position: relative; }
 
 /* =========================================
    VÄYLÄTAULU JA PAPERIELEMENTIT
@@ -388,7 +326,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .dg-sign-wrapper { 
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
     width: 95%; max-width: 500px; margin: 30px auto; position: relative; 
-    margin-top: auto !important; /* Pakottaa kyltin painautumaan alareunaan ja kasvamaan ylös! */
+    margin-top: auto !important; 
 }
 .dg-sign-top-bar { width: 100%; height: 25px; background: #0284c7; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.6); z-index: 3; position: relative; }
 .dg-sign-legs { position: absolute; top: 12px; bottom: -50px; left: 0; right: 0; display: flex; justify-content: space-between; z-index: 1; }
