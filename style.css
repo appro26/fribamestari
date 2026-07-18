@@ -43,23 +43,51 @@ body {
     box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
 }
 
-/* UUSI TERÄVÄ 3D FRISBEEGOLF MAISEMA TULOSTAULUUN */
+/* UUSI KASVAVA AVARUUS-MAISEMA TULOSTAULUUN */
 #view-receipt {
-    background-color: #38bdf8;
+    background-color: #020617;
     background-image: 
-        radial-gradient(circle at 85% 15%, #fef08a 0%, #facc15 6%, transparent 6.2%),
-        radial-gradient(ellipse at 10% 100%, #064e3b 0%, #064e3b 45%, transparent 45.2%),
-        radial-gradient(ellipse at 90% 100%, #065f46 0%, #065f46 35%, transparent 35.2%),
-        radial-gradient(ellipse at 30% 100%, #166534 0%, #166534 25%, transparent 25.2%),
-        radial-gradient(ellipse at 70% 100%, #22c55e 0%, #22c55e 15%, transparent 15.2%),
-        linear-gradient(to top, #15803d 0%, #15803d 8%, transparent 8%);
-    background-attachment: fixed !important;
-    background-size: 100vw 100vh !important;
-    background-position: center bottom !important;
-    background-repeat: no-repeat !important;
+        /* 1. UFO Ylhäällä (Noin 2% korkeudessa) */
+        radial-gradient(ellipse 40px 15px at 50% 2%, #22c55e 0%, transparent 60%),
+        radial-gradient(circle 8px at 50% 1.5%, #fff 0%, transparent 70%),
+        /* 2. Kuu ja Satelliitit (Yläosa) */
+        radial-gradient(circle 45px at 80% 8%, #e2e8f0 0%, #cbd5e1 80%, transparent 85%),
+        radial-gradient(circle 3px at 20% 12%, #fff 0%, transparent 100%),
+        /* 3. Tähdet (Avaruus) */
+        radial-gradient(circle 2px at 30% 4%, #fff 0%, transparent 100%),
+        radial-gradient(circle 2px at 70% 7%, #fff 0%, transparent 100%),
+        radial-gradient(circle 3px at 40% 16%, #fff 0%, transparent 100%),
+        radial-gradient(circle 1px at 85% 18%, #fff 0%, transparent 100%),
+        /* 4. Aurinko (Alempi taivas) */
+        radial-gradient(circle 80px at 50% 70%, #fef08a 0%, #facc15 60%, transparent 65%),
+        /* 5. Väriliuku ylhäältä alas (Avaruus -> Taivas) */
+        linear-gradient(to bottom, #020617 0%, #0f172a 15%, #1e3a8a 35%, #38bdf8 65%, #bae6fd 100%);
+    
+    background-size: 100% 100%;
+    background-attachment: local; /* Tausta kasvaa sisällön mukana ja rullautuu täydellisesti */
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 120px;
     position: relative;
     overflow-x: hidden;
-    box-shadow: none !important;
+}
+
+/* Kiinteä ruohikko-etuala, joka pysyy aina näytön alareunassa */
+#view-receipt::after {
+    content: '';
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 200px;
+    background-image: 
+        radial-gradient(ellipse 150vw 200px at 10% 100%, #064e3b 0%, #064e3b 45%, transparent 45.2%),
+        radial-gradient(ellipse 150vw 250px at 90% 100%, #065f46 0%, #065f46 35%, transparent 35.2%),
+        radial-gradient(ellipse 100vw 150px at 50% 100%, #166534 0%, #166534 50%, transparent 50.2%),
+        linear-gradient(to top, #15803d 0%, #15803d 20px, transparent 20px);
+    z-index: 0;
+    pointer-events: none;
 }
 
 #view-receipt > div {
@@ -146,7 +174,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 #gmNewPlayerName { flex: 1; min-width: 0; margin-right: 10px; margin-bottom: 0; }
 
 /* =========================================
-   KORTTIEN KÄÄRE JA SKAALAUS (UUSI 3D KIILTO)
+   KORTTIEN KÄÄRE JA SKAALAUS
    ========================================= */
 .card-aspect-wrapper {
     width: 100%; padding-top: 150%; 
@@ -158,7 +186,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     width: 100% !important; height: 100% !important; margin: 0; 
 }
 
-/* 3D-KORTIT JOTKA POMPPAAVAT ESIIN JA KIMALTAA */
+/* 3D-KORTIT JOTKA POMPPAAVAT ESIIN (Kiilto-animaatio poistettu) */
 .physical-card {
     background: #fff; border-radius: 12px; width: 100%; aspect-ratio: 2 / 3 !important; 
     padding: 6px; 
@@ -170,29 +198,14 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     transform: translateZ(0); 
 }
 
-/* Kiinteä heijastus kortin päälle */
+/* Staattinen heijastus kortin päälle (ei lagaa) */
 .physical-card::after {
     content: ''; position: absolute; top: 0; left: -50%; width: 200%; height: 200%;
     background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.1) 35%, rgba(255,255,255,0) 50%, rgba(255,255,255,0) 100%);
     pointer-events: none; z-index: 15; border-radius: 10px;
 }
 
-/* Animoitu kimallus pyyhkäisee yli! */
-@keyframes cardShimmer {
-    0% { transform: translateX(-200%) skewX(-20deg); }
-    15% { transform: translateX(200%) skewX(-20deg); }
-    100% { transform: translateX(200%) skewX(-20deg); }
-}
-
-.physical-card::before {
-    content: ''; position: absolute; top: 0; left: 0; width: 60%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
-    z-index: 16; pointer-events: none;
-    transform: translateX(-200%) skewX(-20deg);
-    animation: cardShimmer 6s infinite;
-}
-
-/* TASOT (Pronssi, Hopea, Kulta) REUNAT TÄSMÄÄVÄT NYT LAATTOIHIN */
+/* TASOT (Pronssi, Hopea, Kulta) */
 .tier-1 { 
     border: 8px solid #d97706; 
     box-shadow: 
@@ -225,10 +238,10 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 
 /* KORTIN YLÄPALKKI */
 .card-header { 
-    padding: 6px 4px; 
-    padding-right: 80px; /* Reilusti tilaa tasolaatalle! Ei peity enää! */
+    padding: 6px 8px; 
+    padding-right: 75px; /* Tilaa tasolaatalle! */
     font-weight: 900; 
-    font-size: 0.60rem; /* Pienennetty fonttia hieman, jotta mahtuu täydellisesti */
+    font-size: 0.65rem; 
     display: flex; justify-content: flex-start; align-items: center; 
     text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 11; margin: -6px -6px 0 -6px; 
     box-shadow: 0 4px 6px rgba(0,0,0,0.25); 
@@ -237,7 +250,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .card-header.sabotage { background: linear-gradient(180deg, #b91c1c, #7f1d1d); color: #fff; border-bottom: 2px solid #450a0a;}
 .card-header.buff { background: linear-gradient(180deg, #15803d, #14532d); color: #fff; border-bottom: 2px solid #052e16;}
 
-/* UUSI ABSOLUUTTINEN TASO-LAATTA KORTIN KULMAAN */
+/* TASO-LAATTA KORTIN KULMAAN */
 .level-badge {
     position: absolute;
     top: 0;
@@ -372,7 +385,11 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 /* =========================================
    TULOSKYLTTI
    ========================================= */
-.dg-sign-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 95%; max-width: 500px; margin: 30px auto; position: relative; }
+.dg-sign-wrapper { 
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
+    width: 95%; max-width: 500px; margin: 30px auto; position: relative; 
+    margin-top: auto !important; /* Pakottaa kyltin painautumaan alareunaan ja kasvamaan ylös! */
+}
 .dg-sign-top-bar { width: 100%; height: 25px; background: #0284c7; border-radius: 15px 15px 0 0; box-shadow: inset 0 8px 10px rgba(255,255,255,0.4), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.6); z-index: 3; position: relative; }
 .dg-sign-legs { position: absolute; top: 12px; bottom: -50px; left: 0; right: 0; display: flex; justify-content: space-between; z-index: 1; }
 .dg-sign-leg { width: 25px; height: 100%; background: #0284c7; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.6); }
