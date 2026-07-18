@@ -47,21 +47,18 @@ window.claimIdentity = function() {
         let newPlayer = { name: n, score: 3, dgScore: 0, cards: [], reservations: [], upgradedThisHole: [] };
         
         if (window.currentCourse && window.activeHole) {
-            let currentDeck = window.activeHole.deck ? [...window.activeHole.deck] : window.createFullDeck();
             let nextShop = window.activeHole.shop ? JSON.parse(JSON.stringify(window.activeHole.shop)) : {};
 
             let inUse = window.getCardsInUse(nextPlayers, nextShop);
             let lvl1 = Math.random() < 0.75 ? 1 : 2;
-            newPlayer.cards.push(window.drawFromDeck(currentDeck, 'sabotage', lvl1, inUse));
+            newPlayer.cards.push(window.drawFromDeck('sabotage', lvl1, inUse));
 
-            inUse = window.getCardsInUse(nextPlayers, nextShop);
             let lvl2 = Math.random() < 0.75 ? 1 : 2;
-            newPlayer.cards.push(window.drawFromDeck(currentDeck, 'buff', lvl2, inUse));
+            newPlayer.cards.push(window.drawFromDeck('buff', lvl2, inUse));
 
-            inUse = window.getCardsInUse([...nextPlayers, newPlayer], nextShop);
-            nextShop[n] = window.generatePersonalShop(currentDeck, inUse);
+            nextShop[n] = window.generatePersonalShop(inUse);
 
-            window.update(window.ref(window.db, 'gameState/activeHole'), window.cleanFirebaseData({ deck: currentDeck, shop: nextShop }));
+            window.update(window.ref(window.db, 'gameState/activeHole/shop'), window.cleanFirebaseData(nextShop));
         }
 
         nextPlayers.push(newPlayer); 
@@ -70,9 +67,10 @@ window.claimIdentity = function() {
 };
 
 // ==============================================
-// GLOBAALIN PAKAN HALLINTA
+// GLOBAALIN YHTEISEN PAKAN HALLINTA
 // ==============================================
 
+// Kerää kaikki kortit, jotka ovat KÄYTÖSSÄ juuri nyt (pelaajien käsissä, varauksissa tai kaupoissa)
 window.getCardsInUse = function(players, currentShops = {}) {
     let inUse = [];
     (players || []).filter(Boolean).forEach(p => {
@@ -94,77 +92,58 @@ window.getCardsInUse = function(players, currentShops = {}) {
     return [...new Set(inUse)];
 };
 
-window.createFullDeck = function(excludeIds = []) {
-    let deck = window.allCards.map(c => c.id).filter(id => !excludeIds.includes(id));
-    if (deck.length === 0) {
-        deck = window.allCards.map(c => c.id);
-    }
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    return deck;
-};
-
-window.drawFromDeck = function(deckArr, type, level, inUseIds = []) {
-    let refillIfNeeded = () => {
-        if (!deckArr || deckArr.length === 0) {
-            deckArr.push(...window.createFullDeck(inUseIds));
-        }
-    };
+window.drawFromDeck = function(type, level, inUseIds = []) {
+    // 1. Vapaana olevat kortit = Kaikki kortit miinus ne mitkä ovat tällä hetkellä jollain kädessä/kaupassa.
+    // Tämä sekoittaa pelatut/myydyt kortit automaattisesti takaisin yhteiseen pakkaan!
+    let candidates = window.allCards.filter(c => !inUseIds.includes(c.id));
     
-    refillIfNeeded();
-
-    let idx = deckArr.findIndex(cId => {
-        let def = window.allCards.find(c => c.id === cId);
-        if (!def) return false;
-        let typeMatch = type ? def.type === type : true;
-        let levelMatch = level ? def.level === level : true;
-        return typeMatch && levelMatch;
-    });
-
-    if (idx !== -1) {
-        return deckArr.splice(idx, 1)[0];
-    } else {
-        let fallbackIdx = deckArr.findIndex(cId => {
-            let def = window.allCards.find(c => c.id === cId);
-            if (!def) return false;
-            let typeMatch = type ? def.type === type : true;
-            let preventLevel3 = (level === 1 || level === 2) ? def.level !== 3 : true;
-            return typeMatch && preventLevel3;
-        });
-        
-        if (fallbackIdx !== -1) {
-            return deckArr.splice(fallbackIdx, 1)[0];
-        }
-        
-        let lastResortIdx = deckArr.findIndex(cId => {
-            let def = window.allCards.find(c => c.id === cId);
-            if (!def) return false;
-            return (level === 1 || level === 2) ? def.level !== 3 : true;
-        });
-
-        if (lastResortIdx !== -1) {
-            return deckArr.splice(lastResortIdx, 1)[0];
-        } else if (deckArr.length > 0) {
-            return deckArr.shift(); 
-        } else {
-            refillIfNeeded();
-            return deckArr.shift();
-        }
+    // 2. Yritetään löytää täydellinen osuma
+    let exactMatches = candidates.filter(c => 
+        (type ? c.type === type : true) && 
+        (level ? c.level === level : true)
+    );
+    
+    if (exactMatches.length > 0) {
+        let picked = exactMatches[Math.floor(Math.random() * exactMatches.length)];
+        inUseIds.push(picked.id); // Merkitään samantien käytetyksi
+        return picked.id;
     }
+    
+    // 3. Joustetaan tasosta (Etsitään oikea tyyppi, mutta varmistetaan ettei ikinä anneta vahingossa kultaista Taso 3:a, jos pyydettiin 1 tai 2)
+    let typeMatches = candidates.filter(c => 
+        (type ? c.type === type : true) && 
+        ((level === 1 || level === 2) ? c.level !== 3 : true)
+    );
+    
+    if (typeMatches.length > 0) {
+        let picked = typeMatches[Math.floor(Math.random() * typeMatches.length)];
+        inUseIds.push(picked.id);
+        return picked.id;
+    }
+    
+    // 4. Hätävara: Joustetaan tyypistä ja tasosta (Pidetään edelleen huoli ettei norminostolla tule Taso 3:a)
+    let anyMatches = candidates.filter(c => 
+        ((level === 1 || level === 2) ? c.level !== 3 : true)
+    );
+    
+    if (anyMatches.length > 0) {
+        let picked = anyMatches[Math.floor(Math.random() * anyMatches.length)];
+        inUseIds.push(picked.id);
+        return picked.id;
+    }
+    
+    return null; // Aivan kaikki sallitut kortit ovat tällä hetkellä pelaajien käsissä
 };
 
-window.generatePersonalShop = function(deckArr, inUseIds = []) {
+window.generatePersonalShop = function(inUseIds = []) {
     let shopCards = [];
     let drawAndTrack = (type, level) => {
-        let cId = window.drawFromDeck(deckArr, type, level, inUseIds);
-        if (cId) {
-            shopCards.push(cId);
-            inUseIds.push(cId);
-        }
+        let cId = window.drawFromDeck(type, level, inUseIds);
+        if (cId) shopCards.push(cId);
+        else shopCards.push(null);
     };
     
+    // Kauppaan ladataan aina varmasti jokaista tasoa yksi.
     drawAndTrack('sabotage', 3);
     drawAndTrack('buff', 3);
     drawAndTrack('sabotage', 2);
@@ -172,7 +151,7 @@ window.generatePersonalShop = function(deckArr, inUseIds = []) {
     drawAndTrack('sabotage', 1);
     drawAndTrack('buff', 1);
     
-    return shopCards.map(id => window.allCards.find(c => c.id === id) || null);
+    return shopCards.map(id => id ? window.allCards.find(c => c.id === id) : null);
 };
 
 window.getCardSortWeight = function(cId) {
@@ -198,7 +177,6 @@ window.submitScores = function() {
     let par = window.currentCourse.pars[window.currentHoleIndex - 1] || 3;
     let playerResults = {};
     
-    // TÄRKEÄ KORJAUS: Tyhjät pelaajat filtteröidään aina ennen nimien käsittelyä.
     (window.allPlayers || []).filter(Boolean).forEach(p => { playerResults[p.name] = { strokes: par, taskWon: false }; });
     
     document.querySelectorAll('.score-input-data').forEach(input => { 
@@ -310,8 +288,10 @@ window.submitScores = function() {
     let limit = window.gameSettings.handLimit || 6;
     
     let holePointBreakdowns = {};
-    let currentDeck = window.activeHole && window.activeHole.deck ? [...window.activeHole.deck] : window.createFullDeck();
     let nextShop = {};
+
+    // Haetaan vapaana olevat kortit ainoastaan nykyisistä pelaajien käsistä/varauksista
+    let inUse = window.getCardsInUse(nextPlayers);
 
     nextPlayers.forEach(p => {
         let res = playerResults[p.name]; 
@@ -385,8 +365,7 @@ window.submitScores = function() {
             
             cardsToDraw.forEach(drawReq => {
                 if (p.cards.length < limit) {
-                    let inUse = window.getCardsInUse(nextPlayers, nextShop);
-                    let drawnId = window.drawFromDeck(currentDeck, drawReq.type, drawReq.level, inUse);
+                    let drawnId = window.drawFromDeck(drawReq.type, drawReq.level, inUse);
                     if (drawnId) p.cards.push(drawnId);
                 }
             });
@@ -394,8 +373,7 @@ window.submitScores = function() {
     });
 
     nextPlayers.forEach(p => { 
-        let inUse = window.getCardsInUse(nextPlayers, nextShop);
-        nextShop[p.name] = window.generatePersonalShop(currentDeck, inUse); 
+        nextShop[p.name] = window.generatePersonalShop(inUse); 
     });
 
     let nextActiveHole = { 
@@ -404,8 +382,7 @@ window.submitScores = function() {
         playedCards: {}, 
         timestamp: Date.now(), 
         color: window.getRandomColor(), 
-        penColor: window.getRandomPen(),
-        deck: currentDeck
+        penColor: window.getRandomPen()
     };
     
     let nextHistory = JSON.parse(JSON.stringify(window.gameHistory || []));
@@ -440,7 +417,6 @@ window.executeCardPlay = function(targetName) {
     
     const card = window.pendingCardPlay; 
     const timestamp = Date.now();
-    let nextDeck = window.activeHole && window.activeHole.deck ? [...window.activeHole.deck] : [];
     
     if(el('targetModal')) el('targetModal').style.display = 'none'; 
     if(el('cardDetailModal')) el('cardDetailModal').style.display = 'none'; 
@@ -480,8 +456,7 @@ window.executeCardPlay = function(targetName) {
     
     window.update(window.ref(window.db), { 
         'gameState/players': window.cleanFirebaseData(nextPlayers), 
-        'gameState/activeHole/playedCards': window.cleanFirebaseData(pCards),
-        'gameState/activeHole/deck': nextDeck
+        'gameState/activeHole/playedCards': window.cleanFirebaseData(pCards)
     });
     
     window.logEvent(`${window.myName} pelasi kortin ${card.def.n} kohteelle ${targetName}.`);
@@ -495,7 +470,6 @@ window.upgradeCard = function(cId) {
     if (!nextDef) return;
     
     let cost = (cDef.level === 1) ? 3 : 5;
-    let nextDeck = window.activeHole && window.activeHole.deck ? [...window.activeHole.deck] : [];
     let nextPlayers = JSON.parse(JSON.stringify(window.allPlayers)).filter(Boolean);
     const me = nextPlayers.find(p => p.name === window.myName);
     
@@ -512,8 +486,7 @@ window.upgradeCard = function(cId) {
     me.upgradedThisHole.push(nextDef.id);
     
     window.update(window.ref(window.db), { 
-        'gameState/players': window.cleanFirebaseData(nextPlayers),
-        'gameState/activeHole/deck': nextDeck
+        'gameState/players': window.cleanFirebaseData(nextPlayers)
     });
     
     window.logScore(window.myName, -cost, `Päivitti kortin tasolle ${nextDef.level}`);
@@ -530,7 +503,6 @@ window.forceDiscard = function(cId) {
     if(!me) return;
     
     let cDef = window.allCards.find(c => c.id === cId);
-    let nextDeck = window.activeHole && window.activeHole.deck ? [...window.activeHole.deck] : [];
     
     me.cards = Array.isArray(me.cards) ? me.cards : Object.values(me.cards);
     me.cards = me.cards.filter(Boolean);
@@ -572,8 +544,7 @@ window.forceDiscard = function(cId) {
             }
 
             window.update(window.ref(window.db), {
-                'gameState/players': window.cleanFirebaseData(nextPlayers),
-                'gameState/activeHole/deck': nextDeck
+                'gameState/players': window.cleanFirebaseData(nextPlayers)
             });
             window.pendingShopPurchase = null; 
             
@@ -587,8 +558,7 @@ window.forceDiscard = function(cId) {
     }
     
     window.update(window.ref(window.db), {
-        'gameState/players': window.cleanFirebaseData(nextPlayers),
-        'gameState/activeHole/deck': nextDeck
+        'gameState/players': window.cleanFirebaseData(nextPlayers)
     });
     if(el('cardDetailModal')) el('cardDetailModal').style.display='none';
 };
@@ -712,21 +682,18 @@ window.startMeilahti = function() {
     });
     
     let personalizedShop = {}; 
-    let initialDeck = window.createFullDeck();
+    let inUse = window.getCardsInUse(nextPlayers); // Alussa pidetään silmällä vain varauksia (joita ei vielä ole)
     
     nextPlayers.forEach(p => { 
-        let inUse = window.getCardsInUse(nextPlayers, personalizedShop);
         let lvl1 = Math.random() < 0.75 ? 1 : 2;
-        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', lvl1, inUse)); 
+        p.cards.push(window.drawFromDeck('sabotage', lvl1, inUse)); 
         
-        inUse = window.getCardsInUse(nextPlayers, personalizedShop);
         let lvl2 = Math.random() < 0.75 ? 1 : 2;
-        p.cards.push(window.drawFromDeck(initialDeck, 'buff', lvl2, inUse)); 
+        p.cards.push(window.drawFromDeck('buff', lvl2, inUse)); 
     });
     
     nextPlayers.forEach(p => { 
-        let inUse = window.getCardsInUse(nextPlayers, personalizedShop);
-        personalizedShop[p.name] = window.generatePersonalShop(initialDeck, inUse); 
+        personalizedShop[p.name] = window.generatePersonalShop(inUse); 
     });
     
     let nextActiveHole = { 
@@ -735,8 +702,7 @@ window.startMeilahti = function() {
         playedCards: {}, 
         timestamp: Date.now(), 
         color: window.getRandomColor(),
-        penColor: window.getRandomPen(),
-        deck: initialDeck
+        penColor: window.getRandomPen()
     };
     
     window.update(window.ref(window.db, 'gameState'), window.cleanFirebaseData({ 
@@ -766,26 +732,23 @@ window.startCustomCourse = function() {
     });
     
     let personalizedShop = {}; 
-    let initialDeck = window.createFullDeck();
+    let inUse = window.getCardsInUse(nextPlayers);
     
     nextPlayers.forEach(p => { 
-        let inUse = window.getCardsInUse(nextPlayers, personalizedShop);
         let lvl1 = Math.random() < 0.75 ? 1 : 2;
-        p.cards.push(window.drawFromDeck(initialDeck, 'sabotage', lvl1, inUse)); 
+        p.cards.push(window.drawFromDeck('sabotage', lvl1, inUse)); 
         
-        inUse = window.getCardsInUse(nextPlayers, personalizedShop);
         let lvl2 = Math.random() < 0.75 ? 1 : 2;
-        p.cards.push(window.drawFromDeck(initialDeck, 'buff', lvl2, inUse)); 
+        p.cards.push(window.drawFromDeck('buff', lvl2, inUse)); 
     });
     
     nextPlayers.forEach(p => { 
-        let inUse = window.getCardsInUse(nextPlayers, personalizedShop);
-        personalizedShop[p.name] = window.generatePersonalShop(initialDeck, inUse); 
+        personalizedShop[p.name] = window.generatePersonalShop(inUse); 
     });
     
     let nextActiveHole = { 
         rule: window.holeRules[0], shop: personalizedShop, playedCards: {}, 
-        timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen(), deck: initialDeck
+        timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen()
     };
     
     window.set(window.ref(window.db, 'gameState'), window.cleanFirebaseData({ 
@@ -840,9 +803,11 @@ window.gmRemoveCurrentHole = function() {
         let nextHistory = JSON.parse(JSON.stringify(window.gameHistory || []));
         if(nextHistory.length >= window.currentHoleIndex) { nextHistory = nextHistory.slice(0, window.currentHoleIndex - 1); }
         
-        let initialDeck = window.createFullDeck(); 
-        let nextActiveHole = { rule: window.holeRules[0], shop: {}, playedCards: {}, timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen(), deck: initialDeck };
-        (window.allPlayers || []).filter(Boolean).forEach(p => { nextActiveHole.shop[p.name] = window.generatePersonalShop(initialDeck); });
+        let nextActiveHole = { rule: window.holeRules[0], shop: {}, playedCards: {}, timestamp: Date.now(), color: window.getRandomColor(), penColor: window.getRandomPen() };
+        
+        // Pakan laskenta ja kauppojen generointi tässä poikkeustilassa
+        let inUse = window.getCardsInUse(window.allPlayers);
+        (window.allPlayers || []).filter(Boolean).forEach(p => { nextActiveHole.shop[p.name] = window.generatePersonalShop(inUse); });
         
         window.update(window.ref(window.db), window.cleanFirebaseData({ 
             'gameState/currentHoleIndex': nextH, 'gameState/history': nextHistory, 'gameState/activeHole': nextActiveHole 
