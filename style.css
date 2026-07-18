@@ -152,10 +152,9 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     width: 100% !important; height: 100% !important; margin: 0; box-shadow: none; 
 }
 
-/* KORJAUS 4: Paksummat reunat, parempi tunnistettavuus! */
 .physical-card {
     background: #fff; border-radius: 12px; width: 100%; aspect-ratio: 2 / 3 !important; 
-    padding: 6px; /* Pienennetty padding, koska reuna on paksumpi */
+    padding: 6px; 
     display: flex; flex-direction: column; justify-content: flex-start;
     box-shadow: inset -1px 2px 4px rgba(255,255,255,0.9);
     border: 1px solid #ccc; position: relative; z-index: 1; overflow: hidden;
@@ -178,7 +177,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .physical-card p::-webkit-scrollbar { width: 4px; } .physical-card p::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
 
 /* =========================================
-   KARUSELLI JA VIUHKA (Tiivis limitys!)
+   KARUSELLI JA VIUHKA (Tiivis limitys korjattu!)
    ========================================= */
 #cardDetailModal { 
     padding: 0 !important; z-index: 2147483650 !important; 
@@ -188,12 +187,11 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     width: 100%; height: 100vh; padding: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; overflow: hidden;
 }
 
-/* KORJAUS 3: Kortit todella tiiviisti yhdessä! Gap muutettu reilusti negatiiviseksi. */
 .native-carousel-container { 
     flex: 1; display: flex; align-items: center; overflow-x: auto; 
     scroll-snap-type: x mandatory; 
     padding: 20px calc(50vw - 140px); /* Keskittää 280px levyisen kortin */
-    gap: -220px; /* Jättää vain 60px reunaa näkyviin viereisestä kortista! */
+    gap: -60px; /* Korttien väliä avarrettu, jotta ne näkyvät kunnolla! */
     width: 100vw; height: auto; min-height: 0; 
     touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
 }
@@ -281,7 +279,6 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .dg-sign-leg { width: 25px; height: 100%; background: #0284c7; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.6); }
 .dg-sign-board { width: 90%; background: #dcfce7; margin-top: -5px; padding: 25px 20px; border: 4px solid #0284c7; border-top: none; box-shadow: 0 15px 30px rgba(0,0,0,0.6); z-index: 2; position: relative; }
 
-/* KORJAUS 1: Ympyröiden värit. Even tulokset harmaalle pohjalle tummalla tekstillä! */
 .receipt-circle { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; font-size: 0.8rem; flex-shrink: 0; }
 .receipt-circle.green { background-color: #22c55e; color: #fff; } 
 .receipt-circle.blue { background-color: #3b82f6; color: #fff; } 
