@@ -63,7 +63,7 @@ window.showZoomModal = function(html) {
     }
 };
 
-window.openCardDetail = function(cId, mode) {
+window.openCardDetail = function(cId, mode, forceIndex = -1) {
     if (mode === 'sell') {
         window.carouselCards = window.currentBinderCards || [cId];
     } else if (mode === 'shop') {
@@ -75,7 +75,13 @@ window.openCardDetail = function(cId, mode) {
     }
     
     window.carouselCurrentMode = mode;
-    window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
+
+    if (forceIndex !== -1 && window.carouselCards[forceIndex] === cId) {
+        window.carouselCurrentIndex = forceIndex;
+    } else {
+        window.carouselCurrentIndex = window.carouselCards.indexOf(cId);
+    }
+    
     if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
     
     window.renderCarousel();
@@ -85,8 +91,8 @@ window.openCardDetail = function(cId, mode) {
     setTimeout(() => { 
         const container = el('cardCarousel');
         if(container) {
-            // KORJAUS 1: Tarkka hyppäys, kun kortti on 280px ja limitys -220px = 60px "askel"
-            container.scrollLeft = window.carouselCurrentIndex * 60;
+            // Askel = Kortin leveys (280) + CSS gap (-60) = 220
+            container.scrollLeft = window.carouselCurrentIndex * 220;
             if(window.initNativeCarousel) window.initNativeCarousel();
         }
     }, 50);
@@ -302,7 +308,6 @@ window.renderHoleView = function(hIndex, isCurrent) {
     let rot1 = (window.pseudoRandom(hIndex * 1.1) * 6 - 3).toFixed(1);
     let rot2 = (window.pseudoRandom(hIndex * 2.2) * 6 - 3).toFixed(1);
 
-    // KORJAUS 3: Etsitään oikea henkilö solvausta varten edelliseltä väylältä
     let prevHData = hIndex > 1 ? window.gameHistory[hIndex - 2] : null;
     let worstPlayer = null;
     
@@ -333,7 +338,6 @@ window.renderHoleView = function(hIndex, isCurrent) {
     if (worstPlayer) {
         finalInsult = finalInsult.replace(/\[Pelaaja\]/g, worstPlayer);
     } else {
-        // Poistetaan nimen paikka siististi jos tasapeli tai eka väylä
         finalInsult = finalInsult.replace(/\[Pelaaja\],\s*/g, "").replace(/\[Pelaaja\]\s*/g, "").replace(/\[Pelaaja\]/g, "");
         finalInsult = finalInsult.charAt(0).toUpperCase() + finalInsult.slice(1);
     }
@@ -385,7 +389,6 @@ window.renderHoleView = function(hIndex, isCurrent) {
     let playedCards = [];
     if (hData.playedCards) { playedCards = Object.values(hData.playedCards).filter(Boolean); }
     
-    // KORJAUS 2: Kortit asettuvat taululla nätisti vierekkäin jos tilaa on!
     if(playedCards.length > 0) {
         html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top: 15px;">`;
         playedCards.forEach((pc, idx) => {
@@ -526,7 +529,6 @@ window.renderBinderOnBoard = function() {
     let myCards = me && me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
     let myPoints = me ? (me.score || 0) : 0;
     
-    // KORJAUS 3: Täydellinen lajittelu ILMAN tekstiotikoita. 
     myCards.sort((a,b) => {
         let cA = window.allCards.find(x => x.id === a);
         let cB = window.allCards.find(x => x.id === b);
@@ -545,7 +547,7 @@ window.renderBinderOnBoard = function() {
     if(myCards.length === 0) {
         cardsHtml = '<p style="color:#64748b; font-size:1.6rem; text-align:center; padding:40px; font-weight:bold; grid-column: 1 / -1;">Kansiosi on tyhjä.</p>';
     } else {
-        myCards.forEach((cId) => {
+        myCards.forEach((cId, idx) => {
             let cDef = window.allCards.find(sc => sc && sc.id === cId);
             if(!cDef) return; 
             let isLocked = me.upgradedThisHole && me.upgradedThisHole.includes(cId);
@@ -553,7 +555,7 @@ window.renderBinderOnBoard = function() {
             let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
             
             cardsHtml += `
-            <div style="cursor:pointer; width:100%; position:relative; transition:transform 0.1s;" onclick="window.openCardDetail('${cId}', 'sell')">
+            <div style="cursor:pointer; width:100%; position:relative; transition:transform 0.1s;" onclick="window.openCardDetail('${cId}', 'sell', ${idx})">
                 <div class="card-aspect-wrapper">
                     ${fullCardHtml}
                 </div>
@@ -587,11 +589,11 @@ window.renderShopOnBoard = function() {
     let shopArray = window.activeHole && window.activeHole.shop ? window.activeHole.shop[window.myName] : [];
     let resArray = me && me.reservations ? (Array.isArray(me.reservations) ? me.reservations : Object.values(me.reservations)) : [];
 
-    window.currentShopCards = shopArray.filter(c => c !== null).map(c => c.id);
-    window.currentShopResCards = resArray.filter(Boolean);
+    window.currentShopCards = [];
+    window.currentShopResCards = [];
 
     let shelvesHtml = '';
-    let actRes = window.currentShopResCards;
+    let actRes = resArray.filter(Boolean);
     let levels = [3, 2, 1]; 
 
     levels.forEach(lvl => {
@@ -603,6 +605,9 @@ window.renderShopOnBoard = function() {
         for(let i=0; i<2; i++) {
             let item = shelfItems[i];
             if (item) {
+                let shopIdx = window.currentShopCards.length;
+                window.currentShopCards.push(item.id);
+
                 let buyPrice = item.price;
                 if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[item.id] !== undefined) buyPrice = window.gameSettings.cardPrices[item.id];
 
@@ -613,7 +618,7 @@ window.renderShopOnBoard = function() {
                 
                 shelvesHtml += `
                     <div style="position:relative; width:100%; display:flex; flex-direction:column; align-items:center; z-index:10;">
-                        <div style="cursor:pointer; width:100%; margin-bottom:10px; box-shadow:0 8px 15px rgba(0,0,0,0.6); border-radius:12px;" onclick="window.openCardDetail('${item.id}', 'shop')">
+                        <div style="cursor:pointer; width:100%; margin-bottom:10px; box-shadow:0 8px 15px rgba(0,0,0,0.6); border-radius:12px;" onclick="window.openCardDetail('${item.id}', 'shop', ${shopIdx})">
                             <div class="card-aspect-wrapper">${fullCardHtml}</div>
                         </div>
                         
@@ -646,10 +651,13 @@ window.renderShopOnBoard = function() {
             <div style="color: #fbbf24; font-family: 'Courier Prime', monospace; font-size: 1.2rem; font-weight: 900; text-align: center; margin-bottom: 15px; letter-spacing: 2px; text-shadow: 0 0 8px rgba(251,191,36,0.5);">NOUTOLOKERO</div>
             <div style="display:flex; justify-content:space-around; width:100%; gap:10px;">`;
             
-        actRes.forEach(rId => {
+        actRes.forEach((rId) => {
             let resItem = window.allCards.find(c => c.id === rId);
             if(!resItem) return;
             
+            let shopResIdx = window.currentShopResCards.length;
+            window.currentShopResCards.push(resItem.id);
+
             let buyPrice = resItem.price;
             if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[rId] !== undefined) buyPrice = window.gameSettings.cardPrices[rId];
 
@@ -658,7 +666,7 @@ window.renderShopOnBoard = function() {
             
             reserveHtml += `
                 <div style="width:48%; display:flex; flex-direction:column; align-items:center;">
-                    <div style="width:100%; cursor:pointer; position:relative; margin-bottom:10px; border-radius:12px; box-shadow:0 8px 15px rgba(0,0,0,0.6);" onclick="window.openCardDetail('${resItem.id}', 'shop_res')">
+                    <div style="width:100%; cursor:pointer; position:relative; margin-bottom:10px; border-radius:12px; box-shadow:0 8px 15px rgba(0,0,0,0.6);" onclick="window.openCardDetail('${resItem.id}', 'shop_res', ${shopResIdx})">
                         <div style="position:absolute; top:-10px; right:-10px; background:#fbbf24; color:#000; padding:6px 10px; font-weight:900; font-size: 0.9rem; border-radius:8px; z-index:30; border: 3px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.8);">🔒 VARATTU</div>
                         <div class="card-aspect-wrapper">${fullCardHtml}</div>
                     </div>
@@ -796,8 +804,7 @@ window.renderBoard = function() {
 window.updateAdminPlayerList = function() {
     let container = el('adminPlayerList'); if(!container) return; 
     let html = '';
-    (window.allPlayers || []).forEach(p => {
-        if(!p) return;
+    (window.allPlayers || []).filter(Boolean).forEach(p => {
         let dg = p.dgScore > 0 ? `+${p.dgScore}` : (p.dgScore === 0 ? 'E' : p.dgScore);
         html += `
         <div class="apple-setting-row" style="flex-direction:column; align-items:stretch; gap:12px; padding: 15px;">
@@ -899,14 +906,16 @@ window.initNativeCarousel = function() {
             const cardCenter = card.offsetLeft + card.offsetWidth / 2;
             const diff = cardCenter - center;
             
-            const maxDist = container.clientWidth * 0.45; 
+            // Suurempi etäisyystoleranssi = rauhallisempi animaatio
+            const maxDist = container.clientWidth * 0.7; 
             let percentage = diff / maxDist;
             if (percentage > 1) percentage = 1;
             if (percentage < -1) percentage = -1;
             
-            const angle = percentage * 25; 
-            const yOffset = Math.abs(percentage) * 30; 
-            const scale = 1 - Math.abs(percentage) * 0.1; 
+            // Pienennetään transformaation vaikutusta reunoilla, jotta kortit näkyvät
+            const angle = percentage * 12; 
+            const yOffset = Math.abs(percentage) * 15; 
+            const scale = 1 - Math.abs(percentage) * 0.05; 
             const zIndex = 100 - Math.round(Math.abs(percentage) * 10);
 
             card.style.transform = `rotate(${angle}deg) translateY(${yOffset}px) scale(${scale})`;
@@ -1119,8 +1128,7 @@ window.openScoreModal = function() {
     let html = taskInfoHtml; 
     let taskCheckboxes = '';
     
-    (window.allPlayers || []).forEach((p, i) => {
-        if(!p) return; 
+    (window.allPlayers || []).filter(Boolean).forEach((p, i) => {
         let safeId = "player_" + i; 
         taskCheckboxes += `<label class="task-paper-label"><input type="checkbox" class="task-paper-checkbox" data-name="${p.name}" /> ${p.name}</label>`;
         html += `
@@ -1141,237 +1149,3 @@ window.openScoreModal = function() {
     if(container2) container2.innerHTML = taskCheckboxes;
     window.showModalSafe('scoreModal');
 };
-
-// ==============================================
-// KAMERAN OHJAUS, ZOOM JA KOSKETUS (camera.js)
-// ==============================================
-
-window.camCurrent = { x: 0, y: 0, scale: 1 };
-window.camTarget = { x: 0, y: 0, scale: 1 };
-
-window.getRightXPanel = function() {
-    if(!window.currentCourse || !window.currentCourse.pars) return 2000;
-    let cols = Math.min(9, window.currentCourse.pars.length);
-    let startX = window.startXHoles || 1000;
-    return startX + (cols * 380) + ((cols - 1) * 80) + 150;
-};
-
-window.applyBounds = function(customTarget) {
-    let target = customTarget || window.camTarget; 
-    let boardEl = document.getElementById('corkboard-surface');
-    if(!boardEl) return target;
-    
-    let rightXPanel = window.getRightXPanel();
-    let corkW = rightXPanel + 400;
-    let boardW = corkW + 1500; 
-    
-    let totalHoles = (window.currentCourse && window.currentCourse.pars) ? window.currentCourse.pars.length : 18; 
-    let cols = Math.min(9, totalHoles); 
-    let rows = Math.ceil(totalHoles / cols);
-    let boardH = Math.max((rows * 1010) + 200, 2500) + 800; 
-    
-    let minX = window.innerWidth - boardW * target.scale - 1000;
-    let maxX = 1000;
-    let minY = window.innerHeight - boardH * target.scale - 1000;
-    let maxY = 1000;
-
-    if (target.x < minX) target.x = minX;
-    if (target.x > maxX) target.x = maxX;
-    if (target.y < minY) target.y = minY;
-    if (target.y > maxY) target.y = maxY;
-    
-    return target;
-};
-
-window.animFrame = null;
-window.animateCameraTo = function(tX, tY, tScale) {
-    if(window.animFrame) cancelAnimationFrame(window.animFrame);
-    let sX = window.camCurrent.x, sY = window.camCurrent.y, sScale = window.camCurrent.scale;
-    
-    let target = window.applyBounds({x: tX, y: tY, scale: tScale});
-    tX = target.x; tY = target.y; tScale = target.scale;
-
-    let startTime = performance.now();
-    let duration = 350; 
-    
-    function step(time) {
-        let p = (time - startTime) / duration;
-        if(p > 1) p = 1;
-        let ease = 1 - Math.pow(1 - p, 3); 
-        
-        window.camCurrent.x = sX + (tX - sX) * ease;
-        window.camCurrent.y = sY + (tY - sY) * ease;
-        window.camCurrent.scale = sScale + (tScale - sScale) * ease;
-        window.camTarget = {...window.camCurrent}; 
-        
-        let boardEl = document.getElementById('corkboard-surface');
-        if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
-        if(p < 1) window.animFrame = requestAnimationFrame(step);
-    }
-    window.animFrame = requestAnimationFrame(step);
-};
-
-window.zoomToHole = function(hIndex) {
-    if(!window.currentCourse || !window.currentCourse.pars) return;
-    let cols = Math.min(9, window.currentCourse.pars.length);
-    let col = (hIndex - 1) % cols;
-    let row = Math.floor((hIndex - 1) / cols);
-    
-    let startX = window.startXHoles || 1000;
-    let cellX = startX + 50 + col * 460; 
-    let cellY = 150 + row * 1010; 
-    
-    let targetX = (window.innerWidth - 380) / 2 - cellX; 
-    let targetY = 10 - cellY;
-    
-    window.animateCameraTo(targetX, targetY, 1);
-};
-
-window.zoomToCurrentHole = function() { window.zoomToHole(window.currentHoleIndex || 1); };
-window.zoomToPreviousHole = function() { let prev = Math.max(1, (window.currentHoleIndex || 1) - 1); window.zoomToHole(prev); };
-
-window.zoomToBinder = function() { 
-    let tScale = Math.min(1.0, window.innerWidth / 550); 
-    let wrapper = document.getElementById('board-binder-wrapper');
-    let tY = 50; let tX = 50;
-    if(wrapper) {
-        let wX = parseInt(wrapper.style.left) || 0;
-        let wY = parseInt(wrapper.style.top) || 0;
-        tX = (window.innerWidth - 500 * tScale) / 2 - wX * tScale; 
-        tY = 50 - wY * tScale; 
-    }
-    window.animateCameraTo(tX, tY, tScale); 
-};
-
-window.zoomToReceipt = function() {
-    let tScale = Math.min(1.0, window.innerWidth / 500);
-    let wrapper = document.getElementById('board-receipt-wrapper');
-    let tY = 50; let tX = 50;
-    if(wrapper) {
-        let wX = parseInt(wrapper.style.left) || 0;
-        let wY = parseInt(wrapper.style.top) || 0;
-        tX = (window.innerWidth - 450 * tScale) / 2 - wX * tScale; 
-        tY = 50 - wY * tScale; 
-    }
-    window.animateCameraTo(tX, tY, tScale);
-};
-
-window.zoomToShop = function() { 
-    let wrapper = document.getElementById('board-shop-wrapper');
-    let tY = 50; let tX = 50;
-    let shopPhysicalWidth = 650; 
-    
-    let tScale = window.innerWidth / (shopPhysicalWidth + 30); 
-    if (tScale > 1.4) tScale = 1.4; 
-    
-    if(wrapper) {
-        let wX = parseInt(wrapper.style.left) || 0;
-        let wY = parseInt(wrapper.style.top) || 0;
-        tX = (window.innerWidth - shopPhysicalWidth * tScale) / 2 - wX * tScale; 
-        tY = 40 - wY * tScale; 
-    }
-    window.animateCameraTo(tX, tY, tScale);
-};
-
-document.addEventListener('DOMContentLoaded', () => {
-    const vp = document.getElementById('corkboard-viewport');
-    if(!vp) return;
-
-    let isDraggingBoard = false;
-    let lastTouch = null;
-    let initialPinchDist = 0;
-    let pinchCenterBoard = { x: 0, y: 0 };
-    
-    let velX = 0; let velY = 0;
-    let momentumFrame = null;
-
-    function applyMomentum() {
-        if (isDraggingBoard) return; 
-        window.camTarget.x += velX;
-        window.camTarget.y += velY;
-        
-        velX *= 0.90; 
-        velY *= 0.90;
-        
-        window.applyBounds(window.camTarget);
-        window.camCurrent.x = window.camTarget.x;
-        window.camCurrent.y = window.camTarget.y;
-        
-        let boardEl = document.getElementById('corkboard-surface');
-        if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
-        
-        if (Math.abs(velX) > 0.5 || Math.abs(velY) > 0.5) {
-            momentumFrame = requestAnimationFrame(applyMomentum);
-        }
-    }
-
-    vp.addEventListener('touchstart', e => {
-        if (momentumFrame) cancelAnimationFrame(momentumFrame);
-        if (window.animFrame) cancelAnimationFrame(window.animFrame);
-        
-        vp.classList.add('is-dragging'); 
-        velX = 0; velY = 0; 
-        
-        if(e.touches.length === 1) {
-            isDraggingBoard = true;
-            lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        } else if (e.touches.length === 2) {
-            isDraggingBoard = true;
-            initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-            let screenCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-            let screenCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-            pinchCenterBoard = { x: (screenCX - window.camCurrent.x) / window.camCurrent.scale, y: (screenCY - window.camCurrent.y) / window.camCurrent.scale };
-        }
-    }, {passive: false});
-
-    vp.addEventListener('touchmove', e => {
-        if(!isDraggingBoard) return;
-        e.preventDefault(); 
-        
-        let nextCam = { ...window.camCurrent };
-
-        if(e.touches.length === 1 && lastTouch) {
-            let dx = e.touches[0].clientX - lastTouch.x;
-            let dy = e.touches[0].clientY - lastTouch.y;
-            
-            window.camTarget.x += dx; window.camTarget.y += dy;
-            nextCam.x = window.camTarget.x; nextCam.y = window.camTarget.y;
-            
-            velX = (velX * 0.4) + (dx * 0.6); velY = (velY * 0.4) + (dy * 0.6);
-            lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        } else if (e.touches.length === 2) {
-            velX = 0; velY = 0;
-            let dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-            let scaleDelta = dist / initialPinchDist;
-            
-            let newScale = window.camCurrent.scale * scaleDelta;
-            if(newScale < 0.15) newScale = 0.15; if(newScale > 3.0) newScale = 3.0;
-            
-            let screenCX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-            let screenCY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-            
-            window.camTarget.scale = newScale;
-            window.camTarget.x = screenCX - pinchCenterBoard.x * newScale;
-            window.camTarget.y = screenCY - pinchCenterBoard.y * newScale;
-            
-            nextCam.x = window.camTarget.x; nextCam.y = window.camTarget.y; nextCam.scale = window.camTarget.scale;
-            initialPinchDist = dist;
-        }
-
-        window.camCurrent = window.applyBounds(nextCam);
-        let boardEl = document.getElementById('corkboard-surface');
-        if(boardEl) boardEl.style.transform = `translate3d(${window.camCurrent.x}px, ${window.camCurrent.y}px, 0) scale(${window.camCurrent.scale})`;
-    }, {passive: false});
-
-    vp.addEventListener('touchend', e => {
-        if(e.touches.length === 0) {
-            isDraggingBoard = false;
-            lastTouch = null;
-            vp.classList.remove('is-dragging');
-            if (Math.abs(velX) > 1 || Math.abs(velY) > 1) momentumFrame = requestAnimationFrame(applyMomentum);
-        } else if (e.touches.length === 1) {
-            lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            velX = 0; velY = 0;
-        }
-    }, {passive: true});
-});
