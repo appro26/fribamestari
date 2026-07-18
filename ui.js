@@ -220,7 +220,6 @@ window.openTargetModal = function(cId) {
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '') {
     if (!cDef) return '';
     let typeClass = `tier-${cDef.level || 1}`;
-    let typeIcon = cDef.type === 'buff' ? '🛡️' : '💥';
     let typeName = cDef.type === 'buff' ? 'buff' : 'sabotage';
     let safeCardName = cDef.n ? cDef.n.split(' (')[0] : '';
     
@@ -234,7 +233,7 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '')
     return `
     <div class="physical-card ${typeClass}" style="${lockedStyle}">
         <div class="card-header ${typeName}">
-            <span>${typeIcon} ${cDef.type === 'buff' ? 'HELPOTUS' : 'SABOTAASI'}</span>
+            <span>${cDef.type === 'buff' ? 'HELPOTUS' : 'SABOTAASI'}</span>
             <span class="level-badge level-badge-${cDef.level || 1}">TASO ${cDef.level || 1}</span>
         </div>
         <div class="card-body ${typeName}">
@@ -399,25 +398,19 @@ window.renderHoleView = function(hIndex, isCurrent) {
     if (hData.playedCards) { playedCards = Object.values(hData.playedCards).filter(Boolean); }
     
     if(playedCards.length > 0) {
-        // LAJITELLAAN KORTIT: Muiden pelaajien laput alimmaiseksi (piirretään ensin), 
-        // itseesi vaikuttavat kortit päällimmäiseksi (piirretään viimeiseksi).
-        playedCards.sort((a, b) => {
-            let aTargetMe = (a.target === window.myName || a.target === 'KAIKKI VASTUSTAJAT');
-            let bTargetMe = (b.target === window.myName || b.target === 'KAIKKI VASTUSTAJAT');
-            if (aTargetMe === bTargetMe) return a.timestamp - b.timestamp;
-            return aTargetMe ? 1 : -1;
-        });
+        let myTargetCards = playedCards.filter(pc => pc.target === window.myName || pc.target === 'KAIKKI VASTUSTAJAT');
+        let opponentCards = playedCards.filter(pc => pc.target !== window.myName && pc.target !== 'KAIKKI VASTUSTAJAT');
+        
+        myTargetCards.sort((a,b) => a.timestamp - b.timestamp);
+        opponentCards.sort((a,b) => a.timestamp - b.timestamp);
 
-        html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:15px; margin-top: 25px;">`;
-        playedCards.forEach((pc, idx) => {
-            let isTargetingMe = (pc.target === window.myName || pc.target === 'KAIKKI VASTUSTAJAT');
-            let cRot = (window.pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
-            
-            let encodedBy = pc.by ? pc.by.replace(/"/g, '&quot;') : '';
-            let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
-            let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
-            
-            if (isTargetingMe) {
+        if (myTargetCards.length > 0) {
+            html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:15px; margin-top: 25px;">`;
+            myTargetCards.forEach((pc, idx) => {
+                let cRot = (window.pseudoRandom((hIndex + idx) * 4.4) * 10 - 5).toFixed(1); 
+                let encodedBy = pc.by ? pc.by.replace(/"/g, '&quot;') : '';
+                let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
+                let cDef = window.allCards.find(c => c && c.id === pc.cardId) || {id: pc.cardId, d: pc.cardDesc, n: pc.cardName, type: pc.type, level: pc.level};
                 let fullCardHtml = window.generateCardHTML(cDef, false, '');
 
                 html += `
@@ -426,20 +419,29 @@ window.renderHoleView = function(hIndex, isCurrent) {
                         <div class="card-aspect-wrapper">${fullCardHtml}</div>
                     </div>
                 </div>`;
-            } else {
+            });
+            html += `</div>`;
+        }
+
+        if (opponentCards.length > 0) {
+            html += `<div style="width: 100%; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:10px; margin-top: 30px; border-top: 2px dashed rgba(0,0,0,0.2); padding-top: 20px;">`;
+            html += `<div style="width:100%; text-align:center; font-weight:900; color:#334155; font-size:0.85rem; text-transform:uppercase; margin-bottom:5px;">Muiden Pelaajien Tapahtumat:</div>`;
+            opponentCards.forEach((pc, idx) => {
+                let cRot = (window.pseudoRandom((hIndex + idx + 10) * 4.4) * 10 - 5).toFixed(1); 
+                let encodedBy = pc.by ? pc.by.replace(/"/g, '&quot;') : '';
+                let encodedTarget = pc.target ? pc.target.replace(/"/g, '&quot;') : '';
                 let typeClass = pc.type === 'buff' ? 'buff' : 'sabotage';
-                let icon = pc.type === 'buff' ? '🛡️' : '💥';
                 let shortName = pc.cardName.split(' (')[0];
 
                 html += `
                 <div class="opponent-event-note ${typeClass}" style="transform: rotate(${cRot}deg); z-index: 5;" onclick="event.stopPropagation(); window.showEventCard('${pc.cardId}', '${encodedTarget}', '${encodedBy}')">
-                    <div style="font-weight:900; font-size:1rem; line-height:1.1; margin-top:5px;">${icon} ${shortName}</div>
-                    <div style="font-size:0.8rem; font-weight:bold; margin-top:10px;">Kohteelle:<br><span style="font-size:1rem; color:#111; font-family: 'Inter', sans-serif;">${pc.target}</span></div>
-                    <div style="font-size:0.65rem; margin-top:auto; opacity:0.8; font-family: 'Inter', sans-serif; text-transform:uppercase;">Pelaaja: ${pc.by}</div>
+                    <div style="font-weight:900; font-size:0.9rem; line-height:1.1; margin-top:5px;">${shortName}</div>
+                    <div style="font-size:0.75rem; font-weight:bold; margin-top:8px;">Kohteelle:<br><span style="font-size:0.9rem; color:#111; font-family: 'Inter', sans-serif;">${pc.target}</span></div>
+                    <div style="font-size:0.6rem; margin-top:auto; opacity:0.8; font-family: 'Inter', sans-serif; text-transform:uppercase;">Pelaaja: ${pc.by}</div>
                 </div>`;
-            }
-        });
-        html += `</div>`;
+            });
+            html += `</div>`;
+        }
     }
 
     html += `</div>`; 
@@ -615,8 +617,7 @@ window.renderShopOnBoard = function() {
     let levels = [3, 2, 1]; 
 
     levels.forEach(lvl => {
-        shelvesHtml += `<div class="shop-shelf-grid">`;
-        shelvesHtml += `<div style="position:absolute; bottom:15px; left:0; width:100%; height:30px; background:repeating-linear-gradient(90deg, transparent, transparent 20px, #64748b 20px, #64748b 28px); z-index:1; opacity:0.9; filter:drop-shadow(0 10px 10px #000);"></div>`;
+        shelvesHtml += `<div class="shop-shelf-grid" style="margin-bottom: 10px;">`;
 
         let shelfItems = (shopArray || []).filter(c => c === null || c.level === lvl);
         
@@ -705,7 +706,7 @@ window.renderShopOnBoard = function() {
         <div class="shop-machine">
             <!-- LED Header -->
             <div style="background: #000; border-radius: 8px; border: 2px solid #222; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(239,68,68,0.15);">
-                <div style="color: #ef4444; font-family: monospace; font-size: 1.6rem; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px #ef4444;">FRIBAMART</div>
+                <div style="color: #ef4444; font-family: monospace; font-size: 1.6rem; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px #ef4444;">FRIBAMASTER</div>
                 <div style="background: #022c22; border: 2px solid #064e3b; padding: 5px 15px; border-radius: 4px; box-shadow: inset 0 0 10px #000; text-align: center;">
                     <div style="font-size: 0.6rem; color: #10b981; letter-spacing: 1px;">CREDIT</div>
                     <div style="font-size: 1.8rem; color: #34d399; font-family: 'Courier Prime', monospace; font-weight: 900; text-shadow: 0 0 8px #34d399;">${myPoints} P</div>
@@ -1050,7 +1051,7 @@ window.renderCarouselActionButtons = function() {
             btnHtml += `<button class="btn ${canUpg ? 'btn-warning' : 'btn-secondary'} btn-modern" ${!canUpg ? 'disabled' : ''} style="width:100%; font-size:1.1rem; padding:15px; margin-bottom:10px; color:#000; font-weight:900;" onclick="event.stopPropagation(); window.upgradeCard('${cId}')">🔼 UPGRADE TASOLLE ${cDef.level + 1} (${upgCost} P)</button>`;
         }
         btnHtml += `<button class="btn ${canPlay ? 'btn-success' : 'btn-secondary'} btn-modern" ${!canPlay ? 'disabled' : ''} style="width:100%; font-size:1.2rem; padding:20px; font-weight:900; margin-bottom:10px;" onclick="document.getElementById('cardDetailModal').style.display='none'; window.openTargetModal('${cDef.id}')">PELAA KORTTI (${playCost} P)</button>`;
-        btnHtml += `<button class="btn btn-danger btn-modern" style="width:100%; font-size:1.1rem; padding:15px; font-weight:bold; margin-bottom:10px;" onclick="window.forceDiscard('${cDef.id}')">♻️ MYY KORTTI (+${sellReward} P)</button>`;
+        btnHtml += `<button class="btn btn-danger btn-modern" style="width:100%; font-size:1.1rem; padding:15px; font-weight:bold; margin-bottom:10px;" onclick="window.forceDiscard('${cId}')">♻️ MYY KORTTI (+${sellReward} P)</button>`;
     } 
     else if (mode === 'shop') {
         const canAfford = me.score >= buyPrice;
