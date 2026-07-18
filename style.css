@@ -43,19 +43,23 @@ body {
     box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
 }
 
-/* 3D FRISBEEGOLF MAISEMA TULOSTAULUUN (Kiinteä, ei repeile!) */
+/* UUSI TERÄVÄ 3D FRISBEEGOLF MAISEMA TULOSTAULUUN */
 #view-receipt {
-    background: 
+    background-color: #38bdf8; /* Taivas */
+    background-image: 
         /* Aurinko */
-        radial-gradient(circle at 75% 20%, #fef08a 0%, #fde047 8%, transparent 15%),
-        /* Etualan kukkula (Oikea) */
-        radial-gradient(ellipse at 85% 100%, #14532d 0%, #14532d 40%, transparent 45%),
-        /* Taka-alan kukkula (Vasen) */
-        radial-gradient(ellipse at 15% 100%, #166534 0%, #166534 45%, transparent 50%),
-        /* Keskustan väylä / Nurmi */
-        radial-gradient(ellipse at 50% 100%, #22c55e 0%, #15803d 55%, transparent 65%),
-        /* Taivas ja horisontti */
-        linear-gradient(180deg, #38bdf8 0%, #bae6fd 38%, #86efac 38.5%, #15803d 100%);
+        radial-gradient(circle at 85% 15%, #fef08a 0%, #facc15 6%, transparent 6.2%),
+        /* Taaimmainen kukkula (Vasen) */
+        radial-gradient(ellipse at 10% 100%, #064e3b 0%, #064e3b 45%, transparent 45.2%),
+        /* Keskimmäinen kukkula (Oikea) */
+        radial-gradient(ellipse at 90% 100%, #065f46 0%, #065f46 35%, transparent 35.2%),
+        /* Etu-kukkula (Keskivasen) */
+        radial-gradient(ellipse at 30% 100%, #166534 0%, #166534 25%, transparent 25.2%),
+        /* Lähin ruohikko (Keskioikea) */
+        radial-gradient(ellipse at 70% 100%, #22c55e 0%, #22c55e 15%, transparent 15.2%),
+        /* Perusmaa */
+        linear-gradient(to top, #15803d 0%, #15803d 8%, transparent 8%);
+    
     background-attachment: fixed !important;
     background-size: 100vw 100vh !important;
     background-position: center bottom !important;
@@ -64,7 +68,6 @@ body {
     overflow-x: hidden;
     box-shadow: none !important;
 }
-#view-receipt::before, #view-receipt::after { display: none; } 
 
 #view-receipt > div {
     z-index: 2; position: relative; 
@@ -181,60 +184,61 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     pointer-events: none; z-index: 15; border-radius: 10px;
 }
 
-/* TASOT (Pronssi, Hopea, Kulta) 3D Reunoilla - PÄIVITETYT VÄRIT */
+/* TASOT (Pronssi, Hopea, Kulta) - KULLAN VÄRI KORJATTU TÄYSIN KELTAISEKSI */
 .tier-1 { 
-    border: 8px solid #c97a3a; 
+    border: 8px solid #b45309; 
     box-shadow: 
-        inset 0 0 0 2px #e69655, 
-        inset 3px 3px 6px rgba(255,255,255,0.5), 
-        inset -4px -4px 8px rgba(0,0,0,0.5); 
+        inset 0 0 0 2px #d97706, 
+        inset 3px 3px 6px rgba(255,255,255,0.4), 
+        inset -4px -4px 8px rgba(0,0,0,0.6); 
 } 
 .tier-2 { 
-    border: 8px solid #94a3b8; 
+    border: 8px solid #64748b; 
     box-shadow: 
-        inset 0 0 0 2px #cbd5e1, 
+        inset 0 0 0 2px #94a3b8, 
         inset 3px 3px 6px rgba(255,255,255,0.8), 
         inset -4px -4px 8px rgba(0,0,0,0.4); 
 } 
-/* Kulta on nyt huomattavasti kirkkaampi ja keltaisempi */
 .tier-3 { 
-    border: 8px solid #f59e0b; 
+    border: 8px solid #eab308; 
     box-shadow: 
-        inset 0 0 0 2px #fef08a, 
+        inset 0 0 0 2px #fde047, 
         inset 3px 3px 8px rgba(255,255,255,0.9), 
-        inset -4px -4px 10px rgba(0,0,0,0.4); 
+        inset -4px -4px 10px rgba(0,0,0,0.3); 
 } 
 
-/* KORTIN YLÄPALKKI JA TASON LAATTA */
+/* KORTIN YLÄPALKKI */
 .card-header { 
-    padding: 6px 4px; /* Kavennettu padding */
+    padding: 6px 8px; 
+    padding-right: 65px; /* Tilaa uudelle tasolaatalle! */
     font-weight: 900; 
-    font-size: 0.65rem; /* Pienennetty fontti */
-    display: flex; justify-content: space-between; align-items: center; 
+    font-size: 0.65rem; 
+    display: flex; justify-content: flex-start; align-items: center; 
     text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 11; margin: -6px -6px 0 -6px; 
     box-shadow: 0 4px 6px rgba(0,0,0,0.25); 
-    white-space: nowrap; /* Estää tekstin rivittymisen */
-    gap: 4px;
+    white-space: nowrap; 
 }
 .card-header.sabotage { background: linear-gradient(180deg, #b91c1c, #7f1d1d); color: #fff; border-bottom: 2px solid #450a0a;}
 .card-header.buff { background: linear-gradient(180deg, #15803d, #14532d); color: #fff; border-bottom: 2px solid #052e16;}
 
-/* Uudet tason laatat / badges */
+/* UUSI ABSOLUUTTINEN TASO-LAATTA KORTIN KULMAAN */
 .level-badge {
-    padding: 2px 6px;
-    border-radius: 4px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 4px 10px;
+    border-bottom-left-radius: 12px;
     font-weight: 900;
-    font-size: 0.65rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.4);
+    font-size: 0.75rem;
+    box-shadow: -2px 2px 5px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.4);
     letter-spacing: 0.5px;
     color: #fff;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-    display: inline-block;
+    z-index: 20;
+    text-transform: uppercase;
 }
-.level-badge-1 { background: linear-gradient(135deg, #cd7f32, #8b5a2b); border: 1px solid #ffebcd; }
-.level-badge-2 { background: linear-gradient(135deg, #cbd5e1, #64748b); border: 1px solid #f8fafc; color: #1e293b; text-shadow: none; }
-.level-badge-3 { background: linear-gradient(135deg, #fde047, #f59e0b); border: 1px solid #fff; color: #451a03; text-shadow: none; }
-
+.level-badge-1 { background: linear-gradient(135deg, #d97706, #78350f); border-left: 2px solid #fde68a; border-bottom: 2px solid #fde68a; }
+.level-badge-2 { background: linear-gradient(135deg, #e2e8f0, #64748b); border-left: 2px solid #fff; border-bottom: 2px solid #fff; color: #0f172a; }
+.level-badge-3 { background: linear-gradient(135deg, #fef08a, #d97706); border-left: 2px solid #fff; border-bottom: 2px solid #fff; color: #451a03; }
 
 .card-body { 
     flex: 1; padding: 6px; display: flex; flex-direction: column; align-items: center; text-align: center; 
@@ -288,9 +292,8 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     z-index: 100; position: relative;
 }
 
-.carousel-card-wrapper .card-header { font-size: 1.1rem; padding: 12px 15px; margin: -6px -6px 0 -6px; }
-/* Varmistetaan että myös karusellissa badge skaalautuu oikein */
-.carousel-card-wrapper .level-badge { font-size: 1rem; padding: 4px 10px; border-radius: 6px; }
+.carousel-card-wrapper .card-header { font-size: 1.1rem; padding: 12px 15px; margin: -6px -6px 0 -6px; padding-right: 90px; }
+.carousel-card-wrapper .level-badge { font-size: 1.1rem; padding: 8px 15px; border-bottom-left-radius: 16px; }
 .carousel-card-wrapper .play-cost-badge { font-size: 1.5rem; padding: 8px 18px; margin-bottom: 15px; }
 .carousel-card-wrapper .physical-card h3 { font-size: 1.6rem; margin-bottom: 12px; }
 .carousel-card-wrapper .physical-card p { font-size: 1.2rem; line-height: 1.4; }
@@ -334,13 +337,13 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .post-it-tape { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 80px; height: 25px; background: rgba(255,255,255,0.6); box-shadow: 0 1px 3px rgba(0,0,0,0.1); z-index: 20; }
 
 .opponent-event-note { 
-    width: 140px; height: 140px; flex-shrink: 0; padding: 12px; 
+    width: 120px; height: 120px; flex-shrink: 0; padding: 10px; 
     box-shadow: 2px 4px 10px rgba(0,0,0,0.3); font-family: 'Kalam', cursive; text-align: center; 
     display: flex; flex-direction: column; justify-content: space-between; align-items: center; 
     border-radius: 2px 15px 2px 15px; cursor: pointer; position: relative; transition: transform 0.1s; z-index: 5;
 }
 .opponent-event-note:active { transform: scale(0.95) !important; }
-.opponent-event-note::before { content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 40px; height: 15px; background: rgba(255,255,255,0.6); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.opponent-event-note::before { content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 35px; height: 12px; background: rgba(255,255,255,0.6); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .opponent-event-note.buff { background: #bbf7d0; color: #14532d; }
 .opponent-event-note.sabotage { background: #fecaca; color: #7f1d1d; }
 
