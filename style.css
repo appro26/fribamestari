@@ -45,21 +45,14 @@ body {
 
 /* UUSI TERÄVÄ 3D FRISBEEGOLF MAISEMA TULOSTAULUUN */
 #view-receipt {
-    background-color: #38bdf8; /* Taivas */
+    background-color: #38bdf8;
     background-image: 
-        /* Aurinko */
         radial-gradient(circle at 85% 15%, #fef08a 0%, #facc15 6%, transparent 6.2%),
-        /* Taaimmainen kukkula (Vasen) */
         radial-gradient(ellipse at 10% 100%, #064e3b 0%, #064e3b 45%, transparent 45.2%),
-        /* Keskimmäinen kukkula (Oikea) */
         radial-gradient(ellipse at 90% 100%, #065f46 0%, #065f46 35%, transparent 35.2%),
-        /* Etu-kukkula (Keskivasen) */
         radial-gradient(ellipse at 30% 100%, #166534 0%, #166534 25%, transparent 25.2%),
-        /* Lähin ruohikko (Keskioikea) */
         radial-gradient(ellipse at 70% 100%, #22c55e 0%, #22c55e 15%, transparent 15.2%),
-        /* Perusmaa */
         linear-gradient(to top, #15803d 0%, #15803d 8%, transparent 8%);
-    
     background-attachment: fixed !important;
     background-size: 100vw 100vh !important;
     background-position: center bottom !important;
@@ -153,7 +146,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 #gmNewPlayerName { flex: 1; min-width: 0; margin-right: 10px; margin-bottom: 0; }
 
 /* =========================================
-   KORTTIEN KÄÄRE JA SKAALAUS (UUSI 3D)
+   KORTTIEN KÄÄRE JA SKAALAUS (UUSI 3D KIILTO)
    ========================================= */
 .card-aspect-wrapper {
     width: 100%; padding-top: 150%; 
@@ -165,7 +158,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     width: 100% !important; height: 100% !important; margin: 0; 
 }
 
-/* 3D-KORTIT JOTKA POMPPAAVAT ESIIN */
+/* 3D-KORTIT JOTKA POMPPAAVAT ESIIN JA KIMALTAA */
 .physical-card {
     background: #fff; border-radius: 12px; width: 100%; aspect-ratio: 2 / 3 !important; 
     padding: 6px; 
@@ -177,42 +170,65 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     transform: translateZ(0); 
 }
 
-/* Heijastus/glare-efekti kortin päälle */
+/* Kiinteä heijastus kortin päälle */
 .physical-card::after {
     content: ''; position: absolute; top: 0; left: -50%; width: 200%; height: 200%;
     background: linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.1) 35%, rgba(255,255,255,0) 50%, rgba(255,255,255,0) 100%);
     pointer-events: none; z-index: 15; border-radius: 10px;
 }
 
-/* TASOT (Pronssi, Hopea, Kulta) - KULLAN VÄRI KORJATTU TÄYSIN KELTAISEKSI */
+/* Animoitu kimallus pyyhkäisee yli! */
+@keyframes cardShimmer {
+    0% { transform: translateX(-200%) skewX(-20deg); }
+    15% { transform: translateX(200%) skewX(-20deg); }
+    100% { transform: translateX(200%) skewX(-20deg); }
+}
+
+.physical-card::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+    z-index: 16; pointer-events: none;
+    transform: translateX(-200%) skewX(-20deg);
+    animation: cardShimmer 6s infinite;
+}
+
+/* TASOT (Pronssi, Hopea, Kulta) REUNAT TÄSMÄÄVÄT NYT LAATTOIHIN */
 .tier-1 { 
-    border: 8px solid #b45309; 
+    border: 8px solid #d97706; 
     box-shadow: 
-        inset 0 0 0 2px #d97706, 
+        inset 0 0 0 2px #fde68a, 
         inset 3px 3px 6px rgba(255,255,255,0.4), 
-        inset -4px -4px 8px rgba(0,0,0,0.6); 
+        inset -4px -4px 8px rgba(0,0,0,0.6),
+        0 0 8px rgba(217, 119, 6, 0.4); 
 } 
 .tier-2 { 
-    border: 8px solid #64748b; 
+    border: 8px solid #cbd5e1; 
     box-shadow: 
-        inset 0 0 0 2px #94a3b8, 
+        inset 0 0 0 2px #fff, 
         inset 3px 3px 6px rgba(255,255,255,0.8), 
-        inset -4px -4px 8px rgba(0,0,0,0.4); 
+        inset -4px -4px 8px rgba(0,0,0,0.4),
+        0 0 8px rgba(203, 213, 225, 0.4); 
 } 
 .tier-3 { 
-    border: 8px solid #eab308; 
+    border: 8px solid #facc15; 
     box-shadow: 
-        inset 0 0 0 2px #fde047, 
+        inset 0 0 0 2px #fff, 
         inset 3px 3px 8px rgba(255,255,255,0.9), 
-        inset -4px -4px 10px rgba(0,0,0,0.3); 
-} 
+        inset -4px -4px 10px rgba(0,0,0,0.3),
+        0 0 15px rgba(250, 204, 21, 0.6); 
+    animation: goldPulse 3s infinite alternate;
+}
+@keyframes goldPulse {
+    0% { box-shadow: inset 0 0 0 2px #fff, inset 3px 3px 8px rgba(255,255,255,0.9), inset -4px -4px 10px rgba(0,0,0,0.3), 0 0 10px rgba(250, 204, 21, 0.4); }
+    100% { box-shadow: inset 0 0 0 2px #fff, inset 3px 3px 8px rgba(255,255,255,0.9), inset -4px -4px 10px rgba(0,0,0,0.3), 0 0 25px rgba(250, 204, 21, 0.9); }
+}
 
 /* KORTIN YLÄPALKKI */
 .card-header { 
-    padding: 6px 8px; 
-    padding-right: 65px; /* Tilaa uudelle tasolaatalle! */
+    padding: 6px 4px; 
+    padding-right: 80px; /* Reilusti tilaa tasolaatalle! Ei peity enää! */
     font-weight: 900; 
-    font-size: 0.65rem; 
+    font-size: 0.60rem; /* Pienennetty fonttia hieman, jotta mahtuu täydellisesti */
     display: flex; justify-content: flex-start; align-items: center; 
     text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,0.8); z-index: 11; margin: -6px -6px 0 -6px; 
     box-shadow: 0 4px 6px rgba(0,0,0,0.25); 
@@ -292,7 +308,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
     z-index: 100; position: relative;
 }
 
-.carousel-card-wrapper .card-header { font-size: 1.1rem; padding: 12px 15px; margin: -6px -6px 0 -6px; padding-right: 90px; }
+.carousel-card-wrapper .card-header { font-size: 1rem; padding: 12px 15px; margin: -6px -6px 0 -6px; padding-right: 100px; }
 .carousel-card-wrapper .level-badge { font-size: 1.1rem; padding: 8px 15px; border-bottom-left-radius: 16px; }
 .carousel-card-wrapper .play-cost-badge { font-size: 1.5rem; padding: 8px 18px; margin-bottom: 15px; }
 .carousel-card-wrapper .physical-card h3 { font-size: 1.6rem; margin-bottom: 12px; }
