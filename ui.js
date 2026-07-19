@@ -1,4 +1,3 @@
-
 var el = id => document.getElementById(id);
 
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
@@ -231,7 +230,6 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '')
 
     let lockedStyle = isLocked ? 'opacity: 0.5; filter: grayscale(50%);' : '';
     
-    // Emojit poistettu otsikosta asettelun parantamiseksi
     return `
     <div class="physical-card ${typeClass}" style="${lockedStyle}">
         <div class="card-header ${typeName}">
@@ -706,7 +704,6 @@ window.renderShopOnBoard = function() {
     wrapper.innerHTML = `
     <div class="shop-3d-container">
         <div class="shop-machine">
-            <!-- LED Header -->
             <div style="background: #000; border-radius: 8px; border: 2px solid #222; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(239,68,68,0.15);">
                 <div style="color: #ef4444; font-family: monospace; font-size: 1.6rem; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px #ef4444;">FRIBAMASTER</div>
                 <div style="background: #022c22; border: 2px solid #064e3b; padding: 5px 15px; border-radius: 4px; box-shadow: inset 0 0 10px #000; text-align: center;">
@@ -715,26 +712,12 @@ window.renderShopOnBoard = function() {
                 </div>
             </div>
 
-            <!-- Lasinen Sisäosa -->
             <div class="shop-glass">
                 <div style="position: absolute; top: 0; left: -50%; width: 200%; height: 100%; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.05) 50%, transparent 55%); z-index: 5; pointer-events: none;"></div>
                 ${shelvesHtml}
             </div>
 
             ${reserveHtml}
-
-            <!-- Alapaneeli -->
-            <div style="background: #0f172a; margin-top: 20px; padding: 15px; border-radius: 8px; border: 2px solid #334155; display: flex; justify-content: space-between; align-items: flex-start; box-shadow: inset 0 0 15px #000;">
-                <div style="width: 90px; background: #000; padding: 10px; border-radius: 6px; border: 2px solid #1e293b; box-shadow: inset 0 0 10px #000;">
-                   <div style="color: #10b981; text-align: right; font-family: monospace; border: 1px solid #334155; padding: 2px 5px; margin-bottom: 8px; font-size: 0.9rem;">12.00</div>
-                   <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
-                       ${Array(9).fill('<div style="height: 10px; background: #334155; border-radius: 2px;"></div>').join('')}
-                   </div>
-                </div>
-                <div style="flex: 1; margin-left: 15px; background: #000; height: 60px; border-radius: 6px; border: 4px solid #1e293b; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 20px 20px rgba(0,0,0,0.8);">
-                    <span style="color: #334155; font-size: 1.2rem; font-weight: 900; letter-spacing: 5px;">PUSH</span>
-                </div>
-            </div>
         </div>
         <div class="shop-floor"></div>
     </div>
@@ -762,19 +745,19 @@ window.renderReceiptOnBoard = function() {
     <div class="dg-sign-wrapper">
     `;
     
-    // TÄSSÄ LUODAAN AVARUUSMAISEMAN ELEMENTIT TAUSTALLE (Tähtia, lintuja yms!)
-    let decorContainer = `<div style="position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:100vw; height:100%; pointer-events:none; z-index:-1;">`;
+    // TÄSSÄ LUODAAN AVARUUSMAISEMAN ELEMENTIT TAUSTALLE ALHAALTA YLÖSPÄIN
+    let decorContainer = `<div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:100vw; height:100%; pointer-events:none; z-index:-1;">`;
     for(let i=0; i<window.gameHistory.length; i++) { 
-        let bottomPx = 300 + (i * 47); // Arvioitu korkeus väylää kohden
-        if (i === 0) decorContainer += `<div style="position:absolute; bottom:${bottomPx}px; left:8vw; font-size:2.5rem; opacity:0.8; transform:scaleX(-1);">🦅</div>`;
-        if (i === 2) decorContainer += `<div style="position:absolute; bottom:${bottomPx}px; right:12vw; font-size:3rem; opacity:0.7;">☁️</div>`;
-        if (i === 4) decorContainer += `<div style="position:absolute; bottom:${bottomPx}px; left:15vw; font-size:2.5rem; opacity:0.9;">✈️</div>`;
-        if (i === 6) decorContainer += `<div style="position:absolute; bottom:${bottomPx}px; right:8vw; font-size:3.5rem; filter:drop-shadow(0 0 15px #fef08a);">🌕</div>`;
-        if (i === 8) decorContainer += `<div style="position:absolute; bottom:${bottomPx}px; left:12vw; font-size:2rem; color:#fff; text-shadow: 0 0 5px #fff;">✨</div>`;
-        if (i === 11) decorContainer += `<div style="position:absolute; bottom:${bottomPx}px; right:15vw; font-size:3rem; animation: float 6s infinite;">🛰️</div>`;
-        if (i === 13) decorContainer += `<div style="position:absolute; bottom:${bottomPx}px; left:10vw; font-size:2.5rem;">☄️</div>`;
-        if (i === 15) decorContainer += `<div style="position:absolute; bottom:${bottomPx}px; right:10vw; font-size:4rem; filter:drop-shadow(0 0 20px #22c55e);">🛸</div>`;
-        if (i === 17) decorContainer += `<div style="position:absolute; bottom:${bottomPx}px; left:18vw; font-size:3rem;">👾</div>`;
+        let topPx = 250 + (i * 65); // Määritetään kuinka tiheään koristeita tulee kun vieritetään alas
+        if (i === 0) decorContainer += `<div style="position:absolute; top:${topPx}px; left:8vw; font-size:2.5rem; opacity:0.8; transform:scaleX(-1);">🦅</div>`;
+        if (i === 2) decorContainer += `<div style="position:absolute; top:${topPx}px; right:12vw; font-size:3rem; opacity:0.7;">☁️</div>`;
+        if (i === 4) decorContainer += `<div style="position:absolute; top:${topPx}px; left:15vw; font-size:2.5rem; opacity:0.9;">✈️</div>`;
+        if (i === 6) decorContainer += `<div style="position:absolute; top:${topPx}px; right:8vw; font-size:3.5rem; filter:drop-shadow(0 0 15px #fef08a);">🌕</div>`;
+        if (i === 8) decorContainer += `<div style="position:absolute; top:${topPx}px; left:12vw; font-size:2rem; color:#fff; text-shadow: 0 0 5px #fff;">✨</div>`;
+        if (i === 11) decorContainer += `<div style="position:absolute; top:${topPx}px; right:15vw; font-size:3rem; animation: float 6s infinite;">🛰️</div>`;
+        if (i === 13) decorContainer += `<div style="position:absolute; top:${topPx}px; left:10vw; font-size:2.5rem;">☄️</div>`;
+        if (i === 15) decorContainer += `<div style="position:absolute; top:${topPx}px; right:10vw; font-size:4rem; filter:drop-shadow(0 0 20px #22c55e);">🛸</div>`;
+        if (i === 17) decorContainer += `<div style="position:absolute; top:${topPx}px; left:18vw; font-size:3rem;">👾</div>`;
     }
     decorContainer += `</div>`;
     
@@ -932,7 +915,7 @@ window.saveCardPrices = function() {
 // ==============================================
 window.isFlipping = false;
 window.flippedCards = new Set();
-let lastScrollLeft = -1; // Optimointi
+let lastScrollLeft = -1; 
 
 window.initNativeCarousel = function() {
     const container = el('cardCarousel');
@@ -941,7 +924,6 @@ window.initNativeCarousel = function() {
     const updateViuhka = () => {
         const currentScroll = container.scrollLeft;
         
-        // Optimointi: Laske 3D-kulmat vain jos ollaan oikeasti vieritetty ruutua
         if (Math.abs(currentScroll - lastScrollLeft) < 1) {
             requestAnimationFrame(updateViuhka);
             return; 
@@ -1126,7 +1108,6 @@ window.showHandLimitModal = function(cards) {
         if(!cDef) return;
         let sellReward = cDef.level === 3 ? 4 : (cDef.level === 2 ? 2 : 1);
         
-        // Modal on nyt KLIKKAA-ominaisuudella varustettu, jolloin kortit voi avata karuselliin!
         html += `
         <div style="background:#fff; border-radius:12px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; color:#000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
             <div style="text-align:left; flex:1; cursor:pointer;" onclick="window.openCardDetail('${cId}', 'sell', ${idx})">
