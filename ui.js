@@ -24,17 +24,16 @@ window.pseudoRandom = (seed) => {
 };
 
 // ==============================================
-// SKAALAUS (POISTETTU LIIALLINEN KUTISTUS KAUPASTA/OMISTA KORTEISTA)
+// SKAALAUS (POISTETTU RECEIPT-SKAALAUS, JOTTA TAUSTA EI LEIKKAA)
 // ==============================================
 window.applyViewScales = function() {
     let w = window.innerWidth;
     
-    // Receipt saa hieman skaalausta jotta torni mahtuu kivasti
+    // Receipt ei skaalaudu rumasti, vaan pysyy täysikokoisena ja keskittyy CSS:llä.
     let receiptWrapper = el('board-receipt-wrapper');
     if(receiptWrapper) {
-        let recScale = w < 500 ? Math.max(0.7, w / 500) : 1;
-        receiptWrapper.style.transform = `scale(${recScale})`;
-        receiptWrapper.style.transformOrigin = 'top center';
+        receiptWrapper.style.transform = `none`;
+        receiptWrapper.style.width = '100%';
     }
     
     // Kauppa ja kansio pidetään ISOINA! Ei pakotettua scalea.
@@ -109,7 +108,7 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
     window.renderCarousel();
     if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
     
-    // TÄYDELLINEN KESKITYS (ESTÄÄ VÄÄRÄN KORTIN AUKEAMISEN)
+    // TÄYDELLINEN KESKITYS: 50ms viive varmistaa, että selain on ehtinyt piirtää modaalin.
     setTimeout(() => {
         const container = el('cardCarousel');
         if(!container) return;
@@ -123,8 +122,11 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
             container.style.scrollSnapType = 'none';
             
             // Lasketaan millintarkka sijainti ja pakotetaan vieritys sinne välittömästi
-            const offset = targetCard.offsetLeft - (container.clientWidth / 2) + (targetCard.clientWidth / 2);
-            container.scrollLeft = offset;
+            const containerCenter = container.clientWidth / 2;
+            const cardCenter = targetCard.offsetLeft + (targetCard.offsetWidth / 2);
+            container.scrollLeft = cardCenter - containerCenter;
+            
+            void container.offsetWidth; 
             
             // Kytketään pehmeä vieritys takaisin päälle kun JS on tehnyt työnsä
             setTimeout(() => {
@@ -133,7 +135,7 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
                 if(window.initNativeCarousel) window.initNativeCarousel();
             }, 50);
         }
-    }, 10);
+    }, 50);
 };
 
 window.showEventCard = function(cId, target, by) {
@@ -248,7 +250,7 @@ window.openTargetModal = function(cId) {
     }
 };
 
-// KORTIN LUONTI (PALAUTETTU NEON-ULKOASU KUVAN MUKAISESTI)
+// KORTIN LUONTI (TÄYDELLINEN KUVIEN MUKAINEN NEON-ULKOASU)
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
     if (!cDef) return '';
     let typeClass = `tier-${cDef.level || 1}`;
@@ -576,7 +578,7 @@ window.renderPayslipView = function(hIndex) {
 };
 
 // ==============================================
-// KANSIO (OMAT KORTIT - ISOINA)
+// KANSIO (OMAT KORTIT ISOINA)
 // ==============================================
 window.renderBinderOnBoard = function() {
     let wrapper = el('board-binder-wrapper');
@@ -771,7 +773,6 @@ window.renderReceiptOnBoard = function() {
         return html; 
     };
 
-    // Estetään vanhat CSS-gradientit
     let vr = el('view-receipt');
     if(vr) vr.style.background = 'transparent';
 
@@ -803,20 +804,20 @@ window.renderReceiptOnBoard = function() {
     // Taulu kasvaa ylöspäin
     let html = epicBgHtml + `
     <div style="position:relative; z-index:10; width:95%; max-width:450px; margin: 0 auto; margin-top: 150px; padding-bottom: 120px;">
-        <div style="background:#f1f5f9; border-radius: 20px 20px 0 0; border: 4px solid #cbd5e1; border-bottom: none; height: 35px; box-shadow: inset 0 10px 15px white;"></div>
+        <div class="dg-sign-top-bar"></div>
         
-        <div style="position:absolute; top:20px; left:0; right:0; display:flex; justify-content:space-between; z-index:-1;">
-            <div style="background:#94a3b8; width:30px; height:100vh; border-radius:15px 15px 0 0; border:2px solid #64748b;"></div>
-            <div style="background:#94a3b8; width:30px; height:100vh; border-radius:15px 15px 0 0; border:2px solid #64748b;"></div>
+        <div class="dg-sign-legs">
+            <div class="dg-sign-leg"></div>
+            <div class="dg-sign-leg"></div>
         </div>
 
-        <div style="background:#f8fafc; border:4px solid #cbd5e1; border-top: none; padding: 25px 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);">
+        <div class="dg-sign-board">
             <div style="background: #ffffff; border: 3px solid #16a34a; padding: 15px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                 <h3 style="text-align:center; width:100%; font-family:'Inter', sans-serif; font-weight: 900; color:#166534; margin:0 0 15px 0; text-transform: uppercase;">KOKONAISTILANNE</h3>
                 ${generateTotals()}
             </div>
             
-            <h2 style="text-align:center; font-size:1.6rem; color:#475569; font-family:'Inter', sans-serif; font-weight:900; margin-bottom:15px; text-transform:uppercase;">Väyläkohtaiset</h2>
+            <h2 style="text-align:center; font-size:1.6rem; color:#0284c7; font-family:'Inter', sans-serif; font-weight:900; margin-bottom:15px; text-transform:uppercase;">Väyläkohtaiset</h2>
     `;
     
     let holesHtml = '';
@@ -824,8 +825,8 @@ window.renderReceiptOnBoard = function() {
         let h = window.gameHistory[i]; 
         let par = window.currentCourse.pars ? (window.currentCourse.pars[i] || 3) : 3; 
         
-        holesHtml += `<div style="position:relative; font-size:1.2rem; font-weight:bold; border-bottom:2px solid #cbd5e1; margin-top:15px; padding-bottom:5px; color:#334155;">
-            Väylä ${i+1} <span style="color:#64748b; font-weight:normal; font-size:0.9rem;">(PAR ${par})</span>
+        holesHtml += `<div style="position:relative; font-size:1.2rem; font-weight:bold; border-bottom:2px solid #bbf7d0; margin-top:15px; padding-bottom:5px; color:#166534;">
+            Väylä ${i+1} <span style="color:#15803d; font-weight:normal; font-size:0.9rem;">(PAR ${par})</span>
         </div>`; 
         
         if(h.holeResults) { 
