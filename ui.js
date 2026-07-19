@@ -84,11 +84,12 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
     
     if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
     
+    // NÄYTÄ MODAALI ENSIN, JOTTA SELAIMEN ON PAKKO LASKEA MITAT!
+    window.showModalSafe('cardDetailModal');
     window.renderCarousel();
     if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
-    window.showModalSafe('cardDetailModal');
     
-    // UUSI TAKUU-VARMA KESKITYS (Tuhoaa selaimen oman rullausmuistin ja pakottaa kortin ruutuun)
+    // TÄYDELLINEN TAKUU-VARMA KESKITYS
     setTimeout(() => { 
         const container = el('cardCarousel');
         if(!container) return;
@@ -97,24 +98,26 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
         const targetCard = cards[window.carouselCurrentIndex];
         
         if(targetCard) {
-            // Sammuta magneetit ja animaatiot hetkeksi
+            // Poista rullausmagneetit hetkeksi, ettei selain taistele vastaan
             container.style.scrollBehavior = 'auto';
             container.style.scrollSnapType = 'none';
             
-            // Siirrä kortti välittömästi täydellisesti keskelle
-            targetCard.scrollIntoView({ behavior: 'instant', inline: 'center', block: 'nearest' });
+            // Laske itse millintarkasti oikea kohta
+            const containerCenter = container.clientWidth / 2;
+            const cardCenter = targetCard.offsetLeft + (targetCard.offsetWidth / 2);
+            container.scrollLeft = cardCenter - containerCenter;
             
-            // Pakota selain piirtämään näyttö heti tähän asentoon
+            // Pakota ruudun päivitys heti
             void container.offsetWidth; 
             
-            // Laita 10ms päästä magneetti ja pehmeys takaisin päälle seuraavaa pyyhkäisyä varten
+            // Laita asetukset takaisin pehmeää selailua varten
             setTimeout(() => {
                 container.style.scrollBehavior = 'smooth';
                 container.style.scrollSnapType = 'x mandatory';
                 if(window.initNativeCarousel) window.initNativeCarousel();
             }, 10);
         }
-    }, 20); // Pieni odotus jotta modaali ehtii ilmestyä DOMiin
+    }, 50);
 };
 
 window.showEventCard = function(cId, target, by) {
@@ -769,22 +772,23 @@ window.renderReceiptOnBoard = function() {
     <div class="dg-sign-wrapper">
     `;
     
-    // TÄSSÄ LUODAAN AVARUUSMAISEMAN ELEMENTIT TAUSTALLE (Täydellinen prosentuaalinen sijoittelu!)
-    let decorContainer = `<div style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1;">`;
-    // Ufot ja kuut leijailevat aina aivan taulun yläpäässä avaruudessa
-    decorContainer += `<div style="position:absolute; top:2%; right:-5%; font-size:4rem; filter:drop-shadow(0 0 20px #22c55e);">🛸</div>`;
-    decorContainer += `<div style="position:absolute; top:12%; left:-5%; font-size:3rem;">👾</div>`;
-    decorContainer += `<div style="position:absolute; top:25%; right:-2%; font-size:3.5rem; filter:drop-shadow(0 0 15px #fef08a);">🌕</div>`;
-    decorContainer += `<div style="position:absolute; top:38%; left:-2%; font-size:2.5rem;">☄️</div>`;
-    decorContainer += `<div style="position:absolute; top:50%; left:-8%; font-size:2rem; color:#fff; text-shadow: 0 0 5px #fff;">✨</div>`;
-    // Satelliitit, lentokoneet ja linnut liitelevät listaa alaspäin tullessa ilmakehässä ja taivaalla
-    decorContainer += `<div style="position:absolute; top:65%; right:-5%; font-size:3rem; animation: float 6s infinite;">🛰️</div>`;
-    decorContainer += `<div style="position:absolute; top:78%; left:-2%; font-size:2.5rem; opacity:0.9;">✈️</div>`;
-    decorContainer += `<div style="position:absolute; top:88%; right:-2%; font-size:3rem; opacity:0.7;">☁️</div>`;
-    decorContainer += `<div style="position:absolute; top:96%; left:-5%; font-size:2.5rem; opacity:0.8; transform:scaleX(-1);">🦅</div>`;
-    decorContainer += `</div>`;
-    
-    html += decorContainer;
+    // TÄSSÄ LUODAAN KORISTEET VÄYLIEN VIEREEN! (Avaruus ylhäällä, Maa alhaalla)
+    let spaceDecors = ['🚀', '🛸', '🛰️', '🌕', '☄️', '🌌', '✨', '🪐', '👾'];
+    let skyDecors = ['☁️', '☀️', '✈️', '🎈', '🚁'];
+    let groundDecors = ['🦅', '🌲', '🦋', '🐝'];
+
+    // Laitetaan ne itse taulun rivien viereen
+    for(let i=0; i<window.gameHistory.length; i++) { 
+        let decorEmoji = '';
+        if (i < 3) decorEmoji = spaceDecors[i % spaceDecors.length]; // Ylimmät väylät (Avaruus)
+        else if (i < 10) decorEmoji = skyDecors[i % skyDecors.length]; // Keskiväylät (Taivas)
+        else decorEmoji = groundDecors[i % groundDecors.length]; // Alimmat väylät (Maa)
+        
+        let decorSideClass = i % 2 === 0 ? 'decor-left' : 'decor-right';
+        
+        // Tämä tulostetaan myöhemmin väylärivin kohdalla!
+        window.gameHistory[i].decorHtml = `<div class="decor-item ${decorSideClass}">${decorEmoji}</div>`;
+    }
 
     html += `
         <div class="dg-sign-top-bar" style="background:#0284c7;"></div>
@@ -795,9 +799,11 @@ window.renderReceiptOnBoard = function() {
         </div>
 
         <div class="dg-sign-board" style="background:#dcfce7; border-color:#0284c7; padding: 25px 20px;">
-            <div style="background: #ffffff; border: 3px solid #16a34a; padding: 15px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <div style="background: #ffffff; border: 3px solid #16a34a; padding: 15px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position:relative;">
                 <h3 style="text-align:center; width:100%; font-family:'Inter', sans-serif; font-weight: 900; color:#166534; margin:0 0 15px 0; text-transform: uppercase;">KOKONAISTILANNE</h3>
                 ${generateTotals()}
+                <div class="decor-item decor-right" style="top:-30px;">👨‍🚀</div>
+                <div class="decor-item decor-left" style="top:20px;">🛸</div>
             </div>
             
             <h2 style="text-align:center; font-size:1.6rem; color:#0284c7; font-family:'Inter', sans-serif; font-weight:900; margin-bottom:15px; text-transform:uppercase;">Väyläkohtaiset</h2>
@@ -806,7 +812,12 @@ window.renderReceiptOnBoard = function() {
     for(let i=0; i<window.gameHistory.length; i++) { 
         let h = window.gameHistory[i]; 
         let par = window.currentCourse.pars ? (window.currentCourse.pars[i] || 3) : 3; 
-        html += `<div style="font-size:1.2rem; font-weight:bold; border-bottom:2px solid #bbf7d0; margin-top:15px; padding-bottom:5px; color:#166534;">Väylä ${i+1} <span style="color:#15803d; font-weight:normal; font-size:0.9rem;">(PAR ${par})</span></div>`; 
+        
+        html += `<div style="position:relative; font-size:1.2rem; font-weight:bold; border-bottom:2px solid #bbf7d0; margin-top:15px; padding-bottom:5px; color:#166534;">
+            Väylä ${i+1} <span style="color:#15803d; font-weight:normal; font-size:0.9rem;">(PAR ${par})</span>
+            ${h.decorHtml || ''}
+        </div>`; 
+        
         if(h.holeResults) { 
             for(let pName in h.holeResults) { 
                 let strokes = h.holeResults[pName]; 
@@ -847,7 +858,7 @@ window.renderBoard = function() {
 };
 
 // ==============================================
-// PAKOTA TULOSTAULU YLÄREUNAAN NAPPIA PAINAESSA
+// KAMERAN KESKITYS KUN PAINAA TULOKSET-NAPPIA
 // ==============================================
 document.addEventListener('click', (e) => {
     let target = e.target.closest('.nav-item');
