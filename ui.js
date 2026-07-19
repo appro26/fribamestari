@@ -1,3 +1,7 @@
+// ==============================================
+// KÄYTTÖLIITTYMÄ, NÄKYMÄT JA MODAALIT (ui.js)
+// ==============================================
+
 var el = id => document.getElementById(id);
 
 const postItColors = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa', '#e9d5ff', '#a7f3d0'];
@@ -24,11 +28,26 @@ window.pseudoRandom = (seed) => {
 // ==============================================
 window.applyViewScales = function() {
     let w = window.innerWidth;
+    
     let receiptWrapper = el('board-receipt-wrapper');
     if(receiptWrapper) {
         let recScale = w < 480 ? Math.max(0.6, w / 480) : 1;
         receiptWrapper.style.transform = `scale(${recScale})`;
         receiptWrapper.style.transformOrigin = 'top center';
+    }
+    
+    let shopWrapper = el('board-shop-wrapper');
+    if(shopWrapper) {
+        let shopScale = w < 680 ? Math.max(0.5, w / 680) : 1;
+        shopWrapper.style.transform = `scale(${shopScale})`;
+        shopWrapper.style.transformOrigin = 'top center';
+    }
+    
+    let binderWrapper = el('board-binder-wrapper');
+    if(binderWrapper) {
+        let bindScale = w < 720 ? Math.max(0.6, w / 720) : 1;
+        binderWrapper.style.transform = `scale(${bindScale})`;
+        binderWrapper.style.transformOrigin = 'top center';
     }
 };
 window.addEventListener('resize', window.applyViewScales);
@@ -84,40 +103,35 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
     
     if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
     
-    // NÄYTÄ MODAALI ENSIN, JOTTA SELAIMEN ON PAKKO LASKEA MITAT!
     window.showModalSafe('cardDetailModal');
     window.renderCarousel();
     if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
     
-    // TÄYDELLINEN TAKUU-VARMA KESKITYS
-    setTimeout(() => { 
-        const container = el('cardCarousel');
-        if(!container) return;
-        
-        const cards = container.querySelectorAll('.carousel-card-wrapper');
-        const targetCard = cards[window.carouselCurrentIndex];
-        
-        if(targetCard) {
-            // Poista rullausmagneetit hetkeksi, ettei selain taistele vastaan
-            container.style.scrollBehavior = 'auto';
-            container.style.scrollSnapType = 'none';
+    // TÄYDELLISESTI OPTIMOITU KESKITYS
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            const container = el('cardCarousel');
+            if(!container) return;
             
-            // Laske itse millintarkasti oikea kohta
-            const containerCenter = container.clientWidth / 2;
-            const cardCenter = targetCard.offsetLeft + (targetCard.offsetWidth / 2);
-            container.scrollLeft = cardCenter - containerCenter;
+            const cards = container.querySelectorAll('.carousel-card-wrapper');
+            const targetCard = cards[window.carouselCurrentIndex];
             
-            // Pakota ruudun päivitys heti
-            void container.offsetWidth; 
-            
-            // Laita asetukset takaisin pehmeää selailua varten
-            setTimeout(() => {
-                container.style.scrollBehavior = 'smooth';
-                container.style.scrollSnapType = 'x mandatory';
-                if(window.initNativeCarousel) window.initNativeCarousel();
-            }, 10);
-        }
-    }, 50);
+            if(targetCard) {
+                // Poistetaan scroll snap hetkeksi, jotta selain ei tappele JS:ää vastaan
+                container.style.scrollBehavior = 'auto';
+                container.style.scrollSnapType = 'none';
+                
+                targetCard.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
+                
+                // Palautetaan snap takaisin pienen viiveen jälkeen
+                setTimeout(() => {
+                    container.style.scrollBehavior = 'smooth';
+                    container.style.scrollSnapType = 'x mandatory';
+                    if(window.initNativeCarousel) window.initNativeCarousel();
+                }, 50);
+            }
+        });
+    });
 };
 
 window.showEventCard = function(cId, target, by) {
@@ -232,29 +246,32 @@ window.openTargetModal = function(cId) {
     }
 };
 
-window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '') {
+window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
     if (!cDef) return '';
     let typeClass = `tier-${cDef.level || 1}`;
+    let typeIcon = cDef.type === 'buff' ? '🛡️' : '💥';
     let typeName = cDef.type === 'buff' ? 'buff' : 'sabotage';
     let safeCardName = cDef.n ? cDef.n.split(' (')[0] : '';
+    let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cDef.id) : (cDef.level === 3 ? 6 : (cDef.level === 2 ? 4 : 2));
     
-    let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cDef.id) : cDef.price;
     if (window.gameSettings && window.gameSettings.cardPrices && window.gameSettings.cardPrices[cDef.id] !== undefined) {
         playCost = window.gameSettings.cardPrices[cDef.id];
     }
-
+    
     let lockedStyle = isLocked ? 'opacity: 0.5; filter: grayscale(50%);' : '';
+    let dimensions = isCarousel ? 'width: 100%; height: 100%; box-sizing: border-box; display:flex; flex-direction:column;' : 'width: 175px; height: 260px;';
+    let titleSize = isCarousel ? 'font-size: 1.5rem;' : '';
+    let descSize = isCarousel ? 'font-size: 1rem; flex: 1;' : '';
     
     return `
-    <div class="physical-card ${typeClass}" style="${lockedStyle}">
+    <div class="physical-card ${typeClass}" style="${lockedStyle} ${dimensions} margin: 0 auto; box-shadow: 0 8px 16px rgba(0,0,0,0.4);">
         <div class="card-header ${typeName}">
-            <span>${cDef.type === 'buff' ? 'HELPOTUS' : 'SABOTAASI'}</span>
-            <span class="level-badge level-badge-${cDef.level || 1}">TASO ${cDef.level || 1}</span>
+            <span>${typeIcon} ${cDef.type === 'buff' ? 'HELPOTUS' : 'SABOTAASI'}</span><span>TASO ${cDef.level || 1}</span>
         </div>
-        <div class="card-body ${typeName}">
-            <div class="play-cost-badge">PELUU: ${playCost} P</div>
-            <h3>${safeCardName}</h3>
-            <p>${cDef.d}</p>
+        <div class="card-body ${typeName}" style="justify-content: flex-start; flex: 1; display:flex; flex-direction:column;">
+            <div class="play-cost-badge">MAKSU: ${playCost} P</div>
+            <h3 class="card-title" style="${titleSize}">${safeCardName}</h3>
+            <p class="card-desc" style="${descSize}">${cDef.d}</p>
             ${extraBottomHtml}
         </div>
     </div>`;
@@ -555,7 +572,7 @@ window.renderPayslipView = function(hIndex) {
 };
 
 // ==============================================
-// KANSIO (OMAT KORTIT ILMAN OTSIKKOJA, LAJITELTUNA)
+// KANSIO (OMAT KORTIT)
 // ==============================================
 window.renderBinderOnBoard = function() {
     let wrapper = el('board-binder-wrapper');
@@ -614,7 +631,7 @@ window.renderBinderOnBoard = function() {
 };
 
 // ==============================================
-// VÄLIPALA-AUTOMAATTI (KAUPPA) 
+// VÄLIPALA-AUTOMAATTI (KAUPPA 3D)
 // ==============================================
 window.renderShopOnBoard = function() {
     let wrapper = document.getElementById('board-shop-wrapper');
@@ -752,7 +769,7 @@ window.renderShopOnBoard = function() {
 };
 
 // ==============================================
-// FRISBEEGOLF -OPASTEKRYLTTI (TULOSSEURANTA)
+// TULOSSEURANTA JOKA KASVAA MAASTA AVARUUTEEN
 // ==============================================
 window.renderReceiptOnBoard = function() {
     let wrapper = el('board-receipt-wrapper');
@@ -768,54 +785,58 @@ window.renderReceiptOnBoard = function() {
         return html; 
     };
 
-    let html = `
-    <div class="dg-sign-wrapper">
-    `;
-    
-    // TÄSSÄ LUODAAN KORISTEET VÄYLIEN VIEREEN! (Avaruus ylhäällä, Maa alhaalla)
-    let spaceDecors = ['🚀', '🛸', '🛰️', '🌕', '☄️', '🌌', '✨', '🪐', '👾'];
-    let skyDecors = ['☁️', '☀️', '✈️', '🎈', '🚁'];
-    let groundDecors = ['🦅', '🌲', '🦋', '🐝'];
-
-    // Laitetaan ne itse taulun rivien viereen
-    for(let i=0; i<window.gameHistory.length; i++) { 
-        let decorEmoji = '';
-        if (i < 3) decorEmoji = spaceDecors[i % spaceDecors.length]; // Ylimmät väylät (Avaruus)
-        else if (i < 10) decorEmoji = skyDecors[i % skyDecors.length]; // Keskiväylät (Taivas)
-        else decorEmoji = groundDecors[i % groundDecors.length]; // Alimmat väylät (Maa)
-        
-        let decorSideClass = i % 2 === 0 ? 'decor-left' : 'decor-right';
-        
-        // Tämä tulostetaan myöhemmin väylärivin kohdalla!
-        window.gameHistory[i].decorHtml = `<div class="decor-item ${decorSideClass}">${decorEmoji}</div>`;
+    // Asetetaan dynaaminen tausta receipt-näkymään (Maasta avaruuteen)
+    let vr = el('view-receipt');
+    if(vr) {
+        vr.style.backgroundImage = 'linear-gradient(to top, #15803d 0%, #22c55e 10%, #7dd3fc 30%, #0284c7 60%, #0f172a 85%, #020617 100%)';
+        vr.style.backgroundAttachment = 'local';
     }
 
-    html += `
+    // Käännetty järjestys: uusimmat ylhäällä, väylä 1 alhaalla.
+    let html = `
+    <div class="dg-sign-wrapper" style="margin-top: 50px;">
         <div class="dg-sign-top-bar" style="background:#0284c7;"></div>
-        
         <div class="dg-sign-legs">
             <div class="dg-sign-leg" style="background:#0284c7;"></div>
             <div class="dg-sign-leg" style="background:#0284c7;"></div>
         </div>
-
         <div class="dg-sign-board" style="background:#dcfce7; border-color:#0284c7; padding: 25px 20px;">
-            <div style="background: #ffffff; border: 3px solid #16a34a; padding: 15px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position:relative;">
+            <div style="background: #ffffff; border: 3px solid #16a34a; padding: 15px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position:relative; z-index: 10;">
                 <h3 style="text-align:center; width:100%; font-family:'Inter', sans-serif; font-weight: 900; color:#166534; margin:0 0 15px 0; text-transform: uppercase;">KOKONAISTILANNE</h3>
                 ${generateTotals()}
-                <div class="decor-item decor-right" style="top:-30px;">👨‍🚀</div>
-                <div class="decor-item decor-left" style="top:20px;">🛸</div>
             </div>
             
             <h2 style="text-align:center; font-size:1.6rem; color:#0284c7; font-family:'Inter', sans-serif; font-weight:900; margin-bottom:15px; text-transform:uppercase;">Väyläkohtaiset</h2>
     `;
     
-    for(let i=0; i<window.gameHistory.length; i++) { 
+    let holesHtml = '';
+    // Käydään historia läpi lopusta alkuun (uusin väylä ylimpänä, alin väylä 1)
+    for(let i = window.gameHistory.length - 1; i >= 0; i--) { 
         let h = window.gameHistory[i]; 
         let par = window.currentCourse.pars ? (window.currentCourse.pars[i] || 3) : 3; 
         
-        html += `<div style="position:relative; font-size:1.2rem; font-weight:bold; border-bottom:2px solid #bbf7d0; margin-top:15px; padding-bottom:5px; color:#166534;">
+        let decorHtml = '';
+        // Joka toisella väylällä spesiaalidekoraatio, maasta avaruuteen.
+        if ((i + 1) % 2 === 0) {
+            let isRight = (i + 1) % 4 === 0;
+            let decorSideClass = isRight ? 'decor-right' : 'decor-left';
+            let element = '';
+            
+            if (i <= 3) {
+                element = `<div class="animated-decor bird-decor" style="font-size:2.5rem; animation: floatAnim 3s ease-in-out infinite;">🦅</div>`;
+            } else if (i <= 9) {
+                element = `<div class="animated-decor plane-decor" style="font-size:2.5rem; animation: floatAnim 4s ease-in-out infinite;">✈️</div>`;
+            } else if (i <= 13) {
+                element = `<div class="animated-decor moon-decor" style="font-size:2.8rem; animation: pulseAnim 4s ease-in-out infinite;">🌕</div>`;
+            } else {
+                element = `<div class="animated-decor satellite-decor" style="font-size:2.5rem; animation: spinAnim 10s linear infinite;">🛰️</div>`;
+            }
+            decorHtml = `<div class="decor-item ${decorSideClass}" style="position:absolute; ${isRight ? 'right:-40px;' : 'left:-40px;'} top:10px; z-index:20;">${element}</div>`;
+        }
+
+        holesHtml += `<div style="position:relative; font-size:1.2rem; font-weight:bold; border-bottom:2px solid #bbf7d0; margin-top:15px; padding-bottom:5px; color:#166534;">
             Väylä ${i+1} <span style="color:#15803d; font-weight:normal; font-size:0.9rem;">(PAR ${par})</span>
-            ${h.decorHtml || ''}
+            ${decorHtml}
         </div>`; 
         
         if(h.holeResults) { 
@@ -824,13 +845,26 @@ window.renderReceiptOnBoard = function() {
                 let diff = strokes - par;
                 let cClass = diff === 0 ? 'even' : (diff < 0 ? 'green' : 'red'); 
                 if (diff < -1) cClass = 'blue'; 
-                html += `<div style="display:flex; justify-content:space-between; font-size:1.2rem; padding: 8px 0; align-items:center; color:#0f172a; font-weight: bold;"><span>${pName.substring(0, 12)}</span><span class="receipt-circle ${cClass}" style="width:32px; height:32px; font-size:1.2rem;">${strokes}</span></div>`; 
+                holesHtml += `<div style="display:flex; justify-content:space-between; font-size:1.2rem; padding: 8px 0; align-items:center; color:#0f172a; font-weight: bold;"><span>${pName.substring(0, 12)}</span><span class="receipt-circle ${cClass}" style="width:32px; height:32px; font-size:1.2rem;">${strokes}</span></div>`; 
             } 
         } 
     }
     
-    html += `</div></div>`;
+    html += holesHtml + `</div></div>`;
     wrapper.innerHTML = html;
+
+    // Injektoidaan animaatiot lennosta, jos niitä ei ole vielä lisätty
+    if(!document.getElementById('receipt-animations')) {
+        let style = document.createElement('style');
+        style.id = 'receipt-animations';
+        style.innerHTML = `
+            @keyframes floatAnim { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(5deg); } }
+            @keyframes pulseAnim { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.1); filter: brightness(1.2); } }
+            @keyframes spinAnim { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            .decor-item { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); }
+        `;
+        document.head.appendChild(style);
+    }
 };
 
 // ==============================================
@@ -848,18 +882,9 @@ window.renderBoard = function() {
     window.renderBinderOnBoard();
     window.renderShopOnBoard();
     window.renderReceiptOnBoard();
-
-    let me = (window.allPlayers || []).find(p => p && p.name === window.myName);
-    if(me) {
-        let totalDg = me.dgScore > 0 ? '+' + me.dgScore : (me.dgScore === 0 ? 'E' : me.dgScore);
-        let navScoreSummary = el('navScoreSummary');
-        if(navScoreSummary) navScoreSummary.innerText = `TULOS: ${totalDg}`;
-    }
 };
 
-// ==============================================
 // KAMERAN KESKITYS KUN PAINAA TULOKSET-NAPPIA
-// ==============================================
 document.addEventListener('click', (e) => {
     let target = e.target.closest('.nav-item');
     if(target && target.innerText.includes('TULOKSET')) {
