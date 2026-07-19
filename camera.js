@@ -113,6 +113,7 @@ window.zoomToReceipt = function() {
     window.animateCameraTo(tX, tY, tScale);
 };
 
+// Integroitu patches.js tiedoston parempi zoomaus!
 window.zoomToShop = function() { 
     let wrapper = document.getElementById('board-shop-wrapper');
     let tY = 50; let tX = 50;
