@@ -24,28 +24,28 @@ window.pseudoRandom = (seed) => {
 };
 
 // ==============================================
-// SKAALAUS
+// SKAALAUS (KORJATTU: KORTIT PALAUTETTU ISOIKSI)
 // ==============================================
 window.applyViewScales = function() {
     let w = window.innerWidth;
     
     let receiptWrapper = el('board-receipt-wrapper');
     if(receiptWrapper) {
-        let recScale = w < 480 ? Math.max(0.6, w / 480) : 1;
+        let recScale = w < 480 ? Math.max(0.7, w / 480) : 1;
         receiptWrapper.style.transform = `scale(${recScale})`;
         receiptWrapper.style.transformOrigin = 'top center';
     }
     
     let shopWrapper = el('board-shop-wrapper');
     if(shopWrapper) {
-        let shopScale = w < 680 ? Math.max(0.5, w / 680) : 1;
+        let shopScale = w < 650 ? w / 650 : 1;
         shopWrapper.style.transform = `scale(${shopScale})`;
         shopWrapper.style.transformOrigin = 'top center';
     }
     
     let binderWrapper = el('board-binder-wrapper');
     if(binderWrapper) {
-        let bindScale = w < 720 ? Math.max(0.6, w / 720) : 1;
+        let bindScale = w < 550 ? w / 550 : 1;
         binderWrapper.style.transform = `scale(${bindScale})`;
         binderWrapper.style.transformOrigin = 'top center';
     }
@@ -107,31 +107,29 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
     window.renderCarousel();
     if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
     
-    // TÄYDELLISESTI OPTIMOITU KESKITYS
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            const container = el('cardCarousel');
-            if(!container) return;
+    // TÄYDELLINEN KESKITYS: Pakotetaan scrollaus matematiikalla
+    const container = el('cardCarousel');
+    if(container) {
+        const cards = container.querySelectorAll('.carousel-card-wrapper');
+        const targetCard = cards[window.carouselCurrentIndex];
+        
+        if(targetCard) {
+            container.style.scrollBehavior = 'auto';
+            container.style.scrollSnapType = 'none';
             
-            const cards = container.querySelectorAll('.carousel-card-wrapper');
-            const targetCard = cards[window.carouselCurrentIndex];
+            const containerCenter = container.clientWidth / 2;
+            const cardCenter = targetCard.offsetLeft + (targetCard.offsetWidth / 2);
+            container.scrollLeft = cardCenter - containerCenter;
             
-            if(targetCard) {
-                // Poistetaan scroll snap hetkeksi, jotta selain ei tappele JS:ää vastaan
-                container.style.scrollBehavior = 'auto';
-                container.style.scrollSnapType = 'none';
-                
-                targetCard.scrollIntoView({ behavior: 'auto', inline: 'center', block: 'nearest' });
-                
-                // Palautetaan snap takaisin pienen viiveen jälkeen
-                setTimeout(() => {
-                    container.style.scrollBehavior = 'smooth';
-                    container.style.scrollSnapType = 'x mandatory';
-                    if(window.initNativeCarousel) window.initNativeCarousel();
-                }, 50);
-            }
-        });
-    });
+            void container.offsetWidth; 
+            
+            setTimeout(() => {
+                container.style.scrollBehavior = 'smooth';
+                container.style.scrollSnapType = 'x mandatory';
+                if(window.initNativeCarousel) window.initNativeCarousel();
+            }, 10);
+        }
+    }
 };
 
 window.showEventCard = function(cId, target, by) {
@@ -259,7 +257,7 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '',
     }
     
     let lockedStyle = isLocked ? 'opacity: 0.5; filter: grayscale(50%);' : '';
-    let dimensions = isCarousel ? 'width: 100%; height: 100%; box-sizing: border-box; display:flex; flex-direction:column;' : 'width: 175px; height: 260px;';
+    let dimensions = isCarousel ? 'width: 100%; height: 100%; box-sizing: border-box; display:flex; flex-direction:column;' : 'width: 100%; height: 100%;';
     let titleSize = isCarousel ? 'font-size: 1.5rem;' : '';
     let descSize = isCarousel ? 'font-size: 1rem; flex: 1;' : '';
     
@@ -585,9 +583,7 @@ window.renderBinderOnBoard = function() {
         let cA = window.allCards.find(x => x.id === a);
         let cB = window.allCards.find(x => x.id === b);
         if(!cA || !cB) return 0;
-        
         if (cA.level !== cB.level) return cB.level - cA.level; 
-        
         let typeW_A = cA.type === 'sabotage' ? 1 : 2;
         let typeW_B = cB.type === 'sabotage' ? 1 : 2;
         return typeW_A - typeW_B;
@@ -769,7 +765,7 @@ window.renderShopOnBoard = function() {
 };
 
 // ==============================================
-// TULOSSEURANTA JOKA KASVAA MAASTA AVARUUTEEN
+// TULOSSEURANTA: MAASTA AVARUUTEEN (ANIMOITU TAUSTA)
 // ==============================================
 window.renderReceiptOnBoard = function() {
     let wrapper = el('board-receipt-wrapper');
@@ -785,58 +781,70 @@ window.renderReceiptOnBoard = function() {
         return html; 
     };
 
-    // Asetetaan dynaaminen tausta receipt-näkymään (Maasta avaruuteen)
+    // Asetetaan täydellisesti skaalautuva avaruus-taivas-maa tausta css-luokalla containeriin
     let vr = el('view-receipt');
     if(vr) {
-        vr.style.backgroundImage = 'linear-gradient(to top, #15803d 0%, #22c55e 10%, #7dd3fc 30%, #0284c7 60%, #0f172a 85%, #020617 100%)';
+        vr.style.backgroundImage = 'linear-gradient(to top, #166534 0%, #3b82f6 15%, #1d4ed8 40%, #1e3a8a 60%, #020617 80%, #000000 100%)';
         vr.style.backgroundAttachment = 'local';
     }
 
-    // Käännetty järjestys: uusimmat ylhäällä, väylä 1 alhaalla.
-    let html = `
-    <div class="dg-sign-wrapper" style="margin-top: 50px;">
-        <div class="dg-sign-top-bar" style="background:#0284c7;"></div>
-        <div class="dg-sign-legs">
-            <div class="dg-sign-leg" style="background:#0284c7;"></div>
-            <div class="dg-sign-leg" style="background:#0284c7;"></div>
+    // Injektoidaan dynaamiset avaruus- ja sääanimaatiot taustalle (puhtainta mahdollista CSS:ää)
+    let epicBgHtml = `
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; z-index: 1;">
+        <!-- Tähdet -->
+        <div style="position:absolute; top:0; left:0; right:0; height: 50%; background-image: radial-gradient(white 1px, transparent 1px); background-size: 50px 50px; opacity: 0.5; animation: twinkle 3s infinite alternate;"></div>
+        <!-- Kuu -->
+        <div style="position:absolute; top: 25%; left: 10%; width: 100px; height: 100px; background: #e2e8f0; border-radius: 50%; box-shadow: inset -15px -15px 0 0 #94a3b8, 0 0 40px rgba(255,255,255,0.4); animation: floatSlow 6s ease-in-out infinite;"></div>
+        <!-- Satelliitti SVG -->
+        <svg style="position:absolute; top: 15%; right: 15%; width: 60px; height: 60px; animation: spinOrbit 20s linear infinite;" viewBox="0 0 24 24" fill="#94a3b8"><path d="M4.2 14.5L1.4 17.3c-.8.8-.8 2 0 2.8l2.5 2.5c.8.8 2 .8 2.8 0l2.8-2.8-5.3-5.3zm16.5-6.3l2.8-2.8c.8-.8.8-2 0-2.8L21 2c-.8-.8-2-.8-2.8 0l-2.8 2.8 5.3 5.3zM12 15c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3zm6.3-7.7L7.7 18.3c-.4.4-1 .4-1.4 0l-1.4-1.4c-.4-.4-.4-1 0-1.4L15.5 4.9c.4-.4 1-.4 1.4 0l1.4 1.4c.4.4.4 1 0 1.4z"/></svg>
+        <!-- Ufo SVG -->
+        <svg style="position:absolute; top: 35%; right: 25%; width: 50px; height: 50px; animation: ufoHover 4s ease-in-out infinite;" viewBox="0 0 24 24" fill="#34d399"><path d="M12 2c-3.3 0-6 2.7-6 6v1c-3.3 0-6 1.3-6 3s2.7 3 6 3h12c3.3 0 6-1.3 6-3s-2.7-3-6-3V8c0-3.3-2.7-6-6-6zm0 2c2.2 0 4 1.8 4 4v1H8V8c0-2.2 1.8-4 4-4z"/></svg>
+        <!-- Pilviä taivaalla -->
+        <div style="position:absolute; top: 60%; left: -20%; width: 150px; height: 40px; background: white; border-radius: 40px; opacity: 0.6; filter: blur(5px); animation: driftRight 45s linear infinite;"></div>
+        <div style="position:absolute; top: 75%; right: -20%; width: 200px; height: 50px; background: white; border-radius: 50px; opacity: 0.8; filter: blur(3px); animation: driftLeft 35s linear infinite;"></div>
+        <div style="position:absolute; top: 70%; left: 30%; width: 120px; height: 35px; background: #64748b; border-radius: 35px; opacity: 0.9; box-shadow: 0 15px 25px rgba(0,0,0,0.5); animation: thunderStorm 10s infinite alternate;"></div>
+        <!-- Maapallo taulun alla -->
+        <div style="position:absolute; bottom: -400px; left: -50%; width: 200%; height: 500px; background: radial-gradient(circle at top, #22c55e, #14532d); border-radius: 50% 50% 0 0; box-shadow: inset 0 20px 40px rgba(0,0,0,0.4); animation: rotateEarth 120s linear infinite;"></div>
+    </div>
+    <style>
+        @keyframes twinkle { 0% { opacity: 0.3; } 100% { opacity: 0.8; transform: scale(1.05); } }
+        @keyframes floatSlow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        @keyframes spinOrbit { 0% { transform: rotate(0deg) translateX(30px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(30px) rotate(-360deg); } }
+        @keyframes ufoHover { 0%, 100% { transform: translate(0, 0) rotate(-5deg); } 50% { transform: translate(-30px, -15px) rotate(5deg); } }
+        @keyframes driftRight { 0% { transform: translateX(0vw); } 100% { transform: translateX(140vw); } }
+        @keyframes driftLeft { 0% { transform: translateX(0vw); } 100% { transform: translateX(-140vw); } }
+        @keyframes thunderStorm { 0%, 95% { filter: brightness(1); } 96%, 98% { filter: brightness(3) drop-shadow(0 0 20px #fde047); } 100% { filter: brightness(1); } }
+        @keyframes rotateEarth { 0% { transform: rotate(0deg); } 100% { transform: rotate(3deg); } }
+    </style>
+    `;
+
+    // Taulu, joka kasvaa alhaalta ylöspäin! (Uusin ylimpänä)
+    let html = epicBgHtml + `
+    <div class="dg-sign-wrapper" style="margin-top: 250px; padding-bottom: 50px;">
+        <div class="dg-sign-top-bar" style="background:#f1f5f9; border-radius: 20px 20px 0 0; border: 4px solid #cbd5e1; border-bottom: none; height: 35px; box-shadow: inset 0 10px 15px white;"></div>
+        
+        <div class="dg-sign-legs" style="top: 20px;">
+            <div class="dg-sign-leg" style="background:#94a3b8; width:30px; border-radius:15px; border:2px solid #64748b;"></div>
+            <div class="dg-sign-leg" style="background:#94a3b8; width:30px; border-radius:15px; border:2px solid #64748b;"></div>
         </div>
-        <div class="dg-sign-board" style="background:#dcfce7; border-color:#0284c7; padding: 25px 20px;">
-            <div style="background: #ffffff; border: 3px solid #16a34a; padding: 15px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position:relative; z-index: 10;">
+
+        <div class="dg-sign-board" style="background:#f8fafc; border:4px solid #cbd5e1; border-top: none; padding: 25px 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); z-index: 10;">
+            <div style="background: #ffffff; border: 3px solid #16a34a; padding: 15px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position:relative;">
                 <h3 style="text-align:center; width:100%; font-family:'Inter', sans-serif; font-weight: 900; color:#166534; margin:0 0 15px 0; text-transform: uppercase;">KOKONAISTILANNE</h3>
                 ${generateTotals()}
             </div>
             
-            <h2 style="text-align:center; font-size:1.6rem; color:#0284c7; font-family:'Inter', sans-serif; font-weight:900; margin-bottom:15px; text-transform:uppercase;">Väyläkohtaiset</h2>
+            <h2 style="text-align:center; font-size:1.6rem; color:#475569; font-family:'Inter', sans-serif; font-weight:900; margin-bottom:15px; text-transform:uppercase;">Väyläkohtaiset</h2>
     `;
     
     let holesHtml = '';
-    // Käydään historia läpi lopusta alkuun (uusin väylä ylimpänä, alin väylä 1)
+    // Historia käydään läpi lopusta alkuun (uusin väylä ylimpänä)
     for(let i = window.gameHistory.length - 1; i >= 0; i--) { 
         let h = window.gameHistory[i]; 
         let par = window.currentCourse.pars ? (window.currentCourse.pars[i] || 3) : 3; 
         
-        let decorHtml = '';
-        // Joka toisella väylällä spesiaalidekoraatio, maasta avaruuteen.
-        if ((i + 1) % 2 === 0) {
-            let isRight = (i + 1) % 4 === 0;
-            let decorSideClass = isRight ? 'decor-right' : 'decor-left';
-            let element = '';
-            
-            if (i <= 3) {
-                element = `<div class="animated-decor bird-decor" style="font-size:2.5rem; animation: floatAnim 3s ease-in-out infinite;">🦅</div>`;
-            } else if (i <= 9) {
-                element = `<div class="animated-decor plane-decor" style="font-size:2.5rem; animation: floatAnim 4s ease-in-out infinite;">✈️</div>`;
-            } else if (i <= 13) {
-                element = `<div class="animated-decor moon-decor" style="font-size:2.8rem; animation: pulseAnim 4s ease-in-out infinite;">🌕</div>`;
-            } else {
-                element = `<div class="animated-decor satellite-decor" style="font-size:2.5rem; animation: spinAnim 10s linear infinite;">🛰️</div>`;
-            }
-            decorHtml = `<div class="decor-item ${decorSideClass}" style="position:absolute; ${isRight ? 'right:-40px;' : 'left:-40px;'} top:10px; z-index:20;">${element}</div>`;
-        }
-
-        holesHtml += `<div style="position:relative; font-size:1.2rem; font-weight:bold; border-bottom:2px solid #bbf7d0; margin-top:15px; padding-bottom:5px; color:#166534;">
-            Väylä ${i+1} <span style="color:#15803d; font-weight:normal; font-size:0.9rem;">(PAR ${par})</span>
-            ${decorHtml}
+        holesHtml += `<div style="position:relative; font-size:1.2rem; font-weight:bold; border-bottom:2px solid #cbd5e1; margin-top:15px; padding-bottom:5px; color:#334155;">
+            Väylä ${i+1} <span style="color:#64748b; font-weight:normal; font-size:0.9rem;">(PAR ${par})</span>
         </div>`; 
         
         if(h.holeResults) { 
@@ -852,19 +860,6 @@ window.renderReceiptOnBoard = function() {
     
     html += holesHtml + `</div></div>`;
     wrapper.innerHTML = html;
-
-    // Injektoidaan animaatiot lennosta, jos niitä ei ole vielä lisätty
-    if(!document.getElementById('receipt-animations')) {
-        let style = document.createElement('style');
-        style.id = 'receipt-animations';
-        style.innerHTML = `
-            @keyframes floatAnim { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(5deg); } }
-            @keyframes pulseAnim { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.1); filter: brightness(1.2); } }
-            @keyframes spinAnim { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            .decor-item { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); }
-        `;
-        document.head.appendChild(style);
-    }
 };
 
 // ==============================================
