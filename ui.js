@@ -88,17 +88,31 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
     if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
     window.showModalSafe('cardDetailModal');
     
-    // TÄYDELLINEN KESKITYS (scrollIntoView pakottaa kortin ruudun keskelle)
+    // TÄYDELLINEN KESKITYS: Otetaan rullausmagneetti hetkeksi pois, siirretään kortti keskelle koodilla ja laitetaan magneetti takaisin
     setTimeout(() => { 
         const container = el('cardCarousel');
-        if(container) {
-            const cards = container.querySelectorAll('.carousel-card-wrapper');
-            if(cards[window.carouselCurrentIndex]) {
-                cards[window.carouselCurrentIndex].scrollIntoView({ behavior: 'instant', inline: 'center', block: 'nearest' });
+        if(!container) return;
+        
+        const cards = container.querySelectorAll('.carousel-card-wrapper');
+        const targetCard = cards[window.carouselCurrentIndex];
+        
+        if(targetCard) {
+            container.style.scrollBehavior = 'auto';
+            container.style.scrollSnapType = 'none';
+            
+            const containerCenter = container.clientWidth / 2;
+            const cardCenter = targetCard.offsetLeft + (targetCard.offsetWidth / 2);
+            container.scrollLeft = cardCenter - containerCenter;
+            
+            void container.offsetWidth; // PakotetaanSelain piirtämään muutos heti
+            
+            setTimeout(() => {
+                container.style.scrollBehavior = 'smooth';
+                container.style.scrollSnapType = 'x mandatory';
                 if(window.initNativeCarousel) window.initNativeCarousel();
-            }
+            }, 50);
         }
-    }, 10);
+    }, 50);
 };
 
 window.showEventCard = function(cId, target, by) {
@@ -756,19 +770,20 @@ window.renderReceiptOnBoard = function() {
     <div class="dg-sign-wrapper">
     `;
     
-    // TÄSSÄ LUODAAN AVARUUSMAISEMAN ELEMENTIT TAUSTALLE (Mitä idemmäs alas skrollaat, sitä ylemmäs taivaalle menet)
+    // TÄSSÄ LUODAAN AVARUUSMAISEMAN ELEMENTIT TAUSTALLE (Alkaa ylhäältä avaruudesta!)
     let decorContainer = `<div style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1; overflow:hidden;">`;
     for(let i=0; i<window.gameHistory.length; i++) { 
-        let topPx = 400 + (i * 100); // Objektit tiputetaan alaspäin suhteessa väylien määrään!
-        if (i === 0) decorContainer += `<div style="position:absolute; top:${topPx}px; left:8%; font-size:2.5rem; opacity:0.8; transform:scaleX(-1);">🦅</div>`;
-        if (i === 2) decorContainer += `<div style="position:absolute; top:${topPx}px; right:8%; font-size:3rem; opacity:0.7;">☁️</div>`;
-        if (i === 4) decorContainer += `<div style="position:absolute; top:${topPx}px; left:12%; font-size:2.5rem; opacity:0.9;">✈️</div>`;
-        if (i === 6) decorContainer += `<div style="position:absolute; top:${topPx}px; right:10%; font-size:3.5rem; filter:drop-shadow(0 0 15px #fef08a);">🌕</div>`;
+        let topPx = 150 + (i * 110); 
+        // Ylinnä olevat väylät saavat UFOja ja kuuta (Avaruus), alimmat saavat lintuja (Ilmakehä)
+        if (i === 0) decorContainer += `<div style="position:absolute; top:${topPx}px; right:5%; font-size:4rem; filter:drop-shadow(0 0 20px #22c55e);">🛸</div>`;
+        if (i === 2) decorContainer += `<div style="position:absolute; top:${topPx}px; left:8%; font-size:3rem;">👾</div>`;
+        if (i === 4) decorContainer += `<div style="position:absolute; top:${topPx}px; right:10%; font-size:3.5rem; filter:drop-shadow(0 0 15px #fef08a);">🌕</div>`;
+        if (i === 6) decorContainer += `<div style="position:absolute; top:${topPx}px; left:12%; font-size:2.5rem;">☄️</div>`;
         if (i === 8) decorContainer += `<div style="position:absolute; top:${topPx}px; left:10%; font-size:2rem; color:#fff; text-shadow: 0 0 5px #fff;">✨</div>`;
-        if (i === 11) decorContainer += `<div style="position:absolute; top:${topPx}px; right:12%; font-size:3rem; animation: float 6s infinite;">🛰️</div>`;
-        if (i === 13) decorContainer += `<div style="position:absolute; top:${topPx}px; left:15%; font-size:2.5rem;">☄️</div>`;
-        if (i === 15) decorContainer += `<div style="position:absolute; top:${topPx}px; right:8%; font-size:4rem; filter:drop-shadow(0 0 20px #22c55e);">🛸</div>`;
-        if (i === 17) decorContainer += `<div style="position:absolute; top:${topPx}px; left:10%; font-size:3rem;">👾</div>`;
+        if (i === 11) decorContainer += `<div style="position:absolute; top:${topPx}px; right:15%; font-size:3rem; animation: float 6s infinite;">🛰️</div>`;
+        if (i === 13) decorContainer += `<div style="position:absolute; top:${topPx}px; left:12%; font-size:2.5rem; opacity:0.9;">✈️</div>`;
+        if (i === 15) decorContainer += `<div style="position:absolute; top:${topPx}px; right:8%; font-size:3rem; opacity:0.7;">☁️</div>`;
+        if (i === 17) decorContainer += `<div style="position:absolute; top:${topPx}px; left:8%; font-size:2.5rem; opacity:0.8; transform:scaleX(-1);">🦅</div>`;
     }
     decorContainer += `</div>`;
     
@@ -784,7 +799,7 @@ window.renderReceiptOnBoard = function() {
 
         <div class="dg-sign-board" style="background:#dcfce7; border-color:#0284c7; padding: 25px 20px;">
             <div style="background: #ffffff; border: 3px solid #16a34a; padding: 15px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                <h3 style="text-align:center; width:100%; font-size:1.8rem; font-family:'Inter', sans-serif; font-weight: 900; color:#166534; margin:0 0 15px 0; text-transform: uppercase;">KOKONAISTILANNE</h3>
+                <h3 style="text-align:center; width:100%; font-family:'Inter', sans-serif; font-weight: 900; color:#166534; margin:0 0 15px 0; text-transform: uppercase;">KOKONAISTILANNE</h3>
                 ${generateTotals()}
             </div>
             
@@ -808,7 +823,7 @@ window.renderReceiptOnBoard = function() {
     
     html += `</div>
     
-    <!-- 3D Maapallo asettuu taulun alle -->
+    <!-- 3D Maapallo asettuu taulun jalkojen alle -->
     <div class="earth-bottom"></div>
     
     </div>`;
@@ -845,8 +860,10 @@ window.renderBoard = function() {
 document.addEventListener('click', (e) => {
     let target = e.target.closest('.nav-item');
     if(target && target.innerText.includes('TULOKSET')) {
-        let vr = el('view-receipt');
-        if(vr) vr.scrollTop = 0;
+        setTimeout(() => {
+            let vr = el('view-receipt');
+            if(vr) vr.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 50);
     }
 });
 
