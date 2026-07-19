@@ -43,42 +43,23 @@ body {
     box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
 }
 
-/* TÄYDELLINEN AVARUUS-MAISEMA (Avaruus on ylhäällä, maa alhaalla!) */
+/* TÄYDELLINEN AVARUUSMAISEMA 
+   Ylhäällä Kokonaistuloksen takana on Avaruus, alhaalla uuden väylän takana on Taivas ja Maa */
 #view-receipt {
     background-color: #020617;
     background-image: linear-gradient(to bottom, 
-        #020617 0%,      /* Syvä avaruus (Aivan ylhäällä) */
+        #020617 0%,      /* Syvä avaruus (Ylhäällä) */
         #0f172a 20%,     /* Avaruuden raja */
         #1e3a8a 50%,     /* Yläilmakehä */
         #38bdf8 80%,     /* Taivas */
-        #7dd3fc 100%     /* Vaalea taivas aivan maan rajassa */
+        #7dd3fc 100%     /* Vaalea taivas maan rajassa */
     );
-    background-attachment: local !important; 
     min-height: 100%;
     display: block; 
     padding-top: 40px; 
-    padding-bottom: 250px; /* Tilaa maapallolle ja alaskrollaukseen */
     position: relative;
     overflow-x: hidden;
-}
-
-/* PIENI 3D MAAPALLO (Asettuu tulostaulun jalkojen alle!) */
-.earth-bottom {
-    position: absolute; 
-    bottom: -150px; 
-    left: 50%;
-    transform: translateX(-50%);
-    width: 650px;
-    height: 650px;
-    background: radial-gradient(circle at 50% 15%, #16a34a 0%, #064e3b 40%, #022c22 80%);
-    border-radius: 50%;
-    z-index: 1;
-    box-shadow: inset 0 20px 40px rgba(255,255,255,0.2), 0 0 50px rgba(56,189,248,0.4);
-    pointer-events: none;
-}
-
-#view-receipt > div {
-    z-index: 5; position: relative; 
+    overflow-y: auto;
 }
 
 .app-view {
@@ -334,7 +315,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 @keyframes penSwing { 0%, 100% { transform: rotate(6deg); } 50% { transform: rotate(-6deg); } }
 
 /* =========================================
-   TULOSKYLTTI (Skaalautuva otsikko)
+   TULOSKYLTTI
    ========================================= */
 .dg-sign-wrapper { 
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
@@ -346,11 +327,27 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .dg-sign-leg { width: 25px; height: 100%; background: #0284c7; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.6); }
 .dg-sign-board { width: 90%; background: #dcfce7; margin-top: -5px; padding: 25px 20px; border: 4px solid #0284c7; border-top: none; box-shadow: 0 15px 30px rgba(0,0,0,0.6); z-index: 2; position: relative; }
 
-/* Kutistuu nätisti pieneen puhelimeen rikkomatta laatikkoa */
-.dg-sign-board h3 {
-    font-size: clamp(1.2rem, 5vw, 1.8rem) !important;
-    word-break: break-word;
-    line-height: 1.2;
+.dg-sign-board h3 { font-size: clamp(1.2rem, 5vw, 1.8rem) !important; word-break: break-word; line-height: 1.2; }
+
+/* KORJAUS: MAAPALLO KYLTIN ALLE */
+.earth-bottom-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    z-index: 5;
+    margin-top: -40px; 
+    overflow: hidden; 
+    padding-bottom: 80px; 
+}
+
+.earth-globe {
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle at 50% 10%, #16a34a 0%, #064e3b 40%, #022c22 80%);
+    border-radius: 50%;
+    box-shadow: inset 0 20px 40px rgba(255,255,255,0.2), 0 0 50px rgba(56,189,248,0.4);
+    flex-shrink: 0; 
 }
 
 .receipt-circle { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; font-size: 0.8rem; flex-shrink: 0; }
