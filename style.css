@@ -43,23 +43,33 @@ body {
     box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
 }
 
-/* TÄYDELLINEN AVARUUSMAISEMA 
-   Ylhäällä Kokonaistuloksen takana on Avaruus, alhaalla uuden väylän takana on Taivas ja Maa */
+/* TULOSKYLTIN AVARUUSMATKA (Kiinteä pikselikartta maasta avaruuteen!) */
 #view-receipt {
     background-color: #020617;
     background-image: linear-gradient(to bottom, 
-        #020617 0%,      /* Syvä avaruus (Ylhäällä) */
-        #0f172a 20%,     /* Avaruuden raja */
-        #1e3a8a 50%,     /* Yläilmakehä */
-        #38bdf8 80%,     /* Taivas */
-        #7dd3fc 100%     /* Vaalea taivas maan rajassa */
+        #15803d 0px,      /* Maa / Ruoho (Täysin ylhäällä) */
+        #22c55e 80px,     /* Vaaleampi ruoho */
+        #7dd3fc 150px,    /* Taivas alkaa */
+        #38bdf8 600px,    /* Taivas */
+        #0284c7 1200px,   /* Yläilmakehä */
+        #1e3a8a 2000px,   /* Avaruuden raja */
+        #0f172a 2800px,   /* Avaruus */
+        #020617 3800px    /* Syvä avaruus */
     );
+    background-attachment: local !important; 
+    background-repeat: no-repeat;
+    background-size: 100% 8000px; /* Pitkä tausta jotta avaruus ei tule heti vastaan */
     min-height: 100%;
     display: block; 
     padding-top: 40px; 
+    padding-bottom: 120px;
     position: relative;
     overflow-x: hidden;
     overflow-y: auto;
+}
+
+#view-receipt > div {
+    z-index: 5; position: relative; 
 }
 
 .app-view {
@@ -315,7 +325,7 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 @keyframes penSwing { 0%, 100% { transform: rotate(6deg); } 50% { transform: rotate(-6deg); } }
 
 /* =========================================
-   TULOSKYLTTI
+   TULOSKYLTTI (Skaalautuva otsikko ja Koriste-animaatio)
    ========================================= */
 .dg-sign-wrapper { 
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
@@ -327,28 +337,26 @@ input[type="text"], input[type="number"], select { width: 100%; padding: 16px; m
 .dg-sign-leg { width: 25px; height: 100%; background: #0284c7; box-shadow: inset 8px 0 10px rgba(255,255,255,0.4), inset -5px 0 10px rgba(0,0,0,0.5), 5px 5px 10px rgba(0,0,0,0.6); }
 .dg-sign-board { width: 90%; background: #dcfce7; margin-top: -5px; padding: 25px 20px; border: 4px solid #0284c7; border-top: none; box-shadow: 0 15px 30px rgba(0,0,0,0.6); z-index: 2; position: relative; }
 
-.dg-sign-board h3 { font-size: clamp(1.2rem, 5vw, 1.8rem) !important; word-break: break-word; line-height: 1.2; }
-
-/* KORJAUS: MAAPALLO KYLTIN ALLE */
-.earth-bottom-wrapper {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    position: relative;
-    z-index: 5;
-    margin-top: -40px; 
-    overflow: hidden; 
-    padding-bottom: 80px; 
+.dg-sign-board h3 {
+    font-size: clamp(1.2rem, 5vw, 1.8rem) !important;
+    word-break: break-word;
+    line-height: 1.2;
 }
 
-.earth-globe {
-    width: 800px;
-    height: 800px;
-    background: radial-gradient(circle at 50% 10%, #16a34a 0%, #064e3b 40%, #022c22 80%);
-    border-radius: 50%;
-    box-shadow: inset 0 20px 40px rgba(255,255,255,0.2), 0 0 50px rgba(56,189,248,0.4);
-    flex-shrink: 0; 
+@keyframes floatDecor {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(5deg); }
 }
+.decor-item {
+    position: absolute;
+    bottom: 5px;
+    font-size: 2.2rem;
+    z-index: 10;
+    animation: floatDecor 4s ease-in-out infinite;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+}
+.decor-left { left: -35px; }
+.decor-right { right: -35px; }
 
 .receipt-circle { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; font-size: 0.8rem; flex-shrink: 0; }
 .receipt-circle.green { background-color: #22c55e; color: #fff; } 
