@@ -92,6 +92,7 @@ window.getCardsInUse = function(players, currentShops = {}) {
 };
 
 window.drawFromDeck = function(type, level, inUseIds = []) {
+    // 1. Etsitään vapaat kortit, jotka eivät ole kenenkään kädessä tai kaupassa
     let candidates = window.allCards.filter(c => !inUseIds.includes(c.id));
     
     let exactMatches = candidates.filter(c => 
@@ -105,17 +106,21 @@ window.drawFromDeck = function(type, level, inUseIds = []) {
         return picked.id;
     }
     
-    let typeMatches = candidates.filter(c => 
+    // 2. KORJAUS KAUPAN TYHJENTYMISTÄ VARTEN: 
+    // Jos vapaat kortit loppuvat (esim. kaikki 1-tason helpotukset on jo jaettu), 
+    // vedetään suoraan kopio alkuperäisestä pakasta, jotta kauppa pysyy AINA täytenä!
+    let allExactMatches = window.allCards.filter(c => 
         (type ? c.type === type : true) && 
-        ((level === 1 || level === 2) ? c.level !== 3 : true)
+        (level ? c.level === level : true)
     );
     
-    if (typeMatches.length > 0) {
-        let picked = typeMatches[Math.floor(Math.random() * typeMatches.length)];
+    if (allExactMatches.length > 0) {
+        let picked = allExactMatches[Math.floor(Math.random() * allExactMatches.length)];
         inUseIds.push(picked.id);
         return picked.id;
     }
     
+    // 3. Viimeinen hätävara (ei pitäisi enää tapahtua)
     let anyMatches = candidates.filter(c => 
         ((level === 1 || level === 2) ? c.level !== 3 : true)
     );
@@ -137,6 +142,7 @@ window.generatePersonalShop = function(inUseIds = []) {
         else shopCards.push(null);
     };
     
+    // KORJAUS: Nyt kauppaan pakotetaan ehdottomasti jokaista tasoa (3, 2, 1) yksi sabotaasi ja yksi buff!
     drawAndTrack('sabotage', 3);
     drawAndTrack('buff', 3);
     drawAndTrack('sabotage', 2);
@@ -252,6 +258,7 @@ window.submitScores = function() {
                 return;
             }
             
+            // HUOMIO: Löytötavara hoidetaan suoraan executeCardPlay-funktiossa, ei täällä!
             if (isSabotage) { 
                 playerEffects[t].sabotages.push({ ...pc }); 
             } else { 
@@ -463,6 +470,17 @@ window.executeCardPlay = function(targetName) {
             window.logScore(window.myName, -playCost, `Pelasi kortin: ${card.def.n}`);
             if(window.showAppleToast) window.showAppleToast(`-${playCost} P (Pelattu)`, '💸');
         }
+
+        // LÖYTÖTAVARAN ERIKOISMEKANIIKKA: Antaa rahat välittömästi pelaajalle!
+        if (card.def.mech === 'instant_money_3') {
+            me.score += 3;
+            window.logScore(window.myName, 3, `Löytötavara pelattu`);
+            if(window.showAppleToast) window.showAppleToast(`+3 P (Löytötavara)`, '💰');
+        } else if (card.def.mech === 'instant_money_7') {
+            me.score += 7;
+            window.logScore(window.myName, 7, `Löytötavara pelattu`);
+            if(window.showAppleToast) window.showAppleToast(`+7 P (Löytötavara)`, '💰');
+        }
     }
     
     let pCards = {};
@@ -616,10 +634,8 @@ window.buyShopItem = function(idStr, priceVal, isReservation) {
         if(el('cardDetailModal')) el('cardDetailModal').style.display='none';
         if(window.switchView) window.switchView('view-binder'); 
         
-        // Näytetään varoitus täydestä kädestä
         if(window.showNotification) window.showNotification("🛑 KÄSI ON TÄYNNÄ! Myy jokin kortti ensin ja palaa sitten kauppaan.", "danger");
         
-        // Avataan myyntimodaali heti
         if(window.showHandLimitModal) {
             let myCardsArray = me.cards ? (Array.isArray(me.cards) ? me.cards : Object.values(me.cards)).filter(Boolean) : [];
             window.showHandLimitModal(myCardsArray);
