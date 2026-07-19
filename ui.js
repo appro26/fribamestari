@@ -88,7 +88,7 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
     if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
     window.showModalSafe('cardDetailModal');
     
-    // TÄYDELLINEN KESKITYS: Otetaan rullausmagneetti hetkeksi pois, siirretään kortti keskelle koodilla ja laitetaan magneetti takaisin
+    // UUSI TAKUU-VARMA KESKITYS (Tuhoaa selaimen oman rullausmuistin ja pakottaa kortin ruutuun)
     setTimeout(() => { 
         const container = el('cardCarousel');
         if(!container) return;
@@ -97,22 +97,24 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
         const targetCard = cards[window.carouselCurrentIndex];
         
         if(targetCard) {
+            // Sammuta magneetit ja animaatiot hetkeksi
             container.style.scrollBehavior = 'auto';
             container.style.scrollSnapType = 'none';
             
-            const containerCenter = container.clientWidth / 2;
-            const cardCenter = targetCard.offsetLeft + (targetCard.offsetWidth / 2);
-            container.scrollLeft = cardCenter - containerCenter;
+            // Siirrä kortti välittömästi täydellisesti keskelle
+            targetCard.scrollIntoView({ behavior: 'instant', inline: 'center', block: 'nearest' });
             
-            void container.offsetWidth; // PakotetaanSelain piirtämään muutos heti
+            // Pakota selain piirtämään näyttö heti tähän asentoon
+            void container.offsetWidth; 
             
+            // Laita 10ms päästä magneetti ja pehmeys takaisin päälle seuraavaa pyyhkäisyä varten
             setTimeout(() => {
                 container.style.scrollBehavior = 'smooth';
                 container.style.scrollSnapType = 'x mandatory';
                 if(window.initNativeCarousel) window.initNativeCarousel();
-            }, 50);
+            }, 10);
         }
-    }, 50);
+    }, 20); // Pieni odotus jotta modaali ehtii ilmestyä DOMiin
 };
 
 window.showEventCard = function(cId, target, by) {
@@ -714,7 +716,6 @@ window.renderShopOnBoard = function() {
     wrapper.innerHTML = `
     <div class="shop-3d-container">
         <div class="shop-machine">
-            <!-- LED Header -->
             <div style="background: #000; border-radius: 8px; border: 2px solid #222; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; box-shadow: inset 0 0 20px rgba(239,68,68,0.15);">
                 <div style="color: #ef4444; font-family: monospace; font-size: 1.6rem; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 10px #ef4444;">FRIBAMASTER</div>
                 <div style="background: #022c22; border: 2px solid #064e3b; padding: 5px 15px; border-radius: 4px; box-shadow: inset 0 0 10px #000; text-align: center;">
@@ -723,7 +724,6 @@ window.renderShopOnBoard = function() {
                 </div>
             </div>
 
-            <!-- Lasinen Sisäosa -->
             <div class="shop-glass">
                 <div style="position: absolute; top: 0; left: -50%; width: 200%; height: 100%; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.05) 50%, transparent 55%); z-index: 5; pointer-events: none;"></div>
                 ${shelvesHtml}
@@ -731,7 +731,6 @@ window.renderShopOnBoard = function() {
 
             ${reserveHtml}
 
-            <!-- Alapaneeli -->
             <div style="background: #0f172a; margin-top: 20px; padding: 15px; border-radius: 8px; border: 2px solid #334155; display: flex; justify-content: space-between; align-items: flex-start; box-shadow: inset 0 0 15px #000;">
                 <div style="width: 90px; background: #000; padding: 10px; border-radius: 6px; border: 2px solid #1e293b; box-shadow: inset 0 0 10px #000;">
                    <div style="color: #10b981; text-align: right; font-family: monospace; border: 1px solid #334155; padding: 2px 5px; margin-bottom: 8px; font-size: 0.9rem;">12.00</div>
@@ -770,21 +769,19 @@ window.renderReceiptOnBoard = function() {
     <div class="dg-sign-wrapper">
     `;
     
-    // TÄSSÄ LUODAAN AVARUUSMAISEMAN ELEMENTIT TAUSTALLE (Alkaa ylhäältä avaruudesta!)
-    let decorContainer = `<div style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1; overflow:hidden;">`;
-    for(let i=0; i<window.gameHistory.length; i++) { 
-        let topPx = 150 + (i * 110); 
-        // Ylinnä olevat väylät saavat UFOja ja kuuta (Avaruus), alimmat saavat lintuja (Ilmakehä)
-        if (i === 0) decorContainer += `<div style="position:absolute; top:${topPx}px; right:5%; font-size:4rem; filter:drop-shadow(0 0 20px #22c55e);">🛸</div>`;
-        if (i === 2) decorContainer += `<div style="position:absolute; top:${topPx}px; left:8%; font-size:3rem;">👾</div>`;
-        if (i === 4) decorContainer += `<div style="position:absolute; top:${topPx}px; right:10%; font-size:3.5rem; filter:drop-shadow(0 0 15px #fef08a);">🌕</div>`;
-        if (i === 6) decorContainer += `<div style="position:absolute; top:${topPx}px; left:12%; font-size:2.5rem;">☄️</div>`;
-        if (i === 8) decorContainer += `<div style="position:absolute; top:${topPx}px; left:10%; font-size:2rem; color:#fff; text-shadow: 0 0 5px #fff;">✨</div>`;
-        if (i === 11) decorContainer += `<div style="position:absolute; top:${topPx}px; right:15%; font-size:3rem; animation: float 6s infinite;">🛰️</div>`;
-        if (i === 13) decorContainer += `<div style="position:absolute; top:${topPx}px; left:12%; font-size:2.5rem; opacity:0.9;">✈️</div>`;
-        if (i === 15) decorContainer += `<div style="position:absolute; top:${topPx}px; right:8%; font-size:3rem; opacity:0.7;">☁️</div>`;
-        if (i === 17) decorContainer += `<div style="position:absolute; top:${topPx}px; left:8%; font-size:2.5rem; opacity:0.8; transform:scaleX(-1);">🦅</div>`;
-    }
+    // TÄSSÄ LUODAAN AVARUUSMAISEMAN ELEMENTIT TAUSTALLE (Täydellinen prosentuaalinen sijoittelu!)
+    let decorContainer = `<div style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:-1;">`;
+    // Ufot ja kuut leijailevat aina aivan taulun yläpäässä avaruudessa
+    decorContainer += `<div style="position:absolute; top:2%; right:-5%; font-size:4rem; filter:drop-shadow(0 0 20px #22c55e);">🛸</div>`;
+    decorContainer += `<div style="position:absolute; top:12%; left:-5%; font-size:3rem;">👾</div>`;
+    decorContainer += `<div style="position:absolute; top:25%; right:-2%; font-size:3.5rem; filter:drop-shadow(0 0 15px #fef08a);">🌕</div>`;
+    decorContainer += `<div style="position:absolute; top:38%; left:-2%; font-size:2.5rem;">☄️</div>`;
+    decorContainer += `<div style="position:absolute; top:50%; left:-8%; font-size:2rem; color:#fff; text-shadow: 0 0 5px #fff;">✨</div>`;
+    // Satelliitit, lentokoneet ja linnut liitelevät listaa alaspäin tullessa ilmakehässä ja taivaalla
+    decorContainer += `<div style="position:absolute; top:65%; right:-5%; font-size:3rem; animation: float 6s infinite;">🛰️</div>`;
+    decorContainer += `<div style="position:absolute; top:78%; left:-2%; font-size:2.5rem; opacity:0.9;">✈️</div>`;
+    decorContainer += `<div style="position:absolute; top:88%; right:-2%; font-size:3rem; opacity:0.7;">☁️</div>`;
+    decorContainer += `<div style="position:absolute; top:96%; left:-5%; font-size:2.5rem; opacity:0.8; transform:scaleX(-1);">🦅</div>`;
     decorContainer += `</div>`;
     
     html += decorContainer;
@@ -821,12 +818,7 @@ window.renderReceiptOnBoard = function() {
         } 
     }
     
-    html += `</div>
-    
-    <!-- 3D Maapallo asettuu taulun jalkojen alle -->
-    <div class="earth-bottom"></div>
-    
-    </div>`;
+    html += `</div></div>`;
     wrapper.innerHTML = html;
 };
 
@@ -862,7 +854,7 @@ document.addEventListener('click', (e) => {
     if(target && target.innerText.includes('TULOKSET')) {
         setTimeout(() => {
             let vr = el('view-receipt');
-            if(vr) vr.scrollTo({ top: 0, behavior: 'smooth' });
+            if(vr) vr.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
         }, 50);
     }
 });
