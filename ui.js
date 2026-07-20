@@ -24,31 +24,16 @@ window.pseudoRandom = (seed) => {
 };
 
 // ==============================================
-// SKAALAUS (POISTETTU RECEIPT-SKAALAUS, JOTTA TAUSTA EI LEIKKAA)
+// SKAALAUS (TÄYDELLISESTI PALAUTETTU)
 // ==============================================
 window.applyViewScales = function() {
     let w = window.innerWidth;
     
-    // Receipt ei skaalaudu rumasti, vaan pysyy täysikokoisena ja keskittyy CSS:llä.
     let receiptWrapper = el('board-receipt-wrapper');
     if(receiptWrapper) {
-        receiptWrapper.style.transform = `none`;
-        receiptWrapper.style.width = '100%';
-    }
-    
-    // Kauppa ja kansio pidetään ISOINA! Ei pakotettua scalea.
-    let shopWrapper = el('board-shop-wrapper');
-    if(shopWrapper) {
-        shopWrapper.style.transform = `scale(1)`; 
-        shopWrapper.style.width = '100%';
-        shopWrapper.style.maxWidth = '650px';
-    }
-    
-    let binderWrapper = el('board-binder-wrapper');
-    if(binderWrapper) {
-        binderWrapper.style.transform = `scale(1)`;
-        binderWrapper.style.width = '100%';
-        binderWrapper.style.maxWidth = '600px';
+        let recScale = w < 480 ? Math.max(0.6, w / 480) : 1;
+        receiptWrapper.style.transform = `scale(${recScale})`;
+        receiptWrapper.style.transformOrigin = 'top center';
     }
 };
 window.addEventListener('resize', window.applyViewScales);
@@ -104,12 +89,13 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
     
     if(window.carouselCurrentIndex === -1) window.carouselCurrentIndex = 0;
     
+    // NÄYTÄ MODAALI ENSIN, JOTTA SELAIMEN ON PAKKO LASKEA MITAT!
     window.showModalSafe('cardDetailModal');
     window.renderCarousel();
     if(window.renderCarouselActionButtons) window.renderCarouselActionButtons();
     
-    // TÄYDELLINEN KESKITYS: 50ms viive varmistaa, että selain on ehtinyt piirtää modaalin.
-    setTimeout(() => {
+    // TÄYDELLINEN TAKUU-VARMA KESKITYS
+    setTimeout(() => { 
         const container = el('cardCarousel');
         if(!container) return;
         
@@ -117,23 +103,24 @@ window.openCardDetail = function(cId, mode, forceIndex = -1) {
         const targetCard = cards[window.carouselCurrentIndex];
         
         if(targetCard) {
-            // Sammutetaan selaimen pehmeä scroll snap hetkeksi
+            // Poista rullausmagneetit hetkeksi, ettei selain taistele vastaan
             container.style.scrollBehavior = 'auto';
             container.style.scrollSnapType = 'none';
             
-            // Lasketaan millintarkka sijainti ja pakotetaan vieritys sinne välittömästi
+            // Laske itse millintarkasti oikea kohta
             const containerCenter = container.clientWidth / 2;
             const cardCenter = targetCard.offsetLeft + (targetCard.offsetWidth / 2);
             container.scrollLeft = cardCenter - containerCenter;
             
+            // Pakota ruudun päivitys heti
             void container.offsetWidth; 
             
-            // Kytketään pehmeä vieritys takaisin päälle kun JS on tehnyt työnsä
+            // Laita asetukset takaisin pehmeää selailua varten
             setTimeout(() => {
                 container.style.scrollBehavior = 'smooth';
                 container.style.scrollSnapType = 'x mandatory';
                 if(window.initNativeCarousel) window.initNativeCarousel();
-            }, 50);
+            }, 10);
         }
     }, 50);
 };
@@ -250,12 +237,14 @@ window.openTargetModal = function(cId) {
     }
 };
 
-// KORTIN LUONTI (TÄYDELLINEN KUVIEN MUKAINEN NEON-ULKOASU)
+// ==============================================
+// KORTIN LUONTI (ALKUPERÄINEN ULKOASU JA HTML-RAKENNE)
+// ==============================================
 window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '', isCarousel = false) {
     if (!cDef) return '';
     let typeClass = `tier-${cDef.level || 1}`;
+    let typeIcon = cDef.type === 'buff' ? '🛡️' : '💥';
     let typeName = cDef.type === 'buff' ? 'buff' : 'sabotage';
-    let typeLabel = cDef.type === 'buff' ? 'HELPOTUS' : 'SABOTAASI';
     let safeCardName = cDef.n ? cDef.n.split(' (')[0] : '';
     let playCost = typeof window.getCardPlayCost === 'function' ? window.getCardPlayCost(cDef.id) : (cDef.level === 3 ? 6 : (cDef.level === 2 ? 4 : 2));
     
@@ -264,20 +253,20 @@ window.generateCardHTML = function(cDef, isLocked = false, extraBottomHtml = '',
     }
     
     let lockedStyle = isLocked ? 'opacity: 0.5; filter: grayscale(50%);' : '';
-    let dimensions = isCarousel ? 'width: 100%; height: 100%; box-sizing: border-box;' : 'width: 100%; max-width:200px; height: 100%;';
+    let dimensions = isCarousel ? 'width: 100%; height: 100%; box-sizing: border-box; display:flex; flex-direction:column;' : 'width: 175px; height: 260px;';
     let titleSize = isCarousel ? 'font-size: 1.5rem;' : '';
-    let descSize = isCarousel ? 'font-size: 1rem;' : '';
+    let descSize = isCarousel ? 'font-size: 1rem; flex: 1;' : '';
     
     return `
-    <div class="physical-card ${typeClass}" style="${lockedStyle} ${dimensions}">
-        <div class="card-header">
-            <span class="header-type-pill ${typeName}">${typeLabel}</span>
-            <span class="header-lvl-pill">TASO ${cDef.level || 1}</span>
+    <div class="physical-card ${typeClass}" style="${lockedStyle} ${dimensions} margin: 0 auto; box-shadow: 0 8px 16px rgba(0,0,0,0.4);">
+        <div class="card-header ${typeName}">
+            <span>${typeIcon} ${cDef.type === 'buff' ? 'HELPOTUS' : 'SABOTAASI'}</span>
         </div>
-        <div class="card-body ${typeName}">
-            <div class="play-cost-badge">PELUU: ${playCost} P</div>
-            <h3 style="${titleSize}">${safeCardName}</h3>
-            <p style="${descSize}">${cDef.d}</p>
+        <span class="level-badge level-badge-${cDef.level || 1}">TASO ${cDef.level || 1}</span>
+        <div class="card-body ${typeName}" style="justify-content: flex-start; flex: 1; display:flex; flex-direction:column;">
+            <div class="play-cost-badge">MAKSU: ${playCost} P</div>
+            <h3 class="card-title" style="${titleSize}">${safeCardName}</h3>
+            <p class="card-desc" style="${descSize}">${cDef.d}</p>
             ${extraBottomHtml}
         </div>
     </div>`;
@@ -578,7 +567,7 @@ window.renderPayslipView = function(hIndex) {
 };
 
 // ==============================================
-// KANSIO (OMAT KORTIT ISOINA)
+// KANSIO (OMAT KORTIT ISOINA, ALKUPERÄINEN ASETTELU)
 // ==============================================
 window.renderBinderOnBoard = function() {
     let wrapper = el('board-binder-wrapper');
@@ -611,7 +600,7 @@ window.renderBinderOnBoard = function() {
             let fullCardHtml = window.generateCardHTML(cDef, isLocked, extraHtml, false);
             
             cardsHtml += `
-            <div style="cursor:pointer; width:100%; max-width:200px; position:relative; transition:transform 0.1s;" onclick="window.openCardDetail('${cId}', 'sell', ${idx})">
+            <div style="cursor:pointer; width:175px; position:relative; transform:scale(1.3); margin-bottom: 70px; transform-origin: top center;" onclick="window.openCardDetail('${cId}', 'sell', ${idx})">
                 <div class="card-aspect-wrapper">
                     ${fullCardHtml}
                 </div>
@@ -620,15 +609,15 @@ window.renderBinderOnBoard = function() {
     }
 
     wrapper.innerHTML = `
-    <div class="binder-page" style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
-        <h2 style="color:#1e293b; font-size:2.5rem; margin-bottom:15px; font-family:'Kalam', cursive; border-bottom:4px dashed #cbd5e1; padding-bottom:10px; text-align:center; text-transform:uppercase;">OMAT KORTIT</h2>
+    <div class="binder-page">
+        <h2 style="color:#1e293b; font-size:2.8rem; margin-bottom:15px; font-family:'Kalam', cursive; border-bottom:4px dashed #94a3b8; padding-bottom:10px; text-align:center;">OMAT KORTIT</h2>
         
         <div style="text-align:center; margin-bottom: 25px;">
             <div style="background:#0f172a; color:#22c55e; padding: 10px 25px; border-radius: 8px; border: 3px solid #22c55e; font-family:'Courier Prime', monospace; font-size:1.6rem; font-weight:900; display:inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">LOMPAKKO: ${myPoints} P</div>
         </div>
         
         <div style="text-align:center; color:#64748b; font-weight:bold; margin-bottom:20px; font-size:0.9rem;">👆 KLIKKAA KORTTIA AVATAKSESI TOIMINNOT 👆</div>
-        <div class="binder-grid" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:20px; justify-items:center;">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 20px;">
             ${cardsHtml}
         </div>
     </div>`;
@@ -653,7 +642,7 @@ window.renderShopOnBoard = function() {
     let levels = [3, 2, 1]; 
 
     levels.forEach(lvl => {
-        shelvesHtml += `<div style="display:flex; gap:20px; margin-bottom: 30px; justify-content:center;">`;
+        shelvesHtml += `<div style="display:flex; justify-content:space-around; padding: 30px 0; border-bottom: 12px solid #020617; background: #1e293b; border-radius: 6px; margin-bottom: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.5);">`;
 
         let shelfItems = (shopArray || []).filter(c => c === null || c.level === lvl);
         
@@ -672,26 +661,24 @@ window.renderShopOnBoard = function() {
                 let fullCardHtml = window.generateCardHTML(item, false, '', false);
                 
                 shelvesHtml += `
-                    <div style="width:48%; max-width:200px; display:flex; flex-direction:column; align-items:center;">
-                        <div style="cursor:pointer; width:100%; margin-bottom:10px;" onclick="window.openCardDetail('${item.id}', 'shop', ${shopIdx})">
-                            <div class="card-aspect-wrapper">${fullCardHtml}</div>
+                    <div style="position:relative; width:45%; display:flex; flex-direction:column; align-items:center;">
+                        <div style="transform: scale(1.4); cursor:pointer; width:175px; margin-bottom: 80px; transform-origin: top center;" onclick="window.openCardDetail('${item.id}', 'shop', ${shopIdx})">
+                            ${fullCardHtml}
                         </div>
-                        
-                        <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 8px; border: 2px solid #22c55e; font-weight: 900; font-size: 1.2rem; margin-top: 5px; box-shadow: 0 0 10px rgba(34,197,94,0.5);">OSTA: ${buyPrice} P</div>
-                        
-                        <div style="margin-top: 15px; display:flex; gap:8px; width:100%;">
-                            <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:12px; font-size:1rem; font-weight:900; flex:1;" onclick="window.buyShopItem('${item.id}', ${buyPrice}, false)">OSTA</button>
-                            ${!isResFull ? `<button class="btn btn-primary btn-modern" style="padding:12px; font-size:1rem; font-weight:900; flex:1; background:#0ea5e9;" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
+                        <div style="background: #000; color: #22c55e; font-family: 'Courier Prime', monospace; padding: 10px 25px; border-radius: 6px; border: 4px solid #22c55e; font-weight: 900; font-size: 1.8rem; margin-top: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.6); text-align: center; margin-bottom: 15px;">${buyPrice} P</div>
+                        <div style="display:flex; flex-direction:column; gap:10px; width:90%;">
+                            <button class="btn btn-success" ${!canAfford?'disabled':''} style="padding:15px; font-size:1.3rem; font-weight:900;" onclick="window.buyShopItem('${item.id}', ${buyPrice}, false)">OSTA</button>
+                            ${!isResFull ? `<button class="btn btn-primary" style="padding:12px; font-size:1.1rem; font-weight:900;" onclick="window.reserveShopItem('${item.id}')">VARAA</button>` : ''}
                         </div>
                     </div>
                 `;
             } else {
                 shelvesHtml += `
-                    <div style="width:48%; max-width:200px; display:flex; flex-direction:column; align-items:center;">
-                        <div style="width:100%; aspect-ratio: 2/3; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:12px; border:6px dashed #333; margin-bottom:10px;">
-                            <div style="color:#666; font-weight:900; font-size:1.8rem; letter-spacing:2px; transform:rotate(-45deg);">TYHJÄ</div>
+                    <div style="position:relative; width:45%; display:flex; flex-direction:column; align-items:center;">
+                        <div style="width:175px; height:260px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4); border-radius:8px; border:4px dashed #333; transform: scale(1.4); margin-bottom: 80px; transform-origin: top center;">
+                            <div style="color:#666; font-weight:900; font-size:2rem; letter-spacing:4px; transform:rotate(-45deg);">TYHJÄ</div>
                         </div>
-                        <div style="background: #000; color: #555; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 8px; border: 2px solid #444; font-weight: 900; font-size: 1.2rem; margin-top: 5px;">---</div>
+                        <div style="background: #000; color: #555; font-family: 'Courier Prime', monospace; padding: 10px 25px; border-radius: 6px; border: 4px solid #444; font-weight: 900; font-size: 1.8rem; margin-top: 10px; text-align: center; margin-bottom: 15px;">---</div>
                     </div>
                 `;
             }
@@ -701,10 +688,7 @@ window.renderShopOnBoard = function() {
 
     let reserveHtml = '';
     if(actRes.length > 0) {
-        reserveHtml += `
-        <div style="background: #0f172a; border-radius:12px; border: 4px solid #1e293b; padding: 20px; margin-top: 20px;">
-            <div style="color: #fbbf24; font-family: 'Courier Prime', monospace; font-size: 1.5rem; font-weight: 900; text-align: center; margin-bottom: 20px; letter-spacing: 2px;">NOUTOLOKERO</div>
-            <div style="display:flex; justify-content:center; gap:20px; width:100%;">`;
+        reserveHtml += `<div style="margin-top:40px; border-top: 6px dashed #475569; padding-top: 40px;"><div style="display:flex; justify-content:space-around; width:100%; gap:20px;">`;
             
         actRes.forEach((rId) => {
             let resItem = window.allCards.find(c => c.id === rId);
@@ -720,16 +704,15 @@ window.renderShopOnBoard = function() {
             let fullCardHtml = window.generateCardHTML(resItem, false, '', false);
             
             reserveHtml += `
-                <div style="width:48%; max-width:200px; display:flex; flex-direction:column; align-items:center;">
-                    <div style="width:100%; cursor:pointer; position:relative; margin-bottom:10px;" onclick="window.openCardDetail('${resItem.id}', 'shop_res', ${shopResIdx})">
-                        <div style="position:absolute; top:-15px; right:-10px; background:#fbbf24; color:#000; padding:8px 12px; font-weight:900; font-size: 1rem; border-radius:8px; z-index:30; border: 3px solid #fff;">🔒 VARATTU</div>
-                        <div class="card-aspect-wrapper">${fullCardHtml}</div>
+                <div style="width:45%; display:flex; flex-direction:column; align-items:center; background: rgba(0,0,0,0.3); padding: 30px 15px; border-radius: 12px; border: 3px solid #334155;">
+                    <div style="transform: scale(1.3); margin-bottom: 70px; cursor:pointer; width:175px; transform-origin: top center; position:relative;" onclick="window.openCardDetail('${resItem.id}', 'shop_res', ${shopResIdx})">
+                        <div style="position:absolute; top:-20px; right:-20px; background:#eab308; color:#000; padding:8px 12px; font-weight:900; font-size: 1.1rem; border-radius:8px; z-index:30; border: 3px solid #fff;">🔒 VARATTU</div>
+                        ${fullCardHtml}
                     </div>
-                    <div style="background: #000; color: #fbbf24; font-family: 'Courier Prime', monospace; padding: 6px 15px; border-radius: 8px; border: 2px solid #fbbf24; font-weight: 900; font-size: 1.2rem; margin-top: 5px;">LUNASTA: ${buyPrice} P</div>
-                    
-                    <div style="margin-top: 15px; display:flex; gap:8px; width:100%;">
-                        <button class="btn btn-success btn-modern" ${!canAfford?'disabled':''} style="padding:12px; font-size:1rem; font-weight:900; flex:1;" onclick="window.buyShopItem('${resItem.id}', ${buyPrice}, true)">LUNASTA</button>
-                        <button class="btn btn-danger btn-modern" style="padding:12px; font-size:1rem; font-weight:900; flex:1;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
+                    <div style="background: #000; color: #eab308; font-family: 'Courier Prime', monospace; padding: 10px 20px; border-radius: 6px; border: 4px solid #eab308; font-weight: 900; font-size: 1.8rem; margin-top: 10px; text-align: center; margin-bottom:15px;">${buyPrice} P</div>
+                    <div style="display:flex; flex-direction:column; gap:10px; width:90%;">
+                        <button class="btn btn-success" ${!canAfford?'disabled':''} style="padding:15px; font-size:1.3rem; font-weight:900;" onclick="window.buyShopItem('${resItem.id}', ${buyPrice}, true)">LUNASTA</button>
+                        <button class="btn btn-danger" style="padding:12px; font-size:1.1rem; font-weight:900;" onclick="window.cancelReservation('${resItem.id}')">PERU</button>
                     </div>
                 </div>
             `;
@@ -738,17 +721,33 @@ window.renderShopOnBoard = function() {
     }
 
     wrapper.innerHTML = `
-    <div style="background: #020617; border-radius: 20px; padding: 30px; border: 6px solid #1e293b; box-shadow: 0 20px 40px rgba(0,0,0,0.8);">
-        <div style="background: #000; border-radius: 12px; border: 2px solid #222; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <div style="color: #ef4444; font-family: monospace; font-size: 1.8rem; font-weight: 900; letter-spacing: 3px;">FRIBAMASTER</div>
-            <div style="background: #022c22; border: 2px solid #064e3b; padding: 8px 20px; border-radius: 8px;">
-                <div style="font-size: 0.7rem; color: #10b981; letter-spacing: 2px; text-transform:uppercase;">Credit</div>
-                <div style="font-size: 2.2rem; color: #34d399; font-family: 'Courier Prime', monospace; font-weight: 900;">${myPoints} P</div>
+    <div style="position: relative; width: 650px; background: #0f172a; border: 15px solid #000; border-bottom: 60px solid #050505; border-radius: 20px; padding: 40px 30px; box-shadow: 20px 30px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; z-index:20;">
+        <div style="background: #000; padding: 25px 30px; border-radius: 12px; border: 6px solid #222; display:flex; justify-content:space-between; align-items:center; margin-bottom: 40px;">
+            <div style="display:flex; align-items:center; gap: 20px;">
+                <div style="width: 25px; height: 25px; border-radius: 50%; background: #22c55e;"></div>
+                <div style="color:#ef4444; font-family:'Courier Prime', monospace; font-weight:900; font-size:3rem; letter-spacing: 4px;">FRIBAMART</div>
+            </div>
+            <div style="background: #111; padding: 15px 25px; border-radius: 10px; border: 3px solid #333;">
+                <div style="color:#22c55e; font-family:'Courier Prime', monospace; font-size:2.5rem; font-weight:900;">${myPoints} P</div>
             </div>
         </div>
 
-        <div style="background: #111827; border-radius: 16px; padding: 25px 15px; border: 4px solid #1e293b;">
+        <div style="background: #020617; border-radius: 12px; border: 12px solid #050505; padding: 30px;">
             ${shelvesHtml}
+        </div>
+
+        <div style="height: 250px; margin-top: 50px; display:flex; gap:40px; align-items:flex-start;">
+            <div style="flex: 1; background: #050505; border-radius: 12px; border: 8px solid #111; position:relative; height: 200px;">
+                <div style="position:absolute; top:0; left:0; right:0; height: 80px; background: #1a1a1a; border-bottom: 4px solid #000; display:flex; justify-content:center; align-items:center;">
+                    <span style="color:#333; font-weight:900; font-size:2.5rem; letter-spacing:15px;">PUSH</span>
+                </div>
+            </div>
+            <div style="width: 180px; background: #111; border-radius: 12px; border: 6px solid #000; padding: 30px; display:flex; flex-direction:column; align-items:center;">
+                <div style="width: 20px; height: 60px; background: #000; border-radius: 10px; border: 4px solid #333; margin-bottom: 40px;"></div>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width:100%;">
+                    ${Array(9).fill('<div style="background: #222; height:30px; border-radius:6px; border-bottom:4px solid #000;"></div>').join('')}
+                </div>
+            </div>
         </div>
 
         ${reserveHtml}
@@ -757,7 +756,7 @@ window.renderShopOnBoard = function() {
 };
 
 // ==============================================
-// TOWER RUSH - TULOSTAULU
+// TULOSSEURANTA (PUHDAS 3D TAULU SINISET TOLPAT + VIHREÄ TAULU, EI TAUSTAA)
 // ==============================================
 window.renderReceiptOnBoard = function() {
     let wrapper = el('board-receipt-wrapper');
@@ -774,36 +773,13 @@ window.renderReceiptOnBoard = function() {
     };
 
     let vr = el('view-receipt');
-    if(vr) vr.style.background = 'transparent';
+    if(vr) {
+        vr.style.background = 'transparent';
+        vr.style.backgroundImage = 'none';
+    }
 
-    let epicBgHtml = `
-    <div class="tower-rush-bg">
-        <div class="tr-stars"></div>
-        <div class="tr-stars-2"></div>
-        <div class="tr-galaxy"></div>
-        <div class="tr-moon"></div>
-        
-        <svg class="tr-satellite" viewBox="0 0 24 24" fill="#94a3b8" style="width: 80px; height: 80px;"><path d="M4.2 14.5L1.4 17.3c-.8.8-.8 2 0 2.8l2.5 2.5c.8.8 2 .8 2.8 0l2.8-2.8-5.3-5.3zm16.5-6.3l2.8-2.8c.8-.8.8-2 0-2.8L21 2c-.8-.8-2-.8-2.8 0l-2.8 2.8 5.3 5.3zM12 15c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3zm6.3-7.7L7.7 18.3c-.4.4-1 .4-1.4 0l-1.4-1.4c-.4-.4-.4-1 0-1.4L15.5 4.9c.4-.4 1-.4 1.4 0l1.4 1.4c.4.4.4 1 0 1.4z"/></svg>
-        
-        <svg class="tr-ufo" viewBox="0 0 24 24" fill="#34d399" style="width: 70px; height: 70px;"><path d="M12 2c-3.3 0-6 2.7-6 6v1c-3.3 0-6 1.3-6 3s2.7 3 6 3h12c3.3 0 6-1.3 6-3s-2.7-3-6-3V8c0-3.3-2.7-6-6-6zm0 2c2.2 0 4 1.8 4 4v1H8V8c0-2.2 1.8-4 4-4z"/></svg>
-        
-        <div class="tr-wind tr-wind-1"></div>
-        <div class="tr-wind tr-wind-2"></div>
-        <div class="tr-wind tr-wind-3"></div>
-        
-        <div class="tr-cloud tr-cloud-1"></div>
-        <div class="tr-cloud tr-cloud-2"></div>
-        <div class="tr-cloud-storm"></div>
-        
-        <div class="tr-earth-container">
-            <div class="tr-earth"></div>
-        </div>
-    </div>
-    `;
-
-    // Taulu kasvaa ylöspäin
-    let html = epicBgHtml + `
-    <div style="position:relative; z-index:10; width:95%; max-width:450px; margin: 0 auto; margin-top: 150px; padding-bottom: 120px;">
+    let html = `
+    <div class="dg-sign-wrapper">
         <div class="dg-sign-top-bar"></div>
         
         <div class="dg-sign-legs">
@@ -1062,7 +1038,7 @@ window.renderCarousel = function() {
                 </ul>
             </div>`;
         
-        let extraHtml = `<div style="text-align:center; font-weight:900; color:#fff; text-shadow:0 1px 3px #000; margin-top:auto; padding-bottom:10px; font-size:1.1rem;">🔄 KÄÄNNÄ (KATSO TASOT)</div>`;
+        let extraHtml = `<div style="text-align:center; font-weight:900; color:#111; margin-top:auto; padding-bottom:10px; font-size:1.1rem;">🔄 KÄÄNNÄ (KATSO TASOT)</div>`;
         let fullCardHtml = window.generateCardHTML(cDef, false, extraHtml, true);
 
         html += `
